@@ -1,13 +1,14 @@
+.vs/
 *.db
 *.opendb
 *.user
-.vs/
-
+*.sln
+*.vcxproj
+*.filters
 
 bin/
 bin-int/
+vendor/
 
 .idea/
 cmake*/
-
-vendor/
