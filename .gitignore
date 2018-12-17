@@ -1,0 +1,13 @@
+*.db
+*.opendb
+*.user
+.vs/
+
+
+bin/
+bin-int/
+
+.idea/
+cmake*/
+
+vendor/
