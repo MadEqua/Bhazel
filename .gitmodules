@@ -1,3 +1,6 @@
 [submodule "Bhazel/vendor/spdlog"]
 	path = Bhazel/vendor/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "Bhazel/vendor/GLFW"]
+	path = Bhazel/vendor/GLFW
+	url = https://github.com/TheCherno/glfw

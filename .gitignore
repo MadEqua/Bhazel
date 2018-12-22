@@ -8,7 +8,6 @@
 
 bin/
 bin-int/
-vendor/
 
 .idea/
 cmake*/

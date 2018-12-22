@@ -8,16 +8,15 @@
 namespace BZ {
 
     Application::Application() {
+        window = std::unique_ptr<Window>(Window::create());
     }
 
     Application::~Application() {
     }
 
     void Application::run() {
-        
-        WindowResizeEvent e(555, 999);
-        BZ_TRACE(e);
-        
-        while(true);
+        while(running) {
+            window->onUpdate();
+        }
     }
 }

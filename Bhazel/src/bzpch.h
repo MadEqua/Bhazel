@@ -11,3 +11,5 @@
 #ifdef BZ_PLATFORM_WINDOWS
     #include <Windows.h>
 #endif
+
+#include "Bhazel/Log.h"

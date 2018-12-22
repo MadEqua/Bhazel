@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core.h"
+#include "Window.h"
 
 namespace BZ {
 
@@ -11,6 +12,10 @@ namespace BZ {
         ~Application();
 
         void run();
+
+    private:
+        std::unique_ptr<Window> window;
+        bool running = true;
     };
 
     //To be defined in Bhazel client applications

@@ -10,4 +10,12 @@
     #error Windows only for now.
 #endif
 
+#ifdef BZ_ENABLE_ASSERTS
+    #define BZ_ASSERT(x, ...) { if(!(x)) { HZ_ERROR("Assertion  Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+    #define BZ_CORE_ASSERT(x, ...) { if(!(x)) { HZ_CORE_ERROR("Assertion  Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+#else
+    #define BZ_ASSERT(x, ...)
+    #define BZ_CORE_ASSERT(x, ...)
+#endif
+
 #define BIT(x) (1 << x)
