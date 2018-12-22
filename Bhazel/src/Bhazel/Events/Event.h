@@ -1,7 +1,6 @@
 #pragma once
 
-#include <string>
-#include <functional>
+#include "bzpch.h"
 
 #include "Bhazel/Core.h"
 

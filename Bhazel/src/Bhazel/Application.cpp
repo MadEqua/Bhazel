@@ -1,3 +1,5 @@
+#include "bzpch.h"
+
 #include "Application.h"
 
 #include "Bhazel/Events/ApplicationEvent.h"
@@ -13,7 +15,7 @@ namespace BZ {
 
     void Application::run() {
         
-        WindowResizeEvent e(555, 666);
+        WindowResizeEvent e(555, 999);
         BZ_TRACE(e);
         
         while(true);

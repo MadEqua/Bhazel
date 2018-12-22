@@ -20,6 +20,9 @@ project "Bhazel"
     targetdir("bin/" .. outputDir .. "/%{prj.name}")
     objdir("bin-int/" .. outputDir .. "/%{prj.name}")
 
+    pchheader "bzpch.h"
+    pchsource "Bhazel/src/bzpch.cpp"
+
     files
     {
         "%{prj.name}/src/**.h",
