@@ -1,9 +1,14 @@
 #pragma once
 
+#include "bzpch.h"
+
 #include "Core.h"
-#include "Window.h"
 
 namespace BZ {
+
+    class Window;
+    class Event;
+    class WindowCloseEvent;
 
     class BZ_API Application
     {
@@ -12,8 +17,11 @@ namespace BZ {
         ~Application();
 
         void run();
-
+        
+        void onEvent(Event &ev);
     private:
+        bool onWindowClose(WindowCloseEvent &e);
+
         std::unique_ptr<Window> window;
         bool running = true;
     };

@@ -3,9 +3,10 @@
 #include "bzpch.h"
 
 #include "Core.h"
-#include "Bhazel/Events/Event.h"
 
 namespace BZ {
+
+    class Event;
 
     struct WindowProps {
         std::string title;
