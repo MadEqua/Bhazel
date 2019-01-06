@@ -5,6 +5,7 @@
 #include "Window.h"
 #include "Events/ApplicationEvent.h"
 #include "Log.h"
+#include "Bhazel/Layer.h"
 
 namespace BZ {
 
@@ -15,11 +16,13 @@ namespace BZ {
         window->setEventCallback(BIND_EVENT_FN(onEvent));
     }
 
-    Application::~Application() {
-    }
-
     void Application::run() {
         while(running) {
+
+			for (Layer *layer : layerStack) {
+				layer->onUpdate();
+			}
+
             window->onUpdate();
         }
     }
@@ -29,7 +32,20 @@ namespace BZ {
         dispatcher.dispatch<WindowCloseEvent>(BIND_EVENT_FN(onWindowClose));
         
         BZ_CORE_TRACE("{0}", e);
+
+		for (auto it = layerStack.end(); it != layerStack.begin(); ) {
+			(*--it)->onEvent(e);
+			if (e.handled) break;
+		}
     }
+
+	void Application::pushLayer(Layer *layer) {
+		layerStack.pushLayer(layer);
+	}
+
+	void Application::pushOverlay(Layer *overlay) {
+		layerStack.pushOverlay(overlay);
+	}
 
     bool Application::onWindowClose(WindowCloseEvent &e) {
         running = false;

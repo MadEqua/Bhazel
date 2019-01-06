@@ -42,7 +42,6 @@ namespace BZ {
             return getCategoryFlags() & category;
         }
 
-    protected:
         bool handled = false;
     };
 
