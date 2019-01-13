@@ -24,6 +24,9 @@ namespace BZ {
 
 		void pushLayer(Layer *layer);
 		void pushOverlay(Layer *overlay);
+
+        inline Window& getWindow() { return *window; }
+        inline static Application& getInstance() { return *instance; }
     private:
         bool onWindowClose(WindowCloseEvent &e);
 
@@ -31,6 +34,8 @@ namespace BZ {
         bool running = true;
 
 		LayerStack layerStack;
+
+        static Application *instance;
     };
 
     //To be defined in Bhazel client applications

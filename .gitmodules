@@ -4,3 +4,6 @@
 [submodule "Bhazel/vendor/GLFW"]
 	path = Bhazel/vendor/GLFW
 	url = https://github.com/TheCherno/glfw
+[submodule "Bhazel/vendor/imgui"]
+	path = Bhazel/vendor/imgui
+	url = https://github.com/TheCherno/imgui.git

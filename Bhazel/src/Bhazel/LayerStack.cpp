@@ -16,10 +16,12 @@ namespace BZ {
 
 	void LayerStack::pushLayer(Layer *layer) {
 		layerInsert = layers.emplace(layerInsert, layer);
+        layer->onAttach();
 	}
 
 	void LayerStack::pushOverlay(Layer *overlay) {
 		layers.emplace_back(overlay);
+        overlay->onAttach();
 	}
 
 	void LayerStack::popLayer(Layer *layer) {
@@ -27,6 +29,7 @@ namespace BZ {
 		if (it != layers.end()) {
 			layers.erase(it);
 			layerInsert--;
+            layer->onDetach();
 		}
 	}
 
@@ -34,6 +37,7 @@ namespace BZ {
 		auto it = std::find(layers.begin(), layers.end(), overlay);
 		if (it != layers.end()) {
 			layers.erase(it);
+            overlay->onDetach();
 		}
 	}
 }

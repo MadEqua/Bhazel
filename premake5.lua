@@ -14,9 +14,11 @@ outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 includeDir = {}
 includeDir["GLFW"] = "Bhazel/vendor/GLFW/include"
 includeDir["glad"] = "Bhazel/vendor/glad/include"
+includeDir["ImGui"] = "Bhazel/vendor/imgui"
 
 include "Bhazel/vendor/GLFW"
 include "Bhazel/vendor/glad"
+include "Bhazel/vendor/imgui"
 
 project "Bhazel"
     location "Bhazel"
@@ -40,13 +42,15 @@ project "Bhazel"
         "%{prj.name}/vendor/spdlog/include",
         "%{prj.name}/src",
         "%{includeDir.GLFW}",
-        "%{includeDir.glad}"
+        "%{includeDir.glad}",
+        "%{includeDir.ImGui}"
     }
 
     links
     {
         "GLFW",
-		"glad",
+        "glad",
+        "ImGui",
         "opengl32.lib"
     }
 
