@@ -4,6 +4,15 @@
 
 namespace BZ {
 
+    class MouseButtonPressedEvent;
+    class MouseButtonReleasedEvent;
+    class MouseMovedEvent;
+    class MouseScrolledEvent;
+    class KeyPressedEvent;
+    class KeyReleasedEvent;
+    class KeyTypedEvent;
+    class WindowResizeEvent;
+
     class BZ_API ImGuiLayer : public Layer
     {
     public:
@@ -16,6 +25,17 @@ namespace BZ {
         void onEvent(Event &event) override;
 
     private:
+        bool onMouseButtonPressedEvent(MouseButtonPressedEvent &e);
+        bool onMouseButtonReleasedEvent(MouseButtonReleasedEvent &e);
+        bool onMouseMovedEvent(MouseMovedEvent &e);
+        bool onMouseScrolledEvent(MouseScrolledEvent &e);
+        
+        bool onKeyPressedEvent(KeyPressedEvent &e);
+        bool onKeyReleasedEvent(KeyReleasedEvent &e);
+        bool onKeyTypedEvent(KeyTypedEvent &e);
+        
+        bool onWindowResizedEvent(WindowResizeEvent &e);
+
         float time;
     };
 }

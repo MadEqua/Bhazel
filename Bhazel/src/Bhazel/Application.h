@@ -2,7 +2,7 @@
 
 #include "bzpch.h"
 
-#include "Core.h"
+#include "Bhazel/Core.h"
 #include "Bhazel/Window.h"
 #include "Bhazel/LayerStack.h"
 

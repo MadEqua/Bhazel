@@ -1,8 +1,10 @@
 #include "bzpch.h"
 #include "ImGuiLayer.h"
+
 #include "Bhazel/Application.h"
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
+#include "Bhazel/Events/ApplicationEvent.h"
 
 #include "imgui.h"
 #include "Bhazel/Platform/OpenGL/ImGuiOpenGLRenderer.h"
@@ -77,46 +79,83 @@ namespace BZ {
     void ImGuiLayer::onEvent(Event &event) {
         ImGuiIO &io = ImGui::GetIO();
 
-        if(event.getEventType() == EventType::MouseMoved) {
-            MouseMovedEvent &castedEvent = static_cast<MouseMovedEvent&>(event);
-            io.MousePos = ImVec2(castedEvent.getX(), castedEvent.getY());
-        }
-        else if(event.getEventType() == EventType::MouseButtonPressed) {
-            MouseButtonPressedEvent &castedEvent = static_cast<MouseButtonPressedEvent&>(event);
-            io.MouseDown[castedEvent.getMouseButton()] = true;
-        }
-        else if(event.getEventType() == EventType::MouseButtonReleased) {
-            MouseButtonReleasedEvent &castedEvent = static_cast<MouseButtonReleasedEvent&>(event);
-            io.MouseDown[castedEvent.getMouseButton()] = false;
-        }
-        else if(event.getEventType() == EventType::MouseScrolled) {
-            MouseScrolledEvent &castedEvent = static_cast<MouseScrolledEvent&>(event);
-            io.MouseWheelH += (float) castedEvent.getXOffset();
-            io.MouseWheel += (float) castedEvent.getYOffset();
-        }
-        else if(event.getEventType() == EventType::KeyPressed) {
-            KeyPressedEvent &castedEvent = static_cast<KeyPressedEvent&>(event);
-            io.KeysDown[castedEvent.getKeyCode()] = true;
+        EventDispatcher dispatcher(event);
+        dispatcher.dispatch<MouseButtonPressedEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onMouseButtonPressedEvent));
+        dispatcher.dispatch<MouseButtonReleasedEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onMouseButtonReleasedEvent));
+        dispatcher.dispatch<MouseMovedEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onMouseMovedEvent));
+        dispatcher.dispatch<MouseScrolledEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onMouseScrolledEvent));
 
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-            io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+        dispatcher.dispatch<KeyPressedEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onKeyPressedEvent));
+        dispatcher.dispatch<KeyReleasedEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onKeyReleasedEvent));
+        dispatcher.dispatch<KeyTypedEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onKeyTypedEvent));
 
-            if(castedEvent.getKeyCode() > 0 && castedEvent.getKeyCode() < 0x10000) {
-                io.AddInputCharacter((unsigned short) castedEvent.getKeyCode());
-            }
+        dispatcher.dispatch<WindowResizeEvent>(BZ_BIND_EVENT_FN(ImGuiLayer::onWindowResizedEvent));
+    }
+
+    bool ImGuiLayer::onMouseButtonPressedEvent(MouseButtonPressedEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+        io.MouseDown[e.getMouseButton()] = true;
+        return false;
+    }
+
+    bool ImGuiLayer::onMouseButtonReleasedEvent(MouseButtonReleasedEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+        io.MouseDown[e.getMouseButton()] = false;
+        return false;
+    }
+
+    bool ImGuiLayer::onMouseMovedEvent(MouseMovedEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+        io.MousePos = ImVec2(e.getX(), e.getY());
+        return false;
+    }
+
+    bool ImGuiLayer::onMouseScrolledEvent(MouseScrolledEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+        io.MouseWheelH += (float) e.getXOffset();
+        io.MouseWheel += (float) e.getYOffset();
+        return false;
+    }
+
+    bool ImGuiLayer::onKeyPressedEvent(KeyPressedEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+        
+        io.KeysDown[e.getKeyCode()] = true;
+
+        io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+        io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+        io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+        io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+        return false;
+    }
+
+    bool ImGuiLayer::onKeyReleasedEvent(KeyReleasedEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+
+        io.KeysDown[e.getKeyCode()] = false;
+
+        io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+        io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+        io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+        io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+        return false;
+    }
+
+    bool ImGuiLayer::onKeyTypedEvent(KeyTypedEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+
+        if(e.getKeyCode() > 0 && e.getKeyCode() < 0x10000) {
+            io.AddInputCharacter((unsigned short) e.getKeyCode());
         }
-        else if(event.getEventType() == EventType::KeyReleased) {
-            KeyReleasedEvent &castedEvent = static_cast<KeyReleasedEvent&>(event);
-            io.KeysDown[castedEvent.getKeyCode()] = false;
 
-            io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-            io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-            io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-            io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
-        }
+        return false;
+    }
 
-        event.handled = true;
+    bool ImGuiLayer::onWindowResizedEvent(WindowResizeEvent &e) {
+        ImGuiIO &io = ImGui::GetIO();
+        io.DisplaySize = ImVec2(e.getWidth(), e.getHeight());
+        io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+        //glViewport(0.0f, 0.0f, e.getWidth(), e.getHeight());
+        return false;
     }
 }
