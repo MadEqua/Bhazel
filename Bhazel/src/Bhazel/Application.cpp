@@ -6,6 +6,7 @@
 #include "Events/ApplicationEvent.h"
 #include "Log.h"
 #include "Bhazel/Layer.h"
+#include "Input.h"
 
 namespace BZ {
 
