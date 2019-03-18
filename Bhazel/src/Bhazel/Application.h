@@ -6,6 +6,8 @@
 #include "Bhazel/Window.h"
 #include "Bhazel/LayerStack.h"
 
+#include "Bhazel/ImGui/ImGuiLayer.h"
+
 namespace BZ {
 
 	class Event;
@@ -31,6 +33,7 @@ namespace BZ {
         bool onWindowClose(WindowCloseEvent &e);
 
         std::unique_ptr<Window> window;
+        ImGuiLayer* imGuiLayer;
         bool running = true;
 
 		LayerStack layerStack;

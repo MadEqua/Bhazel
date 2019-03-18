@@ -5,7 +5,6 @@
 namespace BZ {
 
 	LayerStack::LayerStack() {
-		layerInsert = layers.begin();
 	}
 
 	LayerStack::~LayerStack() {
@@ -15,7 +14,8 @@ namespace BZ {
 	}
 
 	void LayerStack::pushLayer(Layer *layer) {
-		layerInsert = layers.emplace(layerInsert, layer);
+		layers.emplace(layers.begin() + layerInsertIndex, layer);
+        layerInsertIndex++;
         layer->onAttach();
 	}
 
@@ -28,7 +28,7 @@ namespace BZ {
 		auto it = std::find(layers.begin(), layers.end(), layer);
 		if (it != layers.end()) {
 			layers.erase(it);
-			layerInsert--;
+			layerInsertIndex--;
             layer->onDetach();
 		}
 	}

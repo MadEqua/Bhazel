@@ -18,6 +18,9 @@ namespace BZ {
 
         window = std::unique_ptr<Window>(Window::create());
         window->setEventCallback(BZ_BIND_EVENT_FN(Application::onEvent));
+
+        imGuiLayer = new ImGuiLayer();
+        pushOverlay(imGuiLayer);
     }
 
     void Application::run() {
@@ -26,6 +29,12 @@ namespace BZ {
 			for (Layer *layer : layerStack) {
 				layer->onUpdate();
 			}
+
+            imGuiLayer->begin();
+            for(Layer *layer : layerStack) {
+                layer->onImGuiRender();
+            }
+            imGuiLayer->end();
 
             window->onUpdate();
         }

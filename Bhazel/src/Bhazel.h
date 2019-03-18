@@ -11,7 +11,5 @@
 #include "Bhazel/Layer.h"
 #include "Bhazel/Log.h"
 
-#include "Bhazel/ImGui/ImGuiLayer.h"
-
 
 #include "Bhazel/EntryPoint.h"
