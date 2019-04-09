@@ -25,7 +25,7 @@ namespace BZ {
         auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindow());
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        return std::make_pair(xpos, ypos);
+        return std::make_pair(static_cast<float>(xpos), static_cast<float>(ypos));
     }
 
     float WindowsInput::getMouseXImpl() {

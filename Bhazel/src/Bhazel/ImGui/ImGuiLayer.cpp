@@ -22,7 +22,7 @@ namespace BZ {
     void ImGuiLayer::onAttach() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void) io;
+        ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
@@ -65,7 +65,7 @@ namespace BZ {
     void ImGuiLayer::end() {
         ImGuiIO &io = ImGui::GetIO();
         Application &app = Application::getInstance();
-        io.DisplaySize = ImVec2(app.getWindow().getWidth(), app.getWindow().getHeight());
+        io.DisplaySize = ImVec2(static_cast<float>(app.getWindow().getWidth()), static_cast<float>(app.getWindow().getHeight()));
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

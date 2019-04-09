@@ -24,9 +24,10 @@ include "Bhazel/vendor/imgui"
 
 project "Bhazel"
     location "Bhazel"
-    kind "SharedLib"
+    kind "StaticLib"
     language "C++"
-    staticruntime "off"
+    cppdialect "C++17"
+    staticruntime "on"
 
     targetdir("bin/" .. outputDir .. "/%{prj.name}")
     objdir("bin-int/" .. outputDir .. "/%{prj.name}")
@@ -59,44 +60,38 @@ project "Bhazel"
     }
 
     filter "system:windows"
-        cppdialect "C++17"
         systemversion "latest"
 
         defines
         {
             "BZ_PLATFORM_WINDOWS",
             "BZ_BUILD_DLL",
-			"GLFW_INCLUDE_NONE"
-        }
-
-        postbuildcommands
-        {
-            ("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputDir .. "/Sandbox/\"")
+            "GLFW_INCLUDE_NONE"
         }
 
     filter "configurations:Debug"
         defines "BZ_DEBUG"
-		runtime "Debug"
-        symbols "On"
+        runtime "Debug"
+        symbols "on"
 
     filter "configurations:Release"
         defines "BZ_RELEASE"
-		runtime "Release"
-        optimize "On"
+        runtime "Release"
+        optimize "on"
 
     filter "configurations:Dist"
         defines "BZ_DIST"
-		runtime "Release"
-        optimize "On"
+        runtime "Release"
+        optimize "on"
 
 
 
 project "Sandbox"
     location "Sandbox"
     kind "ConsoleApp"
-    staticruntime "off"
-
+    staticruntime "on"
     language "C++"
+    cppdialect "C++17"
 
     targetdir("bin/" .. outputDir .. "/%{prj.name}")
     objdir("bin-int/" .. outputDir .. "/%{prj.name}")
@@ -121,7 +116,6 @@ project "Sandbox"
     }
 
     filter "system:windows"
-        cppdialect "C++17"
         systemversion "latest"
 
         defines
@@ -131,15 +125,15 @@ project "Sandbox"
 
     filter "configurations:Debug"
         defines "BZ_DEBUG"
-		runtime "Debug"
-        symbols "On"
+        runtime "Debug"
+        symbols "on"
 
     filter "configurations:Release"
         defines "BZ_RELEASE"
-		runtime "Release"
-        optimize "On"
+        runtime "Release"
+        optimize "on"
 
     filter "configurations:Dist"
         defines "BZ_DIST"
-		runtime "Release"
-        optimize "On"
+        runtime "Release"
+        optimize "on"

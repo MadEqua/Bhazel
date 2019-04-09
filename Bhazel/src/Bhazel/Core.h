@@ -1,11 +1,15 @@
 #pragma once
 
 #ifdef BZ_PLATFORM_WINDOWS
-    #ifdef BZ_BUILD_DLL
-        #define BZ_API __declspec(dllexport)
+    #ifdef BZ_DYNAMIC_LINK
+        #ifdef BZ_BUILD_DLL
+            #define BZ_API __declspec(dllexport)
+        #else
+            #define BZ_API __declspec(dllimport)
+        #endif
     #else
-        #define BZ_API __declspec(dllimport)
-    #endif
+        #define BZ_API
+#endif
 #else
     #error Windows only for now.
 #endif

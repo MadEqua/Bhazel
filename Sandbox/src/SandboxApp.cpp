@@ -12,6 +12,12 @@ public:
 
 	void onEvent(BZ::Event &event) override {
 	}
+
+    void onImGuiRender() override {
+        /*ImGui::Begin("Test");
+        ImGui::Text("Hello");
+        ImGui::End();*/
+    }
 };
 
 class Sandbox : public BZ::Application {
