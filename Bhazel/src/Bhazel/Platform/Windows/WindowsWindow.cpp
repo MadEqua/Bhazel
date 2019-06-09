@@ -5,7 +5,8 @@
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 
-#include <glad/glad.h>
+#include "Bhazel/Platform/OpenGL/OpenGLContext.h"
+
 #include <GLFW/glfw3.h>
 
 namespace BZ {
@@ -44,10 +45,9 @@ namespace BZ {
         }
 
         window = glfwCreateWindow(static_cast<int>(props.width), static_cast<int>(props.height), data.title.c_str(), nullptr, nullptr);
-        glfwMakeContextCurrent(window);
-
-		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-		BZ_CORE_ASSERT(status, "Failed to initialize glad!");
+        
+        graphicsContext = new OpenGLContext(window);
+        graphicsContext->init();
 
         glfwSetWindowUserPointer(window, &data);
         setVSync(true);
@@ -134,11 +134,12 @@ namespace BZ {
 
     void WindowsWindow::shutdown() {
         glfwDestroyWindow(window);
+        delete graphicsContext;
     }
 
     void WindowsWindow::onUpdate() {
         glfwPollEvents();
-        glfwSwapBuffers(window);
+        graphicsContext->swapBuffers();
     }
 
     void WindowsWindow::setVSync(bool enabled) {

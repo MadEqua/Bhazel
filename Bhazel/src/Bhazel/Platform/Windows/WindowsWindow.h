@@ -5,6 +5,8 @@
 struct GLFWwindow;
 
 namespace BZ {
+
+    class GraphicsContext;
     
     class WindowsWindow : public Window {
     public:
@@ -27,6 +29,7 @@ namespace BZ {
         virtual void shutdown();
 
         GLFWwindow* window;
+        GraphicsContext *graphicsContext;
 
         struct WindowData {
             std::string title;

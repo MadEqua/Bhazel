@@ -26,9 +26,9 @@ namespace BZ {
     void Application::run() {
         while(running) {
 
-			for (Layer *layer : layerStack) {
-				layer->onUpdate();
-			}
+        for (Layer *layer : layerStack) {
+            layer->onUpdate();
+        }
 
             imGuiLayer->begin();
             for(Layer *layer : layerStack) {
@@ -46,19 +46,19 @@ namespace BZ {
         
         BZ_CORE_TRACE("{0}", e);
 
-		for (auto it = layerStack.end(); it != layerStack.begin(); ) {
-			(*--it)->onEvent(e);
-			if (e.handled) break;
-		}
+        for (auto it = layerStack.end(); it != layerStack.begin(); ) {
+            (*--it)->onEvent(e);
+            if (e.handled) break;
+        }
     }
 
-	void Application::pushLayer(Layer *layer) {
-		layerStack.pushLayer(layer);
-	}
+    void Application::pushLayer(Layer *layer) {
+        layerStack.pushLayer(layer);
+    }
 
-	void Application::pushOverlay(Layer *overlay) {
-		layerStack.pushOverlay(overlay);
-	}
+    void Application::pushOverlay(Layer *overlay) {
+        layerStack.pushOverlay(overlay);
+    }
 
     bool Application::onWindowClose(WindowCloseEvent &e) {
         running = false;
