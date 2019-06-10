@@ -8,8 +8,10 @@
 
 #include "Bhazel/ImGui/ImGuiLayer.h"
 
-//TODO: temporary
+//TODO: temporary for testing
 #include "Bhazel/Renderer/Shader.h"
+#include "Bhazel/Renderer/Buffer.h"
+#include <memory>
 
 namespace BZ {
 
@@ -41,8 +43,11 @@ namespace BZ {
 
         LayerStack layerStack;
 
-        unsigned int vertexArray, vertexBuffer, indexBuffer;
-        Shader *shader; //TODO: temporary
+        //TODO: temporaries for testing
+        unsigned int vertexArray;
+        std::unique_ptr<Shader> shader;
+        std::unique_ptr<VertexBuffer> vertexBuffer;
+        std::unique_ptr<IndexBuffer> indexBuffer;
 
         static Application *instance;
     };

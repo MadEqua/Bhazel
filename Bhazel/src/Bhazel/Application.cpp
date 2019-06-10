@@ -4,7 +4,6 @@
 
 #include "Window.h"
 #include "Events/ApplicationEvent.h"
-#include "Log.h"
 #include "Bhazel/Layer.h"
 #include "Input.h"
 
@@ -28,25 +27,20 @@ namespace BZ {
         glGenVertexArrays(1, &vertexArray);
         glBindVertexArray(vertexArray);
 
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-
         float vertices[3 * 3] = {
             -0.5f, -0.5f, 0.0f,
             0.5f, -0.5f, 0.0f,
             0.0f, 0.5f, 0.0f
         };
+        vertexBuffer = std::unique_ptr<VertexBuffer>(VertexBuffer::create(vertices, sizeof(vertices)));
+        vertexBuffer->bind();
 
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
 
-        glGenBuffers(1, &indexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-
         unsigned int indices[3] = { 0, 1, 2 };
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        indexBuffer = std::unique_ptr<IndexBuffer>(IndexBuffer::create(indices, 3));
+        indexBuffer->bind();
 
         const char * v = R"(
             #version 450 core
@@ -67,7 +61,8 @@ namespace BZ {
                 col = vec4(vPosition * 0.5 + 0.5, 1.0);
             }
         )";
-        shader = new Shader(v, f);
+
+        shader = std::make_unique<Shader>(v, f);
     }
 
     void Application::run() {
@@ -78,7 +73,7 @@ namespace BZ {
 
             shader->bind();
             glBindVertexArray(vertexArray);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+            glDrawElements(GL_TRIANGLES, indexBuffer->getCount(), GL_UNSIGNED_INT, nullptr);
 
             for (Layer *layer : layerStack) {
                 layer->onUpdate();
