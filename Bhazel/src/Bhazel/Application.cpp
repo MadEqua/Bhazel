@@ -47,6 +47,27 @@ namespace BZ {
 
         unsigned int indices[3] = { 0, 1, 2 };
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        const char * v = R"(
+            #version 450 core
+            layout(location = 0) in vec3 pos;
+            out vec3 vPosition;
+            
+            void main() {
+                gl_Position = vec4(pos, 1.0);
+                vPosition = pos;
+            }
+        )";
+        const char * f = R"(
+            #version 450 core
+            layout(location = 0) out vec4 col;
+            in vec3 vPosition;
+            
+            void main() {
+                col = vec4(vPosition * 0.5 + 0.5, 1.0);
+            }
+        )";
+        shader = new Shader(v, f);
     }
 
     void Application::run() {
@@ -55,6 +76,7 @@ namespace BZ {
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
+            shader->bind();
             glBindVertexArray(vertexArray);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 

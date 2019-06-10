@@ -8,11 +8,14 @@
 
 #include "Bhazel/ImGui/ImGuiLayer.h"
 
+//TODO: temporary
+#include "Bhazel/Renderer/Shader.h"
+
 namespace BZ {
 
-	class Event;
+    class Event;
     class WindowCloseEvent;
-	class Layer;
+    class Layer;
 
     class BZ_API Application
     {
@@ -24,8 +27,8 @@ namespace BZ {
         
         void onEvent(Event &ev);
 
-		void pushLayer(Layer *layer);
-		void pushOverlay(Layer *overlay);
+        void pushLayer(Layer *layer);
+        void pushOverlay(Layer *overlay);
 
         inline Window& getWindow() { return *window; }
         inline static Application& getInstance() { return *instance; }
@@ -36,9 +39,10 @@ namespace BZ {
         ImGuiLayer* imGuiLayer;
         bool running = true;
 
-		LayerStack layerStack;
+        LayerStack layerStack;
 
         unsigned int vertexArray, vertexBuffer, indexBuffer;
+        Shader *shader; //TODO: temporary
 
         static Application *instance;
     };
