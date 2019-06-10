@@ -38,6 +38,8 @@ namespace BZ {
 
 		LayerStack layerStack;
 
+        unsigned int vertexArray, vertexBuffer, indexBuffer;
+
         static Application *instance;
     };
 

@@ -46,7 +46,7 @@ namespace BZ {
 
         window = glfwCreateWindow(static_cast<int>(props.width), static_cast<int>(props.height), data.title.c_str(), nullptr, nullptr);
         
-        graphicsContext = new OpenGLContext(window);
+        graphicsContext = std::make_unique<OpenGLContext>(window);
         graphicsContext->init();
 
         glfwSetWindowUserPointer(window, &data);
@@ -134,7 +134,6 @@ namespace BZ {
 
     void WindowsWindow::shutdown() {
         glfwDestroyWindow(window);
-        delete graphicsContext;
     }
 
     void WindowsWindow::onUpdate() {

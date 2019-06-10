@@ -4,14 +4,14 @@
 
 class ExampleLayer : public BZ::Layer {
 public:
-	ExampleLayer() : Layer("Example") {
-	}
+    ExampleLayer() : Layer("Example") {
+    }
 
-	void onUpdate() override {
-	}
+    void onUpdate() override {
+    }
 
-	void onEvent(BZ::Event &event) override {
-	}
+    void onEvent(BZ::Event &event) override {
+    }
 
     void onImGuiRender() override {
         ImGui::Begin("Test");
@@ -22,9 +22,9 @@ public:
 
 class Sandbox : public BZ::Application {
 public:
-	Sandbox() {
-		pushLayer(new ExampleLayer());
-	}
+    Sandbox() {
+    pushLayer(new ExampleLayer());
+    }
 };
 
 

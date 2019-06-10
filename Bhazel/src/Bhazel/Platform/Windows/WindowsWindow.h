@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Bhazel/Window.h"
+#include <memory>
 
 struct GLFWwindow;
 
@@ -29,7 +30,7 @@ namespace BZ {
         virtual void shutdown();
 
         GLFWwindow* window;
-        GraphicsContext *graphicsContext;
+        std::unique_ptr<GraphicsContext> graphicsContext;
 
         struct WindowData {
             std::string title;

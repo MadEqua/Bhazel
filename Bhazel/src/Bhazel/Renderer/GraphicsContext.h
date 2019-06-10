@@ -11,4 +11,3 @@ namespace BZ {
         virtual void swapBuffers() = 0;
     };
 }
-
