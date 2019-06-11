@@ -27,38 +27,42 @@ namespace BZ {
         glGenVertexArrays(1, &vertexArray);
         glBindVertexArray(vertexArray);
 
-        float vertices[3 * 3] = {
-            -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f,
-            0.0f, 0.5f, 0.0f
+        float vertices[] = {
+            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
         };
         vertexBuffer = std::unique_ptr<VertexBuffer>(VertexBuffer::create(vertices, sizeof(vertices)));
         vertexBuffer->bind();
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
+        BufferLayout layout = {
+            {ShaderDataType::Vec3, "position"},
+            {ShaderDataType::Vec3, "color"}
+        };
+        vertexBuffer->setLayout(layout);
 
-        unsigned int indices[3] = { 0, 1, 2 };
+        unsigned int indices[] = { 0, 1, 2 };
         indexBuffer = std::unique_ptr<IndexBuffer>(IndexBuffer::create(indices, 3));
         indexBuffer->bind();
 
         const char * v = R"(
             #version 450 core
             layout(location = 0) in vec3 pos;
-            out vec3 vPosition;
+            layout(location = 1) in vec3 col;
+            out vec3 vCol;
             
             void main() {
                 gl_Position = vec4(pos, 1.0);
-                vPosition = pos;
+                vCol = col;
             }
         )";
         const char * f = R"(
             #version 450 core
             layout(location = 0) out vec4 col;
-            in vec3 vPosition;
+            in vec3 vCol;
             
             void main() {
-                col = vec4(vPosition * 0.5 + 0.5, 1.0);
+                col = vec4(vCol, 1.0);
             }
         )";
 

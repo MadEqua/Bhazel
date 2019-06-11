@@ -14,8 +14,14 @@ namespace BZ {
         virtual void bind() const override;
         virtual void unbind() const override;
 
+        virtual void setLayout(const BufferLayout &layout) override;
+        virtual const BufferLayout& getLayout() const override { return layout; };
+
     private:
         GLuint rendererId;
+        BufferLayout layout;
+
+        static GLenum shaderDataTypeToGL(ShaderDataType dataType);
     };
 
 
