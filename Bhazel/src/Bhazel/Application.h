@@ -11,6 +11,7 @@
 //TODO: temporary for testing
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Buffer.h"
+#include "Bhazel/Renderer/VertexArray.h"
 #include <memory>
 
 namespace BZ {
@@ -44,10 +45,10 @@ namespace BZ {
         LayerStack layerStack;
 
         //TODO: temporaries for testing
-        unsigned int vertexArray;
+        std::unique_ptr<VertexArray> vertexArray;
         std::unique_ptr<Shader> shader;
-        std::unique_ptr<VertexBuffer> vertexBuffer;
-        std::unique_ptr<IndexBuffer> indexBuffer;
+        std::shared_ptr<VertexBuffer> vertexBuffer;
+        std::shared_ptr<IndexBuffer> indexBuffer;
 
         static Application *instance;
     };

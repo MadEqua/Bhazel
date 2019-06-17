@@ -24,15 +24,12 @@ namespace BZ {
         pushOverlay(imGuiLayer);
 
         //TESTING
-        glGenVertexArrays(1, &vertexArray);
-        glBindVertexArray(vertexArray);
-
         float vertices[] = {
             -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
             0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
         };
-        vertexBuffer = std::unique_ptr<VertexBuffer>(VertexBuffer::create(vertices, sizeof(vertices)));
+        vertexBuffer = std::shared_ptr<VertexBuffer>(VertexBuffer::create(vertices, sizeof(vertices)));
         vertexBuffer->bind();
 
         BufferLayout layout = {
@@ -42,8 +39,12 @@ namespace BZ {
         vertexBuffer->setLayout(layout);
 
         unsigned int indices[] = { 0, 1, 2 };
-        indexBuffer = std::unique_ptr<IndexBuffer>(IndexBuffer::create(indices, 3));
+        indexBuffer = std::shared_ptr<IndexBuffer>(IndexBuffer::create(indices, 3));
         indexBuffer->bind();
+
+        vertexArray = std::unique_ptr<VertexArray>(VertexArray::create());
+        vertexArray->addVertexBuffer(vertexBuffer);
+        vertexArray->setIndexBuffer(indexBuffer);
 
         const char * v = R"(
             #version 450 core
@@ -76,7 +77,7 @@ namespace BZ {
             glClear(GL_COLOR_BUFFER_BIT);
 
             shader->bind();
-            glBindVertexArray(vertexArray);
+            vertexArray->bind();
             glDrawElements(GL_TRIANGLES, indexBuffer->getCount(), GL_UNSIGNED_INT, nullptr);
 
             for (Layer *layer : layerStack) {

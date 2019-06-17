@@ -20,8 +20,6 @@ namespace BZ {
     private:
         GLuint rendererId;
         BufferLayout layout;
-
-        static GLenum shaderDataTypeToGL(ShaderDataType dataType);
     };
 
 
