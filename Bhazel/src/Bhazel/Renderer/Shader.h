@@ -13,6 +13,6 @@ namespace BZ {
         void unbind() const;
 
     private:
-        unsigned int rendererId;
+        uint32 rendererId;
     };
 }

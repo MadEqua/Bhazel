@@ -12,7 +12,7 @@ namespace BZ {
         Mat2, Mat3, Mat4
     };
 
-    static unsigned int shaderDataTypeSize(ShaderDataType type) {
+    static uint32 shaderDataTypeSize(ShaderDataType type) {
         switch(type)
         {
         case ShaderDataType::Float:
@@ -50,15 +50,15 @@ namespace BZ {
     public:
         ShaderDataType dataType;
         std::string name;
-        unsigned int sizeBytes;
-        unsigned int offset;
+        uint32 sizeBytes;
+        uint32 offset;
         bool normalized;
 
         BufferElement(ShaderDataType dataType, const std::string &name, bool normalized = false) :
             dataType(dataType), name(name), sizeBytes(shaderDataTypeSize(dataType)), offset(0), normalized(normalized) {
         }
 
-        unsigned int getElementCount() const;
+        uint32 getElementCount() const;
     };
 
 
@@ -71,7 +71,7 @@ namespace BZ {
         }
 
         const auto& getElements() const { return elements; }
-        unsigned int getStride() const { return stride; }
+        uint32 getStride() const { return stride; }
 
         std::vector<BufferElement>::iterator begin() { return elements.begin(); }
         std::vector<BufferElement>::iterator end() { return elements.end(); }
@@ -80,7 +80,7 @@ namespace BZ {
 
     private:
         std::vector<BufferElement> elements;
-        unsigned int stride;
+        uint32 stride;
 
         void calculateOffsetsAndStride();
     };
@@ -99,7 +99,7 @@ namespace BZ {
 
     class VertexBuffer : public Buffer {
     public:
-        static VertexBuffer* create(float *vertices, unsigned int size);
+        static VertexBuffer* create(float *vertices, uint32 size);
 
         void setLayout(const BufferLayout &layout) { this->layout = layout; }
         const BufferLayout& getLayout() const { return layout; };
@@ -111,13 +111,13 @@ namespace BZ {
 
     class IndexBuffer : public Buffer {
     public:
-        static IndexBuffer* create(unsigned int *indices, unsigned int count);
+        static IndexBuffer* create(uint32 *indices, uint32 count);
 
-        unsigned int getCount() const { return count; }
+        uint32 getCount() const { return count; }
 
     protected:
-        IndexBuffer(unsigned int count) : count(count) {}
+        IndexBuffer(uint32 count) : count(count) {}
 
-        unsigned int count;
+        uint32 count;
     };
 }

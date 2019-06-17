@@ -10,12 +10,12 @@ namespace BZ {
 
     struct WindowProps {
         std::string title;
-        unsigned int width;
-        unsigned int height;
+        uint32 width;
+        uint32 height;
 
         WindowProps(const std::string &title = "Bhazel Engine",
-                    unsigned int width = 1280,
-                    unsigned int height = 720)
+                    uint32 width = 1280,
+                    uint32 height = 720)
             : title(title), width(width), height(height) {}
     };
 
@@ -28,8 +28,8 @@ namespace BZ {
 
         virtual void onUpdate() = 0;
 
-        virtual unsigned int getWidth() const = 0;
-        virtual unsigned int getHeight() const = 0;
+        virtual uint32 getWidth() const = 0;
+        virtual uint32 getHeight() const = 0;
 
         virtual void setEventCallback(const EventCallbackFn &callback) = 0;
         virtual void setVSync(bool enabled) = 0;

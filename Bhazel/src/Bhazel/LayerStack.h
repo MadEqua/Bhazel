@@ -24,6 +24,6 @@ namespace BZ {
 
     private:
         std::vector<Layer*> layers;
-        unsigned int layerInsertIndex = 0;
+        uint32 layerInsertIndex = 0;
     };
 }

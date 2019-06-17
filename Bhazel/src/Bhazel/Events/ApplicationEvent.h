@@ -6,11 +6,11 @@ namespace BZ {
 
     class BZ_API WindowResizeEvent : public Event {
     public:
-        WindowResizeEvent(unsigned int width, unsigned int height)
+        WindowResizeEvent(uint32 width, uint32 height)
             : width(width), height(height) {}
 
-        inline unsigned int getWidth() const { return width; }
-        inline unsigned int getHeight() const { return height; }
+        inline uint32 getWidth() const { return width; }
+        inline uint32 getHeight() const { return height; }
 
         std::string toString() const override {
             std::stringstream ss;
@@ -22,7 +22,7 @@ namespace BZ {
         EVENT_CLASS_CATEGORY(EventCategoryApplication)
 
     private:
-        unsigned int width, height;
+        uint32 width, height;
     };
 
 

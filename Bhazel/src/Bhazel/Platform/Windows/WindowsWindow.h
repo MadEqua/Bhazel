@@ -16,8 +16,8 @@ namespace BZ {
 
         void onUpdate() override;
 
-        inline unsigned int getWidth() const override { return data.width; }
-        inline unsigned int getHeight() const override { return data.height; }
+        inline uint32 getWidth() const override { return data.width; }
+        inline uint32 getHeight() const override { return data.height; }
 
         inline void setEventCallback(const EventCallbackFn& callback) override { data.eventCallback = callback; }
         void setVSync(bool enabled) override;
@@ -34,7 +34,7 @@ namespace BZ {
 
         struct WindowData {
             std::string title;
-            unsigned int width, height;
+            uint32 width, height;
             bool vSync;
 
             EventCallbackFn eventCallback;

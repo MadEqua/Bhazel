@@ -4,7 +4,7 @@
 
 namespace BZ {
 
-    OpenGLVertexBuffer::OpenGLVertexBuffer(float *vertices, unsigned int size) {
+    OpenGLVertexBuffer::OpenGLVertexBuffer(float *vertices, uint32 size) {
         glGenBuffers(1, &rendererId);
         glBindBuffer(GL_ARRAY_BUFFER, rendererId);
         glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
@@ -23,11 +23,11 @@ namespace BZ {
     }
 
 
-    OpenGLIndexBuffer::OpenGLIndexBuffer(unsigned int *indices, unsigned int count) : 
+    OpenGLIndexBuffer::OpenGLIndexBuffer(uint32 *indices, uint32 count) : 
         IndexBuffer(count) {
         glGenBuffers(1, &rendererId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererId);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * count, indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * count, indices, GL_STATIC_DRAW);
     }
 
     OpenGLIndexBuffer::~OpenGLIndexBuffer() {

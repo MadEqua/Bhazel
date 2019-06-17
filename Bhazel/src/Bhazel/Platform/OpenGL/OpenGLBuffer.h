@@ -8,7 +8,7 @@ namespace BZ {
     
     class OpenGLVertexBuffer : public VertexBuffer {
     public:
-        OpenGLVertexBuffer(float *vertices, unsigned int size);
+        OpenGLVertexBuffer(float *vertices, uint32 size);
         virtual ~OpenGLVertexBuffer() override;
 
         virtual void bind() const override;
@@ -21,7 +21,7 @@ namespace BZ {
 
     class OpenGLIndexBuffer : public IndexBuffer {
     public:
-        OpenGLIndexBuffer(unsigned int *indices, unsigned int count);
+        OpenGLIndexBuffer(uint32 *indices, uint32 count);
         virtual ~OpenGLIndexBuffer() override;
 
         virtual void bind() const override;

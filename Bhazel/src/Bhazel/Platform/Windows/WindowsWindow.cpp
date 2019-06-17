@@ -107,7 +107,7 @@ namespace BZ {
             }
         });
 
-        glfwSetCharCallback(window, [](GLFWwindow *window, unsigned int keycode) {
+        glfwSetCharCallback(window, [](GLFWwindow *window, uint32 keycode) {
             WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
             KeyTypedEvent event(keycode);
             data.eventCallback(event);

@@ -38,7 +38,7 @@ namespace BZ {
         };
         vertexBuffer->setLayout(layout);
 
-        unsigned int indices[] = { 0, 1, 2 };
+        uint32 indices[] = { 0, 1, 2 };
         indexBuffer = std::shared_ptr<IndexBuffer>(IndexBuffer::create(indices, 3));
         indexBuffer->bind();
 

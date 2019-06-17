@@ -7,7 +7,7 @@
 
 namespace BZ {
 
-    unsigned int BufferElement::getElementCount() const {
+    uint32 BufferElement::getElementCount() const {
         switch(dataType)
         {
         case ShaderDataType::Float:
@@ -37,7 +37,7 @@ namespace BZ {
 
 
     void BufferLayout::calculateOffsetsAndStride() {
-        unsigned int offset = 0;
+        uint32 offset = 0;
         for(auto &element : elements) {
             element.offset = offset;
             offset += element.sizeBytes;
@@ -46,7 +46,7 @@ namespace BZ {
     }
 
 
-    VertexBuffer* VertexBuffer::create(float *vertices, unsigned int size) {
+    VertexBuffer* VertexBuffer::create(float *vertices, uint32 size) {
         switch(Renderer::getAPI())
         {
         case RendererAPI::OpenGL:
@@ -58,7 +58,7 @@ namespace BZ {
         }
     }
 
-    IndexBuffer* IndexBuffer::create(unsigned int *indices, unsigned int count) {
+    IndexBuffer* IndexBuffer::create(uint32 *indices, uint32 count) {
         switch(Renderer::getAPI())
         {
         case RendererAPI::OpenGL:

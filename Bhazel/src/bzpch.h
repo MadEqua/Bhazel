@@ -12,4 +12,5 @@
     #include <Windows.h>
 #endif
 
+#include "Bhazel/Types.h"
 #include "Bhazel/Log.h"
