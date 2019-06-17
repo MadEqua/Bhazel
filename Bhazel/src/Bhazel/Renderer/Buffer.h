@@ -100,14 +100,24 @@ namespace BZ {
     class VertexBuffer : public Buffer {
     public:
         static VertexBuffer* create(float *vertices, unsigned int size);
-        virtual void setLayout(const BufferLayout &layout) = 0;
-        virtual const BufferLayout& getLayout() const = 0;
+
+        void setLayout(const BufferLayout &layout) { this->layout = layout; }
+        const BufferLayout& getLayout() const { return layout; };
+
+    protected:
+        BufferLayout layout;
     };
 
 
     class IndexBuffer : public Buffer {
     public:
         static IndexBuffer* create(unsigned int *indices, unsigned int count);
-        virtual unsigned int getCount() const = 0;
+
+        unsigned int getCount() const { return count; }
+
+    protected:
+        IndexBuffer(unsigned int count) : count(count) {}
+
+        unsigned int count;
     };
 }

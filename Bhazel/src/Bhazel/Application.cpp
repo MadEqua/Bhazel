@@ -97,8 +97,6 @@ namespace BZ {
     void Application::onEvent(Event &e) {
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowCloseEvent>(BZ_BIND_EVENT_FN(Application::onWindowClose));
-        
-        BZ_CORE_TRACE("{0}", e);
 
         for (auto it = layerStack.end(); it != layerStack.begin(); ) {
             (*--it)->onEvent(e);

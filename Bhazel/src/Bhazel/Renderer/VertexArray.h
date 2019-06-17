@@ -16,9 +16,13 @@ namespace BZ {
         virtual void addVertexBuffer(std::shared_ptr<VertexBuffer> buffer) = 0;
         virtual void setIndexBuffer(std::shared_ptr<IndexBuffer> buffer) = 0;
 
-        virtual std::vector<std::shared_ptr<VertexBuffer>>& getVertexBuffers() = 0;
-        virtual std::shared_ptr<IndexBuffer>& getIndexBuffer() = 0;
+        std::vector<std::shared_ptr<VertexBuffer>>& getVertexBuffers() { return vertexBuffers; }
+        std::shared_ptr<IndexBuffer>& getIndexBuffer() { return indexBuffer; }
 
         static VertexArray* create();
+
+    protected:
+        std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers;
+        std::shared_ptr<IndexBuffer> indexBuffer;
     };
 }

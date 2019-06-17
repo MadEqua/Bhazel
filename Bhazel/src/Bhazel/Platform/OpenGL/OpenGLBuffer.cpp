@@ -22,13 +22,9 @@ namespace BZ {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void OpenGLVertexBuffer::setLayout(const BufferLayout &layout) {
-        this->layout = layout;
-    }
-
 
     OpenGLIndexBuffer::OpenGLIndexBuffer(unsigned int *indices, unsigned int count) : 
-        count(count) {
+        IndexBuffer(count) {
         glCreateBuffers(1, &rendererId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererId);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * count, indices, GL_STATIC_DRAW);

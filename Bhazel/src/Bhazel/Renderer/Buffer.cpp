@@ -7,15 +7,6 @@
 
 namespace BZ {
 
-    void BufferLayout::calculateOffsetsAndStride() {
-        unsigned int offset = 0;
-        for(auto &element : elements) {
-            element.offset = offset;
-            offset += element.sizeBytes;
-            stride += element.sizeBytes;
-        }
-    }
-
     unsigned int BufferElement::getElementCount() const {
         switch(dataType)
         {
@@ -41,6 +32,16 @@ namespace BZ {
         default:
             BZ_CORE_ASSERT(false, "Unknown ShaderDataType.");
             return 0;
+        }
+    }
+
+
+    void BufferLayout::calculateOffsetsAndStride() {
+        unsigned int offset = 0;
+        for(auto &element : elements) {
+            element.offset = offset;
+            offset += element.sizeBytes;
+            stride += element.sizeBytes;
         }
     }
 

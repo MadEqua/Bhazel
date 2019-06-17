@@ -14,12 +14,8 @@ namespace BZ {
         virtual void bind() const override;
         virtual void unbind() const override;
 
-        virtual void setLayout(const BufferLayout &layout) override;
-        virtual const BufferLayout& getLayout() const override { return layout; };
-
     private:
         GLuint rendererId;
-        BufferLayout layout;
     };
 
 
@@ -28,15 +24,10 @@ namespace BZ {
         OpenGLIndexBuffer(unsigned int *indices, unsigned int count);
         virtual ~OpenGLIndexBuffer() override;
 
-        virtual unsigned int getCount() const override {
-            return count;
-        }
-
         virtual void bind() const override;
         virtual void unbind() const override;
 
     private:
         GLuint rendererId;
-        unsigned int count;
     };
 }
