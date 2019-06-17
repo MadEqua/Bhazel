@@ -40,7 +40,7 @@ namespace BZ {
         case ShaderDataType::Mat4:
             return sizeof(float) * 16;
         default:
-            BZ_CORE_ASSERT(false, "Unknown ShaderDataType.");
+            BZ_CORE_ASSERT_ALWAYS("Unknown ShaderDataType.");
             return 0;
         }
     }

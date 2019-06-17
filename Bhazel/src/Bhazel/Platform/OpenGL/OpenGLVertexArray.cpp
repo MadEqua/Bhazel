@@ -4,7 +4,7 @@
 namespace BZ {
 
     OpenGLVertexArray::OpenGLVertexArray() {
-        glCreateVertexArrays(1, &rendererId);
+        glGenVertexArrays(1, &rendererId);
     }
 
     OpenGLVertexArray::~OpenGLVertexArray() {
@@ -64,7 +64,7 @@ namespace BZ {
         case ShaderDataType::Bool:
             return GL_BOOL;
         default:
-            BZ_CORE_ASSERT(false, "Unknown ShaderDataType.");
+            BZ_CORE_ASSERT_ALWAYS("Unknown ShaderDataType.");
             return 0;
         }
     }

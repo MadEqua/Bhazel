@@ -14,7 +14,7 @@ namespace BZ {
     static bool isGLFWInitialized = false;
 
     static void GLFWErrorCallback(int error, const char* description) {
-        BZ_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
+        BZ_LOG_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
     }
 
     Window* Window::create(const WindowProps &props) {
@@ -34,17 +34,31 @@ namespace BZ {
         data.width = props.width;
         data.height = props.height;
 
-        BZ_CORE_INFO("Creating window {0} ({1}, {2})", props.title, props.width, props.height);
+        BZ_LOG_CORE_INFO("Creating window {0} ({1}, {2})", props.title, props.width, props.height);
 
         if(!isGLFWInitialized) {
-            // TODO: glfwTerminate on system shutdown
+            glfwSetErrorCallback(GLFWErrorCallback);
             int success = glfwInit();
             BZ_CORE_ASSERT(success, "Could not intialize GLFW!");
-            glfwSetErrorCallback(GLFWErrorCallback);
             isGLFWInitialized = true;
         }
 
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+#ifdef BZ_DIST
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_FALSE);
+#else
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
+
         window = glfwCreateWindow(static_cast<int>(props.width), static_cast<int>(props.height), data.title.c_str(), nullptr, nullptr);
+        if(!window) {
+            BZ_CORE_ASSERT_ALWAYS("Could not create GLFW Window!");
+        }
         
         graphicsContext = std::make_unique<OpenGLContext>(window);
         graphicsContext->init();
@@ -133,7 +147,10 @@ namespace BZ {
     }
 
     void WindowsWindow::shutdown() {
-        glfwDestroyWindow(window);
+        if(isGLFWInitialized) {
+            glfwDestroyWindow(window);
+            glfwTerminate();
+        }
     }
 
     void WindowsWindow::onUpdate() {

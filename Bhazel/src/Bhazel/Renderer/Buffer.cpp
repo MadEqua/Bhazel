@@ -30,7 +30,7 @@ namespace BZ {
         case ShaderDataType::Mat4:
             return 16;
         default:
-            BZ_CORE_ASSERT(false, "Unknown ShaderDataType.");
+            BZ_CORE_ASSERT_ALWAYS("Unknown ShaderDataType.");
             return 0;
         }
     }
@@ -53,7 +53,7 @@ namespace BZ {
             return new OpenGLVertexBuffer(vertices, size);
         case RendererAPI::None:
         default:
-            BZ_CORE_ASSERT(false, "RendererAPI::None is currently not supported.");
+            BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
             return nullptr;
         }
     }
@@ -65,7 +65,7 @@ namespace BZ {
             return new OpenGLIndexBuffer(indices, count);
         case RendererAPI::None:
         default:
-            BZ_CORE_ASSERT(false, "RendererAPI::None is currently not supported.");
+            BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
             return nullptr;
         }
     }

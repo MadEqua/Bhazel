@@ -20,14 +20,32 @@ namespace BZ {
     };
 }
 
-#define BZ_CORE_FATAL(...) BZ::Log::getCoreLogger()->fatal(__VA_ARGS__)
-#define BZ_CORE_ERROR(...) BZ::Log::getCoreLogger()->error(__VA_ARGS__)
-#define BZ_CORE_WARN(...)  BZ::Log::getCoreLogger()->warn(__VA_ARGS__)
-#define BZ_CORE_INFO(...)  BZ::Log::getCoreLogger()->info(__VA_ARGS__)
-#define BZ_CORE_TRACE(...) BZ::Log::getCoreLogger()->trace(__VA_ARGS__)
+#ifdef BZ_DIST
+    #define BZ_LOG_CORE_CRITICAL(...)
+    #define BZ_LOG_CORE_ERROR(...)
+    #define BZ_LOG_CORE_WARN(...)
+    #define BZ_LOG_CORE_INFO(...)
+    #define BZ_LOG_CORE_DEBUG(...)
+    #define BZ_LOG_CORE_TRACE(...)
 
-#define BZ_FATAL(...) BZ::Log::getClientLogger()->fatal(__VA_ARGS__)
-#define BZ_ERROR(...) BZ::Log::getClientLogger()->error(__VA_ARGS__)
-#define BZ_WARN(...)  BZ::Log::getClientLogger()->warn(__VA_ARGS__)
-#define BZ_INFO(...)  BZ::Log::getClientLogger()->info(__VA_ARGS__)
-#define BZ_TRACE(...) BZ::Log::getClientLogger()->trace(__VA_ARGS__)
+    #define BZ_LOG_CRITICAL(...)
+    #define BZ_LOG_ERROR(...)
+    #define BZ_LOG_WARN(...)
+    #define BZ_LOG_INFO(...)
+    #define BZ_LOG_DEBUG(...)
+    #define BZ_LOG_TRACE(...)
+#else
+    #define BZ_LOG_CORE_CRITICAL(...) BZ::Log::getCoreLogger()->critical(__VA_ARGS__)
+    #define BZ_LOG_CORE_ERROR(...) BZ::Log::getCoreLogger()->error(__VA_ARGS__)
+    #define BZ_LOG_CORE_WARN(...)  BZ::Log::getCoreLogger()->warn(__VA_ARGS__)
+    #define BZ_LOG_CORE_INFO(...)  BZ::Log::getCoreLogger()->info(__VA_ARGS__)
+    #define BZ_LOG_CORE_DEBUG(...) BZ::Log::getCoreLogger()->debug(__VA_ARGS__)
+    #define BZ_LOG_CORE_TRACE(...) BZ::Log::getCoreLogger()->trace(__VA_ARGS__)
+
+    #define BZ_LOG_CRITICAL(...) BZ::Log::getClientLogger()->critical(__VA_ARGS__)
+    #define BZ_LOG_ERROR(...) BZ::Log::getClientLogger()->error(__VA_ARGS__)
+    #define BZ_LOG_WARN(...)  BZ::Log::getClientLogger()->warn(__VA_ARGS__)
+    #define BZ_LOG_INFO(...)  BZ::Log::getClientLogger()->info(__VA_ARGS__)
+    #define BZ_LOG_DEBUG(...) BZ::Log::getClientLogger()->debug(__VA_ARGS__)
+    #define BZ_LOG_TRACE(...) BZ::Log::getClientLogger()->trace(__VA_ARGS__)
+#endif

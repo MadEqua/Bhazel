@@ -6,9 +6,7 @@ int main(int argc, char** argv) {
     
     BZ::Log::init();
    
-    BZ_CORE_WARN("Initialized Core Logger");
-    int a = 4;
-    BZ_INFO("Hello var={0}", a);
+    BZ_LOG_CORE_INFO("Initialized Logger.");
     
     auto app = BZ::createApplication();
     app->run();

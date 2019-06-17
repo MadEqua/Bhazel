@@ -14,7 +14,7 @@ namespace BZ {
             return new OpenGLVertexArray();
         case RendererAPI::None:
         default:
-            BZ_CORE_ASSERT(false, "RendererAPI::None is currently not supported.");
+            BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
             return nullptr;
         }
     }

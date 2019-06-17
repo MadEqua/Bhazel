@@ -14,16 +14,19 @@
     #error Windows only for now.
 #endif
 
-#ifdef BZ_DEBUG
-    #define BZ_ENABLE_ASSERTS
-#endif
 
-#ifdef BZ_ENABLE_ASSERTS
-    #define BZ_ASSERT(x, ...) { if(!(x)) { BZ_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
-    #define BZ_CORE_ASSERT(x, ...) { if(!(x)) { BZ_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
-#else
+#ifdef BZ_DIST
     #define BZ_ASSERT(x, ...)
     #define BZ_CORE_ASSERT(x, ...)
+
+    #define BZ_ASSERT_ALWAYS(...)
+    #define BZ_CORE_ASSERT_ALWAYS(...)
+#else
+    #define BZ_ASSERT(x, ...) { if(!(x)) { BZ_LOG_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+    #define BZ_CORE_ASSERT(x, ...) { if(!(x)) { BZ_LOG_CORE_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+
+    #define BZ_ASSERT_ALWAYS(...) { BZ_LOG_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); }
+    #define BZ_CORE_ASSERT_ALWAYS(...) { BZ_LOG_CORE_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); }
 #endif
 
 #define BIT(x) (1 << x)

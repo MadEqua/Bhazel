@@ -47,7 +47,7 @@ namespace BZ {
         vertexArray->setIndexBuffer(indexBuffer);
 
         const char * v = R"(
-            #version 450 core
+            #version 430 core
             layout(location = 0) in vec3 pos;
             layout(location = 1) in vec3 col;
             out vec3 vCol;
@@ -58,7 +58,7 @@ namespace BZ {
             }
         )";
         const char * f = R"(
-            #version 450 core
+            #version 430 core
             layout(location = 0) out vec4 col;
             in vec3 vCol;
             
