@@ -18,9 +18,9 @@ includeDir["glad"] = "Bhazel/vendor/glad/include"
 includeDir["ImGui"] = "Bhazel/vendor/imgui"
 includeDir["glm"] = "Bhazel/vendor/glm"
 
-include "Bhazel/vendor/GLFW"
 include "Bhazel/vendor/glad"
-include "Bhazel/vendor/imgui"
+include "Bhazel/vendor/glfw_premake5.lua"
+include "Bhazel/vendor/imgui_premake5.lua"
 
 project "Bhazel"
     location "Bhazel"
