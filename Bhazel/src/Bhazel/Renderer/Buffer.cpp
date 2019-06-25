@@ -49,9 +49,9 @@ namespace BZ {
     VertexBuffer* VertexBuffer::create(float *vertices, uint32 size) {
         switch(Renderer::getAPI())
         {
-        case RendererAPI::OpenGL:
+        case RendererAPI::API::OpenGL:
             return new OpenGLVertexBuffer(vertices, size);
-        case RendererAPI::None:
+        case RendererAPI::API::None:
         default:
             BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
             return nullptr;
@@ -61,9 +61,9 @@ namespace BZ {
     IndexBuffer* IndexBuffer::create(uint32 *indices, uint32 count) {
         switch(Renderer::getAPI())
         {
-        case RendererAPI::OpenGL:
+        case RendererAPI::API::OpenGL:
             return new OpenGLIndexBuffer(indices, count);
-        case RendererAPI::None:
+        case RendererAPI::API::None:
         default:
             BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
             return nullptr;

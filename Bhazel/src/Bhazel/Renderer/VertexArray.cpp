@@ -10,9 +10,9 @@ namespace BZ {
     VertexArray* VertexArray::create() {
         switch(Renderer::getAPI())
         {
-        case RendererAPI::OpenGL:
+        case RendererAPI::API::OpenGL:
             return new OpenGLVertexArray();
-        case RendererAPI::None:
+        case RendererAPI::API::None:
         default:
             BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
             return nullptr;

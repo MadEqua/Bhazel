@@ -7,7 +7,9 @@
 #include "Bhazel/Layer.h"
 #include "Input.h"
 
-#include <Glad/glad.h>
+#include "Renderer/RenderCommand.h"
+#include "Renderer/Renderer.h"
+
 
 namespace BZ {
 
@@ -42,7 +44,7 @@ namespace BZ {
         indexBuffer = std::shared_ptr<IndexBuffer>(IndexBuffer::create(indices, 3));
         indexBuffer->bind();
 
-        vertexArray = std::unique_ptr<VertexArray>(VertexArray::create());
+        vertexArray = std::shared_ptr<VertexArray>(VertexArray::create());
         vertexArray->addVertexBuffer(vertexBuffer);
         vertexArray->setIndexBuffer(indexBuffer);
 
@@ -73,12 +75,13 @@ namespace BZ {
     void Application::run() {
         while(running) {
 
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+            RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+            RenderCommand::clear();
 
+            Renderer::beginScene();
             shader->bind();
-            vertexArray->bind();
-            glDrawElements(GL_TRIANGLES, indexBuffer->getCount(), GL_UNSIGNED_INT, nullptr);
+            Renderer::submit(vertexArray);
+            Renderer::endScene();
 
             for (Layer *layer : layerStack) {
                 layer->onUpdate();

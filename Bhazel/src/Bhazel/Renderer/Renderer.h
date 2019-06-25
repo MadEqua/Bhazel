@@ -1,21 +1,20 @@
 #pragma once
 
-namespace BZ {
+#include <memory>
 
-    enum class RendererAPI {
-        None,
-        OpenGL
-    };
+#include "RenderCommand.h"
+
+
+namespace BZ {
 
     class Renderer
     {
     public:
-        Renderer();
-        ~Renderer();
+        static void beginScene();
+        static void endScene();
 
-        RendererAPI static getAPI() { return rendererAPI; }
+        static void submit(const std::shared_ptr<VertexArray> &vertexArray);
 
-    private:
-        static RendererAPI rendererAPI;
+        static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
     };
 }

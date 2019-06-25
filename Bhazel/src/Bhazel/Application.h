@@ -45,7 +45,7 @@ namespace BZ {
         LayerStack layerStack;
 
         //TODO: temporaries for testing
-        std::unique_ptr<VertexArray> vertexArray;
+        std::shared_ptr<VertexArray> vertexArray;
         std::unique_ptr<Shader> shader;
         std::shared_ptr<VertexBuffer> vertexBuffer;
         std::shared_ptr<IndexBuffer> indexBuffer;

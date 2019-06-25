@@ -1,13 +1,18 @@
 #include "bzpch.h"
+
 #include "Renderer.h"
+
 
 namespace BZ {
 
-    RendererAPI Renderer::rendererAPI = RendererAPI::OpenGL;
-
-    Renderer::Renderer() {
+    void Renderer::beginScene() {
     }
 
-    Renderer::~Renderer() {
+    void Renderer::endScene() {
+    }
+
+    void Renderer::submit(const std::shared_ptr<VertexArray> &vertexArray) {
+        vertexArray->bind();
+        RenderCommand::drawIndexed(vertexArray);
     }
 }
