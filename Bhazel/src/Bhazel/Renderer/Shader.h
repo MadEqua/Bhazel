@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <glm/glm.hpp>
 
 namespace BZ {
 
@@ -11,6 +12,8 @@ namespace BZ {
 
         void bind() const;
         void unbind() const;
+
+        void setUniformMat4(const std::string &name, const glm::mat4 &mat);
 
     private:
         uint32 rendererId;

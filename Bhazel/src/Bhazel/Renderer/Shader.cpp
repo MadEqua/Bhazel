@@ -2,6 +2,7 @@
 
 #include "Shader.h"
 #include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
 
@@ -91,5 +92,10 @@ namespace BZ {
 
     void Shader::unbind() const {
         glUseProgram(0);
+    }
+
+    void Shader::setUniformMat4(const std::string &name, const glm::mat4 &mat) {
+        GLint loc = glGetUniformLocation(rendererId, name.c_str());
+        glUniformMatrix4fv(loc, 1, false, glm::value_ptr(mat));
     }
 }

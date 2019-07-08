@@ -15,7 +15,8 @@ namespace BZ {
 
     Application* Application::instance = nullptr;
 
-    Application::Application() {
+    Application::Application() : 
+        camera(-1.6f, 1.6f, -0.9f, 0.9f) {
         BZ_CORE_ASSERT(!instance, "Application already exists")
         instance = this;
 
@@ -53,10 +54,12 @@ namespace BZ {
             layout(location = 0) in vec3 pos;
             layout(location = 1) in vec3 col;
             out vec3 vCol;
-            
+
+            uniform mat4 viewProjection;
+
             void main() {
-                gl_Position = vec4(pos, 1.0);
                 vCol = col;
+                gl_Position = viewProjection * vec4(pos, 1.0);
             }
         )";
         const char * f = R"(
@@ -69,7 +72,7 @@ namespace BZ {
             }
         )";
 
-        shader = std::make_unique<Shader>(v, f);
+        shader = std::make_shared<Shader>(v, f);
     }
 
     void Application::run() {
@@ -78,9 +81,8 @@ namespace BZ {
             RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
             RenderCommand::clear();
 
-            Renderer::beginScene();
-            shader->bind();
-            Renderer::submit(vertexArray);
+            Renderer::beginScene(camera);
+            Renderer::submit(shader, vertexArray);
             Renderer::endScene();
 
             for (Layer *layer : layerStack) {

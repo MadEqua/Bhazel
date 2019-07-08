@@ -12,6 +12,7 @@
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/VertexArray.h"
+#include "Bhazel/Renderer/OrtographicCamera.h"
 #include <memory>
 
 namespace BZ {
@@ -46,9 +47,11 @@ namespace BZ {
 
         //TODO: temporaries for testing
         std::shared_ptr<VertexArray> vertexArray;
-        std::unique_ptr<Shader> shader;
+        std::shared_ptr<Shader> shader;
         std::shared_ptr<VertexBuffer> vertexBuffer;
         std::shared_ptr<IndexBuffer> indexBuffer;
+
+        OrtographicCamera camera;
 
         static Application *instance;
     };
