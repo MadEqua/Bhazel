@@ -1,19 +1,11 @@
 #pragma once
 
-#include "bzpch.h"
-
 #include "Bhazel/Core.h"
 #include "Bhazel/Window.h"
 #include "Bhazel/LayerStack.h"
 
 #include "Bhazel/ImGui/ImGuiLayer.h"
 
-//TODO: temporary for testing
-#include "Bhazel/Renderer/Shader.h"
-#include "Bhazel/Renderer/Buffer.h"
-#include "Bhazel/Renderer/VertexArray.h"
-#include "Bhazel/Renderer/OrtographicCamera.h"
-#include <memory>
 
 namespace BZ {
 
@@ -44,14 +36,6 @@ namespace BZ {
         bool running = true;
 
         LayerStack layerStack;
-
-        //TODO: temporaries for testing
-        std::shared_ptr<VertexArray> vertexArray;
-        std::shared_ptr<Shader> shader;
-        std::shared_ptr<VertexBuffer> vertexBuffer;
-        std::shared_ptr<IndexBuffer> indexBuffer;
-
-        OrtographicCamera camera;
 
         static Application *instance;
     };
