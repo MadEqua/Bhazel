@@ -9,7 +9,7 @@
 class ExampleLayer : public BZ::Layer {
 public:
     ExampleLayer();
-    void onUpdate() override;
+    void onUpdate(BZ::Timestep timestep) override;
     void onEvent(BZ::Event &event) override;
     void onImGuiRender() override;
 

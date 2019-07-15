@@ -51,9 +51,9 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
     shader = std::make_shared<BZ::Shader>(v, f);
 }
 
-void ExampleLayer::onUpdate() {
-    const float CAMERA_MOVE_SPEED = 0.1f;
-    const float CAMERA_ROT_SPEED = 1.0f;
+void ExampleLayer::onUpdate(BZ::Timestep timestep) {
+    const float CAMERA_MOVE_SPEED = 3.0f * timestep;
+    const float CAMERA_ROT_SPEED = 180.0f * timestep;
     
     if(BZ::Input::isKeyPressed(BZ_KEY_A)) cameraPos.x -= CAMERA_MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_D)) cameraPos.x += CAMERA_MOVE_SPEED;

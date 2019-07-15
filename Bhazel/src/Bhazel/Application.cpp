@@ -1,6 +1,7 @@
 #include "bzpch.h"
 
 #include "Application.h"
+#include "Bhazel/Core/Timer.h"
 
 #include "Window.h"
 #include "Events/ApplicationEvent.h"
@@ -25,8 +26,12 @@ namespace BZ {
 
     void Application::run() {
         while(running) {
+
+            Timestep timestep = timer.getAsTimestep();
+            timer.start();
+
             for (Layer *layer : layerStack) {
-                layer->onUpdate();
+                layer->onUpdate(timestep);
             }
 
             imGuiLayer->begin();

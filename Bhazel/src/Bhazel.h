@@ -6,6 +6,8 @@
 #include "Bhazel/Layer.h"
 #include "Bhazel/Log.h"
 
+#include "Bhazel/Core/Timer.h"
+
 #include "Bhazel/Input.h"
 #include "Bhazel/KeyCodes.h"
 #include "Bhazel/MouseButtonCodes.h"

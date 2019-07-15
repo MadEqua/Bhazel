@@ -3,6 +3,8 @@
 #include "bzpch.h"
 #include "Bhazel/Core.h"
 #include "Bhazel/Events/Event.h"
+#include "Bhazel/Core/Timer.h"
+
 
 namespace BZ {
 
@@ -15,7 +17,7 @@ namespace BZ {
 
 		virtual void onAttach() {}
 		virtual void onDetach() {}
-		virtual void onUpdate() {}
+		virtual void onUpdate(Timestep timestep) {}
 		virtual void onImGuiRender() {}
 		virtual void onEvent(Event &event) {}
 
