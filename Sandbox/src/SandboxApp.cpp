@@ -1,5 +1,7 @@
 #include "SandboxApp.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 
 ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
 
@@ -31,11 +33,12 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
             layout(location = 1) in vec3 col;
             out vec3 vCol;
 
-            uniform mat4 viewProjection;
+            uniform mat4 viewProjectionMatrix;
+            uniform mat4 modelMatrix;
 
             void main() {
                 vCol = col;
-                gl_Position = viewProjection * vec4(pos, 1.0);
+                gl_Position = viewProjectionMatrix * modelMatrix * vec4(pos, 1.0);
             }
         )";
     const char * f = R"(
@@ -54,6 +57,7 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
 void ExampleLayer::onUpdate(BZ::Timestep timestep) {
     const float CAMERA_MOVE_SPEED = 3.0f * timestep;
     const float CAMERA_ROT_SPEED = 180.0f * timestep;
+    const float TRI_MOVE_SPEED = 3.0f * timestep;
     
     if(BZ::Input::isKeyPressed(BZ_KEY_A)) cameraPos.x -= CAMERA_MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_D)) cameraPos.x += CAMERA_MOVE_SPEED;
@@ -67,12 +71,20 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
     camera.setPosition(cameraPos);
     camera.setRotation(cameraRot);
 
-
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
     BZ::RenderCommand::clear();
 
     BZ::Renderer::beginScene(camera);
-    BZ::Renderer::submit(shader, vertexArray);
+
+    glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+
+    for(int i = 0; i < 20; ++i) {
+        for(int j = 0; j < 20; ++j) {
+            glm::vec3 pos(i * 0.11f, j * 0.11f, 0);
+            glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), pos) * scaleMat;
+            BZ::Renderer::submit(shader, vertexArray, modelMatrix);
+        }
+    }
     BZ::Renderer::endScene();
 }
 

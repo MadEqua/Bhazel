@@ -16,7 +16,7 @@ namespace BZ {
         static void beginScene(OrtographicCamera &camera);
         static void endScene();
 
-        static void submit(const std::shared_ptr<Shader> &shader, const std::shared_ptr<VertexArray> &vertexArray);
+        static void submit(const std::shared_ptr<Shader> &shader, const std::shared_ptr<VertexArray> &vertexArray, const glm::mat4 &transform = glm::mat4(1.0f));
 
         static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
 

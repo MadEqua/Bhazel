@@ -15,9 +15,10 @@ namespace BZ {
     void Renderer::endScene() {
     }
 
-    void Renderer::submit(const std::shared_ptr<Shader> &shader, const std::shared_ptr<VertexArray> &vertexArray) {
+    void Renderer::submit(const std::shared_ptr<Shader> &shader, const std::shared_ptr<VertexArray> &vertexArray, const glm::mat4 &transform) {
         shader->bind();
-        shader->setUniformMat4("viewProjection", sceneData->viewProjection);
+        shader->setUniformMat4("viewProjectionMatrix", sceneData->viewProjection);
+        shader->setUniformMat4("modelMatrix", transform);
 
         vertexArray->bind();
         RenderCommand::drawIndexed(vertexArray);
