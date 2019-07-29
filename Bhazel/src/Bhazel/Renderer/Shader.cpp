@@ -94,6 +94,16 @@ namespace BZ {
         glUseProgram(0);
     }
 
+    void Shader::setUniformFloat3(const std::string &name, const glm::vec3 &vec) {
+        GLint loc = glGetUniformLocation(rendererId, name.c_str());
+        glUniform3fv(loc, 1, glm::value_ptr(vec));
+    }
+
+    void Shader::setUniformFloat4(const std::string &name, const glm::vec4 &vec) {
+        GLint loc = glGetUniformLocation(rendererId, name.c_str());
+        glUniform4fv(loc, 1, glm::value_ptr(vec));
+    }
+
     void Shader::setUniformMat4(const std::string &name, const glm::mat4 &mat) {
         GLint loc = glGetUniformLocation(rendererId, name.c_str());
         glUniformMatrix4fv(loc, 1, false, glm::value_ptr(mat));
