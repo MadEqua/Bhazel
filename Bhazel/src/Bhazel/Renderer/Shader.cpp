@@ -1,111 +1,22 @@
 #include "bzpch.h"
 
 #include "Shader.h"
-#include <glad/glad.h>
-#include <glm/gtc/type_ptr.hpp>
+#include "Renderer.h"
 
-#include <vector>
+#include "Bhazel/Platform/OpenGL/OpenGLShader.h"
+
 
 namespace BZ {
 
-    Shader::Shader(const std::string &vertexSrc, const std::string &fragmentSrc) {
-
-        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        const GLchar *source = (const GLchar *) vertexSrc.c_str();
-        glShaderSource(vertexShader, 1, &source, 0);
-        glCompileShader(vertexShader);
-
-        GLint isCompiled = 0;
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled);
-        if(isCompiled == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
-            
-            std::vector<GLchar> infoLog(maxLength);
-            glGetShaderInfoLog(vertexShader, maxLength, &maxLength, &infoLog[0]);
-
-            glDeleteShader(vertexShader);
-
-            BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
-            BZ_CORE_ASSERT_ALWAYS("Vertex shader compilation error.");
-            return;
+    Shader* Shader::create(const std::string &vertexSrc, const std::string &fragmentSrc) {
+        switch(Renderer::getAPI())
+        {
+        case RendererAPI::API::OpenGL:
+            return new OpenGLShader(vertexSrc, fragmentSrc);
+        case RendererAPI::API::None:
+        default:
+            BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
+            return nullptr;
         }
-
-        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        source = (const GLchar *) fragmentSrc.c_str();
-        glShaderSource(fragmentShader, 1, &source, 0);
-        glCompileShader(fragmentShader);
-
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiled);
-        if(isCompiled == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
-
-            std::vector<GLchar> infoLog(maxLength);
-            glGetShaderInfoLog(fragmentShader, maxLength, &maxLength, &infoLog[0]);
-
-            glDeleteShader(fragmentShader);
-            glDeleteShader(vertexShader);
-
-            BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
-            BZ_CORE_ASSERT_ALWAYS( "Fragment shader compilation error.");
-            return;
-        }
-
-        rendererId = glCreateProgram();
-
-        glAttachShader(rendererId, vertexShader);
-        glAttachShader(rendererId, fragmentShader);
-
-        glLinkProgram(rendererId);
-
-        GLint isLinked = 0;
-        glGetProgramiv(rendererId, GL_LINK_STATUS, (int*) &isLinked);
-        if(isLinked == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetProgramiv(rendererId, GL_INFO_LOG_LENGTH, &maxLength);
-
-            std::vector<GLchar> infoLog(maxLength);
-            glGetProgramInfoLog(rendererId, maxLength, &maxLength, &infoLog[0]);
-
-            glDeleteProgram(rendererId);
-            glDeleteShader(vertexShader);
-            glDeleteShader(fragmentShader);
-
-            BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
-            BZ_CORE_ASSERT_ALWAYS("Shader linking error.");
-            return;
-        }
-
-        // Always detach shaders after a successful link.
-        glDetachShader(rendererId, vertexShader);
-        glDetachShader(rendererId, fragmentShader);
-    }
-
-    Shader::~Shader() {
-        glDeleteProgram(rendererId);
-    }
-
-    void Shader::bind() const {
-        glUseProgram(rendererId);
-    }
-
-    void Shader::unbind() const {
-        glUseProgram(0);
-    }
-
-    void Shader::setUniformFloat3(const std::string &name, const glm::vec3 &vec) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniform3fv(loc, 1, glm::value_ptr(vec));
-    }
-
-    void Shader::setUniformFloat4(const std::string &name, const glm::vec4 &vec) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniform4fv(loc, 1, glm::value_ptr(vec));
-    }
-
-    void Shader::setUniformMat4(const std::string &name, const glm::mat4 &mat) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniformMatrix4fv(loc, 1, false, glm::value_ptr(mat));
     }
 }

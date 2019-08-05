@@ -1,6 +1,7 @@
 #include "SandboxApp.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <ImGui/imgui.h>
 
 
 ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
@@ -51,7 +52,7 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
             }
         )";
 
-    shader = std::make_shared<BZ::Shader>(v, f);
+    shader = std::shared_ptr<BZ::Shader>(BZ::Shader::create(v, f));
 }
 
 void ExampleLayer::onUpdate(BZ::Timestep timestep) {
@@ -94,6 +95,10 @@ void ExampleLayer::onEvent(BZ::Event &event) {
 }
 
 void ExampleLayer::onImGuiRender() {
+    ImGui::Begin("Test");
+    ImGui::LabelText("Hello!", "");
+    ImGui::End();
+
 }
 
 bool ExampleLayer::onKeyPressedEvent(BZ::KeyPressedEvent &event) {

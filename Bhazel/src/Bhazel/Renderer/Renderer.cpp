@@ -3,6 +3,8 @@
 #include "Renderer.h"
 #include "OrtographicCamera.h"
 
+#include "Bhazel/Platform/OpenGL/OpenGLShader.h"
+
 
 namespace BZ {
 
@@ -17,8 +19,8 @@ namespace BZ {
 
     void Renderer::submit(const std::shared_ptr<Shader> &shader, const std::shared_ptr<VertexArray> &vertexArray, const glm::mat4 &transform) {
         shader->bind();
-        shader->setUniformMat4("viewProjectionMatrix", sceneData->viewProjection);
-        shader->setUniformMat4("modelMatrix", transform);
+        std::static_pointer_cast<OpenGLShader>(shader)->setUniformMat4("modelMatrix", transform);
+        std::static_pointer_cast<OpenGLShader>(shader)->setUniformMat4("viewProjectionMatrix", sceneData->viewProjection);
 
         vertexArray->bind();
         RenderCommand::drawIndexed(vertexArray);
