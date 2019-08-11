@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Bhazel/Core.h"
 #include "Bhazel/Window.h"
 #include "Bhazel/LayerStack.h"
 #include "Bhazel/Core/Timer.h"

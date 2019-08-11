@@ -10,7 +10,7 @@ namespace BZ {
     class RenderCommand
     {
     public:
-        static void drawIndexed(const std::shared_ptr<VertexArray> &vertexArray) {
+        static void drawIndexed(const Ref<VertexArray> &vertexArray) {
             rendererAPI->drawIndexed(vertexArray);
         }
 

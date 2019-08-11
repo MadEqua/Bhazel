@@ -15,10 +15,10 @@ public:
 
 
 private:
-    std::shared_ptr<BZ::VertexArray> vertexArray;
-    std::shared_ptr<BZ::Shader> shader;
-    std::shared_ptr<BZ::VertexBuffer> vertexBuffer;
-    std::shared_ptr<BZ::IndexBuffer> indexBuffer;
+    BZ::Ref<BZ::VertexArray> vertexArray;
+    BZ::Ref<BZ::Shader> shader;
+    BZ::Ref<BZ::VertexBuffer> vertexBuffer;
+    BZ::Ref<BZ::IndexBuffer> indexBuffer;
 
     BZ::OrtographicCamera camera;
 

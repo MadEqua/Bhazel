@@ -1,8 +1,5 @@
 #pragma once
 
-#include "bzpch.h"
-
-#include "Bhazel/Core.h"
 
 namespace BZ {
 
@@ -20,7 +17,7 @@ namespace BZ {
     };
 
     //Interface representing a desktop based Window
-    class BZ_API Window {
+    class Window {
     public:
         using EventCallbackFn = std::function<void(Event&)>;
 

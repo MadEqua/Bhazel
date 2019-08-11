@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Bhazel/Core.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
 
 namespace BZ {
 
-    class BZ_API Log
+    class Log
     {
     public:
         static void init();

@@ -12,5 +12,6 @@
     #include <Windows.h>
 #endif
 
-#include "Bhazel/Types.h"
-#include "Bhazel/Log.h"
+#include "Bhazel/Core/Types.h"
+#include "Bhazel/Core/Log.h"
+#include "Bhazel/Core/Core.h"

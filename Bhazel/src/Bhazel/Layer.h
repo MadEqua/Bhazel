@@ -1,7 +1,5 @@
 #pragma once
 
-#include "bzpch.h"
-#include "Bhazel/Core.h"
 #include "Bhazel/Events/Event.h"
 #include "Bhazel/Core/Timer.h"
 
@@ -10,7 +8,7 @@ namespace BZ {
 
 	class Event;
 
-	class BZ_API Layer {
+	class Layer {
 	public:
 		Layer(const std::string &name = "Layer");
 		virtual ~Layer() = default;

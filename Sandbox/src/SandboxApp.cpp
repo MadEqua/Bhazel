@@ -11,7 +11,7 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
     };
-    vertexBuffer = std::shared_ptr<BZ::VertexBuffer>(BZ::VertexBuffer::create(vertices, sizeof(vertices)));
+    vertexBuffer = BZ::Ref<BZ::VertexBuffer>(BZ::VertexBuffer::create(vertices, sizeof(vertices)));
     vertexBuffer->bind();
 
     BZ::BufferLayout layout = {
@@ -21,10 +21,10 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
     vertexBuffer->setLayout(layout);
 
     uint32 indices[] = {0, 1, 2};
-    indexBuffer = std::shared_ptr<BZ::IndexBuffer>(BZ::IndexBuffer::create(indices, 3));
+    indexBuffer = BZ::Ref<BZ::IndexBuffer>(BZ::IndexBuffer::create(indices, 3));
     indexBuffer->bind();
 
-    vertexArray = std::shared_ptr<BZ::VertexArray>(BZ::VertexArray::create());
+    vertexArray = BZ::Ref<BZ::VertexArray>(BZ::VertexArray::create());
     vertexArray->addVertexBuffer(vertexBuffer);
     vertexArray->setIndexBuffer(indexBuffer);
 

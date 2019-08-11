@@ -1,12 +1,10 @@
 #pragma once
 
-#include "bzpch.h"
-
-#include "Bhazel/Core.h"
+#include <utility>
 
 namespace BZ {
 
-    class BZ_API Input {
+    class Input {
     public:
         inline static bool isKeyPressed(int keycode) { return instance->isKeyPressedImpl(keycode); }
         

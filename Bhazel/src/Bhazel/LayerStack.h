@@ -1,13 +1,11 @@
 #pragma once
 
-#include "bzpch.h"
-#include "Bhazel/Core.h"
 
 namespace BZ {
 
     class Layer;
 
-    class BZ_API LayerStack {
+    class LayerStack {
     public:
         LayerStack();
         ~LayerStack();

@@ -17,7 +17,7 @@ namespace BZ {
     void Renderer::endScene() {
     }
 
-    void Renderer::submit(const std::shared_ptr<Shader> &shader, const std::shared_ptr<VertexArray> &vertexArray, const glm::mat4 &transform) {
+    void Renderer::submit(const Ref<Shader> &shader, const Ref<VertexArray> &vertexArray, const glm::mat4 &transform) {
         shader->bind();
         std::static_pointer_cast<OpenGLShader>(shader)->setUniformMat4("modelMatrix", transform);
         std::static_pointer_cast<OpenGLShader>(shader)->setUniformMat4("viewProjectionMatrix", sceneData->viewProjection);

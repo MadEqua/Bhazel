@@ -2,9 +2,10 @@
 
 //Convenience header for use by Bhazel client applications
 
+#include "bzpch.h"
+
 #include "Bhazel/Application.h"
 #include "Bhazel/Layer.h"
-#include "Bhazel/Log.h"
 
 #include "Bhazel/Core/Timer.h"
 
