@@ -17,10 +17,13 @@ includeDir["GLFW"] = "Bhazel/vendor/GLFW/include"
 includeDir["glad"] = "Bhazel/vendor/glad/include"
 includeDir["ImGui"] = "Bhazel/vendor/imgui"
 includeDir["glm"] = "Bhazel/vendor/glm"
+includeDir["stb_image"] = "Bhazel/vendor/stb_image"
 
 include "Bhazel/vendor/glad"
 include "Bhazel/vendor/glfw_premake5.lua"
 include "Bhazel/vendor/imgui_premake5.lua"
+include "Bhazel/vendor/stb_image"
+
 
 project "Bhazel"
     location "Bhazel"
@@ -38,7 +41,7 @@ project "Bhazel"
     files
     {
         "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.cpp"
+        "%{prj.name}/src/**.cpp",
     }
 
     includedirs
@@ -48,7 +51,8 @@ project "Bhazel"
         "%{includeDir.GLFW}",
         "%{includeDir.glad}",
         "%{includeDir.ImGui}",
-        "%{includeDir.glm}"
+        "%{includeDir.glm}",
+        "%{includeDir.stb_image}"
     }
 
     links
@@ -56,6 +60,7 @@ project "Bhazel"
         "GLFW",
         "glad",
         "ImGui",
+        "stb_image",
         "opengl32.lib"
     }
 
@@ -95,6 +100,7 @@ project "Sandbox"
 
     targetdir("bin/" .. outputDir .. "/%{prj.name}")
     objdir("bin-int/" .. outputDir .. "/%{prj.name}")
+    debugdir("bin/" .. outputDir .. "/%{prj.name}")
 
     files
     {

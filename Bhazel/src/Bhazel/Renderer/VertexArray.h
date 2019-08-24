@@ -19,7 +19,7 @@ namespace BZ {
         std::vector<Ref<VertexBuffer>>& getVertexBuffers() { return vertexBuffers; }
         Ref<IndexBuffer>& getIndexBuffer() { return indexBuffer; }
 
-        static VertexArray* create();
+        static Ref<VertexArray> create();
 
     protected:
         std::vector<Ref<VertexBuffer>> vertexBuffers;

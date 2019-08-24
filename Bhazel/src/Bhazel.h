@@ -22,6 +22,7 @@
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/VertexArray.h"
+#include "Bhazel/Renderer/Texture.h"
 
 #include "Bhazel/Renderer/OrtographicCamera.h"
 

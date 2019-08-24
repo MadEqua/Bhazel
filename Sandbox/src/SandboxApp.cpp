@@ -7,24 +7,37 @@
 ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
 
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f,
+
+        0.5f, -0.5f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f,
+
+        0.5f, 0.5f, 0.0f, 
+        0.0f, 0.0f, 1.0f,
+        1.0f, 1.0f,
+
+        -0.5f, 0.5f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 1.0f,
     };
-    vertexBuffer = BZ::Ref<BZ::VertexBuffer>(BZ::VertexBuffer::create(vertices, sizeof(vertices)));
+    vertexBuffer = BZ::VertexBuffer::create(vertices, sizeof(vertices));
     vertexBuffer->bind();
 
     BZ::BufferLayout layout = {
         {BZ::ShaderDataType::Vec3, "position"},
-        {BZ::ShaderDataType::Vec3, "color"}
+        {BZ::ShaderDataType::Vec3, "color"},
+        {BZ::ShaderDataType::Vec2, "texCoord"}
     };
     vertexBuffer->setLayout(layout);
 
-    uint32 indices[] = {0, 1, 2};
-    indexBuffer = BZ::Ref<BZ::IndexBuffer>(BZ::IndexBuffer::create(indices, 3));
+    uint32 indices[] = {0, 1, 2, 0, 2, 3};
+    indexBuffer = BZ::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32));
     indexBuffer->bind();
 
-    vertexArray = BZ::Ref<BZ::VertexArray>(BZ::VertexArray::create());
+    vertexArray = BZ::VertexArray::create();
     vertexArray->addVertexBuffer(vertexBuffer);
     vertexArray->setIndexBuffer(indexBuffer);
 
@@ -32,27 +45,37 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
             #version 430 core
             layout(location = 0) in vec3 pos;
             layout(location = 1) in vec3 col;
+            layout(location = 2) in vec2 texCoord;
+            
             out vec3 vCol;
+            out vec2 vTexCoord;
 
             uniform mat4 viewProjectionMatrix;
             uniform mat4 modelMatrix;
 
             void main() {
                 vCol = col;
+                vTexCoord = texCoord;
                 gl_Position = viewProjectionMatrix * modelMatrix * vec4(pos, 1.0);
             }
         )";
     const char * f = R"(
             #version 430 core
             layout(location = 0) out vec4 col;
+
+            layout(location = 0) uniform sampler2D colorTexture;
+
             in vec3 vCol;
+            in vec2 vTexCoord;
             
             void main() {
-                col = vec4(vCol, 1.0);
+                vec4 texCol = texture(colorTexture, vTexCoord);
+                col = vec4(texCol.rgb, 1.0);
             }
         )";
 
-    shader = std::shared_ptr<BZ::Shader>(BZ::Shader::create(v, f));
+    shader = BZ::Shader::create(v, f);
+    texture = BZ::Texture2D::create("test.jpg");
 }
 
 void ExampleLayer::onUpdate(BZ::Timestep timestep) {
@@ -77,15 +100,17 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
 
     BZ::Renderer::beginScene(camera);
 
-    glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
-
+    /*glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
     for(int i = 0; i < 20; ++i) {
         for(int j = 0; j < 20; ++j) {
             glm::vec3 pos(i * 0.11f, j * 0.11f, 0);
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), pos) * scaleMat;
             BZ::Renderer::submit(shader, vertexArray, modelMatrix);
         }
-    }
+    }*/
+
+    texture->bind(0);
+    BZ::Renderer::submit(shader, vertexArray);
     BZ::Renderer::endScene();
 }
 

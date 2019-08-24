@@ -7,11 +7,11 @@
 
 namespace BZ {
 
-    VertexArray* VertexArray::create() {
+    Ref<VertexArray> VertexArray::create() {
         switch(Renderer::getAPI())
         {
         case RendererAPI::API::OpenGL:
-            return new OpenGLVertexArray();
+            return MakeRef<OpenGLVertexArray>();
         case RendererAPI::API::None:
         default:
             BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");

@@ -1,18 +1,17 @@
 #include "bzpch.h"
 
-#include "Shader.h"
+#include "Texture.h"
 #include "Renderer.h"
-
-#include "Bhazel/Platform/OpenGL/OpenGLShader.h"
+#include "Bhazel/Platform/OpenGL/OpenGLTexture.h"
 
 
 namespace BZ {
 
-    Ref<Shader> Shader::create(const std::string &vertexSrc, const std::string &fragmentSrc) {
+    Ref<Texture2D> Texture2D::create(const std::string &path) {
         switch(Renderer::getAPI())
         {
         case RendererAPI::API::OpenGL:
-            return MakeRef<OpenGLShader>(vertexSrc, fragmentSrc);
+            return MakeRef<OpenGLTexture2D>(path);
         case RendererAPI::API::None:
         default:
             BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");

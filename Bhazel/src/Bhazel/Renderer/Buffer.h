@@ -99,7 +99,7 @@ namespace BZ {
 
     class VertexBuffer : public Buffer {
     public:
-        static VertexBuffer* create(float *vertices, uint32 size);
+        static Ref<VertexBuffer> create(float *vertices, uint32 size);
 
         void setLayout(const BufferLayout &layout) { this->layout = layout; }
         const BufferLayout& getLayout() const { return layout; };
@@ -111,7 +111,7 @@ namespace BZ {
 
     class IndexBuffer : public Buffer {
     public:
-        static IndexBuffer* create(uint32 *indices, uint32 count);
+        static Ref<IndexBuffer> create(uint32 *indices, uint32 count);
 
         uint32 getCount() const { return count; }
 
