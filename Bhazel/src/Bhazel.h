@@ -11,7 +11,6 @@
 
 #include "Bhazel/Input.h"
 #include "Bhazel/KeyCodes.h"
-#include "Bhazel/MouseButtonCodes.h"
 #include "Bhazel/Events/ApplicationEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
@@ -25,6 +24,3 @@
 #include "Bhazel/Renderer/Texture.h"
 
 #include "Bhazel/Renderer/OrtographicCamera.h"
-
-
-#include "Bhazel/EntryPoint.h"

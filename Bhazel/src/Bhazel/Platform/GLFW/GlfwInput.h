@@ -4,7 +4,7 @@
 
 namespace BZ {
 
-    class WindowsInput : public Input {
+    class GlfwInput : public Input {
     protected:
         bool isKeyPressedImpl(int keycode) override;
 

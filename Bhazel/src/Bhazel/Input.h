@@ -2,6 +2,7 @@
 
 #include <utility>
 
+
 namespace BZ {
 
     class Input {
@@ -22,5 +23,8 @@ namespace BZ {
 
     private:
         static Input *instance;
+        static void init();
+
+        friend class Application;
     };
 }

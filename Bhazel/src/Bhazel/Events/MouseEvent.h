@@ -6,11 +6,11 @@ namespace BZ {
 
     class BZ_API MouseMovedEvent : public Event {
     public:
-        MouseMovedEvent(float x, float y)
+        MouseMovedEvent(int x, int y)
             : mouseX(x), mouseY(y) {}
 
-        inline float getX() const { return mouseX; }
-        inline float getY() const { return mouseY; }
+        inline int getX() const { return mouseX; }
+        inline int getY() const { return mouseY; }
 
         std::string toString() const override {
             std::stringstream ss;
@@ -22,17 +22,17 @@ namespace BZ {
         EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
 
     private:
-        float mouseX, mouseY;
+        int mouseX, mouseY;
     };
 
 
     class BZ_API MouseScrolledEvent : public Event {
     public:
-        MouseScrolledEvent(float xOffset, float yOffset)
+        MouseScrolledEvent(int xOffset, int yOffset)
             : xOffset(xOffset), yOffset(yOffset) {}
 
-        inline float getXOffset() const { return xOffset; }
-        inline float getYOffset() const { return yOffset; }
+        inline int getXOffset() const { return xOffset; }
+        inline int getYOffset() const { return yOffset; }
 
         std::string toString() const override {
             std::stringstream ss;
@@ -44,7 +44,7 @@ namespace BZ {
         EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
 
     private:
-        float xOffset, yOffset;
+        int xOffset, yOffset;
     };
 
 

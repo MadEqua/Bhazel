@@ -4,6 +4,7 @@
 #include "Bhazel/Core/Timer.h"
 
 #include "Window.h"
+#include "Input.h"
 #include "Events/ApplicationEvent.h"
 #include "Bhazel/Layer.h"
 #include "Input.h"
@@ -20,8 +21,10 @@ namespace BZ {
         window = std::unique_ptr<Window>(Window::create());
         window->setEventCallback(BZ_BIND_EVENT_FN(Application::onEvent));
 
-        imGuiLayer = new ImGuiLayer();
-        pushOverlay(imGuiLayer);
+        Input::init();
+
+        //imGuiLayer = new ImGuiLayer();
+        //pushOverlay(imGuiLayer);
     }
 
     void Application::run() {
@@ -34,12 +37,12 @@ namespace BZ {
                 layer->onUpdate(timestep);
             }
 
-            imGuiLayer->begin();
+            /*imGuiLayer->begin();
             for(Layer *layer : layerStack) {
                 layer->onImGuiRender();
             }
             imGuiLayer->end();
-
+            */
             window->onUpdate();
         }
     }

@@ -123,7 +123,6 @@ void ExampleLayer::onImGuiRender() {
     ImGui::Begin("Test");
     ImGui::LabelText("Hello!", "");
     ImGui::End();
-
 }
 
 bool ExampleLayer::onKeyPressedEvent(BZ::KeyPressedEvent &event) {
@@ -136,3 +135,5 @@ bool ExampleLayer::onKeyPressedEvent(BZ::KeyPressedEvent &event) {
 BZ::Application* BZ::createApplication() {
     return new Sandbox();
 }
+
+#include <Bhazel/EntryPoint.h>

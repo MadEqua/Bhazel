@@ -17,5 +17,7 @@ namespace BZ {
 
         clientLogger = spdlog::stdout_color_mt("APP");
         clientLogger->set_level(spdlog::level::trace);
+
+        BZ_LOG_CORE_INFO("Initialized Logger.");
     }
 }

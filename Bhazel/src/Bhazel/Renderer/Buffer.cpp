@@ -51,9 +51,8 @@ namespace BZ {
         {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLVertexBuffer>(vertices, size);
-        case RendererAPI::API::None:
         default:
-            BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
+            BZ_CORE_ASSERT_ALWAYS("Unknown RendererAPI.");
             return nullptr;
         }
     }
@@ -63,9 +62,8 @@ namespace BZ {
         {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLIndexBuffer>(indices, count);
-        case RendererAPI::API::None:
         default:
-            BZ_CORE_ASSERT_ALWAYS("RendererAPI::None is currently not supported.");
+            BZ_CORE_ASSERT_ALWAYS("Unknown RendererAPI.");
             return nullptr;
         }
     }

@@ -1,6 +1,6 @@
 #include "bzpch.h"
 
-#include "WindowsWindow.h"
+#include "GlfwWindow.h"
 #include "Bhazel/Events/ApplicationEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
@@ -8,6 +8,7 @@
 #include "Bhazel/Platform/OpenGL/OpenGLContext.h"
 
 #include <GLFW/glfw3.h>
+
 
 namespace BZ {
 
@@ -17,24 +18,19 @@ namespace BZ {
         BZ_LOG_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
     }
 
-    Window* Window::create(const WindowProps &props) {
-        return new WindowsWindow(props);
+
+    GlfwWindow::GlfwWindow(const WindowData &data) {
+        init(data);
     }
 
-    WindowsWindow::WindowsWindow(const WindowProps &props) {
-        init(props);
-    }
-
-    WindowsWindow::~WindowsWindow() {
+    GlfwWindow::~GlfwWindow() {
         shutdown();
     }
 
-    void WindowsWindow::init(const WindowProps &props) {
-        data.title = props.title;
-        data.width = props.width;
-        data.height = props.height;
+    void GlfwWindow::init(const WindowData &data) {
+        windowData = data;
 
-        BZ_LOG_CORE_INFO("Creating window {0} ({1}, {2})", props.title, props.width, props.height);
+        BZ_LOG_CORE_INFO("Creating GLFW window {0} ({1}, {2})", data.title, data.width, data.height);
 
         if(!isGLFWInitialized) {
             glfwSetErrorCallback(GLFWErrorCallback);
@@ -55,15 +51,13 @@ namespace BZ {
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
 
-        window = glfwCreateWindow(static_cast<int>(props.width), static_cast<int>(props.height), data.title.c_str(), nullptr, nullptr);
-        if(!window) {
-            BZ_CORE_ASSERT_ALWAYS("Could not create GLFW Window!");
-        }
-        
+        window = glfwCreateWindow(static_cast<int>(data.width), static_cast<int>(data.height), data.title.c_str(), nullptr, nullptr);
+        BZ_CORE_ASSERT(window, "Could not create GLFW Window!");
+
         graphicsContext = std::make_unique<OpenGLContext>(window);
         graphicsContext->init();
 
-        glfwSetWindowUserPointer(window, &data);
+        glfwSetWindowUserPointer(window, reinterpret_cast<void*>(&windowData));
         setVSync(true);
 
         glfwSetWindowSizeCallback(window, [](GLFWwindow *window, int w, int h) {
@@ -87,20 +81,15 @@ namespace BZ {
             switch(action)
             {
                 case GLFW_PRESS:
+                case GLFW_REPEAT:
                 {
-                    KeyPressedEvent event(key, 0);
+                    KeyPressedEvent event(key, 1);
                     data.eventCallback(event);
                     break;
                 }
                 case GLFW_RELEASE:
                 {
                     KeyReleasedEvent event(key);
-                    data.eventCallback(event);
-                    break;
-                }
-                case GLFW_REPEAT:
-                {
-                    KeyPressedEvent event(key, 1);
                     data.eventCallback(event);
                     break;
                 }
@@ -135,39 +124,35 @@ namespace BZ {
 
         glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
             WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            MouseScrolledEvent event(static_cast<float>(xOffset), static_cast<float>(yOffset));
+            MouseScrolledEvent event(static_cast<int>(xOffset), static_cast<int>(yOffset));
             data.eventCallback(event);
         });
 
         glfwSetCursorPosCallback(window, [](GLFWwindow *window, double x, double y) {
             WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            MouseMovedEvent event(static_cast<float>(x), static_cast<float>(y));
+            MouseMovedEvent event(static_cast<int>(x), static_cast<int>(y));
             data.eventCallback(event);
         });
     }
 
-    void WindowsWindow::shutdown() {
+    void GlfwWindow::shutdown() {
         if(isGLFWInitialized) {
             glfwDestroyWindow(window);
             glfwTerminate();
         }
     }
 
-    void WindowsWindow::onUpdate() {
+    void GlfwWindow::onUpdate() {
         glfwPollEvents();
         graphicsContext->swapBuffers();
     }
 
-    void WindowsWindow::setVSync(bool enabled) {
+    void GlfwWindow::setVSync(bool enabled) {
+        Window::setVSync(enabled);
+
         if(enabled)
             glfwSwapInterval(1);
         else
             glfwSwapInterval(0);
-
-        data.vSync = enabled;
-    }
-
-    bool WindowsWindow::isVSync() const {
-        return data.vSync;
     }
 }

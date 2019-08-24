@@ -122,4 +122,18 @@
 #define BZ_KEY_RIGHT_CONTROL      345
 #define BZ_KEY_RIGHT_ALT          346
 #define BZ_KEY_RIGHT_SUPER        347
-#define BZ_KEY_MENU               348
+#define BZ_KEY_MENU               34
+
+//Mouse
+#define BZ_MOUSE_BUTTON_1         0
+#define BZ_MOUSE_BUTTON_2         1
+#define BZ_MOUSE_BUTTON_3         2
+#define BZ_MOUSE_BUTTON_4         3
+#define BZ_MOUSE_BUTTON_5         4
+#define BZ_MOUSE_BUTTON_6         5
+#define BZ_MOUSE_BUTTON_7         6
+#define BZ_MOUSE_BUTTON_8         7
+#define BZ_MOUSE_BUTTON_LAST      BZ_MOUSE_BUTTON_8
+#define BZ_MOUSE_BUTTON_LEFT      BZ_MOUSE_BUTTON_1
+#define BZ_MOUSE_BUTTON_RIGHT     BZ_MOUSE_BUTTON_2
+#define BZ_MOUSE_BUTTON_MIDDLE    BZ_MOUSE_BUTTON_3

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <Bhazel.h>
-#include <memory>
-
 #include <glm/glm.hpp>
 
 
@@ -30,10 +28,20 @@ private:
 };
 
 
+class EventTestLayer : public BZ::Layer {
+public:
+    void onUpdate(BZ::Timestep timestep) {}
+    void onEvent(BZ::Event &event) override {
+        BZ_LOG_TRACE(event);
+    }
+    void onImGuiRender() {}
+};
+
 class Sandbox : public BZ::Application {
 public:
     Sandbox() {
-        pushLayer(new ExampleLayer());
+        //pushLayer(new ExampleLayer());
+        pushLayer(new EventTestLayer());
     }
 };
 
