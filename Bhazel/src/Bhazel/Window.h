@@ -18,7 +18,7 @@ namespace BZ {
 
         WindowData(const std::string &title = "Bhazel Engine",
                     uint32 width = 1280,
-                    uint32 height = 720)
+                    uint32 height = 800)
             : title(title), width(width), height(height), vsync(true), eventCallback([](Event&) {}) {
         }
     };

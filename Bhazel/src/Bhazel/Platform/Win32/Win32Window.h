@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Bhazel/Window.h"
-#include <memory>
+#include "Bhazel/KeyCodes.h"
 
 
 namespace BZ {
-    
+
+
     class Win32Window : public Window {
     public:
         explicit Win32Window(const WindowData& data);
