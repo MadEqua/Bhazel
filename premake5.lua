@@ -64,14 +64,17 @@ project "Bhazel"
         "opengl32.lib"
     }
 
+    defines
+    {
+        "GLFW_INCLUDE_NONE",
+    }
+
     filter "system:windows"
         systemversion "latest"
 
         defines
         {
             "BZ_PLATFORM_WINDOWS",
-            "BZ_BUILD_DLL",
-            "GLFW_INCLUDE_NONE"
         }
 
     filter "configurations:Debug"

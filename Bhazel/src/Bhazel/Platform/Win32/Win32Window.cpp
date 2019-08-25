@@ -13,7 +13,7 @@ namespace BZ {
     //TODO: These globals will exist even when not using Win32Window
     std::bitset<BZ_MOUSE_BUTTON_LAST + 1> mouseButtons;
     std::bitset<BZ_KEY_LAST + 1> keys;
-    static short int keyTranslationTable[512];
+    static int16 keyTranslationTable[512];
 
 
     BOOL isWindows10BuildOrGreaterWin32(WORD build) {
@@ -260,7 +260,14 @@ namespace BZ {
             case WM_MOUSEWHEEL:
             {
                 WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
-                MouseScrolledEvent event(0, GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+                MouseScrolledEvent event(0.0f, (float) GET_WHEEL_DELTA_WPARAM(wParam) / (float) WHEEL_DELTA);
+                windowData->eventCallback(event);
+                break;
+            }
+            case WM_MOUSEHWHEEL:
+            {
+                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                MouseScrolledEvent event((float) GET_WHEEL_DELTA_WPARAM(wParam) / (float) WHEEL_DELTA, 0.0f);
                 windowData->eventCallback(event);
                 break;
             }

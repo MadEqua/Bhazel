@@ -27,11 +27,6 @@ namespace BZ {
     class Window {
     public:
 
-        enum class API {
-            GLFW,
-            Win32
-        };
-
         virtual ~Window() = default;
 
         virtual void onUpdate() = 0;
@@ -48,12 +43,8 @@ namespace BZ {
 
         static Window* create(const WindowData &data = WindowData());
 
-        static API getAPI() { return api; }
-
     protected:
         WindowData windowData;
         std::unique_ptr<GraphicsContext> graphicsContext;
-
-        static const API api = API::Win32;
     };
 }

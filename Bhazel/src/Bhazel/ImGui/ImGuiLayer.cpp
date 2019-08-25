@@ -16,9 +16,6 @@ namespace BZ {
         time(0.0f) {
     }
 
-    ImGuiLayer::~ImGuiLayer() {
-    }
-
     void ImGuiLayer::onAttach() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();

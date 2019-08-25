@@ -4,7 +4,7 @@
 
 namespace BZ {
 
-    class BZ_API MouseMovedEvent : public Event {
+    class MouseMovedEvent : public Event {
     public:
         MouseMovedEvent(int x, int y)
             : mouseX(x), mouseY(y) {}
@@ -26,13 +26,13 @@ namespace BZ {
     };
 
 
-    class BZ_API MouseScrolledEvent : public Event {
+    class MouseScrolledEvent : public Event {
     public:
-        MouseScrolledEvent(int xOffset, int yOffset)
+        MouseScrolledEvent(float xOffset, float yOffset)
             : xOffset(xOffset), yOffset(yOffset) {}
 
-        inline int getXOffset() const { return xOffset; }
-        inline int getYOffset() const { return yOffset; }
+        inline float getXOffset() const { return xOffset; }
+        inline float getYOffset() const { return yOffset; }
 
         std::string toString() const override {
             std::stringstream ss;
@@ -44,11 +44,11 @@ namespace BZ {
         EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
 
     private:
-        int xOffset, yOffset;
+        float xOffset, yOffset;
     };
 
 
-    class BZ_API MouseButtonEvent : public Event {
+    class MouseButtonEvent : public Event {
     public:
         inline int getMouseButton() const { return button; }
 
@@ -62,7 +62,7 @@ namespace BZ {
     };
 
 
-    class BZ_API MouseButtonPressedEvent : public MouseButtonEvent {
+    class MouseButtonPressedEvent : public MouseButtonEvent {
     public:
         MouseButtonPressedEvent(int button)
             : MouseButtonEvent(button) {}
@@ -77,7 +77,7 @@ namespace BZ {
     };
 
 
-    class BZ_API MouseButtonReleasedEvent : public MouseButtonEvent {
+    class MouseButtonReleasedEvent : public MouseButtonEvent {
     public:
         MouseButtonReleasedEvent(int button)
             : MouseButtonEvent(button) {}

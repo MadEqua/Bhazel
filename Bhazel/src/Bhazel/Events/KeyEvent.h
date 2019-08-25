@@ -4,7 +4,7 @@
 
 namespace BZ {
 
-    class BZ_API KeyEvent : public Event {
+    class KeyEvent : public Event {
     public:
         inline int getKeyCode() const { return keyCode; }
 
@@ -16,7 +16,7 @@ namespace BZ {
     };
 
 
-    class BZ_API KeyPressedEvent : public KeyEvent {
+    class  KeyPressedEvent : public KeyEvent {
     public:
         KeyPressedEvent(int keyCode, int repeatCount) : 
             KeyEvent(keyCode), repeatCount(repeatCount) {}
@@ -36,7 +36,7 @@ namespace BZ {
     };
 
 
-    class BZ_API KeyReleasedEvent : public KeyEvent {
+    class  KeyReleasedEvent : public KeyEvent {
     public:
         KeyReleasedEvent(int keyCode) : 
             KeyEvent(keyCode) {}
@@ -51,7 +51,7 @@ namespace BZ {
     };
 
 
-    class BZ_API KeyTypedEvent : public KeyEvent {
+    class  KeyTypedEvent : public KeyEvent {
     public:
         KeyTypedEvent(int keyCode) :
             KeyEvent(keyCode) {}

@@ -42,9 +42,12 @@ public:
         if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_MIDDLE)) BZ_LOG_TRACE("BZ_MOUSE_BUTTON_MIDDLE");
         if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_4)) BZ_LOG_TRACE("BZ_MOUSE_BUTTON_4");
         if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_5)) BZ_LOG_TRACE("BZ_MOUSE_BUTTON_5");
+
+        auto pos = BZ::Input::getMousePosition();
+        BZ_LOG_TRACE("({0},{1})", pos.first, pos.second);
     }
     void onEvent(BZ::Event &event) override {
-        BZ_LOG_TRACE(event);
+        //BZ_LOG_TRACE(event);
     }
     void onImGuiRender() {}
 };

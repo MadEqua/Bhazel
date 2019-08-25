@@ -13,7 +13,7 @@ namespace BZ {
     class WindowCloseEvent;
     class Layer;
 
-    class BZ_API Application
+    class Application
     {
     public:
         Application();
