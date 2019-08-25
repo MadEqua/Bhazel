@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "RendererAPI.h"
 
 
@@ -10,6 +8,8 @@ namespace BZ {
     class RenderCommand
     {
     public:
+        static void initRendererAPI(RendererAPI *api);
+
         static void drawIndexed(const Ref<VertexArray> &vertexArray) {
             rendererAPI->drawIndexed(vertexArray);
         }

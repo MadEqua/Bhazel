@@ -6,7 +6,6 @@
 
 namespace BZ {
 
-
     class Win32Window : public Window {
     public:
         explicit Win32Window(const WindowData& data);

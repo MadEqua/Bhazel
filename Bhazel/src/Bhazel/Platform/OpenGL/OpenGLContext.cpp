@@ -1,5 +1,6 @@
 #include "bzpch.h"
 #include "OpenGLContext.h"
+#include "OpenGLRendererAPI.h"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -86,9 +87,7 @@ namespace BZ {
     OpenGLContext::OpenGLContext(GLFWwindow *windowHandle) :
         windowHandle(windowHandle) {
         BZ_ASSERT_CORE(windowHandle, "Window handle is null");
-    }
 
-    void OpenGLContext::init() {
         glfwMakeContextCurrent(windowHandle);
         int status = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
         BZ_ASSERT_CORE(status, "Failed to initialize Glad!");
@@ -136,6 +135,9 @@ namespace BZ {
 #else
         glDisable(GL_DEBUG_OUTPUT);
 #endif
+
+        rendererAPI = std::make_unique<OpenGLRendererAPI>();
+        RenderCommand::initRendererAPI(rendererAPI.get());
     }
 
     void OpenGLContext::swapBuffers() {

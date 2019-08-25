@@ -16,7 +16,7 @@ namespace BZ {
         case RendererAPI::API::D3D11:
             return new Win32Window(data);
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown Window API.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown Renderer API.");
             return nullptr;
         }
     }

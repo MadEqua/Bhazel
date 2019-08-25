@@ -7,6 +7,8 @@
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 
+#include "Bhazel/Platform/D3D11/D3D11Context.h"
+
 
 namespace BZ {
 
@@ -416,6 +418,8 @@ namespace BZ {
                      SWP_NOACTIVATE | SWP_NOZORDER);
 
         ShowWindow(hWnd, SW_SHOWDEFAULT);
+
+        graphicsContext = std::make_unique<D3D11Context>();
     }
 
     void Win32Window::shutdown() {

@@ -41,6 +41,8 @@ namespace BZ {
         virtual void setVSync(bool enabled) { windowData.vsync = enabled; };
         bool isVSync() const { return windowData.vsync; }
 
+        GraphicsContext& getGraphicsContext() { return *graphicsContext; }
+
         static Window* create(const WindowData &data = WindowData());
 
     protected:

@@ -22,7 +22,7 @@ namespace BZ {
             instance = new Win32Input(nativeWindowHandle);
             break;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown Window API.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown Renderer API.");
         }
     }
 }

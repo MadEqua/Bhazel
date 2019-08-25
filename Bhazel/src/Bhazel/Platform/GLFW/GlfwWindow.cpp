@@ -55,7 +55,6 @@ namespace BZ {
         BZ_ASSERT_CORE(window, "Could not create GLFW Window!");
 
         graphicsContext = std::make_unique<OpenGLContext>(window);
-        graphicsContext->init();
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(&windowData));
         setVSync(true);

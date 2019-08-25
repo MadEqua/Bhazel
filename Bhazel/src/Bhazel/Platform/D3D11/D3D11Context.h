@@ -2,17 +2,16 @@
 
 #include "Bhazel/Renderer/GraphicsContext.h"
 
-struct GLFWwindow;
 
 namespace BZ {
 
-    class OpenGLContext : public GraphicsContext {
+    class D3D11Context : public GraphicsContext {
     public:
-        OpenGLContext(GLFWwindow *windowHandle);
+        D3D11Context();
 
         virtual void swapBuffers() override;
 
     private:
-        GLFWwindow *windowHandle;
+        //GLFWwindow *windowHandle;
     };
 }
