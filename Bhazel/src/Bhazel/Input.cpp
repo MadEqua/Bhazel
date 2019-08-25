@@ -18,7 +18,7 @@ namespace BZ {
             instance = new GlfwInput();
             break;
         case Window::API::Win32:
-            instance = new Win32Input(static_cast<HWND>(nativeWindowHandle));
+            instance = new Win32Input(nativeWindowHandle);
             break;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown Window API.");

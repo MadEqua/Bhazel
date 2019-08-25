@@ -7,7 +7,7 @@ namespace BZ {
 
     class Win32Input : public Input {
     public:
-        explicit Win32Input(HWND nativeWindow) : nativeWindow(nativeWindow) {}
+        explicit Win32Input(void *nativeWindowHandle) : nativeWindow(static_cast<HWND>(nativeWindowHandle)) {}
 
     protected:
         bool isKeyPressedImpl(int keycode) override;

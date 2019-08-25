@@ -418,12 +418,15 @@ namespace BZ {
 
     void Win32Window::onUpdate() {
         MSG msg;
-        while(GetMessage(&msg, nullptr, 0, 0) > 0) { //TODO this never breaks unless window close
+        while(PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+
+            //PostQuitMessage was called, just stop processing messages
+            if(msg.message == WM_QUIT)
+                break;
+
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-            //BZ_LOG_CORE_DEBUG("received msg!");
         }
-        BZ_LOG_CORE_DEBUG("out of the loop");
         //graphicsContext->swapBuffers();
     }
 

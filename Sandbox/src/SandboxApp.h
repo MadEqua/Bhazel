@@ -44,7 +44,7 @@ public:
         if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_5)) BZ_LOG_TRACE("BZ_MOUSE_BUTTON_5");
     }
     void onEvent(BZ::Event &event) override {
-        //BZ_LOG_TRACE(event);
+        BZ_LOG_TRACE(event);
     }
     void onImGuiRender() {}
 };
