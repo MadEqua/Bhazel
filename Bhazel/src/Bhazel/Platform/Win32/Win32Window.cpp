@@ -1,5 +1,7 @@
 #include "bzpch.h"
 
+#include <bitset>
+
 #include "Win32Window.h"
 #include "Bhazel/Events/ApplicationEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
@@ -8,9 +10,10 @@
 
 namespace BZ {
 
-    //TODO: this should only exist with the Window and not be global
-    bool mouseButtons[BZ_MOUSE_BUTTON_LAST + 1];
-    bool keys[BZ_KEY_LAST + 1];
+    //TODO: These globals will exist even when not using Win32Window
+    std::bitset<BZ_MOUSE_BUTTON_LAST + 1> mouseButtons;
+    std::bitset<BZ_KEY_LAST + 1> keys;
+    static short int keyTranslationTable[512];
 
 
     BOOL isWindows10BuildOrGreaterWin32(WORD build) {
@@ -24,7 +27,6 @@ namespace BZ {
 
 #define isWindows10AnniversaryUpdateOrGreaterWin32() isWindows10BuildOrGreaterWin32(14393)
 
-    static short int keyTranslationTable[512];
 
     static void createKeyTranslationTable() {
         memset(keyTranslationTable, -1, sizeof(keyTranslationTable));
@@ -243,7 +245,7 @@ namespace BZ {
             {
                 if(wParam > 32 && (wParam < 126 || wParam > 160)) {
                     WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
-                    KeyTypedEvent event(wParam);
+                    KeyTypedEvent event(static_cast<int>(wParam));
                     windowData->eventCallback(event);
                 }
                 break;
@@ -350,7 +352,7 @@ namespace BZ {
         createKeyTranslationTable();
         windowData = data;
 
-        BZ_LOG_CORE_INFO("Creating Win32 window {0} ({1}, {2})", data.title, data.width, data.height);
+        BZ_LOG_CORE_INFO("Creating Win32 Window: {0}. Dimensions: ({1}, {2})", data.title, data.width, data.height);
 
         //register window class
         WNDCLASSEXW wndClass = {0};
@@ -383,7 +385,7 @@ namespace BZ {
             GetModuleHandle(nullptr),
             (LPVOID)&windowData //Send custom data to the WndProc callback
         );
-        BZ_CORE_ASSERT(hWnd, "Couldn't create window!");
+        BZ_ASSERT_CORE(hWnd, "Couldn't create window!");
 
         //Adjust client region size now that we can query the window DPI
         RECT rect = {0};

@@ -35,7 +35,7 @@ namespace BZ {
         virtual ~Window() = default;
 
         virtual void onUpdate() = 0;
-        virtual void* getNativeWindow() const = 0;
+        virtual void* getNativeWindowHandle() const = 0;
 
         void setEventCallback(const WindowData::EventCallbackFn &callback) { windowData.eventCallback = callback; }
 

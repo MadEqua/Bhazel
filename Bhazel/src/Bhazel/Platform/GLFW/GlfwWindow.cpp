@@ -30,12 +30,12 @@ namespace BZ {
     void GlfwWindow::init(const WindowData &data) {
         windowData = data;
 
-        BZ_LOG_CORE_INFO("Creating GLFW window {0} ({1}, {2})", data.title, data.width, data.height);
+        BZ_LOG_CORE_INFO("Creating GLFW Window: {0}. Dimensions: ({1}, {2})", data.title, data.width, data.height);
 
         if(!isGLFWInitialized) {
             glfwSetErrorCallback(GLFWErrorCallback);
             int success = glfwInit();
-            BZ_CORE_ASSERT(success, "Could not intialize GLFW!");
+            BZ_ASSERT_CORE(success, "Could not intialize GLFW!");
             isGLFWInitialized = true;
         }
 
@@ -52,7 +52,7 @@ namespace BZ {
 #endif
 
         window = glfwCreateWindow(static_cast<int>(data.width), static_cast<int>(data.height), data.title.c_str(), nullptr, nullptr);
-        BZ_CORE_ASSERT(window, "Could not create GLFW Window!");
+        BZ_ASSERT_CORE(window, "Could not create GLFW Window!");
 
         graphicsContext = std::make_unique<OpenGLContext>(window);
         graphicsContext->init();

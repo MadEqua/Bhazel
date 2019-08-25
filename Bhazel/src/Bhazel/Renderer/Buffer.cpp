@@ -30,7 +30,7 @@ namespace BZ {
         case ShaderDataType::Mat4:
             return 16;
         default:
-            BZ_CORE_ASSERT_ALWAYS("Unknown ShaderDataType.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown ShaderDataType.");
             return 0;
         }
     }
@@ -52,7 +52,7 @@ namespace BZ {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLVertexBuffer>(vertices, size);
         default:
-            BZ_CORE_ASSERT_ALWAYS("Unknown RendererAPI.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
@@ -63,7 +63,7 @@ namespace BZ {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLIndexBuffer>(indices, count);
         default:
-            BZ_CORE_ASSERT_ALWAYS("Unknown RendererAPI.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }

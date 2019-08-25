@@ -9,30 +9,30 @@
 namespace BZ {
 
     bool GlfwInput::isKeyPressedImpl(int keycode) {
-        auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindow());
+        auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle());
         auto state = glfwGetKey(window, keycode);
         return state == GLFW_PRESS || state == GLFW_REPEAT;
     }
 
     bool GlfwInput::isMouseButtonPressedImpl(int button) {
-        auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindow());
+        auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle());
         auto state = glfwGetMouseButton(window, button);
         return state == GLFW_PRESS;
     }
 
-    std::pair<float, float> GlfwInput::getMousePositionImpl() {
-        auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindow());
+    std::pair<int, int> GlfwInput::getMousePositionImpl() {
+        auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle());
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        return std::make_pair(static_cast<float>(xpos), static_cast<float>(ypos));
+        return std::make_pair(static_cast<int>(xpos), static_cast<int>(ypos));
     }
 
-    float GlfwInput::getMouseXImpl() {
+    int GlfwInput::getMouseXImpl() {
         auto[x, y] = getMousePositionImpl();
         return x;
     }
 
-    float GlfwInput::getMouseYImpl() {
+    int GlfwInput::getMouseYImpl() {
         auto[x, y] = getMousePositionImpl();
         return y;
     }

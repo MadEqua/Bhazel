@@ -18,16 +18,16 @@
 
 #ifdef BZ_DIST
     #define BZ_ASSERT(x, ...)
-    #define BZ_CORE_ASSERT(x, ...)
+    #define BZ_ASSERT_CORE(x, ...)
 
     #define BZ_ASSERT_ALWAYS(...)
-    #define BZ_CORE_ASSERT_ALWAYS(...)
+    #define BZ_ASSERT_ALWAYS_CORE(...)
 #else
     #define BZ_ASSERT(x, ...) { if(!(x)) { BZ_LOG_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
-    #define BZ_CORE_ASSERT(x, ...) { if(!(x)) { BZ_LOG_CORE_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+    #define BZ_ASSERT_CORE(x, ...) { if(!(x)) { BZ_LOG_CORE_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
 
     #define BZ_ASSERT_ALWAYS(...) { BZ_LOG_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); }
-    #define BZ_CORE_ASSERT_ALWAYS(...) { BZ_LOG_CORE_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); }
+    #define BZ_ASSERT_ALWAYS_CORE(...) { BZ_LOG_CORE_CRITICAL("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); }
 #endif
 
 #define BIT(x) (1 << x)

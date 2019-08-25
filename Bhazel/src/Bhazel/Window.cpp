@@ -15,7 +15,7 @@ namespace BZ {
         case Window::API::Win32:
             return new Win32Window(data);
         default:
-            BZ_CORE_ASSERT_ALWAYS("Unknown Window API.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown Window API.");
             return nullptr;
         }
     }

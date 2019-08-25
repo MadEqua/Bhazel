@@ -15,7 +15,7 @@ namespace BZ {
         void setVSync(bool enabled) override;
         void onUpdate() override;
 
-        void* getNativeWindow() const override { return hWnd; }
+        void* getNativeWindowHandle() const override { return hWnd; }
 
     private:
         void init(const WindowData& data);

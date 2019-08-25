@@ -20,7 +20,7 @@ namespace BZ {
     }
 
     void OpenGLVertexArray::addVertexBuffer(const Ref<VertexBuffer> &buffer) {
-        BZ_CORE_ASSERT(buffer->getLayout().getElements().size(), "VertexBuffer has no layout.");
+        BZ_ASSERT_CORE(buffer->getLayout().getElements().size(), "VertexBuffer has no layout.");
 
         glBindVertexArray(rendererId);
         buffer->bind();
@@ -64,7 +64,7 @@ namespace BZ {
         case ShaderDataType::Bool:
             return GL_BOOL;
         default:
-            BZ_CORE_ASSERT_ALWAYS("Unknown ShaderDataType.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown ShaderDataType.");
             return 0;
         }
     }

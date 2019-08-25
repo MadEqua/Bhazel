@@ -85,13 +85,13 @@ namespace BZ {
 
     OpenGLContext::OpenGLContext(GLFWwindow *windowHandle) :
         windowHandle(windowHandle) {
-        BZ_CORE_ASSERT(windowHandle, "Window handle is null");
+        BZ_ASSERT_CORE(windowHandle, "Window handle is null");
     }
 
     void OpenGLContext::init() {
         glfwMakeContextCurrent(windowHandle);
         int status = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-        BZ_CORE_ASSERT(status, "Failed to initialize Glad!");
+        BZ_ASSERT_CORE(status, "Failed to initialize Glad!");
 
         BZ_LOG_CORE_INFO("OpenGL Renderer:");
         BZ_LOG_CORE_INFO("  Vendor: {0}", glGetString(GL_VENDOR));

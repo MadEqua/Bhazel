@@ -15,13 +15,13 @@ namespace BZ {
     Application* Application::instance = nullptr;
 
     Application::Application() {
-        BZ_CORE_ASSERT(!instance, "Application already exists")
+        BZ_ASSERT_CORE(!instance, "Application already exists")
         instance = this;
 
         window = std::unique_ptr<Window>(Window::create());
         window->setEventCallback(BZ_BIND_EVENT_FN(Application::onEvent));
 
-        Input::init();
+        Input::init(window->getNativeWindowHandle());
 
         //imGuiLayer = new ImGuiLayer();
         //pushOverlay(imGuiLayer);

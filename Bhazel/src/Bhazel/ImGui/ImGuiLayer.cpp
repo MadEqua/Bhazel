@@ -41,7 +41,7 @@ namespace BZ {
         }
 
         // Setup Platform/Renderer bindings
-        ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindow()), true);
+        ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle()), true);
         ImGui_ImplOpenGL3_Init("#version 430");
     }
 

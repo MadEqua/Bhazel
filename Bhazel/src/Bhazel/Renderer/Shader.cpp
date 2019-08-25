@@ -14,7 +14,7 @@ namespace BZ {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLShader>(vertexSrc, fragmentSrc);
         default:
-            BZ_CORE_ASSERT_ALWAYS("Unknown RendererAPI.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }

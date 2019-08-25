@@ -6,21 +6,22 @@
 #include "Platform/GLFW/GlfwInput.h"
 #include "Platform/Win32/Win32Input.h"
 
+
 namespace BZ {
 
     Input* Input::instance = nullptr;
 
-    void Input::init() {
+    void Input::init(void *nativeWindowHandle) {
         switch(Window::getAPI())
         {
         case Window::API::GLFW:
             instance = new GlfwInput();
             break;
         case Window::API::Win32:
-            instance = new Win32Input();
+            instance = new Win32Input(static_cast<HWND>(nativeWindowHandle));
             break;
         default:
-            BZ_CORE_ASSERT_ALWAYS("Unknown Window API.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown Window API.");
         }
     }
 }

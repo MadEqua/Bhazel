@@ -28,7 +28,7 @@ namespace BZ {
             glDeleteShader(vertexShader);
 
             BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
-            BZ_CORE_ASSERT_ALWAYS("Vertex shader compilation error.");
+            BZ_ASSERT_ALWAYS_CORE("Vertex shader compilation error.");
             return;
         }
 
@@ -49,7 +49,7 @@ namespace BZ {
             glDeleteShader(vertexShader);
 
             BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
-            BZ_CORE_ASSERT_ALWAYS("Fragment shader compilation error.");
+            BZ_ASSERT_ALWAYS_CORE("Fragment shader compilation error.");
             return;
         }
 
@@ -74,7 +74,7 @@ namespace BZ {
             glDeleteShader(fragmentShader);
 
             BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
-            BZ_CORE_ASSERT_ALWAYS("OpenGLShader linking error.");
+            BZ_ASSERT_ALWAYS_CORE("OpenGLShader linking error.");
             return;
         }
 
