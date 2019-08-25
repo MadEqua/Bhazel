@@ -335,6 +335,10 @@ namespace BZ {
 
                 break;
             }
+            case WM_KILLFOCUS:
+                keys.reset();
+                mouseButtons.reset();
+                break;
         }
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }
