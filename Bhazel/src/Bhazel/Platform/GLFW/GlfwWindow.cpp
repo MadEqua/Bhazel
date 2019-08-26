@@ -57,7 +57,6 @@ namespace BZ {
         graphicsContext = std::make_unique<OpenGLContext>(window);
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(&windowData));
-        setVSync(true);
 
         glfwSetWindowSizeCallback(window, [](GLFWwindow *window, int w, int h) {
             WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
@@ -123,7 +122,7 @@ namespace BZ {
 
         glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
             WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
-            MouseScrolledEvent event(static_cast<int>(xOffset), static_cast<int>(yOffset));
+            MouseScrolledEvent event(static_cast<float>(xOffset), static_cast<float>(yOffset));
             data.eventCallback(event);
         });
 
@@ -144,14 +143,5 @@ namespace BZ {
     void GlfwWindow::onUpdate() {
         glfwPollEvents();
         graphicsContext->swapBuffers();
-    }
-
-    void GlfwWindow::setVSync(bool enabled) {
-        Window::setVSync(enabled);
-
-        if(enabled)
-            glfwSwapInterval(1);
-        else
-            glfwSwapInterval(0);
     }
 }

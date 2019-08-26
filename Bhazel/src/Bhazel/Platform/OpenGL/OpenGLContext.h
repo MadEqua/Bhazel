@@ -8,9 +8,10 @@ namespace BZ {
 
     class OpenGLContext : public GraphicsContext {
     public:
-        OpenGLContext(GLFWwindow *windowHandle);
+        explicit OpenGLContext(GLFWwindow *windowHandle);
 
-        virtual void swapBuffers() override;
+        void swapBuffers() override;
+        void setVSync(bool enabled) override;
 
     private:
         GLFWwindow *windowHandle;

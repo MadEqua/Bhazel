@@ -13,13 +13,12 @@ namespace BZ {
         std::string title;
         uint32 width;
         uint32 height;
-        bool vsync;
         EventCallbackFn eventCallback;
 
         WindowData(const std::string &title = "Bhazel Engine",
                     uint32 width = 1280,
                     uint32 height = 800)
-            : title(title), width(width), height(height), vsync(true), eventCallback([](Event&) {}) {
+            : title(title), width(width), height(height), eventCallback([](Event&) {}) {
         }
     };
 
@@ -37,9 +36,6 @@ namespace BZ {
         uint32 getWidth() const { return windowData.width; }
         uint32 getHeight() const {return windowData.height;}
         const std::string& getTitle() const {return windowData.title;}
-
-        virtual void setVSync(bool enabled) { windowData.vsync = enabled; };
-        bool isVSync() const { return windowData.vsync; }
 
         GraphicsContext& getGraphicsContext() { return *graphicsContext; }
 

@@ -196,6 +196,8 @@ namespace BZ {
         return keyTranslationTable[HIWORD(lParam) & 0x1FF];
     }
 
+    static LRESULT (CALLBACK *extraWndProcFunction)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) = nullptr;
+
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         switch(msg) {
             case WM_NCCREATE:
@@ -349,6 +351,9 @@ namespace BZ {
                 mouseButtons.reset();
                 break;
         }
+        if(extraWndProcFunction)
+            extraWndProcFunction(hWnd, msg, wParam, lParam);
+
         return DefWindowProc(hWnd, msg, wParam, lParam);
     }
 
@@ -419,7 +424,7 @@ namespace BZ {
 
         ShowWindow(hWnd, SW_SHOWDEFAULT);
 
-        graphicsContext = std::make_unique<D3D11Context>();
+        graphicsContext = std::make_unique<D3D11Context>(hWnd);
     }
 
     void Win32Window::shutdown() {
@@ -438,11 +443,10 @@ namespace BZ {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-        //graphicsContext->swapBuffers();
+        graphicsContext->swapBuffers();
     }
 
-    void Win32Window::setVSync(bool enabled) {
-        Window::setVSync(enabled);
-        //TODO
+    void Win32Window::setExtraHandlerFunction(LRESULT(*func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)) {
+        extraWndProcFunction = func;
     }
 }

@@ -1,12 +1,16 @@
 #include "bzpch.h"
+
 #include "OpenGLContext.h"
 #include "OpenGLRendererAPI.h"
+#include "Bhazel/Renderer/RenderCommand.h"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
+
 namespace BZ {
 
+#ifndef BZ_DIST
     static void GLAPIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id, GLenum severity,
                                                   GLsizei length, const GLchar *message, const void *userParam) {
         const char* sourceString;
@@ -68,21 +72,22 @@ namespace BZ {
 
         switch(severity) {
         case GL_DEBUG_SEVERITY_HIGH:
-            BZ_LOG_CORE_ERROR("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: {3}. Message: {4}", id, sourceString, typeString, "High", message);
+            BZ_LOG_CORE_ERROR("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: High. Message: {4}", id, sourceString, typeString, message);
             break;
         case GL_DEBUG_SEVERITY_MEDIUM:
-            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: {3}. Message: {4}", id, sourceString, typeString, "Medium", message);
+            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Medium. Message: {4}", id, sourceString, typeString, message);
             break;
         case GL_DEBUG_SEVERITY_LOW:
-            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: {3}. Message: {4}", id, sourceString, typeString, "Low", message);
+            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Low. Message: {4}", id, sourceString, typeString, message);
             break;
         case GL_DEBUG_SEVERITY_NOTIFICATION:
-            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: {3}. Message: {4}", id, sourceString, typeString, "Notification", message);
+            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Notification. Message: {4}", id, sourceString, typeString, message);
             break;
         default:
-            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: {3}. Message: {4}", id, sourceString, typeString, "Unknown", message);
+            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Unknown. Message: {4}", id, sourceString, typeString, message);
         }
     }
+#endif
 
     OpenGLContext::OpenGLContext(GLFWwindow *windowHandle) :
         windowHandle(windowHandle) {
@@ -92,7 +97,7 @@ namespace BZ {
         int status = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
         BZ_ASSERT_CORE(status, "Failed to initialize Glad!");
 
-        BZ_LOG_CORE_INFO("OpenGL Renderer:");
+        BZ_LOG_CORE_INFO("OpenGL Context:");
         BZ_LOG_CORE_INFO("  Vendor: {0}", glGetString(GL_VENDOR));
         BZ_LOG_CORE_INFO("  Renderer: {0}", glGetString(GL_RENDERER));
         BZ_LOG_CORE_INFO("  Version: {0}", glGetString(GL_VERSION));
@@ -142,5 +147,14 @@ namespace BZ {
 
     void OpenGLContext::swapBuffers() {
         glfwSwapBuffers(windowHandle);
+    }
+
+    void OpenGLContext::setVSync(bool enabled) {
+        GraphicsContext::setVSync(enabled);
+
+        if(enabled)
+            glfwSwapInterval(1);
+        else
+            glfwSwapInterval(0);
     }
 }

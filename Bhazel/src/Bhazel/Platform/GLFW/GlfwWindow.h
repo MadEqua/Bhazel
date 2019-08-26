@@ -13,7 +13,6 @@ namespace BZ {
         explicit GlfwWindow(const WindowData& data);
         ~GlfwWindow() override;
 
-        void setVSync(bool enabled) override;
         void onUpdate() override;
 
         void* getNativeWindowHandle() const override { return window; }

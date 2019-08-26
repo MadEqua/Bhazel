@@ -23,8 +23,8 @@ namespace BZ {
 
         Input::init(window->getNativeWindowHandle());
 
-        //imGuiLayer = new ImGuiLayer();
-        //pushOverlay(imGuiLayer);
+        imGuiLayer = new ImGuiLayer();
+        pushOverlay(imGuiLayer);
     }
 
     void Application::run() {
@@ -37,12 +37,12 @@ namespace BZ {
                 layer->onUpdate(timestep);
             }
 
-            /*imGuiLayer->begin();
+            imGuiLayer->begin();
             for(Layer *layer : layerStack) {
                 layer->onImGuiRender();
             }
             imGuiLayer->end();
-            */
+
             window->onUpdate();
         }
     }

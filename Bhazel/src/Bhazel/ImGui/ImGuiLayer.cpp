@@ -4,10 +4,17 @@
 #include "Bhazel/Application.h"
 
 #include <imgui.h>
-#include "examples/imgui_impl_opengl3.h"
-#include "examples/imgui_impl_glfw.h"
 
-#include <GLFW/glfw3.h>
+//#include "examples/imgui_impl_opengl3.h"
+//#include "examples/imgui_impl_glfw.h"
+
+#include "Bhazel/Platform/Win32/Win32Window.h"
+#include "Bhazel/Platform/D3D11/D3D11Context.h"
+#include "examples/imgui_impl_dx11.h"
+#include "examples/imgui_impl_win32.h"
+IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+//#include <GLFW/glfw3.h>
 
 namespace BZ {
 
@@ -38,13 +45,24 @@ namespace BZ {
         }
 
         // Setup Platform/Renderer bindings
-        ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle()), true);
-        ImGui_ImplOpenGL3_Init("#version 430");
+        //ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle()), true);
+        //ImGui_ImplOpenGL3_Init("#version 430");
+
+        Win32Window &window = static_cast<Win32Window&>(Application::getInstance().getWindow());
+        ImGui_ImplWin32_Init(window.getNativeWindowHandle());
+        D3D11Context &context = static_cast<D3D11Context&>(window.getGraphicsContext());
+        window.setExtraHandlerFunction(ImGui_ImplWin32_WndProcHandler);
+
+        ImGui_ImplDX11_Init(context.getDevice(), context.getDeviceContext());
     }
 
     void ImGuiLayer::onDetach() {
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
+        //ImGui_ImplOpenGL3_Shutdown();
+        //ImGui_ImplGlfw_Shutdown();
+
+        ImGui_ImplDX11_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+
         ImGui::DestroyContext();
     }
 
@@ -54,8 +72,12 @@ namespace BZ {
     }
 
     void ImGuiLayer::begin() {
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
+        //ImGui_ImplOpenGL3_NewFrame();
+        //ImGui_ImplGlfw_NewFrame();
+
+        ImGui_ImplDX11_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+
         ImGui::NewFrame();
     }
 
@@ -65,13 +87,18 @@ namespace BZ {
         io.DisplaySize = ImVec2(static_cast<float>(app.getWindow().getWidth()), static_cast<float>(app.getWindow().getHeight()));
 
         ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+        /*ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             GLFWwindow* backupCurrentContext = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backupCurrentContext);
+        }*/
+
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+        if(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
         }
     }
 }

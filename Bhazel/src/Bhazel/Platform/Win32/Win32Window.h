@@ -11,10 +11,11 @@ namespace BZ {
         explicit Win32Window(const WindowData& data);
         ~Win32Window() override;
 
-        void setVSync(bool enabled) override;
         void onUpdate() override;
 
         void* getNativeWindowHandle() const override { return hWnd; }
+
+        void setExtraHandlerFunction(LRESULT (CALLBACK *func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam));
 
     private:
         void init(const WindowData& data);

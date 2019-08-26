@@ -2,6 +2,7 @@
 
 #include <Bhazel.h>
 #include <glm/glm.hpp>
+#include <ImGui/imgui.h>
 
 
 class ExampleLayer : public BZ::Layer {
@@ -49,7 +50,11 @@ public:
     void onEvent(BZ::Event &event) override {
         BZ_LOG_TRACE(event);
     }
-    void onImGuiRender() {}
+    void onImGuiRender() {
+        ImGui::Begin("Test");
+        ImGui::LabelText("Hello!", "");
+        ImGui::End();
+    }
 };
 
 class Sandbox : public BZ::Application {

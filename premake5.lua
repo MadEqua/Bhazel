@@ -77,6 +77,12 @@ project "Bhazel"
             "BZ_PLATFORM_WINDOWS",
         }
 
+        links
+        {
+            "d3d11.lib",
+            "dxguid.lib"
+        }
+
     filter "configurations:Debug"
         defines "BZ_DEBUG"
         runtime "Debug"

@@ -13,6 +13,7 @@
     #include <Windowsx.h>
 #endif
 
+#include "Bhazel/Core/SingletonPattern.h"
 #include "Bhazel/Core/Types.h"
 #include "Bhazel/Core/Log.h"
 #include "Bhazel/Core/Core.h"
