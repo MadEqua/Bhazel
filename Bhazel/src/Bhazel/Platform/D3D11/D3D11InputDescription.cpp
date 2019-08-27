@@ -16,10 +16,22 @@ namespace BZ {
 
     void D3D11InputDescription::bind() const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetInputLayout(inputLayoutPtr.Get()));
+        
+        for(auto &vb : vertexBuffers)
+            vb->bind();
+
+        if(indexBuffer)
+            indexBuffer->bind();
     }
 
     void D3D11InputDescription::unbind() const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetInputLayout(nullptr));
+
+        for(auto &vb : vertexBuffers)
+            vb->unbind();
+
+        if(indexBuffer)
+            indexBuffer->unbind();
     }
 
     void D3D11InputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) {

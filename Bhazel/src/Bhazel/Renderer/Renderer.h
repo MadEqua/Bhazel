@@ -10,6 +10,12 @@ namespace BZ {
 
     class OrtographicCamera;
 
+    enum class RenderMode {
+        Points,
+        Lines,
+        Triangles
+    };
+
     class Renderer
     {
     public:

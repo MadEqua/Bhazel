@@ -5,6 +5,8 @@
 
 namespace BZ {
 
+    enum class RenderMode;
+
     class RenderCommand
     {
     public:
@@ -24,6 +26,14 @@ namespace BZ {
 
         static void clearColorAndDepthStencilBuffers() {
             rendererAPI->clearColorAndDepthStencilBuffers();
+        }
+
+        static void setViewport(int left, int top, int width, int height) {
+            rendererAPI->setViewport(left, top, width, height);
+        }
+
+        static void setRenderMode(RenderMode mode) {
+            rendererAPI->setRenderMode(mode);
         }
 
         static void drawIndexed(const Ref<InputDescription> &inputDescription) {

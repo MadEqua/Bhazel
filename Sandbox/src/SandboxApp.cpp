@@ -102,6 +102,9 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
     inputDescription->addVertexBuffer(vertexBuffer, shader);
     inputDescription->setIndexBuffer(indexBuffer);
 
+    BZ::RenderCommand::setViewport(0, 0, 1280, 800);
+    BZ::RenderCommand::setRenderMode(BZ::RenderMode::Triangles);
+
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
 

@@ -7,7 +7,9 @@
 
 
 namespace BZ {
-    
+
+    enum class RenderMode;
+
     class RendererAPI {
     public:
         enum class API  {
@@ -22,6 +24,9 @@ namespace BZ {
         virtual void setStencilClearValue(int value) = 0;
 
         virtual void clearColorAndDepthStencilBuffers() = 0;
+
+        virtual void setViewport(int left, int top, int width, int height) = 0;
+        virtual void setRenderMode(RenderMode mode) = 0;
 
         virtual void drawIndexed(const Ref<InputDescription> &inputDesc) = 0;
 
