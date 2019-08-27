@@ -4,6 +4,7 @@
 #include "Renderer.h"
 
 #include "Bhazel/Platform/OpenGL/OpenGLShader.h"
+#include "Bhazel/Platform/D3D11/D3D11Shader.h"
 
 
 namespace BZ {
@@ -13,6 +14,8 @@ namespace BZ {
         {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLShader>(vertexSrc, fragmentSrc);
+        case RendererAPI::API::D3D11:
+            return MakeRef<D3D11Shader>(vertexSrc, fragmentSrc);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

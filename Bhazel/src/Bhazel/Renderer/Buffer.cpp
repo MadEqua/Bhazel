@@ -4,6 +4,7 @@
 #include "Renderer.h"
 
 #include "Bhazel/Platform/OpenGL/OpenGLBuffer.h"
+#include "Bhazel/Platform/D3D11/D3D11Buffer.h"
 
 namespace BZ {
 
@@ -12,15 +13,23 @@ namespace BZ {
         {
         case ShaderDataType::Float:
         case ShaderDataType::Int:
+        case ShaderDataType::Int16:
+        case ShaderDataType::Int8:
+        case ShaderDataType::Uint:
+        case ShaderDataType::Uint16:
+        case ShaderDataType::Uint8:
         case ShaderDataType::Bool:
             return 1;
         case ShaderDataType::Vec2i:
+        case ShaderDataType::Vec2ui:
         case ShaderDataType::Vec2:
             return 2;
         case ShaderDataType::Vec3i:
+        case ShaderDataType::Vec3ui:
         case ShaderDataType::Vec3:
             return 3;
         case ShaderDataType::Vec4i:
+        case ShaderDataType::Vec4ui:
         case ShaderDataType::Vec4:
             return 4;
         case ShaderDataType::Mat2:
@@ -46,11 +55,13 @@ namespace BZ {
     }
 
 
-    Ref<VertexBuffer> VertexBuffer::create(float *vertices, uint32 size) {
+    Ref<VertexBuffer> VertexBuffer::create(float *vertices, uint32 size, const BufferLayout &layout) {
         switch(Renderer::getAPI())
         {
         case RendererAPI::API::OpenGL:
-            return MakeRef<OpenGLVertexBuffer>(vertices, size);
+            return MakeRef<OpenGLVertexBuffer>(vertices, size, layout);
+        case RendererAPI::API::D3D11:
+            return MakeRef<D3D11VertexBuffer>(vertices, size, layout);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
@@ -62,6 +73,8 @@ namespace BZ {
         {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLIndexBuffer>(indices, count);
+        case RendererAPI::API::D3D11:
+            return MakeRef<D3D11IndexBuffer>(indices, count);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

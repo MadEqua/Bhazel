@@ -1,18 +1,19 @@
 #pragma once
 
 #include "Bhazel/Renderer/InputDescription.h"
+#include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Buffer.h"
 
-#include <memory>
-#include <glad/glad.h>
+#include "D3D11Context.h"
+#include "D3D11Includes.h"
+
 
 namespace BZ {
 
-    class OpenGLInputDescription : public InputDescription
+    class D3D11InputDescription : public InputDescription
     {
     public:
-        OpenGLInputDescription();
-        virtual ~OpenGLInputDescription() override;
+        D3D11InputDescription();
 
         virtual void bind() const override;
         virtual void unbind() const override;
@@ -21,8 +22,11 @@ namespace BZ {
         virtual void setIndexBuffer(const Ref<IndexBuffer> &buffer) override;
 
     private:
-        GLuint rendererId;
+        D3D11Context &context;
+        wrl::ComPtr<ID3D11InputLayout> inputLayoutPtr;
 
-        static GLenum shaderDataTypeToGL(ShaderDataType dataType);
+        std::vector<D3D11_INPUT_ELEMENT_DESC> ieds;
+
+        static DXGI_FORMAT shaderDataTypeToD3D11(ShaderDataType dataType, bool normalized);
     };
 }

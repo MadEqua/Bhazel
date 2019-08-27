@@ -28,6 +28,7 @@ namespace BZ {
 
         inline Window& getWindow() { return *window; }
         inline static Application& getInstance() { return *instance; }
+
     private:
         bool onWindowClose(WindowCloseEvent &e);
 

@@ -8,7 +8,7 @@ namespace BZ {
     
     class OpenGLVertexBuffer : public VertexBuffer {
     public:
-        OpenGLVertexBuffer(float *vertices, uint32 size);
+        OpenGLVertexBuffer(float *vertices, uint32 size, const BufferLayout &layout);
         virtual ~OpenGLVertexBuffer() override;
 
         virtual void bind() const override;

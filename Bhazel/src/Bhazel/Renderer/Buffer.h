@@ -6,9 +6,13 @@
 namespace BZ {
 
     enum class ShaderDataType {
-        Float, Int, Bool,
-        Vec2i, Vec3i, Vec4i,
+        Float,
+        Int, Int16, Int8,
+        Uint, Uint16, Uint8,
+        Bool,
         Vec2, Vec3, Vec4,
+        Vec2i, Vec3i, Vec4i,
+        Vec2ui, Vec3ui, Vec4ui,
         Mat2, Mat3, Mat4
     };
 
@@ -19,20 +23,36 @@ namespace BZ {
             return sizeof(float);
         case ShaderDataType::Int:
             return sizeof(int);
+        case ShaderDataType::Int16:
+            return sizeof(int16);
+        case ShaderDataType::Int8:
+            return sizeof(int8);
+        case ShaderDataType::Uint:
+            return sizeof(uint32);
+        case ShaderDataType::Uint16:
+            return sizeof(uint16);
+        case ShaderDataType::Uint8:
+            return sizeof(uint8);
         case ShaderDataType::Bool:
             return sizeof(bool);
-        case ShaderDataType::Vec2i:
-            return sizeof(int) * 2;
-        case ShaderDataType::Vec3i:
-            return sizeof(int) * 3;
-        case ShaderDataType::Vec4i:
-            return sizeof(int) * 4;
         case ShaderDataType::Vec2:
             return sizeof(float) * 2;
         case ShaderDataType::Vec3:
             return sizeof(float) * 3;
         case ShaderDataType::Vec4:
             return sizeof(float) * 4;
+        case ShaderDataType::Vec2i:
+            return sizeof(int) * 2;
+        case ShaderDataType::Vec3i:
+            return sizeof(int) * 3;
+        case ShaderDataType::Vec4i:
+            return sizeof(int) * 4;
+        case ShaderDataType::Vec2ui:
+            return sizeof(uint32) * 2;
+        case ShaderDataType::Vec3ui:
+            return sizeof(uint32) * 3;
+        case ShaderDataType::Vec4ui:
+            return sizeof(uint32) * 4;
         case ShaderDataType::Mat2:
             return sizeof(float) * 4;
         case ShaderDataType::Mat3:
@@ -71,6 +91,7 @@ namespace BZ {
         }
 
         const auto& getElements() const { return elements; }
+        uint32 getElementCount() const { return static_cast<uint32>(elements.size()); }
         uint32 getStride() const { return stride; }
 
         std::vector<BufferElement>::iterator begin() { return elements.begin(); }
@@ -99,12 +120,13 @@ namespace BZ {
 
     class VertexBuffer : public Buffer {
     public:
-        static Ref<VertexBuffer> create(float *vertices, uint32 size);
+        static Ref<VertexBuffer> create(float *vertices, uint32 size, const BufferLayout &layout);
 
-        void setLayout(const BufferLayout &layout) { this->layout = layout; }
         const BufferLayout& getLayout() const { return layout; };
 
     protected:
+        VertexBuffer(const BufferLayout &layout) : layout(layout) {}
+
         BufferLayout layout;
     };
 

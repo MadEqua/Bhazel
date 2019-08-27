@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Buffer.h"
+#include "Shader.h"
 
 
 namespace BZ {
@@ -13,7 +14,7 @@ namespace BZ {
         virtual void bind() const = 0;
         virtual void unbind() const = 0;
 
-        virtual void addVertexBuffer(const Ref<VertexBuffer> &buffer) = 0;
+        virtual void addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) = 0;
         virtual void setIndexBuffer(const Ref<IndexBuffer> &buffer) = 0;
 
         std::vector<Ref<VertexBuffer>>& getVertexBuffers() { return vertexBuffers; }

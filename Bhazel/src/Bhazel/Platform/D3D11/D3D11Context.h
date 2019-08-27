@@ -15,6 +15,7 @@ namespace BZ {
 
         ID3D11Device* getDevice() { return device.Get(); }
         ID3D11DeviceContext* getDeviceContext() { return deviceContext.Get(); }
+        IDXGISwapChain* getSwapChain() { return swapChain.Get(); }
 
     private:
         HWND windowHandle;

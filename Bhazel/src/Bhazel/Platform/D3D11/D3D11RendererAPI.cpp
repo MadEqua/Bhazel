@@ -1,13 +1,13 @@
 #include "bzpch.h"
 
 #include "D3D11RendererAPI.h"
+#include "D3D11Context.h"
 
 
 namespace BZ {
 
-    D3D11RendererAPI::D3D11RendererAPI(ID3D11Device *device, ID3D11DeviceContext *deviceContext, IDXGISwapChain* swapchain,
-                                       ID3D11RenderTargetView *backBufferView, ID3D11DepthStencilView *depthStencilView) :
-        device(device), deviceContext(deviceContext), swapChain(swapchain),
+    D3D11RendererAPI::D3D11RendererAPI(D3D11Context &context, ID3D11RenderTargetView *backBufferView, ID3D11DepthStencilView *depthStencilView) :
+        context(context), device(context.getDevice()), deviceContext(context.getDeviceContext()), swapChain(context.getSwapChain()),
         backBufferView (backBufferView), depthStencilView (depthStencilView) {
     }
 

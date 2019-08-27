@@ -14,7 +14,7 @@ namespace BZ {
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {0};
         swapChainDesc.BufferDesc.Width = 0;
         swapChainDesc.BufferDesc.Height = 0;
-        swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; //TODO: srgb?
+        swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
         swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
         swapChainDesc.BufferDesc.RefreshRate.Denominator = 0;
         swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
@@ -76,8 +76,7 @@ namespace BZ {
 
         testinit();
 
-        rendererAPI = std::make_unique<D3D11RendererAPI>(device.Get(), deviceContext.Get(), swapChain.Get(), 
-                                                         backBufferView.Get(), depthStencilView.Get());
+        rendererAPI = std::make_unique<D3D11RendererAPI>(*this, backBufferView.Get(), depthStencilView.Get());
         RenderCommand::initRendererAPI(rendererAPI.get());
     }
 
@@ -196,6 +195,23 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->RSSetViewports(1, &viewport));
 
         BZ_LOG_DXGI(deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+
+
+        wrl::ComPtr<ID3D11RasterizerState> rsState;
+        D3D11_RASTERIZER_DESC rsDesc = {0};
+        rsDesc.FillMode = D3D11_FILL_SOLID;
+        rsDesc.CullMode = D3D11_CULL_BACK;
+        rsDesc.FrontCounterClockwise = TRUE;
+        rsDesc.DepthBias = 0;
+        rsDesc.DepthBiasClamp = 0;
+        rsDesc.SlopeScaledDepthBias = 0;
+        rsDesc.DepthClipEnable = TRUE;
+        rsDesc.ScissorEnable = FALSE;
+        rsDesc.MultisampleEnable = FALSE;
+        rsDesc.AntialiasedLineEnable = FALSE;
+
+        BZ_ASSERT_HRES_DXGI(device->CreateRasterizerState(&rsDesc, &rsState));
+        BZ_LOG_DXGI(deviceContext->RSSetState(rsState.Get()));
     }
 
     void D3D11Context::testdraw() {

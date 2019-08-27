@@ -80,7 +80,8 @@ project "Bhazel"
         links
         {
             "d3d11.lib",
-            "dxguid.lib"
+            "dxguid.lib",
+            "D3DCompiler.lib",
         }
 
     filter "configurations:Debug"

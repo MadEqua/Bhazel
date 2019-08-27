@@ -4,7 +4,8 @@
 
 namespace BZ {
 
-    OpenGLVertexBuffer::OpenGLVertexBuffer(float *vertices, uint32 size) {
+    OpenGLVertexBuffer::OpenGLVertexBuffer(float *vertices, uint32 size, const BufferLayout &layout) :
+        VertexBuffer(layout) {
         glGenBuffers(1, &rendererId);
         glBindBuffer(GL_ARRAY_BUFFER, rendererId);
         glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);

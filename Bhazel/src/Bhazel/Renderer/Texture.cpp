@@ -12,6 +12,8 @@ namespace BZ {
         {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLTexture2D>(path);
+        case RendererAPI::API::D3D11:
+            //return MakeRef<OpenGLTexture2D>(path);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

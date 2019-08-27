@@ -19,8 +19,10 @@ namespace BZ {
         glBindVertexArray(0);
     }
 
-    void OpenGLInputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer) {
-        BZ_ASSERT_CORE(buffer->getLayout().getElements().size(), "VertexBuffer has no layout.");
+    void OpenGLInputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) {
+        //TODO use the vertex shader to do some validations
+
+        BZ_ASSERT_CORE(buffer->getLayout().getElementCount(), "VertexBuffer has no layout.");
 
         glBindVertexArray(rendererId);
         buffer->bind();
@@ -61,6 +63,19 @@ namespace BZ {
         case ShaderDataType::Vec3i:
         case ShaderDataType::Vec4i:
             return GL_INT;
+        case ShaderDataType::Uint:
+        case ShaderDataType::Vec2ui:
+        case ShaderDataType::Vec3ui:
+        case ShaderDataType::Vec4ui:
+            return GL_UNSIGNED_INT;
+        case ShaderDataType::Int16:
+            return GL_SHORT;
+        case ShaderDataType::Int8:
+            return GL_BYTE;
+        case ShaderDataType::Uint16:
+            return GL_UNSIGNED_SHORT;
+        case ShaderDataType::Uint8:
+            return GL_UNSIGNED_BYTE;
         case ShaderDataType::Bool:
             return GL_BOOL;
         default:

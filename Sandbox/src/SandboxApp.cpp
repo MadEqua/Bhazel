@@ -6,42 +6,7 @@
 
 ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f,
-
-        0.5f, -0.5f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        1.0f, 0.0f,
-
-        0.5f, 0.5f, 0.0f, 
-        0.0f, 0.0f, 1.0f,
-        1.0f, 1.0f,
-
-        -0.5f, 0.5f, 0.0f,
-        0.0f, 0.0f, 1.0f,
-        0.0f, 1.0f,
-    };
-    vertexBuffer = BZ::VertexBuffer::create(vertices, sizeof(vertices));
-    vertexBuffer->bind();
-
-    BZ::BufferLayout layout = {
-        {BZ::ShaderDataType::Vec3, "position"},
-        {BZ::ShaderDataType::Vec3, "color"},
-        {BZ::ShaderDataType::Vec2, "texCoord"}
-    };
-    vertexBuffer->setLayout(layout);
-
-    uint32 indices[] = {0, 1, 2, 0, 2, 3};
-    indexBuffer = BZ::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32));
-    indexBuffer->bind();
-
-    inputDescription = BZ::InputDescription::create();
-    inputDescription->addVertexBuffer(vertexBuffer);
-    inputDescription->setIndexBuffer(indexBuffer);
-
-    const char * v = R"(
+    const char * glVS = R"(
             #version 430 core
             layout(location = 0) in vec3 pos;
             layout(location = 1) in vec3 col;
@@ -56,10 +21,11 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
             void main() {
                 vCol = col;
                 vTexCoord = texCoord;
-                gl_Position = viewProjectionMatrix * modelMatrix * vec4(pos, 1.0);
+                //gl_Position = viewProjectionMatrix * modelMatrix * vec4(pos, 1.0);
+                gl_Position = vec4(pos, 1.0);
             }
         )";
-    const char * f = R"(
+    const char * glFS = R"(
             #version 430 core
             layout(location = 0) out vec4 col;
 
@@ -70,12 +36,71 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
             
             void main() {
                 vec4 texCol = texture(colorTexture, vTexCoord);
-                col = vec4(texCol.rgb, 1.0);
+                //col = vec4(texCol.rgb, 1.0);
+                col = vec4(vCol, 1.0);
             }
         )";
 
-    shader = BZ::Shader::create(v, f);
-    texture = BZ::Texture2D::create("test.jpg");
+    const char* d3dVS = R"(
+            struct VsOut {
+                float3 col : COLOR;
+                float4 pos : SV_POSITION;
+            };
+
+            VsOut main(float3 pos : POSITION, float3 col : COLOR) {
+                VsOut res;
+                res.pos = float4(pos, 1.0);
+                res.col = col;
+                return res;
+            }
+        )";
+
+    const char* d3dPS = R"(
+            struct PsIn {
+                float3 col : COLOR;
+            };
+
+            float4 main(PsIn input) : SV_TARGET {
+                return float4(input.col, 1.0);
+            }
+        )";
+
+    shader = BZ::RendererAPI::getAPI() == BZ::RendererAPI::API::OpenGL ? BZ::Shader::create(glVS, glFS) : BZ::Shader::create(d3dVS, d3dPS);
+    //texture = BZ::Texture2D::create("test.jpg");
+
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f,
+
+        0.5f, -0.5f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f,
+
+        0.5f, 0.5f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        1.0f, 1.0f,
+
+        -0.5f, 0.5f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 1.0f,
+    };
+
+    BZ::BufferLayout layout = {
+        {BZ::ShaderDataType::Vec3, "POSITION"},
+        {BZ::ShaderDataType::Vec3, "COLOR"},
+        {BZ::ShaderDataType::Vec2, "TEXCOORD"}
+    };
+    vertexBuffer = BZ::VertexBuffer::create(vertices, sizeof(vertices), layout);
+    vertexBuffer->bind();
+
+    uint32 indices[] = {0, 1, 2, 0, 2, 3};
+    indexBuffer = BZ::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32));
+    indexBuffer->bind();
+
+    inputDescription = BZ::InputDescription::create();
+    inputDescription->addVertexBuffer(vertexBuffer, shader);
+    inputDescription->setIndexBuffer(indexBuffer);
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
@@ -106,11 +131,11 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
         for(int j = 0; j < 20; ++j) {
             glm::vec3 pos(i * 0.11f, j * 0.11f, 0);
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), pos) * scaleMat;
-            BZ::Renderer::submit(shader, vertexArray, modelMatrix);
+            BZ::Renderer::submit(shader, inputDescription, modelMatrix);
         }
     }*/
 
-    texture->bind(0);
+    //texture->bind(0);
     BZ::Renderer::submit(shader, inputDescription);
     BZ::Renderer::endScene();
 }
@@ -127,7 +152,7 @@ void ExampleLayer::onImGuiRender() {
 }
 
 bool ExampleLayer::onKeyPressedEvent(BZ::KeyPressedEvent &event) {
-    BZ_LOG_TRACE("KeyPressed: {0}", event);
+    //BZ_LOG_TRACE("KeyPressed: {0}", event);
     return false;
 }
 
