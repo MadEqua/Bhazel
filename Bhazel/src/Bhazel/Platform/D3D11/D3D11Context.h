@@ -2,10 +2,7 @@
 
 #include "Bhazel/Renderer/GraphicsContext.h"
 
-#include <d3d11.h>
-#include <wrl.h>
-
-namespace wrl = Microsoft::WRL;
+#include "D3D11Includes.h"
 
 
 namespace BZ {
@@ -23,8 +20,8 @@ namespace BZ {
         HWND windowHandle;
 
         wrl::ComPtr<ID3D11Device> device;
-        wrl::ComPtr<IDXGISwapChain> swapChain;
         wrl::ComPtr<ID3D11DeviceContext> deviceContext;
+        wrl::ComPtr<IDXGISwapChain> swapChain;
 
         //TESTING
         void testinit();
@@ -34,6 +31,5 @@ namespace BZ {
         wrl::ComPtr<ID3D11VertexShader> vertexShader;
         wrl::ComPtr<ID3D11PixelShader> pixelShader;
 
-        wrl::ComPtr<ID3D11RenderTargetView> backBufferView;
     };
 }

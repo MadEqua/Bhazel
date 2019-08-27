@@ -14,7 +14,7 @@ public:
 
 
 private:
-    BZ::Ref<BZ::VertexArray> vertexArray;
+    BZ::Ref<BZ::InputDescription> inputDescription;
     BZ::Ref<BZ::Shader> shader;
     BZ::Ref<BZ::VertexBuffer> vertexBuffer;
     BZ::Ref<BZ::IndexBuffer> indexBuffer;
@@ -46,6 +46,8 @@ public:
 
         //auto pos = BZ::Input::getMousePosition();
         //BZ_LOG_TRACE("({0},{1})", pos.first, pos.second);
+
+        BZ::RenderCommand::clearColorAndDepthStencilBuffers();
     }
     void onEvent(BZ::Event &event) override {
         BZ_LOG_TRACE(event);

@@ -2,11 +2,8 @@
 
 #include "D3D11Context.h"
 #include "D3D11RendererAPI.h"
-#include "D3D11Debug.h"
 
 #include "Bhazel/Renderer/RenderCommand.h"
-
-#include <d3dcompiler.h>
 
 
 namespace BZ {
@@ -25,7 +22,7 @@ namespace BZ {
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swapChainDesc.BufferCount = 2;
+        swapChainDesc.BufferCount = 1;
         swapChainDesc.OutputWindow = windowHandle;
         swapChainDesc.Windowed = TRUE;
         swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
@@ -43,9 +40,44 @@ namespace BZ {
         BZ_ASSERT_CORE(device, "Error creating Device!");
         BZ_ASSERT_CORE(deviceContext, "Error creating DeviceContext!");
 
+
+        //Create Depth/Stencil Buffer
+        wrl::ComPtr<ID3D11Texture2D> backBuffer;
+        BZ_ASSERT_HRES_DXGI(swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
+
+        wrl::ComPtr<ID3D11Texture2D> depthStencilBuffer;
+        D3D11_TEXTURE2D_DESC descDepthStencil = {0};
+        backBuffer->GetDesc(&descDepthStencil); //Reuse back buffer description
+        descDepthStencil.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        descDepthStencil.Usage = D3D11_USAGE_DEFAULT;
+        descDepthStencil.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+        BZ_ASSERT_HRES_DXGI(device->CreateTexture2D(&descDepthStencil, nullptr, &depthStencilBuffer));
+
+        //Create Views
+        wrl::ComPtr<ID3D11RenderTargetView> backBufferView;
+        wrl::ComPtr<ID3D11DepthStencilView> depthStencilView;
+
+        BZ_ASSERT_HRES_DXGI(device->CreateRenderTargetView(backBuffer.Get(), nullptr, &backBufferView));
+        BZ_ASSERT_HRES_DXGI(device->CreateDepthStencilView(depthStencilBuffer.Get(), nullptr, &depthStencilView));
+
+        BZ_LOG_DXGI(deviceContext->OMSetRenderTargets(1, backBufferView.GetAddressOf(), depthStencilView.Get()));
+
+        //TODO: making some default assumptions here
+        D3D11_DEPTH_STENCIL_DESC dsDesc = {0};
+        dsDesc.DepthEnable = true;
+        dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+        dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+        dsDesc.StencilEnable = false;
+
+        wrl::ComPtr<ID3D11DepthStencilState> dsState;
+        BZ_ASSERT_HRES_DXGI(device->CreateDepthStencilState(&dsDesc, &dsState))
+        deviceContext->OMSetDepthStencilState(dsState.Get(), 1);
+
         testinit();
 
-        rendererAPI = std::make_unique<D3D11RendererAPI>();
+        rendererAPI = std::make_unique<D3D11RendererAPI>(device.Get(), deviceContext.Get(), swapChain.Get(), 
+                                                         backBufferView.Get(), depthStencilView.Get());
         RenderCommand::initRendererAPI(rendererAPI.get());
     }
 
@@ -79,8 +111,8 @@ namespace BZ {
 
         const char* vs = R"(
             struct VsOut {
-                float4 pos : SV_POSITION;
                 float3 col : COLOR;
+                float4 pos : SV_POSITION;
             };
 
             VsOut main(float3 pos : POSITION, float3 col : COLOR) {
@@ -93,7 +125,6 @@ namespace BZ {
 
         const char* fs = R"(
             struct PsIn {
-                float4 pos : SV_POSITION;
                 float3 col : COLOR;
             };
 
@@ -152,12 +183,6 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->IASetInputLayout(inputLayout.Get()));
 
 
-        wrl::ComPtr<ID3D11Resource> backBuffer;
-        BZ_ASSERT_HRES_DXGI(swapChain->GetBuffer(0, __uuidof(ID3D11Resource), &backBuffer));
-
-        BZ_ASSERT_HRES_DXGI(device->CreateRenderTargetView(backBuffer.Get(), nullptr, &backBufferView));
-
-        BZ_LOG_DXGI(deviceContext->OMSetRenderTargets(1, backBufferView.GetAddressOf(), nullptr));
 
 
 
@@ -174,13 +199,13 @@ namespace BZ {
     }
 
     void D3D11Context::testdraw() {
-        float color[] = {0.2f, 0.4f, 0.2f};
+        /*float color[] = {0.2f, 0.4f, 0.2f};
         deviceContext->ClearRenderTargetView(backBufferView.Get(), color);
-        BZ_LOG_DXGI(deviceContext->Draw(3, 0));
+        BZ_LOG_DXGI(deviceContext->Draw(3, 0));*/
     }
 
     void D3D11Context::swapBuffers() {
-        testdraw();
+        //testdraw();
 
         BZ_ASSERT_HRES_DXGI(swapChain->Present(static_cast<uint32>(vsync), 0));
     }

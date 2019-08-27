@@ -1,17 +1,17 @@
 #include "bzpch.h"
 
-#include "VertexArray.h"
+#include "InputDescription.h"
 #include "Renderer.h"
 
-#include "Bhazel/Platform/OpenGL/OpenGLVertexArray.h"
+#include "Bhazel/Platform/OpenGL/OpenGLInputDescription.h"
 
 namespace BZ {
 
-    Ref<VertexArray> VertexArray::create() {
+    Ref<InputDescription> InputDescription::create() {
         switch(Renderer::getAPI())
         {
         case RendererAPI::API::OpenGL:
-            return MakeRef<OpenGLVertexArray>();
+            return MakeRef<OpenGLInputDescription>();
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

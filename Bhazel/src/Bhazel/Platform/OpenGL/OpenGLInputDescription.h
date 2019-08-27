@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Bhazel/Renderer/VertexArray.h"
+#include "Bhazel/Renderer/InputDescription.h"
 #include "Bhazel/Renderer/Buffer.h"
 
 #include <memory>
@@ -8,11 +8,11 @@
 
 namespace BZ {
 
-    class OpenGLVertexArray : public VertexArray
+    class OpenGLInputDescription : public InputDescription
     {
     public:
-        OpenGLVertexArray();
-        virtual ~OpenGLVertexArray() override;
+        OpenGLInputDescription();
+        virtual ~OpenGLInputDescription() override;
 
         virtual void bind() const override;
         virtual void unbind() const override;

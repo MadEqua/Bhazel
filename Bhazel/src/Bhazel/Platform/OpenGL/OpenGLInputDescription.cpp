@@ -1,25 +1,25 @@
 #include "bzpch.h"
-#include "OpenGLVertexArray.h"
+#include "OpenGLInputDescription.h"
 
 namespace BZ {
 
-    OpenGLVertexArray::OpenGLVertexArray() {
+    OpenGLInputDescription::OpenGLInputDescription() {
         glGenVertexArrays(1, &rendererId);
     }
 
-    OpenGLVertexArray::~OpenGLVertexArray() {
+    OpenGLInputDescription::~OpenGLInputDescription() {
         glDeleteVertexArrays(1, &rendererId);
     }
 
-    void OpenGLVertexArray::bind() const {
+    void OpenGLInputDescription::bind() const {
         glBindVertexArray(rendererId);
     }
 
-    void OpenGLVertexArray::unbind() const {
+    void OpenGLInputDescription::unbind() const {
         glBindVertexArray(0);
     }
 
-    void OpenGLVertexArray::addVertexBuffer(const Ref<VertexBuffer> &buffer) {
+    void OpenGLInputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer) {
         BZ_ASSERT_CORE(buffer->getLayout().getElements().size(), "VertexBuffer has no layout.");
 
         glBindVertexArray(rendererId);
@@ -38,14 +38,14 @@ namespace BZ {
         vertexBuffers.emplace_back(buffer);
     }
 
-    void OpenGLVertexArray::setIndexBuffer(const Ref<IndexBuffer> &buffer) {
+    void OpenGLInputDescription::setIndexBuffer(const Ref<IndexBuffer> &buffer) {
         glBindVertexArray(rendererId);
         buffer->bind();
 
         indexBuffer = buffer;
     }
 
-    GLenum OpenGLVertexArray::shaderDataTypeToGL(ShaderDataType dataType) {
+    GLenum OpenGLInputDescription::shaderDataTypeToGL(ShaderDataType dataType) {
         switch(dataType)
         {
         case ShaderDataType::Float:

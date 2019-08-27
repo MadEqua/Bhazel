@@ -3,7 +3,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 
-#include "VertexArray.h"
+#include "InputDescription.h"
 
 
 namespace BZ {
@@ -18,9 +18,12 @@ namespace BZ {
         virtual ~RendererAPI() = default;
 
         virtual void setClearColor(const glm::vec4 &color) = 0;
-        virtual void clear() = 0;
+        virtual void setDepthClearValue(float value) = 0;
+        virtual void setStencilClearValue(int value) = 0;
 
-        virtual void drawIndexed(const Ref<VertexArray> &vertexArray) = 0;
+        virtual void clearColorAndDepthStencilBuffers() = 0;
+
+        virtual void drawIndexed(const Ref<InputDescription> &inputDesc) = 0;
 
         static API getAPI() { return api; }
 

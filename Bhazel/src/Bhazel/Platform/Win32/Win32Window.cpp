@@ -386,11 +386,11 @@ namespace BZ {
         wndClass.lpszMenuName = nullptr;
         wndClass.lpszClassName = CLASS_NAME;
         wndClass.hIconSm = nullptr;
-        RegisterClassEx(&wndClass);
+        RegisterClassExW(&wndClass);
 
         //create window instance
         DWORD winStyle = WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX;
-        hWnd = CreateWindowEx(
+        hWnd = CreateWindowExW(
             0,
             CLASS_NAME,
             std::wstring(data.title.begin(), data.title.end()).c_str(),
@@ -428,20 +428,20 @@ namespace BZ {
     }
 
     void Win32Window::shutdown() {
-        UnregisterClass(CLASS_NAME, GetModuleHandle(nullptr));
+        UnregisterClassW(CLASS_NAME, GetModuleHandleW(nullptr));
         DestroyWindow(hWnd);
     }
 
     void Win32Window::onUpdate() {
         MSG msg;
-        while(PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+        while(PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
 
             //PostQuitMessage was called, just stop processing messages
             if(msg.message == WM_QUIT)
                 break;
 
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         }
         graphicsContext->swapBuffers();
     }

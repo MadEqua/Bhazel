@@ -9,8 +9,11 @@ namespace BZ {
     {
     public:
         virtual void setClearColor(const glm::vec4& color) override;
-        virtual void clear() override;
+        virtual void setDepthClearValue(float value) override;
+        virtual void setStencilClearValue(int value) override;
 
-        virtual void drawIndexed(const Ref<VertexArray> &vertexArray) override;
+        virtual void clearColorAndDepthStencilBuffers() override;
+
+        virtual void drawIndexed(const Ref<InputDescription> &inputDesc) override;
     };
 }

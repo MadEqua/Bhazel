@@ -37,9 +37,9 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
     indexBuffer = BZ::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32));
     indexBuffer->bind();
 
-    vertexArray = BZ::VertexArray::create();
-    vertexArray->addVertexBuffer(vertexBuffer);
-    vertexArray->setIndexBuffer(indexBuffer);
+    inputDescription = BZ::InputDescription::create();
+    inputDescription->addVertexBuffer(vertexBuffer);
+    inputDescription->setIndexBuffer(indexBuffer);
 
     const char * v = R"(
             #version 430 core
@@ -76,6 +76,8 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
 
     shader = BZ::Shader::create(v, f);
     texture = BZ::Texture2D::create("test.jpg");
+
+    BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
 
 void ExampleLayer::onUpdate(BZ::Timestep timestep) {
@@ -95,8 +97,7 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
     camera.setPosition(cameraPos);
     camera.setRotation(cameraRot);
 
-    BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-    BZ::RenderCommand::clear();
+    BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
     BZ::Renderer::beginScene(camera);
 
@@ -110,7 +111,7 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
     }*/
 
     texture->bind(0);
-    BZ::Renderer::submit(shader, vertexArray);
+    BZ::Renderer::submit(shader, inputDescription);
     BZ::Renderer::endScene();
 }
 

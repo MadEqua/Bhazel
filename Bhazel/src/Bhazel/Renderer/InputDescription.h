@@ -5,10 +5,10 @@
 
 namespace BZ {
 
-    class VertexArray
+    class InputDescription
     {
     public:
-        virtual ~VertexArray() = default;
+        virtual ~InputDescription() = default;
 
         virtual void bind() const = 0;
         virtual void unbind() const = 0;
@@ -19,7 +19,7 @@ namespace BZ {
         std::vector<Ref<VertexBuffer>>& getVertexBuffers() { return vertexBuffers; }
         Ref<IndexBuffer>& getIndexBuffer() { return indexBuffer; }
 
-        static Ref<VertexArray> create();
+        static Ref<InputDescription> create();
 
     protected:
         std::vector<Ref<VertexBuffer>> vertexBuffers;

@@ -10,11 +10,19 @@ namespace BZ {
         glClearColor(color.r, color.g, color.b, color.a);
     }
 
-    void OpenGLRendererAPI::clear() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    void OpenGLRendererAPI::setDepthClearValue(float value) {
+        glClearDepthf(value);
     }
 
-    void OpenGLRendererAPI::drawIndexed(const Ref<VertexArray> &vertexArray) {
-        glDrawElements(GL_TRIANGLES, vertexArray->getIndexBuffer()->getCount(), GL_UNSIGNED_INT, nullptr);
+    void OpenGLRendererAPI::setStencilClearValue(int value) {
+        glClearStencil(value);
+    }
+
+    void OpenGLRendererAPI::clearColorAndDepthStencilBuffers() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+
+    void OpenGLRendererAPI::drawIndexed(const Ref<InputDescription> &inputDesc) {
+        glDrawElements(GL_TRIANGLES, inputDesc->getIndexBuffer()->getCount(), GL_UNSIGNED_INT, nullptr);
     }
 }

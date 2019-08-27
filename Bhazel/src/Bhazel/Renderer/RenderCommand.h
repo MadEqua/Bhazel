@@ -10,16 +10,24 @@ namespace BZ {
     public:
         static void initRendererAPI(RendererAPI *api);
 
-        static void drawIndexed(const Ref<VertexArray> &vertexArray) {
-            rendererAPI->drawIndexed(vertexArray);
-        }
-
         static void setClearColor(const glm::vec4& color) {
             rendererAPI->setClearColor(color);
         }
 
-        static void clear() {
-            rendererAPI->clear();
+        static void setDepthClearValue(float value) {
+            rendererAPI->setDepthClearValue(value);
+        }
+
+        static void setStencilClearValue(int value) {
+            rendererAPI->setStencilClearValue(value);
+        }
+
+        static void clearColorAndDepthStencilBuffers() {
+            rendererAPI->clearColorAndDepthStencilBuffers();
+        }
+
+        static void drawIndexed(const Ref<InputDescription> &inputDescription) {
+            rendererAPI->drawIndexed(inputDescription);
         }
 
     private:
