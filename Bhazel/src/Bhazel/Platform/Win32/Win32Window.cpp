@@ -454,4 +454,8 @@ namespace BZ {
     void Win32Window::setExtraHandlerFunction(LRESULT(*func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)) {
         extraWndProcFunction = func;
     }
+
+    void Win32Window::setTitle(const std::string &title) {
+        SetWindowTextA(hWnd, title.c_str());
+    }
 }

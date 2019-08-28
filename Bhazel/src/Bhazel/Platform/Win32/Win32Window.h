@@ -9,11 +9,12 @@ namespace BZ {
     class Win32Window : public Window {
     public:
         explicit Win32Window(EventCallbackFn eventCallback, const WindowData &data);
-        ~Win32Window() override;
+        virtual ~Win32Window() override;
 
-        void onUpdate() override;
+        virtual void onUpdate() override;
+        virtual void setTitle(const std::string &title) override;
 
-        void* getNativeWindowHandle() const override { return hWnd; }
+        virtual void* getNativeWindowHandle() const override { return hWnd; }
 
         void setExtraHandlerFunction(LRESULT (CALLBACK *func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam));
 

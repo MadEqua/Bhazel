@@ -26,6 +26,7 @@ namespace BZ {
 
         float getElapsedSeconds() const;
         uint32 getElapsedMilliseconds() const;
+        uint64 getElapsedNanoseconds() const;
         
         Timestep getAsTimestep() const;
 

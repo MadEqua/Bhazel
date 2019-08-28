@@ -15,7 +15,8 @@ namespace BZ {
 
         void onUpdate() override;
 
-        void* getNativeWindowHandle() const override { return window; }
+        virtual void* getNativeWindowHandle() const override { return window; }
+        virtual void setTitle(const std::string &title) override;
 
     private:
         void init();

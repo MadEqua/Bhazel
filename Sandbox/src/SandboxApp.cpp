@@ -60,7 +60,7 @@ void ExampleLayer::onGraphicsContextCreated() {
 
             VsOut main(float3 pos : POSITION, float3 col : COLOR) {
                 VsOut res;
-                res.pos = mul(float4(pos, 1.0), mul(modelMatrix, viewProjectionMatrix));
+                res.pos = mul(mul(viewProjectionMatrix, modelMatrix), float4(pos, 1.0));
                 res.col = col;
                 return res;
             }
@@ -80,7 +80,7 @@ void ExampleLayer::onGraphicsContextCreated() {
 
     float data[32];
     glm::mat4 idn(1.0f);
-    glm::mat4 trans = glm::transpose(glm::translate(idn, glm::vec3(0.5f, 0, 0)));
+    glm::mat4 trans = glm::translate(idn, glm::vec3(0.5f, 0, 0));
     memcpy(&data, &idn, sizeof(float) * 16);
     memcpy(&data[16], &trans, sizeof(float) * 16);
     constantBuffer = BZ::ConstantBuffer::create(data, sizeof(data));

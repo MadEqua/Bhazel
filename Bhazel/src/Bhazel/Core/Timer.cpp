@@ -32,6 +32,16 @@ namespace BZ {
             return 0;
     }
 
+    uint64 Timer::getElapsedNanoseconds() const {
+        if(started) {
+            std::chrono::duration<float> dif = std::chrono::high_resolution_clock::now() - startPoint;
+            int64 ns = std::chrono::duration_cast<std::chrono::nanoseconds>(dif).count();
+            return static_cast<uint64>(ns);
+        }
+        else
+            return 0;
+    }
+
     Timestep Timer::getAsTimestep() const {
         if(started) {
             return Timestep(getElapsedSeconds());

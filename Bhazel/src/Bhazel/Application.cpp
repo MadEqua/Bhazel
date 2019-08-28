@@ -28,9 +28,27 @@ namespace BZ {
         
         Input::init(window->getNativeWindowHandle());
 
+#ifndef BZ_DIST
+        std::stringstream sstream;
+        uint64 acumTime = 0;
+#endif
+
         while(running) {
 
             Timestep timestep = timer.getAsTimestep();
+
+#ifndef BZ_DIST
+            uint64 ns = timer.getElapsedNanoseconds();
+            acumTime += ns;
+            if(acumTime > 250'000'000) {
+                acumTime = 0;
+                sstream.str(std::string());
+                sstream.clear();
+                sstream << window->getBaseTitle() << " | FPS: " << (1'000'000'000.0f / ns) << ". Millis: " << (ns / 1'000'000.0f) << ".";
+                window->setTitle(sstream.str());
+            }
+#endif
+
             timer.start();
 
             for (Layer *layer : layerStack) {
@@ -42,6 +60,7 @@ namespace BZ {
                 layer->onImGuiRender();
             }
             imGuiLayer->end();*/
+
 
             window->onUpdate();
         }

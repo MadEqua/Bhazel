@@ -34,11 +34,13 @@ namespace BZ {
         virtual void onUpdate() = 0;
         virtual void* getNativeWindowHandle() const = 0;
 
-        //void setEventCallback(const EventCallbackFn &callback) { eventCallback = callback; }
-
         uint32 getWidth() const { return data.width; }
         uint32 getHeight() const {return data.height;}
-        const std::string& getTitle() const {return data.title;}
+        
+        void setBaseTitle(const std::string &title) { data.title = title; }
+        const std::string& getBaseTitle() const {return data.title;}
+        
+        virtual void setTitle(const std::string &title) = 0;
 
         GraphicsContext& getGraphicsContext() { return *graphicsContext; }
 

@@ -148,4 +148,8 @@ namespace BZ {
         glfwPollEvents();
         graphicsContext->swapBuffers();
     }
+
+    void GlfwWindow::setTitle(const std::string &title) {
+        glfwSetWindowTitle(window, title.c_str());
+    }
 }
