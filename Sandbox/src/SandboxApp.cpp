@@ -5,7 +5,12 @@
 
 
 ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
+}
 
+void ExampleLayer::onAttach() {
+}
+
+void ExampleLayer::onGraphicsContextCreated() {
     const char * glVS = R"(
             #version 430 core
             layout(location = 0) in vec3 pos;

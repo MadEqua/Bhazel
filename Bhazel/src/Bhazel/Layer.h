@@ -6,22 +6,31 @@
 
 namespace BZ {
 
-	class Event;
+    class Event;
 
-	class Layer {
-	public:
-		Layer(const std::string &name = "Layer");
-		virtual ~Layer() = default;
+    class Layer {
+    public:
+        Layer(const std::string &name = "Layer");
+        virtual ~Layer() = default;
+        
+        //On attach to the LayerStack
+        virtual void onAttach() {}
 
-		virtual void onAttach() {}
-		virtual void onDetach() {}
-		virtual void onUpdate(Timestep timestep) {}
-		virtual void onImGuiRender() {}
-		virtual void onEvent(Event &event) {}
+        //After creation of the GraphicsContext and the Window. 
+        //It's safe to create graphics objects.
+        virtual void onGraphicsContextCreated() {}
 
-		inline const std::string &getName() const { return debugName; }
+        virtual void onDetach() {}
 
-	protected:
-		std::string debugName;
-	};
+        virtual void onUpdate(Timestep timestep) {}
+        virtual void onImGuiRender() {}
+
+        //Receiving events as soon as attached to the LayerStack
+        virtual void onEvent(Event &event) {}
+        
+        inline const std::string &getName() const { return debugName; }
+        
+    protected:
+        std::string debugName;
+    };
 }

@@ -56,14 +56,20 @@ namespace BZ {
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
 
-        glfwSetWindowSizeCallback(window, [](GLFWwindow *window, int w, int h) {
+        auto resizeCallback = [](GLFWwindow *window, int w, int h) {
             GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
             win.data.width = w;
             win.data.height = h;
 
             WindowResizeEvent event(w, h);
             win.eventCallback(event);
-        });
+        };
+        glfwSetFramebufferSizeCallback(window, resizeCallback);
+
+        //Send a resize event on app start. Same as Win32Window.
+        int w, h;
+        glfwGetFramebufferSize(window, &w, &h);
+        resizeCallback(window, w, h);
 
         glfwSetWindowCloseCallback(window, [](GLFWwindow *window) {
             GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));

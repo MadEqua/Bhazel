@@ -209,11 +209,11 @@ namespace BZ {
                 Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 uint32 w = LOWORD(lParam);
                 uint32 h = HIWORD(lParam);
+                static_cast<D3D11Context&>(window->getGraphicsContext()).handleWindowResize(w, h);
                 WindowResizeEvent event(w, h);
                 window->data.width = w;
                 window->data.height = h;
                 window->eventCallback(event);
-                static_cast<D3D11Context&>(window->getGraphicsContext()).handleWindowResize(w, h);
                 break;
             }
             case WM_CLOSE:

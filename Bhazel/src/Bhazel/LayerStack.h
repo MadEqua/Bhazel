@@ -14,6 +14,8 @@ namespace BZ {
         void pushOverlay(Layer *overlay);
         void popLayer(Layer *layer);
         void popOverlay(Layer *overlay);
+
+        void onGraphicsContextCreated();
         
         std::vector<Layer*>::iterator begin() { return layers.begin(); }
         std::vector<Layer*>::iterator end() { return layers.end(); }

@@ -4,6 +4,7 @@
 
 namespace BZ {
 
-	Layer::Layer(const std::string &name) : debugName(name) {
+	Layer::Layer(const std::string &name) : 
+        debugName(name) {
 	}
 }

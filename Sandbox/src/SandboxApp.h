@@ -8,6 +8,10 @@
 class ExampleLayer : public BZ::Layer {
 public:
     ExampleLayer();
+
+    void onAttach() override;
+    void onGraphicsContextCreated() override;
+
     void onUpdate(BZ::Timestep timestep) override;
     void onEvent(BZ::Event &event) override;
     void onImGuiRender() override;
@@ -47,9 +51,11 @@ public:
         //auto pos = BZ::Input::getMousePosition();
         //BZ_LOG_TRACE("({0},{1})", pos.first, pos.second);
     }
+
     void onEvent(BZ::Event &event) override {
         BZ_LOG_TRACE(event);
     }
+
     void onImGuiRender() {
         ImGui::Begin("Test");
         ImGui::LabelText("Hello!", "");
@@ -64,4 +70,3 @@ public:
         pushLayer(new EventTestLayer());
     }
 };
-

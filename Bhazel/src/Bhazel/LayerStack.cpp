@@ -9,6 +9,7 @@ namespace BZ {
     
     LayerStack::~LayerStack() {
         for (Layer *layer : layers) {
+            layer->onDetach();
             delete layer;
         }
     }
@@ -40,4 +41,11 @@ namespace BZ {
             overlay->onDetach();
         }
     }
+
+    void LayerStack::onGraphicsContextCreated() {
+        for(Layer *layer : layers) {
+            layer->onGraphicsContextCreated();
+        }
+    }
+
 }
