@@ -23,6 +23,7 @@ private:
     BZ::Ref<BZ::VertexBuffer> vertexBuffer;
     BZ::Ref<BZ::IndexBuffer> indexBuffer;
     BZ::Ref<BZ::Texture> texture;
+    BZ::Ref<BZ::ConstantBuffer> constantBuffer;
 
     BZ::OrtographicCamera camera;
 

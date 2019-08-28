@@ -2,11 +2,11 @@
 
 #include "D3D11Shader.h"
 
-//#include <glm/gtc/type_ptr.hpp>
-
 #include "Bhazel/Application.h"
 #include "Bhazel/Window.h"
 #include "Bhazel/Renderer/GraphicsContext.h"
+
+#include "D3D11Buffer.h"
 
 
 namespace BZ {
@@ -60,31 +60,25 @@ namespace BZ {
     void D3D11Shader::bind() const {
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetShader(vertexShaderPtr.Get(), nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetShader(pixelShaderPtr.Get(), nullptr, 0));
+
+        //Bind the associated Constant Buffers
+        int i = 0;
+        for(auto &constantBuffer : vsConstantBuffers) {
+            D3D11ConstantBuffer &d3dConstantBuffer = static_cast<D3D11ConstantBuffer&>(*constantBuffer);
+            bufferArray[i++] = d3dConstantBuffer.getNativeResource();
+        }
+        BZ_LOG_DXGI(context.getDeviceContext()->VSSetConstantBuffers(0, static_cast<UINT>(vsConstantBuffers.size()), bufferArray));
+
+        i = 0;
+        for(auto &constantBuffer : fsConstantBuffers) {
+            D3D11ConstantBuffer &d3dConstantBuffer = static_cast<D3D11ConstantBuffer&>(*constantBuffer);
+            bufferArray[i++] = d3dConstantBuffer.getNativeResource();
+        }
+        BZ_LOG_DXGI(context.getDeviceContext()->PSSetConstantBuffers(0, static_cast<UINT>(fsConstantBuffers.size()), bufferArray));
     }
 
     void D3D11Shader::unbind() const {
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetShader(nullptr, nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetShader(nullptr, nullptr, 0));
     }
-
-    /*void D3D11Shader::setUniformInt(const std::string &name, int v) {
-    }
-
-    void D3D11Shader::setUniformFloat(const std::string &name, float v) {
-    }
-
-    void D3D11Shader::setUniformFloat2(const std::string &name, const glm::vec2 &vec) {
-    }
-
-    void D3D11Shader::setUniformFloat3(const std::string &name, const glm::vec3 &vec) {
-    }
-
-    void D3D11Shader::setUniformFloat4(const std::string &name, const glm::vec4 &vec) {
-    }
-
-    void D3D11Shader::setUniformMat3(const std::string &name, const glm::mat3 &mat) {
-    }
-
-    void D3D11Shader::setUniformMat4(const std::string &name, const glm::mat4 &mat) {
-    }*/
 }

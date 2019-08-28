@@ -30,4 +30,18 @@ namespace BZ {
     private:
         GLuint rendererId;
     };
+
+
+    class OpenGLConstantBuffer : public ConstantBuffer {
+    public:
+        OpenGLConstantBuffer(void *data, uint32 size);
+        virtual ~OpenGLConstantBuffer() override;
+
+        virtual void bind() const override;
+        virtual void unbind() const override;
+        virtual void setData(void *data, uint32 size) override;
+
+    private:
+        GLuint rendererId;
+    };
 }

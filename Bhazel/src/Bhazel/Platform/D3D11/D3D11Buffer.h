@@ -32,4 +32,21 @@ namespace BZ {
         D3D11Context &context;
         wrl::ComPtr<ID3D11Buffer> bufferPtr;
     };
+
+
+    class D3D11ConstantBuffer : public ConstantBuffer {
+    public:
+        D3D11ConstantBuffer(void *data, uint32 size);
+
+        virtual void bind() const override;
+        virtual void unbind() const override;
+
+        virtual void setData(void *data, uint32 size) override;
+
+        ID3D11Buffer* getNativeResource() { return bufferPtr.Get(); }
+
+    private:
+        D3D11Context &context;
+        wrl::ComPtr<ID3D11Buffer> bufferPtr;
+    };
 }

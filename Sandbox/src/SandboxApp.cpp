@@ -61,16 +61,26 @@ void ExampleLayer::onGraphicsContextCreated() {
         )";
 
     const char* d3dPS = R"(
+            cbuffer CBuffer {
+                float3 constColor;
+            };
+
             struct PsIn {
                 float3 col : COLOR;
             };
 
             float4 main(PsIn input) : SV_TARGET {
-                return float4(input.col, 1.0);
+                //return float4(input.col, 1.0);
+                return float4(constColor, 1.0);
             }
         )";
 
     shader = BZ::RendererAPI::getAPI() == BZ::RendererAPI::API::OpenGL ? BZ::Shader::create(glVS, glFS) : BZ::Shader::create(d3dVS, d3dPS);
+    
+    float data[4] = {1.0f, 1.0f, 1.0f, 2.0f};
+    constantBuffer = BZ::ConstantBuffer::create(data, sizeof(data));
+    shader->addConstantBuffer(constantBuffer, BZ::ShaderType::Fragment);
+
     //texture = BZ::Texture2D::create("test.jpg");
 
     float vertices[] = {
@@ -130,6 +140,10 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
     camera.setRotation(cameraRot);
 
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
+
+    static float r = 0;
+    r = fmod(r + timestep.getSeconds(), 1.0f);
+    constantBuffer->setData(&r, sizeof(float)*100);
 
     BZ::Renderer::beginScene(camera);
 

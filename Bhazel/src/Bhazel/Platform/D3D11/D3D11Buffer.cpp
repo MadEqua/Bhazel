@@ -5,6 +5,7 @@
 #include "Bhazel/Application.h"
 #include "Bhazel/Window.h"
 #include "Bhazel/Renderer/GraphicsContext.h"
+#include "Bhazel/Renderer/Shader.h"
 
 
 namespace BZ {
@@ -44,7 +45,7 @@ namespace BZ {
         context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
         
         D3D11_BUFFER_DESC bufferDesc = {0};
-        bufferDesc.ByteWidth = sizeof(uint32) * count;
+        bufferDesc.ByteWidth = size;
         bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
         bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
         bufferDesc.CPUAccessFlags = 0;
@@ -63,5 +64,37 @@ namespace BZ {
 
     void D3D11IndexBuffer::unbind() const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0));
+    }
+
+
+    D3D11ConstantBuffer::D3D11ConstantBuffer(void *data, uint32 size) :
+        ConstantBuffer(size),
+        context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
+
+        BZ_ASSERT_CORE(!(size % 16), "D3D11ConstantBuffer needs to have a size multiple of 16 bytes.")
+
+        D3D11_BUFFER_DESC bufferDesc = {0};
+        bufferDesc.ByteWidth = size;
+        bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        bufferDesc.CPUAccessFlags = 0;
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = 0;
+
+        D3D11_SUBRESOURCE_DATA resData = {0};
+        resData.pSysMem = data;
+
+        BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateBuffer(&bufferDesc, &resData, &bufferPtr));
+    }
+
+    void D3D11ConstantBuffer::bind() const {
+    }
+
+    void D3D11ConstantBuffer::unbind() const {
+    }
+
+    void D3D11ConstantBuffer::setData(void *data, uint32 size) {
+        BZ_ASSERT_CORE(size <= this->size, "Trying to overflow the buffer!");
+        BZ_LOG_DXGI(context.getDeviceContext()->UpdateSubresource(bufferPtr.Get(), 0, nullptr, data, 0, 0));
     }
 }

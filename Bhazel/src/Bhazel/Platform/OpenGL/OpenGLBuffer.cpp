@@ -42,4 +42,27 @@ namespace BZ {
     void OpenGLIndexBuffer::unbind() const {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
+
+
+    OpenGLConstantBuffer::OpenGLConstantBuffer(void *data, uint32 size) :
+        ConstantBuffer(size) {
+        glGenBuffers(1, &rendererId);
+        glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
+        glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_READ);
+    }
+
+    OpenGLConstantBuffer::~OpenGLConstantBuffer() {
+        glDeleteBuffers(1, &rendererId);
+    }
+
+    void OpenGLConstantBuffer::bind() const {
+        //glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
+    }
+
+    void OpenGLConstantBuffer::unbind() const {
+        //glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
+
+    void OpenGLConstantBuffer::setData(void *data, uint32 size) {
+    }
 }

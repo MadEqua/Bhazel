@@ -80,4 +80,17 @@ namespace BZ {
             return nullptr;
         }
     }
+
+    Ref<ConstantBuffer> ConstantBuffer::create(void *data, uint32 size) {
+        switch(Renderer::getAPI())
+        {
+        case RendererAPI::API::OpenGL:
+            return MakeRef<OpenGLConstantBuffer>(data, size);
+        case RendererAPI::API::D3D11:
+            return MakeRef<D3D11ConstantBuffer>(data, size);
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return nullptr;
+        }
+    }
 }

@@ -36,5 +36,8 @@ namespace BZ {
 
         wrl::ComPtr<ID3D11VertexShader> vertexShaderPtr;
         wrl::ComPtr<ID3D11PixelShader> pixelShaderPtr;
+
+        //Used to avoid allocations when constant buffer binding
+        mutable ID3D11Buffer * bufferArray[D3D11_COMMONSHADER_CONSTANT_BUFFER_HW_SLOT_COUNT];
     };
 }

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <string>
-
 namespace BZ {
 
     enum class ShaderDataType {
@@ -109,12 +106,18 @@ namespace BZ {
 
     class Buffer {
     public:
+        explicit Buffer(uint32 size) : size(size) {}
         virtual ~Buffer() = default;
 
-        //virtual void setData() = 0;
+        virtual void setData(void *data, uint32 size) {
+            BZ_ASSERT_ALWAYS_CORE("Buffer setData() is not implemented.");
+        }
 
         virtual void bind() const = 0;
         virtual void unbind() const = 0;
+
+    protected:
+        uint32 size;
     };
 
 
@@ -125,7 +128,7 @@ namespace BZ {
         const BufferLayout& getLayout() const { return layout; };
 
     protected:
-        VertexBuffer(const BufferLayout &layout) : layout(layout) {}
+        explicit VertexBuffer(const BufferLayout &layout) : Buffer(size), layout(layout) {}
 
         BufferLayout layout;
     };
@@ -138,8 +141,19 @@ namespace BZ {
         uint32 getCount() const { return count; }
 
     protected:
-        IndexBuffer(uint32 count) : count(count) {}
+        explicit IndexBuffer(uint32 count) : Buffer(count * sizeof(uint32)), count(count) {}
 
         uint32 count;
+    };
+
+
+    class ConstantBuffer : public Buffer {
+    public:
+        static Ref<ConstantBuffer> create(void *data, uint32 size);
+
+        virtual void setData(void *data, uint32 size) = 0;
+
+    protected:
+        explicit ConstantBuffer(uint32 size) : Buffer(size) {}
     };
 }
