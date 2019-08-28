@@ -10,7 +10,7 @@ namespace BZ {
     
     class GlfwWindow : public Window {
     public:
-        explicit GlfwWindow(const WindowData& data);
+        explicit GlfwWindow(EventCallbackFn eventCallback, const WindowData &data);
         ~GlfwWindow() override;
 
         void onUpdate() override;
@@ -18,7 +18,7 @@ namespace BZ {
         void* getNativeWindowHandle() const override { return window; }
 
     private:
-        void init(const WindowData& data);
+        void init();
         void shutdown();
 
         GLFWwindow* window;

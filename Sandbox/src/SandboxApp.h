@@ -25,7 +25,7 @@ private:
     glm::vec3 cameraPos;
     float cameraRot;
 
-    bool onKeyPressedEvent(BZ::KeyPressedEvent &event);
+    bool onWindowResizeEvent(BZ::WindowResizeEvent &ev);
 };
 
 

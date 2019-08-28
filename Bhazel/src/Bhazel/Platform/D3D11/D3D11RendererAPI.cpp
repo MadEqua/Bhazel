@@ -8,9 +8,8 @@
 
 namespace BZ {
 
-    D3D11RendererAPI::D3D11RendererAPI(D3D11Context &context, ID3D11RenderTargetView *backBufferView, ID3D11DepthStencilView *depthStencilView) :
-        context(context), device(context.getDevice()), deviceContext(context.getDeviceContext()), swapChain(context.getSwapChain()),
-        backBufferView (backBufferView), depthStencilView (depthStencilView) {
+    D3D11RendererAPI::D3D11RendererAPI(D3D11Context &context) :
+        context(context), device(context.getDevice()), deviceContext(context.getDeviceContext()), swapChain(context.getSwapChain()) {
     }
 
     void D3D11RendererAPI::setClearColor(const glm::vec4& color) {
@@ -26,8 +25,8 @@ namespace BZ {
     }
 
     void D3D11RendererAPI::clearColorAndDepthStencilBuffers() {
-        deviceContext->ClearRenderTargetView(backBufferView.Get(), reinterpret_cast<float*>(&clearColor));
-        deviceContext->ClearDepthStencilView(depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, depthClearValue, stencilClearValue);
+        deviceContext->ClearRenderTargetView(context.getBackBufferView(), reinterpret_cast<float*>(&clearColor));
+        deviceContext->ClearDepthStencilView(context.getDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, depthClearValue, stencilClearValue);
     }
 
     void D3D11RendererAPI::setViewport(int left, int top, int width, int height) {

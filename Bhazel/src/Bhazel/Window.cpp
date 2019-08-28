@@ -8,13 +8,17 @@
 
 namespace BZ {
 
-    Window* Window::create(const WindowData &data) {
+    Window::Window(EventCallbackFn eventCallback, const WindowData &data) : 
+        eventCallback(eventCallback), data(data) {
+    }
+
+    Window* Window::create(EventCallbackFn eventCallback, const WindowData &data) {
         switch(RendererAPI::getAPI())
         {
         case RendererAPI::API::OpenGL:
-            return new GlfwWindow(data);
+            return new GlfwWindow(eventCallback, data);
         case RendererAPI::API::D3D11:
-            return new Win32Window(data);
+            return new Win32Window(eventCallback, data);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown Renderer API.");
             return nullptr;

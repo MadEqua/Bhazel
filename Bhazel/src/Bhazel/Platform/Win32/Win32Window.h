@@ -8,7 +8,7 @@ namespace BZ {
 
     class Win32Window : public Window {
     public:
-        explicit Win32Window(const WindowData& data);
+        explicit Win32Window(EventCallbackFn eventCallback, const WindowData &data);
         ~Win32Window() override;
 
         void onUpdate() override;
@@ -18,7 +18,7 @@ namespace BZ {
         void setExtraHandlerFunction(LRESULT (CALLBACK *func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam));
 
     private:
-        void init(const WindowData& data);
+        void init();
         void shutdown();
 
         LPCWSTR CLASS_NAME = L"BhazelWindowClass";

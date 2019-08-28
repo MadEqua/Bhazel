@@ -92,17 +92,16 @@ ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f
         {BZ::ShaderDataType::Vec2, "TEXCOORD"}
     };
     vertexBuffer = BZ::VertexBuffer::create(vertices, sizeof(vertices), layout);
-    vertexBuffer->bind();
+    //vertexBuffer->bind();
 
     uint32 indices[] = {0, 1, 2, 0, 2, 3};
     indexBuffer = BZ::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32));
-    indexBuffer->bind();
+    //indexBuffer->bind();
 
     inputDescription = BZ::InputDescription::create();
     inputDescription->addVertexBuffer(vertexBuffer, shader);
     inputDescription->setIndexBuffer(indexBuffer);
 
-    BZ::RenderCommand::setViewport(0, 0, 1280, 800);
     BZ::RenderCommand::setRenderMode(BZ::RenderMode::Triangles);
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
@@ -145,7 +144,7 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
 
 void ExampleLayer::onEvent(BZ::Event &event) {
     BZ::EventDispatcher dispatcher(event);
-    dispatcher.dispatch<BZ::KeyPressedEvent>(BZ_BIND_EVENT_FN(ExampleLayer::onKeyPressedEvent));
+    dispatcher.dispatch<BZ::WindowResizeEvent>(BZ_BIND_EVENT_FN(ExampleLayer::onWindowResizeEvent));
 }
 
 void ExampleLayer::onImGuiRender() {
@@ -154,8 +153,8 @@ void ExampleLayer::onImGuiRender() {
     ImGui::End();
 }
 
-bool ExampleLayer::onKeyPressedEvent(BZ::KeyPressedEvent &event) {
-    //BZ_LOG_TRACE("KeyPressed: {0}", event);
+bool ExampleLayer::onWindowResizeEvent(BZ::WindowResizeEvent &ev) {
+    BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
     return false;
 }
 

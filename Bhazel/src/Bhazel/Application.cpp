@@ -18,9 +18,7 @@ namespace BZ {
         BZ_ASSERT_CORE(!instance, "Application already exists")
         instance = this;
 
-        window = std::unique_ptr<Window>(Window::create());
-        window->setEventCallback(BZ_BIND_EVENT_FN(Application::onEvent));
-
+        window = std::unique_ptr<Window>(Window::create(BZ_BIND_EVENT_FN(Application::onEvent)));
         Input::init(window->getNativeWindowHandle());
 
         //imGuiLayer = new ImGuiLayer();

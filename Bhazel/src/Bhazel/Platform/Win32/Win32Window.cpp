@@ -206,16 +206,21 @@ namespace BZ {
                 break;
             case WM_SIZE:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
-                WindowResizeEvent event(LOWORD(lParam), HIWORD(lParam));
-                windowData->eventCallback(event);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                uint32 w = LOWORD(lParam);
+                uint32 h = HIWORD(lParam);
+                WindowResizeEvent event(w, h);
+                window->data.width = w;
+                window->data.height = h;
+                window->eventCallback(event);
+                static_cast<D3D11Context&>(window->getGraphicsContext()).handleWindowResize(w, h);
                 break;
             }
             case WM_CLOSE:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 WindowCloseEvent event;
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 PostQuitMessage(0); //Break the event consumption ASAP
                 return 0; //Don't go to DefWindowProc
             }
@@ -224,9 +229,9 @@ namespace BZ {
             {
                 int translatedKey = translateKey(wParam, lParam);
                 if(translatedKey >= 0) {
-                    WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                    Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                     KeyPressedEvent event(translatedKey, LOWORD(lParam));
-                    windowData->eventCallback(event);
+                    window->eventCallback(event);
 
                     keys[translatedKey] = true;
                 }
@@ -237,9 +242,9 @@ namespace BZ {
             {
                 int translatedKey = translateKey(wParam, lParam);
                 if(translatedKey >= 0) {
-                    WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                    Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                     KeyReleasedEvent event(translatedKey);
-                    windowData->eventCallback(event);
+                    window->eventCallback(event);
 
                     keys[translatedKey] = false;
                 }
@@ -248,100 +253,100 @@ namespace BZ {
             case WM_CHAR:
             {
                 if(wParam > 32 && (wParam < 126 || wParam > 160)) {
-                    WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                    Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                     KeyTypedEvent event(static_cast<int>(wParam));
-                    windowData->eventCallback(event);
+                    window->eventCallback(event);
                 }
                 break;
             }
             case WM_MOUSEMOVE:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseMovedEvent event(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 break;
             }
             case WM_MOUSEWHEEL:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseScrolledEvent event(0.0f, (float) GET_WHEEL_DELTA_WPARAM(wParam) / (float) WHEEL_DELTA);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 break;
             }
             case WM_MOUSEHWHEEL:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseScrolledEvent event((float) GET_WHEEL_DELTA_WPARAM(wParam) / (float) WHEEL_DELTA, 0.0f);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 break;
             }
             case WM_LBUTTONDOWN:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseButtonPressedEvent event(BZ_MOUSE_BUTTON_LEFT);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[BZ_MOUSE_BUTTON_LEFT] = true;
                 break;
             }
             case WM_LBUTTONUP:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseButtonReleasedEvent event(BZ_MOUSE_BUTTON_LEFT);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[BZ_MOUSE_BUTTON_LEFT] = false;
                 break;
             }
             case WM_MBUTTONDOWN:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseButtonPressedEvent event(BZ_MOUSE_BUTTON_MIDDLE);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[BZ_MOUSE_BUTTON_MIDDLE] = true;
                 break;
             }
             case WM_MBUTTONUP:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseButtonReleasedEvent event(BZ_MOUSE_BUTTON_MIDDLE);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[BZ_MOUSE_BUTTON_MIDDLE] = false;
 
                 break;
             }
             case WM_RBUTTONDOWN:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseButtonPressedEvent event(BZ_MOUSE_BUTTON_RIGHT);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[BZ_MOUSE_BUTTON_RIGHT] = true;
 
                 break;
             }
             case WM_RBUTTONUP:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 MouseButtonReleasedEvent event(BZ_MOUSE_BUTTON_RIGHT);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[BZ_MOUSE_BUTTON_RIGHT] = false;
 
                 break;
             }
             case WM_XBUTTONDOWN:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 int button = GET_XBUTTON_WPARAM(wParam) + BZ_MOUSE_BUTTON_3;
                 MouseButtonPressedEvent event(button);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[button] = true;
 
                 break;
             }
             case WM_XBUTTONUP:
             {
-                WindowData *windowData = (WindowData*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+                Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 int button = GET_XBUTTON_WPARAM(wParam) + BZ_MOUSE_BUTTON_3;
                 MouseButtonReleasedEvent event(button);
-                windowData->eventCallback(event);
+                window->eventCallback(event);
                 mouseButtons[button] = false;
 
                 break;
@@ -358,17 +363,17 @@ namespace BZ {
     }
 
 
-    Win32Window::Win32Window(const WindowData &data) {
-        init(data);
+    Win32Window::Win32Window(EventCallbackFn eventCallback, const WindowData &data) :
+        Window(eventCallback, data) {
+        init();
     }
 
     Win32Window::~Win32Window() {
         shutdown();
     }
 
-    void Win32Window::init(const WindowData &data) {
+    void Win32Window::init() {
         createKeyTranslationTable();
-        windowData = data;
 
         BZ_LOG_CORE_INFO("Creating Win32 Window: {0}. Dimensions: ({1}, {2})", data.title, data.width, data.height);
 
@@ -401,9 +406,11 @@ namespace BZ {
             nullptr,
             nullptr,
             GetModuleHandle(nullptr),
-            (LPVOID)&windowData //Send custom data to the WndProc callback
+            (LPVOID)this //Send custom data to the WndProc callback
         );
         BZ_ASSERT_CORE(hWnd, "Couldn't create window!");
+
+        graphicsContext = std::make_unique<D3D11Context>(hWnd);
 
         //Adjust client region size now that we can query the window DPI
         RECT rect = {0};
@@ -423,8 +430,6 @@ namespace BZ {
                      SWP_NOACTIVATE | SWP_NOZORDER);
 
         ShowWindow(hWnd, SW_SHOWDEFAULT);
-
-        graphicsContext = std::make_unique<D3D11Context>(hWnd);
     }
 
     void Win32Window::shutdown() {
