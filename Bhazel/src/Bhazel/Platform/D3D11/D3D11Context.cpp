@@ -47,7 +47,7 @@ namespace BZ {
         dsDesc.StencilEnable = false;
 
         wrl::ComPtr<ID3D11DepthStencilState> dsState;
-        BZ_ASSERT_HRES_DXGI(device->CreateDepthStencilState(&dsDesc, &dsState))
+        BZ_ASSERT_HRES_DXGI(device->CreateDepthStencilState(&dsDesc, &dsState));
         deviceContext->OMSetDepthStencilState(dsState.Get(), 1);
 
         //Set Rasterizer settings

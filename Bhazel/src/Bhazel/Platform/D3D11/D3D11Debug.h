@@ -18,38 +18,38 @@ namespace BZ {
 
 #ifndef BZ_DIST
 
-#define BZ_ASSERT_HRES(hrcall) { \
+#define BZ_ASSERT_HRES(call) { \
     HRESULT hr; \
-    if(FAILED(hr = (hrcall))) \
+    if(FAILED(hr = (call))) \
         BZ_ASSERT_ALWAYS_CORE("HRESULT is not OK! Error: 0x{0:08x}.", static_cast<uint32>(hr)) \
 }
 
-#define BZ_LOG_HRES(hrcall) { \
+#define BZ_LOG_HRES(call) { \
     HRESULT hr; \
-    if(FAILED(hr = (hrcall))) \
+    if(FAILED(hr = (call))) \
         BZ_LOG_CORE_ERROR("HRESULT is not OK! Error: 0x{0:08x}. File: {1}. Line: {2}.", static_cast<uint32>(hr), __FILE__, __LINE__); \
 }
 
 #define BZ_LOG_DXGI(call) (call); BZ::DXGIDebug::getInstance().printMessages()
 
-#define BZ_ASSERT_HRES_DXGI(hrcall) { \
-    HRESULT hr = (hrcall); \
+#define BZ_ASSERT_HRES_DXGI(call) { \
+    HRESULT hr = (call); \
     BZ::DXGIDebug::getInstance().printMessages(); \
     if(FAILED(hr)) BZ_ASSERT_ALWAYS_CORE("HRESULT is not OK! Error: 0x{0:08x}.", static_cast<uint32>(hr)) \
 }
 
-#define BZ_LOG_HRES_DXGI(hrcall) { \
-    HRESULT hr = (hrcall); \
+#define BZ_LOG_HRES_DXGI(call) { \
+    HRESULT hr = (call); \
     BZ::DXGIDebug::getInstance().printMessages(); \
-    if(FAILED(hr )) BZ_LOG_CORE_ERROR("HRESULT is not OK! Error: 0x{0:08}. File: {1}. Line: {2}.", static_cast<uint32>(hr), __FILE__, __LINE__); \
+    if(FAILED(hr)) BZ_LOG_CORE_ERROR("HRESULT is not OK! Error: 0x{0:08}. File: {1}. Line: {2}.", static_cast<uint32>(hr), __FILE__, __LINE__); \
 }
 
 #else
-#define ASSERT_HRES(hrcall)
-#define LOG_HRES(hrcall)
+#define BZ_ASSERT_HRES(call) call
+#define BZ_LOG_HRES(call) call
 
-#define BZ_LOG_DXGI
+#define BZ_LOG_DXGI(call) call
 
-#define ASSERT_HRES_DXGI(hrcall)
-#define LOG_HRES_DXGI(hrcall)
+#define BZ_ASSERT_HRES_DXGI(call) call
+#define BZ_LOG_HRES_DXGI(call) call
 #endif
