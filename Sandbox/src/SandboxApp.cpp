@@ -53,15 +53,23 @@ void ExampleLayer::onGraphicsContextCreated() {
                 float4x4 modelMatrix;
             };
 
+            struct VsIn {
+                float3 pos : POSITION;
+                float3 col : COLOR;
+                float2 texCoord : TEXCOORD;
+            };
+
             struct VsOut {
                 float3 col : COLOR;
+                float2 texCoord : TEXCOORD;
                 float4 pos : SV_POSITION;
             };
 
-            VsOut main(float3 pos : POSITION, float3 col : COLOR) {
+            VsOut main(VsIn input) {
                 VsOut res;
-                res.pos = mul(mul(viewProjectionMatrix, modelMatrix), float4(pos, 1.0));
-                res.col = col;
+                res.col = input.col;
+                res.texCoord  = input.texCoord;
+                res.pos = mul(mul(viewProjectionMatrix, modelMatrix), float4(input.pos, 1.0));
                 return res;
             }
         )";
@@ -69,10 +77,15 @@ void ExampleLayer::onGraphicsContextCreated() {
     const char* d3dPS = R"(
             struct PsIn {
                 float3 col : COLOR;
+                float2 texCoord : TEXCOORD;
             };
 
+            Texture2D tex;
+            SamplerState splr;
+
             float4 main(PsIn input) : SV_TARGET {
-                return float4(input.col, 1.0);
+                //return float4(input.col, 1.0);
+                return tex.Sample(splr, input.texCoord);
             }
         )";
 
@@ -86,7 +99,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     constantBuffer = BZ::ConstantBuffer::create(data, sizeof(data));
     shader->addConstantBuffer(constantBuffer, BZ::ShaderType::Vertex);
 
-    //texture = BZ::Texture2D::create("test.jpg");
+    texture = BZ::Texture2D::create("test.jpg");
 
     float vertices[] = {
         -0.5f, -0.5f, 0.0f,
@@ -155,7 +168,7 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
         }
     }*/
 
-    //texture->bind(0);
+    texture->bind(0);
     BZ::Renderer::submit(shader, inputDescription);
     BZ::Renderer::endScene();
 }

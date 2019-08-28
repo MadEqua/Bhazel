@@ -3,6 +3,7 @@
 #include "Texture.h"
 #include "Renderer.h"
 #include "Bhazel/Platform/OpenGL/OpenGLTexture.h"
+#include "Bhazel/Platform/D3D11/D3D11Texture.h"
 
 
 namespace BZ {
@@ -13,7 +14,7 @@ namespace BZ {
         case RendererAPI::API::OpenGL:
             return MakeRef<OpenGLTexture2D>(path);
         case RendererAPI::API::D3D11:
-            //return MakeRef<OpenGLTexture2D>(path);
+            return MakeRef<D3D11Texture2D>(path);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
