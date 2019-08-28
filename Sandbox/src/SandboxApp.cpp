@@ -20,14 +20,15 @@ void ExampleLayer::onGraphicsContextCreated() {
             out vec3 vCol;
             out vec2 vTexCoord;
 
-            uniform mat4 viewProjectionMatrix;
-            uniform mat4 modelMatrix;
+            layout (std140, binding = 0) uniform Matrices {
+                mat4 viewProjectionMatrix;
+                mat4 modelMatrix;
+            };
 
             void main() {
                 vCol = col;
                 vTexCoord = texCoord;
-                //gl_Position = viewProjectionMatrix * modelMatrix * vec4(pos, 1.0);
-                gl_Position = vec4(pos, 1.0);
+                gl_Position = viewProjectionMatrix * modelMatrix * vec4(pos, 1.0);
             }
         )";
     const char * glFS = R"(
@@ -47,6 +48,11 @@ void ExampleLayer::onGraphicsContextCreated() {
         )";
 
     const char* d3dVS = R"(
+            cbuffer CBuffer {
+                float4x4 viewProjectionMatrix;
+                float4x4 modelMatrix;
+            };
+
             struct VsOut {
                 float3 col : COLOR;
                 float4 pos : SV_POSITION;
@@ -54,32 +60,31 @@ void ExampleLayer::onGraphicsContextCreated() {
 
             VsOut main(float3 pos : POSITION, float3 col : COLOR) {
                 VsOut res;
-                res.pos = float4(pos, 1.0);
+                res.pos = mul(float4(pos, 1.0), mul(modelMatrix, viewProjectionMatrix));
                 res.col = col;
                 return res;
             }
         )";
 
     const char* d3dPS = R"(
-            cbuffer CBuffer {
-                float3 constColor;
-            };
-
             struct PsIn {
                 float3 col : COLOR;
             };
 
             float4 main(PsIn input) : SV_TARGET {
-                //return float4(input.col, 1.0);
-                return float4(constColor, 1.0);
+                return float4(input.col, 1.0);
             }
         )";
 
     shader = BZ::RendererAPI::getAPI() == BZ::RendererAPI::API::OpenGL ? BZ::Shader::create(glVS, glFS) : BZ::Shader::create(d3dVS, d3dPS);
-    
-    float data[4] = {1.0f, 1.0f, 1.0f, 2.0f};
+
+    float data[32];
+    glm::mat4 idn(1.0f);
+    glm::mat4 trans = glm::transpose(glm::translate(idn, glm::vec3(0.5f, 0, 0)));
+    memcpy(&data, &idn, sizeof(float) * 16);
+    memcpy(&data[16], &trans, sizeof(float) * 16);
     constantBuffer = BZ::ConstantBuffer::create(data, sizeof(data));
-    shader->addConstantBuffer(constantBuffer, BZ::ShaderType::Fragment);
+    shader->addConstantBuffer(constantBuffer, BZ::ShaderType::Vertex);
 
     //texture = BZ::Texture2D::create("test.jpg");
 
@@ -107,11 +112,9 @@ void ExampleLayer::onGraphicsContextCreated() {
         {BZ::ShaderDataType::Vec2, "TEXCOORD"}
     };
     vertexBuffer = BZ::VertexBuffer::create(vertices, sizeof(vertices), layout);
-    //vertexBuffer->bind();
 
     uint32 indices[] = {0, 1, 2, 0, 2, 3};
     indexBuffer = BZ::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32));
-    //indexBuffer->bind();
 
     inputDescription = BZ::InputDescription::create();
     inputDescription->addVertexBuffer(vertexBuffer, shader);
@@ -140,10 +143,6 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
     camera.setRotation(cameraRot);
 
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
-
-    static float r = 0;
-    r = fmod(r + timestep.getSeconds(), 1.0f);
-    constantBuffer->setData(&r, sizeof(float)*100);
 
     BZ::Renderer::beginScene(camera);
 

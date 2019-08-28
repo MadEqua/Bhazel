@@ -56,13 +56,15 @@ namespace BZ {
     }
 
     void OpenGLConstantBuffer::bind() const {
-        //glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
+        glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
     }
 
     void OpenGLConstantBuffer::unbind() const {
-        //glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
     void OpenGLConstantBuffer::setData(void *data, uint32 size) {
+        glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
     }
 }

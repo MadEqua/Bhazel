@@ -1,6 +1,7 @@
 #include "bzpch.h"
 
 #include "OpenGLShader.h"
+#include "OpenGLBuffer.h"
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -87,13 +88,25 @@ namespace BZ {
 
     void OpenGLShader::bind() const {
         glUseProgram(rendererId);
+
+        //Bind the associated Constant Buffers
+        int i = 0;
+        for(auto &constantBuffer : vsConstantBuffers) {
+            OpenGLConstantBuffer &glConstantBuffer = static_cast<OpenGLConstantBuffer&>(*constantBuffer);
+            glBindBufferBase(GL_UNIFORM_BUFFER, i++, glConstantBuffer.getNativeHandle());
+        }
+
+        for(auto &constantBuffer : fsConstantBuffers) {
+            OpenGLConstantBuffer &glConstantBuffer = static_cast<OpenGLConstantBuffer&>(*constantBuffer);
+            glBindBufferBase(GL_UNIFORM_BUFFER, i++, glConstantBuffer.getNativeHandle());
+        }
     }
 
     void OpenGLShader::unbind() const {
         glUseProgram(0);
     }
 
-    void OpenGLShader::setUniformInt(const std::string &name, int v) {
+    /*void OpenGLShader::setUniformInt(const std::string &name, int v) {
         GLint loc = glGetUniformLocation(rendererId, name.c_str());
         glUniform1i(loc, v);
     }
@@ -126,5 +139,5 @@ namespace BZ {
     void OpenGLShader::setUniformMat4(const std::string &name, const glm::mat4 &mat) {
         GLint loc = glGetUniformLocation(rendererId, name.c_str());
         glUniformMatrix4fv(loc, 1, false, glm::value_ptr(mat));
-    }
+    }*/
 }

@@ -41,6 +41,8 @@ namespace BZ {
         virtual void unbind() const override;
         virtual void setData(void *data, uint32 size) override;
 
+        GLuint getNativeHandle() { return rendererId; }
+
     private:
         GLuint rendererId;
     };
