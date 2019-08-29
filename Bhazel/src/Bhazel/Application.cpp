@@ -22,15 +22,18 @@ namespace BZ {
         BZ_ASSERT_CORE(!instance, "Application already exists")
         instance = this;
 
+        //Init logger
+        Log::getInstance();
+
         //imGuiLayer = new ImGuiLayer();
         //pushOverlay(imGuiLayer);
     }
 
     void Application::run() {
         window = std::unique_ptr<Window>(Window::create(BZ_BIND_EVENT_FN(Application::onEvent)));
-        layerStack.onGraphicsContextCreated();
         Renderer::init();
         Input::init(window->getNativeWindowHandle());
+        layerStack.onGraphicsContextCreated();
 
 #ifndef BZ_DIST
         std::stringstream sstream;
@@ -68,6 +71,8 @@ namespace BZ {
 
             window->onUpdate();
         }
+
+        Renderer::destroy();
     }
 
     void Application::onEvent(Event &e) {

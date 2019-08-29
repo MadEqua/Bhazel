@@ -18,6 +18,7 @@ namespace BZ {
     {
     public:
         static void init();
+        static void destroy();
 
         static void beginScene(OrtographicCamera &camera);
         static void endScene();

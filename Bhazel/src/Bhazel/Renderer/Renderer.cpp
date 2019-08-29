@@ -19,6 +19,12 @@ namespace BZ {
         instanceConstantBuffer = ConstantBuffer::create(sizeof(instanceData));
     }
 
+    void Renderer::destroy() {
+        //Destroy this 'manually' to avoid the static destruction lottery
+        frameConstantBuffer.reset();
+        instanceConstantBuffer.reset();
+    }
+
     void Renderer::beginScene(OrtographicCamera &camera) {
         sceneData.viewMatrix = camera.getViewMatrix();
         sceneData.projectionMatrix = camera.getProjectionMatrix();
