@@ -5,7 +5,7 @@
 
 #include "Platform/GLFW/GlfwInput.h"
 #include "Platform/Win32/Win32Input.h"
-#include "Bhazel/Renderer/RendererAPI.h"
+#include "Bhazel/Renderer/Renderer.h"
 
 
 namespace BZ {
@@ -13,12 +13,12 @@ namespace BZ {
     Input* Input::instance = nullptr;
 
     void Input::init(void *nativeWindowHandle) {
-        switch(RendererAPI::getAPI())
+        switch(Renderer::api)
         {
-        case RendererAPI::API::OpenGL:
+        case Renderer::API::OpenGL:
             instance = new GlfwInput();
             break;
-        case RendererAPI::API::D3D11:
+        case Renderer::API::D3D11:
             instance = new Win32Input(nativeWindowHandle);
             break;
         default:

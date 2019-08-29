@@ -8,7 +8,7 @@ namespace BZ {
 
     class Win32Window : public Window {
     public:
-        explicit Win32Window(EventCallbackFn eventCallback, const WindowData &data);
+        explicit Win32Window(const WindowData &data, EventCallbackFn eventCallback);
         virtual ~Win32Window() override;
 
         virtual void onUpdate() override;

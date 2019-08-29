@@ -32,7 +32,7 @@ namespace BZ {
             rendererAPI->setViewport(left, top, width, height);
         }
 
-        static void setRenderMode(RenderMode mode) {
+        static void setRenderMode(Renderer::RenderMode mode) {
             rendererAPI->setRenderMode(mode);
         }
 

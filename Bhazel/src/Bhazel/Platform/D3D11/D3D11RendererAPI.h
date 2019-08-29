@@ -21,7 +21,7 @@ namespace BZ {
         virtual void clearColorAndDepthStencilBuffers() override;
 
         virtual void setViewport(int left, int top, int width, int height) override;
-        virtual void setRenderMode(RenderMode mode) override;
+        virtual void setRenderMode(Renderer::RenderMode mode) override;
 
         virtual void drawIndexed(const Ref<InputDescription> &vertexArray) override;
 

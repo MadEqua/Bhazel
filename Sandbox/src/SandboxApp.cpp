@@ -99,7 +99,7 @@ void ExampleLayer::onGraphicsContextCreated() {
             }
         )";
 
-    shader = BZ::RendererAPI::getAPI() == BZ::RendererAPI::API::OpenGL ? BZ::Shader::create(glVS, glFS) : BZ::Shader::create(d3dVS, d3dPS);
+    shader = BZ::Renderer::api == BZ::Renderer::API::OpenGL ? BZ::Shader::create(glVS, glFS) : BZ::Shader::create(d3dVS, d3dPS);
     texture = BZ::Texture2D::create("test.jpg");
 
     float vertices[] = {
@@ -134,7 +134,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     inputDescription->addVertexBuffer(vertexBuffer, shader);
     inputDescription->setIndexBuffer(indexBuffer);
 
-    BZ::RenderCommand::setRenderMode(BZ::RenderMode::Triangles);
+    BZ::RenderCommand::setRenderMode(BZ::Renderer::RenderMode::Triangles);
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
     cameraPos = pos = {};

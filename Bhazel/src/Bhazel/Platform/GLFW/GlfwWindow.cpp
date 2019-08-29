@@ -18,8 +18,8 @@ namespace BZ {
         BZ_LOG_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
     }
 
-    GlfwWindow::GlfwWindow(EventCallbackFn eventCallback, const WindowData &data) :
-        Window(eventCallback, data) {
+    GlfwWindow::GlfwWindow(const WindowData &data, EventCallbackFn eventCallback) :
+        Window(data, eventCallback) {
         init();
     }
 
@@ -53,6 +53,7 @@ namespace BZ {
         BZ_ASSERT_CORE(window, "Could not create GLFW Window!");
 
         graphicsContext = std::make_unique<OpenGLContext>(window);
+        graphicsContext->setVSync(data.vsync);
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
 

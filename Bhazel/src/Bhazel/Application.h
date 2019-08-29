@@ -3,6 +3,7 @@
 #include "Bhazel/Window.h"
 #include "Bhazel/LayerStack.h"
 #include "Bhazel/Core/Timer.h"
+#include "Bhazel/Core/Ini/IniParser.h"
 
 #include "Bhazel/ImGui/ImGuiLayer.h"
 
@@ -38,6 +39,7 @@ namespace BZ {
 
         LayerStack layerStack;
         Timer timer;
+        IniParser iniParser;
 
         static Application *instance;
     };

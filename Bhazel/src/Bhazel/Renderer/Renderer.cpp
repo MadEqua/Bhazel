@@ -1,12 +1,16 @@
 #include "bzpch.h"
 
 #include "Renderer.h"
+#include "RenderCommand.h"
 #include "OrtographicCamera.h"
 
-#include "Bhazel/Platform/OpenGL/OpenGLShader.h"
+#include "Shader.h"
+#include "InputDescription.h"
 
 
 namespace BZ {
+
+    Renderer::API Renderer::api = API::Unknown;
 
     Renderer::FrameData Renderer::sceneData;
     Renderer::InstanceData Renderer::instanceData;

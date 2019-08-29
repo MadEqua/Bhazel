@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Bhazel.h>
-#include <glm/glm.hpp>
 #include <ImGui/imgui.h>
 
 

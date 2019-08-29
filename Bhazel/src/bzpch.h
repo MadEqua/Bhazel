@@ -4,9 +4,13 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include <vector>
+#include <unordered_map>
 
 #include <sstream>
 #include <string>
+
+#include <glm/glm.hpp>
 
 #ifdef BZ_PLATFORM_WINDOWS
     #include <Windows.h>

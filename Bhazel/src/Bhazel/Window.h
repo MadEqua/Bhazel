@@ -8,24 +8,20 @@ namespace BZ {
     class Event;
 
     struct WindowData {
-
         std::string title;
         uint32 width;
         uint32 height;
-
-        WindowData(const std::string &title = "Bhazel Engine",
-                    uint32 width = 1280,
-                    uint32 height = 800)
-            : title(title), width(width), height(height) {
-        }
+        //bool fullScreen;
+        bool vsync;
+        //uint32 MSAASamples;
     };
 
 
     class Window {
     public:
         using EventCallbackFn = std::function<void(Event&)>;
+        static Window* create(const WindowData &data, EventCallbackFn eventCallback = [](Event&) {});
 
-        explicit Window(EventCallbackFn eventCallback, const WindowData &data);
         virtual ~Window() = default;
 
         EventCallbackFn eventCallback;
@@ -44,9 +40,9 @@ namespace BZ {
 
         GraphicsContext& getGraphicsContext() { return *graphicsContext; }
 
-        static Window* create(EventCallbackFn eventCallback = [](Event&){}, const WindowData &data = WindowData());
-
     protected:
         std::unique_ptr<GraphicsContext> graphicsContext;
+
+        Window(const WindowData &data, EventCallbackFn eventCallback);
     };
 }

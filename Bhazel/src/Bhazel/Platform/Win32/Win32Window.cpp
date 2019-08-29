@@ -363,8 +363,8 @@ namespace BZ {
     }
 
 
-    Win32Window::Win32Window(EventCallbackFn eventCallback, const WindowData &data) :
-        Window(eventCallback, data) {
+    Win32Window::Win32Window(const WindowData &data, EventCallbackFn eventCallback) :
+        Window(data, eventCallback) {
         init();
     }
 
@@ -411,6 +411,7 @@ namespace BZ {
         BZ_ASSERT_CORE(hWnd, "Couldn't create window!");
 
         graphicsContext = std::make_unique<D3D11Context>(hWnd);
+        graphicsContext->setVSync(data.vsync);
 
         //Adjust client region size now that we can query the window DPI
         RECT rect = {};

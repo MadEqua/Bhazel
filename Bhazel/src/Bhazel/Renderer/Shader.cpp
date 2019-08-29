@@ -10,11 +10,11 @@
 namespace BZ {
 
     Ref<Shader> Shader::create(const std::string &vertexSrc, const std::string &fragmentSrc) {
-        switch(Renderer::getAPI())
+        switch(Renderer::api)
         {
-        case RendererAPI::API::OpenGL:
+        case Renderer::API::OpenGL:
             return MakeRef<OpenGLShader>(vertexSrc, fragmentSrc);
-        case RendererAPI::API::D3D11:
+        case Renderer::API::D3D11:
             return MakeRef<D3D11Shader>(vertexSrc, fragmentSrc);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");

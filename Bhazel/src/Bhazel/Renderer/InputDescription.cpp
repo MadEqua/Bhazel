@@ -10,11 +10,11 @@
 namespace BZ {
 
     Ref<InputDescription> InputDescription::create() {
-        switch(Renderer::getAPI())
+        switch(Renderer::api)
         {
-        case RendererAPI::API::OpenGL:
+        case Renderer::API::OpenGL:
             return MakeRef<OpenGLInputDescription>();
-        case RendererAPI::API::D3D11:
+        case Renderer::API::D3D11:
             return MakeRef<D3D11InputDescription>();
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");

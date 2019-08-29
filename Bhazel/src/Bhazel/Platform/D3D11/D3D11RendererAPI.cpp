@@ -4,6 +4,7 @@
 #include "D3D11Context.h"
 
 #include "Bhazel/Renderer/Renderer.h"
+#include "Bhazel/Renderer/InputDescription.h"
 
 
 namespace BZ {
@@ -40,16 +41,16 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->RSSetViewports(1, &viewport));
     }
 
-    void D3D11RendererAPI::setRenderMode(RenderMode mode) {
+    void D3D11RendererAPI::setRenderMode(Renderer::RenderMode mode) {
         D3D_PRIMITIVE_TOPOLOGY topology;
         switch(mode) {
-        case RenderMode::Points:
+        case Renderer::RenderMode::Points:
             topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
             break;
-        case BZ::RenderMode::Lines:
+        case Renderer::RenderMode::Lines:
             topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
             break;
-        case BZ::RenderMode::Triangles:
+        case Renderer::RenderMode::Triangles:
             topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
             break;
         default:

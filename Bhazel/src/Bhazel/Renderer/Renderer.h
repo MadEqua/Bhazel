@@ -1,22 +1,29 @@
 #pragma once
 
-#include "RenderCommand.h"
-#include "Shader.h"
-
 
 namespace BZ {
 
     class OrtographicCamera;
-
-    enum class RenderMode {
-        Points,
-        Lines,
-        Triangles
-    };
+    class InputDescription;
+    class ConstantBuffer;
+    class Shader;
 
     class Renderer
     {
     public:
+
+        enum class API {
+            Unknown,
+            OpenGL,
+            D3D11
+        };
+
+        enum class RenderMode {
+            Points,
+            Lines,
+            Triangles
+        };
+
         static void init();
         static void destroy();
 
@@ -25,8 +32,7 @@ namespace BZ {
 
         static void submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix = glm::mat4(1.0f));
 
-        static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
-
+        static API api;
     private:
         struct FrameData {
             glm::mat4 viewMatrix;

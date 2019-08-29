@@ -56,11 +56,11 @@ namespace BZ {
 
 
     Ref<VertexBuffer> VertexBuffer::create(float *vertices, uint32 size, const BufferLayout &layout) {
-        switch(Renderer::getAPI())
+        switch(Renderer::api)
         {
-        case RendererAPI::API::OpenGL:
+        case Renderer::API::OpenGL:
             return MakeRef<OpenGLVertexBuffer>(vertices, size, layout);
-        case RendererAPI::API::D3D11:
+        case Renderer::API::D3D11:
             return MakeRef<D3D11VertexBuffer>(vertices, size, layout);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
@@ -69,11 +69,11 @@ namespace BZ {
     }
 
     Ref<IndexBuffer> IndexBuffer::create(uint32 *indices, uint32 count) {
-        switch(Renderer::getAPI())
+        switch(Renderer::api)
         {
-        case RendererAPI::API::OpenGL:
+        case Renderer::API::OpenGL:
             return MakeRef<OpenGLIndexBuffer>(indices, count);
-        case RendererAPI::API::D3D11:
+        case Renderer::API::D3D11:
             return MakeRef<D3D11IndexBuffer>(indices, count);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
@@ -83,11 +83,11 @@ namespace BZ {
 
 
     Ref<ConstantBuffer> ConstantBuffer::create(uint32 size) {
-        switch(Renderer::getAPI())
+        switch(Renderer::api)
         {
-        case RendererAPI::API::OpenGL:
+        case Renderer::API::OpenGL:
             return MakeRef<OpenGLConstantBuffer>(size);
-        case RendererAPI::API::D3D11:
+        case Renderer::API::D3D11:
             return MakeRef<D3D11ConstantBuffer>(size);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
@@ -96,11 +96,11 @@ namespace BZ {
     }
 
     Ref<ConstantBuffer> ConstantBuffer::create(void *data, uint32 size) {
-        switch(Renderer::getAPI())
+        switch(Renderer::api)
         {
-        case RendererAPI::API::OpenGL:
+        case Renderer::API::OpenGL:
             return MakeRef<OpenGLConstantBuffer>(data, size);
-        case RendererAPI::API::D3D11:
+        case Renderer::API::D3D11:
             return MakeRef<D3D11ConstantBuffer>(data, size);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");

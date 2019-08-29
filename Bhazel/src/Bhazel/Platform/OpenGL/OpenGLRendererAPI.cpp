@@ -4,6 +4,7 @@
 #include "OpenGLRendererAPI.h"
 
 #include "Bhazel/Renderer/Renderer.h"
+#include "Bhazel/Renderer/InputDescription.h"
 
 
 namespace BZ {
@@ -28,16 +29,16 @@ namespace BZ {
         BZ_ASSERT_GL(glViewport(left, top, width, height));
     }
 
-    void OpenGLRendererAPI::setRenderMode(RenderMode mode) {
+    void OpenGLRendererAPI::setRenderMode(Renderer::RenderMode mode) {
         switch(mode)
         {
-        case BZ::RenderMode::Points:
+        case Renderer::RenderMode::Points:
             renderMode = GL_POINTS;
             break;
-        case BZ::RenderMode::Lines:
+        case Renderer::RenderMode::Lines:
             renderMode = GL_LINES;
             break;
-        case BZ::RenderMode::Triangles:
+        case Renderer::RenderMode::Triangles:
             renderMode = GL_TRIANGLES;
             break;
         default:
