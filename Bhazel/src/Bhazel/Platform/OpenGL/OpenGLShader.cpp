@@ -3,7 +3,7 @@
 #include "OpenGLShader.h"
 #include "OpenGLBuffer.h"
 
-#include <glad/glad.h>
+#include "OpenGLIncludes.h"
 #include <glm/gtc/type_ptr.hpp>
 
 
@@ -13,19 +13,19 @@ namespace BZ {
 
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         const GLchar *source = (const GLchar *) vertexSrc.c_str();
-        glShaderSource(vertexShader, 1, &source, 0);
-        glCompileShader(vertexShader);
+        BZ_ASSERT_GL(glShaderSource(vertexShader, 1, &source, 0));
+        BZ_ASSERT_GL(glCompileShader(vertexShader));
 
         GLint isCompiled = 0;
-        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled);
+        BZ_ASSERT_GL(glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled));
         if(isCompiled == GL_FALSE) {
             GLint maxLength = 0;
-            glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+            BZ_ASSERT_GL(glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength));
 
             std::vector<GLchar> infoLog(maxLength);
-            glGetShaderInfoLog(vertexShader, maxLength, &maxLength, &infoLog[0]);
+            BZ_ASSERT_GL(glGetShaderInfoLog(vertexShader, maxLength, &maxLength, &infoLog[0]));
 
-            glDeleteShader(vertexShader);
+            BZ_ASSERT_GL(glDeleteShader(vertexShader));
 
             BZ_ASSERT_ALWAYS_CORE("Vertex shader compilation error:\n{0}", static_cast<char*>(infoLog.data()));
             return;
@@ -33,19 +33,19 @@ namespace BZ {
 
         GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         source = (const GLchar *) fragmentSrc.c_str();
-        glShaderSource(fragmentShader, 1, &source, 0);
-        glCompileShader(fragmentShader);
+        BZ_ASSERT_GL(glShaderSource(fragmentShader, 1, &source, 0));
+        BZ_ASSERT_GL(glCompileShader(fragmentShader));
 
-        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiled);
+        BZ_ASSERT_GL(glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiled));
         if(isCompiled == GL_FALSE) {
             GLint maxLength = 0;
-            glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
+            BZ_ASSERT_GL(glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength));
 
             std::vector<GLchar> infoLog(maxLength);
-            glGetShaderInfoLog(fragmentShader, maxLength, &maxLength, &infoLog[0]);
+            BZ_ASSERT_GL(glGetShaderInfoLog(fragmentShader, maxLength, &maxLength, &infoLog[0]));
 
-            glDeleteShader(fragmentShader);
-            glDeleteShader(vertexShader);
+            BZ_ASSERT_GL(glDeleteShader(fragmentShader));
+            BZ_ASSERT_GL(glDeleteShader(vertexShader));
 
             BZ_ASSERT_ALWAYS_CORE("Fragment shader compilation error:\n{0}", static_cast<char*>(infoLog.data()));
 
@@ -54,23 +54,23 @@ namespace BZ {
 
         rendererId = glCreateProgram();
 
-        glAttachShader(rendererId, vertexShader);
-        glAttachShader(rendererId, fragmentShader);
+        BZ_ASSERT_GL(glAttachShader(rendererId, vertexShader));
+        BZ_ASSERT_GL(glAttachShader(rendererId, fragmentShader));
 
-        glLinkProgram(rendererId);
+        BZ_ASSERT_GL(glLinkProgram(rendererId));
 
         GLint isLinked = 0;
-        glGetProgramiv(rendererId, GL_LINK_STATUS, (int*) &isLinked);
+        BZ_ASSERT_GL(glGetProgramiv(rendererId, GL_LINK_STATUS, (int*) &isLinked));
         if(isLinked == GL_FALSE) {
             GLint maxLength = 0;
-            glGetProgramiv(rendererId, GL_INFO_LOG_LENGTH, &maxLength);
+            BZ_ASSERT_GL(glGetProgramiv(rendererId, GL_INFO_LOG_LENGTH, &maxLength));
 
             std::vector<GLchar> infoLog(maxLength);
-            glGetProgramInfoLog(rendererId, maxLength, &maxLength, &infoLog[0]);
+            BZ_ASSERT_GL(glGetProgramInfoLog(rendererId, maxLength, &maxLength, &infoLog[0]));
 
-            glDeleteProgram(rendererId);
-            glDeleteShader(vertexShader);
-            glDeleteShader(fragmentShader);
+            BZ_ASSERT_GL(glDeleteProgram(rendererId));
+            BZ_ASSERT_GL(glDeleteShader(vertexShader));
+            BZ_ASSERT_GL(glDeleteShader(fragmentShader));
 
             BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
             BZ_ASSERT_ALWAYS_CORE("OpenGLShader linking error.");
@@ -78,19 +78,19 @@ namespace BZ {
         }
 
         // Always detach shaders after a successful link.
-        glDetachShader(rendererId, vertexShader);
-        glDetachShader(rendererId, fragmentShader);
+        BZ_ASSERT_GL(glDetachShader(rendererId, vertexShader));
+        BZ_ASSERT_GL(glDetachShader(rendererId, fragmentShader));
     }
 
     OpenGLShader::~OpenGLShader() {
-        glDeleteProgram(rendererId);
+        BZ_ASSERT_GL(glDeleteProgram(rendererId));
     }
 
     void OpenGLShader::bind() const {
-        glUseProgram(rendererId);
+        BZ_ASSERT_GL(glUseProgram(rendererId));
     }
 
     void OpenGLShader::unbind() const {
-        glUseProgram(0);
+        BZ_ASSERT_GL(glUseProgram(0));
     }
 }

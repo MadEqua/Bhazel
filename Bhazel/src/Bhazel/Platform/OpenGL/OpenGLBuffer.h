@@ -2,7 +2,7 @@
 
 #include "Bhazel/Renderer/Buffer.h"
 
-#include <glad/glad.h>
+#include "OpenGLIncludes.h"
 
 namespace BZ {
     

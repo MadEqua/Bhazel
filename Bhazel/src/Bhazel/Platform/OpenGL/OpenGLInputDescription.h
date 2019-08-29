@@ -3,8 +3,8 @@
 #include "Bhazel/Renderer/InputDescription.h"
 #include "Bhazel/Renderer/Buffer.h"
 
-#include <memory>
-#include <glad/glad.h>
+#include "OpenGLIncludes.h"
+
 
 namespace BZ {
 

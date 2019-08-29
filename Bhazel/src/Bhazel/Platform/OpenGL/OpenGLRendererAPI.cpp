@@ -1,6 +1,6 @@
 #include "bzpch.h"
 
-#include <Glad/glad.h>
+#include "OpenGLIncludes.h"
 #include "OpenGLRendererAPI.h"
 
 #include "Bhazel/Renderer/Renderer.h"
@@ -9,23 +9,23 @@
 namespace BZ {
 
     void OpenGLRendererAPI::setClearColor(const glm::vec4& color) {
-        glClearColor(color.r, color.g, color.b, color.a);
+        BZ_ASSERT_GL(glClearColor(color.r, color.g, color.b, color.a));
     }
 
     void OpenGLRendererAPI::setDepthClearValue(float value) {
-        glClearDepthf(value);
+        BZ_ASSERT_GL(glClearDepthf(value));
     }
 
     void OpenGLRendererAPI::setStencilClearValue(int value) {
-        glClearStencil(value);
+        BZ_ASSERT_GL(glClearStencil(value));
     }
 
     void OpenGLRendererAPI::clearColorAndDepthStencilBuffers() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        BZ_ASSERT_GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     }
 
     void OpenGLRendererAPI::setViewport(int left, int top, int width, int height) {
-        glViewport(left, top, width, height);
+        BZ_ASSERT_GL(glViewport(left, top, width, height));
     }
 
     void OpenGLRendererAPI::setRenderMode(RenderMode mode) {
@@ -47,6 +47,6 @@ namespace BZ {
     }
 
     void OpenGLRendererAPI::drawIndexed(const Ref<InputDescription> &inputDesc) {
-        glDrawElements(renderMode, inputDesc->getIndexBuffer()->getCount(), GL_UNSIGNED_INT, nullptr);
+        BZ_ASSERT_GL(glDrawElements(renderMode, inputDesc->getIndexBuffer()->getCount(), GL_UNSIGNED_INT, nullptr));
     }
 }

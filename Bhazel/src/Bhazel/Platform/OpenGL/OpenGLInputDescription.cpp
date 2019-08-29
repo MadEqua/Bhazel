@@ -4,19 +4,19 @@
 namespace BZ {
 
     OpenGLInputDescription::OpenGLInputDescription() {
-        glGenVertexArrays(1, &rendererId);
+        BZ_ASSERT_GL(glGenVertexArrays(1, &rendererId));
     }
 
     OpenGLInputDescription::~OpenGLInputDescription() {
-        glDeleteVertexArrays(1, &rendererId);
+        BZ_ASSERT_GL(glDeleteVertexArrays(1, &rendererId));
     }
 
     void OpenGLInputDescription::bind() const {
-        glBindVertexArray(rendererId);
+        BZ_ASSERT_GL(glBindVertexArray(rendererId));
     }
 
     void OpenGLInputDescription::unbind() const {
-        glBindVertexArray(0);
+        BZ_ASSERT_GL(glBindVertexArray(0));
     }
 
     void OpenGLInputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) {
@@ -24,16 +24,16 @@ namespace BZ {
 
         BZ_ASSERT_CORE(buffer->getLayout().getElementCount(), "VertexBuffer has no layout.");
 
-        glBindVertexArray(rendererId);
+        BZ_ASSERT_GL(glBindVertexArray(rendererId));
         buffer->bind();
 
         int index = 0;
         for(const auto &element : buffer->getLayout()) {
-            glEnableVertexAttribArray(index);
-            glVertexAttribPointer(index, element.getElementCount(),
+            BZ_ASSERT_GL(glEnableVertexAttribArray(index));
+            BZ_ASSERT_GL(glVertexAttribPointer(index, element.getElementCount(),
                                   shaderDataTypeToGL(element.dataType),
                                   element.normalized ? GL_TRUE : GL_FALSE,
-                                  buffer->getLayout().getStride(), reinterpret_cast<const void*>(element.offset));
+                                  buffer->getLayout().getStride(), reinterpret_cast<const void*>(element.offset)));
             index++;
         }
 
@@ -41,7 +41,7 @@ namespace BZ {
     }
 
     void OpenGLInputDescription::setIndexBuffer(const Ref<IndexBuffer> &buffer) {
-        glBindVertexArray(rendererId);
+        BZ_ASSERT_GL(glBindVertexArray(rendererId));
         buffer->bind();
 
         indexBuffer = buffer;

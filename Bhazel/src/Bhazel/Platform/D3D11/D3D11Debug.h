@@ -3,6 +3,8 @@
 #include <dxgidebug.h>
 
 
+#ifndef BZ_DIST
+
 namespace BZ {
 
     class DXGIDebug
@@ -15,8 +17,6 @@ namespace BZ {
         IDXGIInfoQueue *dxgiInfoQueue;
     };
 }
-
-#ifndef BZ_DIST
 
 #define BZ_ASSERT_HRES(call) { \
     HRESULT hr; \
