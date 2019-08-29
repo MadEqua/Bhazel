@@ -49,7 +49,7 @@ namespace BZ {
         BZ_ASSERT_GL(glDeleteTextures(1, &rendererId));
     }
 
-    void OpenGLTexture2D::bind(uint32 unit) const {
+    void OpenGLTexture2D::bindToPipeline(uint32 unit) const {
         BZ_ASSERT_GL(glActiveTexture(GL_TEXTURE0 + unit));
         BZ_ASSERT_GL(glBindTexture(GL_TEXTURE_2D, rendererId));
 

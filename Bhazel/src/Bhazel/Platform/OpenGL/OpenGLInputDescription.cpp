@@ -1,5 +1,7 @@
 #include "bzpch.h"
+
 #include "OpenGLInputDescription.h"
+#include "OpenGLBuffer.h"
 
 namespace BZ {
 
@@ -11,11 +13,11 @@ namespace BZ {
         BZ_ASSERT_GL(glDeleteVertexArrays(1, &rendererId));
     }
 
-    void OpenGLInputDescription::bind() const {
+    void OpenGLInputDescription::bindToPipeline() const {
         BZ_ASSERT_GL(glBindVertexArray(rendererId));
     }
 
-    void OpenGLInputDescription::unbind() const {
+    void OpenGLInputDescription::unbindFromPipeline() const {
         BZ_ASSERT_GL(glBindVertexArray(0));
     }
 
@@ -25,7 +27,7 @@ namespace BZ {
         BZ_ASSERT_CORE(buffer->getLayout().getElementCount(), "VertexBuffer has no layout.");
 
         BZ_ASSERT_GL(glBindVertexArray(rendererId));
-        buffer->bind();
+        BZ_ASSERT_GL(glBindBuffer(GL_ARRAY_BUFFER, static_cast<OpenGLVertexBuffer*>(buffer.get())->rendererId));
 
         int index = 0;
         for(const auto &element : buffer->getLayout()) {
@@ -42,7 +44,7 @@ namespace BZ {
 
     void OpenGLInputDescription::setIndexBuffer(const Ref<IndexBuffer> &buffer) {
         BZ_ASSERT_GL(glBindVertexArray(rendererId));
-        buffer->bind();
+        BZ_ASSERT_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<OpenGLIndexBuffer*>(buffer.get())->rendererId));
 
         indexBuffer = buffer;
     }

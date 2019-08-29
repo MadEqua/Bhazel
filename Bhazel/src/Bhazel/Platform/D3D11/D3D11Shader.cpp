@@ -55,12 +55,12 @@ namespace BZ {
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreatePixelShader(fsBlob->GetBufferPointer(), fsBlob->GetBufferSize(), nullptr, &pixelShaderPtr));
     }
 
-    void D3D11Shader::bind() const {
+    void D3D11Shader::bindToPipeline() const {
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetShader(vertexShaderPtr.Get(), nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetShader(pixelShaderPtr.Get(), nullptr, 0));
     }
 
-    void D3D11Shader::unbind() const {
+    void D3D11Shader::unbindFromPipeline() const {
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetShader(nullptr, nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetShader(nullptr, nullptr, 0));
     }

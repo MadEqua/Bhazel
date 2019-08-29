@@ -13,7 +13,7 @@ namespace BZ {
     public:
         explicit D3D11Texture2D(const std::string &path);
 
-        virtual void bind(uint32 unit) const override;
+        virtual void bindToPipeline(uint32 unit) const override;
 
     private:
         std::string path;

@@ -86,11 +86,11 @@ namespace BZ {
         BZ_ASSERT_GL(glDeleteProgram(rendererId));
     }
 
-    void OpenGLShader::bind() const {
+    void OpenGLShader::bindToPipeline() const {
         BZ_ASSERT_GL(glUseProgram(rendererId));
     }
 
-    void OpenGLShader::unbind() const {
+    void OpenGLShader::unbindFromPipeline() const {
         BZ_ASSERT_GL(glUseProgram(0));
     }
 }

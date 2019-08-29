@@ -113,8 +113,8 @@ namespace BZ {
             BZ_ASSERT_ALWAYS_CORE("Buffer setData() is not implemented.");
         }
 
-        virtual void bind(uint32 unit = 0) const = 0;
-        virtual void unbind(uint32 unit = 0) const = 0;
+        virtual void bindToPipeline(uint32 unit = 0) const {};
+        virtual void unbindFromPipeline(uint32 unit = 0) const {};
 
     protected:
         uint32 size;

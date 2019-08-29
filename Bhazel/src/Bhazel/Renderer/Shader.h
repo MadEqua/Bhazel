@@ -13,8 +13,8 @@ namespace BZ {
     public:
         virtual ~Shader() = default;
 
-        virtual void bind() const = 0;
-        virtual void unbind() const = 0;
+        virtual void bindToPipeline() const = 0;
+        virtual void unbindFromPipeline() const = 0;
 
         static Ref<Shader> create(const std::string &vertexSrc, const std::string &fragmentSrc);
     };

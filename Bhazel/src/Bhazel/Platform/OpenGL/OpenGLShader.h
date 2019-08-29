@@ -12,8 +12,8 @@ namespace BZ {
         OpenGLShader(const std::string &vertexSrc, const std::string &fragmentSrc);
         virtual ~OpenGLShader() override;
 
-        void bind() const;
-        void unbind() const;
+        void bindToPipeline() const;
+        void unbindFromPipeline() const;
 
     private:
         uint32 rendererId;

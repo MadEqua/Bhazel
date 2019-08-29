@@ -8,8 +8,8 @@ namespace BZ {
     public:
         virtual ~Texture() = default;
 
-        virtual void bind(uint32 unit = 0u) const = 0;
-        //virtual void unbind() const = 0;
+        virtual void bindToPipeline(uint32 unit = 0u) const = 0;
+        //virtual void unbindFromPipeline() const = 0;
 
     };
 

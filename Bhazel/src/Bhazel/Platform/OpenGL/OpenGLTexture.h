@@ -11,7 +11,7 @@ namespace BZ {
         explicit OpenGLTexture2D(const std::string &path);
         virtual ~OpenGLTexture2D() override;
 
-        virtual void bind(uint32 unit) const override;
+        virtual void bindToPipeline(uint32 unit) const override;
 
     private:
         std::string path;

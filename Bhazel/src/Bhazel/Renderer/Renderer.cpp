@@ -25,7 +25,7 @@ namespace BZ {
         sceneData.viewProjectionMatrix = camera.getViewProjectionMatrix();
 
         frameConstantBuffer->setData(&sceneData, sizeof(sceneData));
-        frameConstantBuffer->bind(0);
+        frameConstantBuffer->bindToPipeline(0);
     }
 
     void Renderer::endScene() {
@@ -34,11 +34,11 @@ namespace BZ {
     void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix) {
         instanceData.modelMatrix = modelMatrix;
         instanceConstantBuffer->setData(&instanceData, sizeof(instanceData));
-        instanceConstantBuffer->bind(1);
+        instanceConstantBuffer->bindToPipeline(1);
 
-        shader->bind();
+        shader->bindToPipeline();
 
-        inputDescription->bind();
+        inputDescription->bindToPipeline();
         RenderCommand::drawIndexed(inputDescription);
     }
 }

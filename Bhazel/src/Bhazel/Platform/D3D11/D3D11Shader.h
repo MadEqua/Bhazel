@@ -12,8 +12,8 @@ namespace BZ {
     public:
         D3D11Shader(const std::string &vertexSrc, const std::string &fragmentSrc);
 
-        void bind() const;
-        void unbind() const;
+        void bindToPipeline() const;
+        void unbindFromPipeline() const;
 
         ID3DBlob* getVertexShaderBlob() { return vertexShaderBlobPtr.Get(); }
 

@@ -12,8 +12,8 @@ namespace BZ {
     public:
         D3D11VertexBuffer(float *vertices, uint32 size, const BufferLayout &layout);
 
-        virtual void bind(uint32 unit = 0) const override;
-        virtual void unbind(uint32 unit = 0) const override;
+        virtual void bindToPipeline(uint32 unit = 0) const override;
+        virtual void unbindFromPipeline(uint32 unit = 0) const override;
 
     private:
         D3D11Context &context;
@@ -25,8 +25,8 @@ namespace BZ {
     public:
         D3D11IndexBuffer(uint32 *indices, uint32 count);
 
-        virtual void bind(uint32 unit = 0) const override;
-        virtual void unbind(uint32 unit = 0) const override;
+        virtual void bindToPipeline(uint32 unit = 0) const override;
+        virtual void unbindFromPipeline(uint32 unit = 0) const override;
 
     private:
         D3D11Context &context;
@@ -39,8 +39,8 @@ namespace BZ {
         explicit D3D11ConstantBuffer(uint32 size);
         D3D11ConstantBuffer(void *data, uint32 size);
 
-        virtual void bind(uint32 unit = 0) const override;
-        virtual void unbind(uint32 unit = 0) const override;
+        virtual void bindToPipeline(uint32 unit = 0) const override;
+        virtual void unbindFromPipeline(uint32 unit = 0) const override;
 
         virtual void setData(const void *data, uint32 size) override;
 

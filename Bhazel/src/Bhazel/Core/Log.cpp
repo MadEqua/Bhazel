@@ -18,5 +18,7 @@ namespace BZ {
         coreLogger->info("Initialized Logger.");
     }
 
-    Log::~Log() {}
+    Log::~Log() {
+        coreLogger->info("Shutting down Logger.");
+    }
 }

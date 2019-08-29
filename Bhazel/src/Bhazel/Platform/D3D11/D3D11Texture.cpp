@@ -68,7 +68,7 @@ namespace BZ {
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateSamplerState(&sampDesc, &samplerViewPtr));
     }
 
-    void D3D11Texture2D::bind(uint32 unit) const {
+    void D3D11Texture2D::bindToPipeline(uint32 unit) const {
         //TODO: only binding to Pixel Shader. What to do?
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetShaderResources(unit, 1, textureViewPtr.GetAddressOf()));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetSamplers(unit, 1, samplerViewPtr.GetAddressOf()));

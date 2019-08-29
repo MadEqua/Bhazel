@@ -14,8 +14,8 @@ namespace BZ {
         OpenGLInputDescription();
         virtual ~OpenGLInputDescription() override;
 
-        virtual void bind() const override;
-        virtual void unbind() const override;
+        virtual void bindToPipeline() const override;
+        virtual void unbindFromPipeline() const override;
 
         virtual void addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) override;
         virtual void setIndexBuffer(const Ref<IndexBuffer> &buffer) override;

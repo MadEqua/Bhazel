@@ -11,8 +11,8 @@ namespace BZ {
     public:
         virtual ~InputDescription() = default;
 
-        virtual void bind() const = 0;
-        virtual void unbind() const = 0;
+        virtual void bindToPipeline() const = 0;
+        virtual void unbindFromPipeline() const = 0;
 
         virtual void addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) = 0;
         virtual void setIndexBuffer(const Ref<IndexBuffer> &buffer) = 0;

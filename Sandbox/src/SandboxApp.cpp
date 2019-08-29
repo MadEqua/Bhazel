@@ -179,7 +179,7 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
     glm::mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, pos);
 
-    texture->bind(0);
+    texture->bindToPipeline(0);
     BZ::Renderer::submit(shader, inputDescription, modelMatrix);
     BZ::Renderer::endScene();
 }

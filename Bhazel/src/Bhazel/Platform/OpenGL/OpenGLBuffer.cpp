@@ -15,14 +15,6 @@ namespace BZ {
         BZ_ASSERT_GL(glDeleteBuffers(1, &rendererId));
     }
 
-    void OpenGLVertexBuffer::bind(uint32 unit) const {
-        BZ_ASSERT_GL(glBindBuffer(GL_ARRAY_BUFFER, rendererId));
-    }
-
-    void OpenGLVertexBuffer::unbind(uint32 unit) const {
-        BZ_ASSERT_GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    }
-
 
     OpenGLIndexBuffer::OpenGLIndexBuffer(uint32 *indices, uint32 count) : 
         IndexBuffer(count) {
@@ -33,14 +25,6 @@ namespace BZ {
 
     OpenGLIndexBuffer::~OpenGLIndexBuffer() {
         BZ_ASSERT_GL(glDeleteBuffers(1, &rendererId));
-    }
-
-    void OpenGLIndexBuffer::bind(uint32 unit) const {
-        BZ_ASSERT_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererId));
-    }
-
-    void OpenGLIndexBuffer::unbind(uint32 unit) const {
-        BZ_ASSERT_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     }
 
 
@@ -59,13 +43,12 @@ namespace BZ {
         BZ_ASSERT_GL(glDeleteBuffers(1, &rendererId));
     }
 
-    void OpenGLConstantBuffer::bind(uint32 unit) const {
-        //glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
+    void OpenGLConstantBuffer::bindToPipeline(uint32 unit) const {
         BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, rendererId));
     }
 
-    void OpenGLConstantBuffer::unbind(uint32 unit) const {
-        BZ_ASSERT_GL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+    void OpenGLConstantBuffer::unbindFromPipeline(uint32 unit) const {
+        BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, 0));
     }
 
     void OpenGLConstantBuffer::setData(const void *data, uint32 size) {

@@ -14,24 +14,24 @@ namespace BZ {
         context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
     }
 
-    void D3D11InputDescription::bind() const {
+    void D3D11InputDescription::bindToPipeline() const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetInputLayout(inputLayoutPtr.Get()));
         
         for(auto &vb : vertexBuffers)
-            vb->bind();
+            vb->bindToPipeline();
 
         if(indexBuffer)
-            indexBuffer->bind();
+            indexBuffer->bindToPipeline();
     }
 
-    void D3D11InputDescription::unbind() const {
+    void D3D11InputDescription::unbindFromPipeline() const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetInputLayout(nullptr));
 
         for(auto &vb : vertexBuffers)
-            vb->unbind();
+            vb->unbindFromPipeline();
 
         if(indexBuffer)
-            indexBuffer->unbind();
+            indexBuffer->unbindFromPipeline();
     }
 
     void D3D11InputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) {

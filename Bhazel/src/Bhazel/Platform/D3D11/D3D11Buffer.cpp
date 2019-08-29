@@ -28,13 +28,13 @@ namespace BZ {
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateBuffer(&bufferDesc, &data, &bufferPtr));
     }
 
-    void D3D11VertexBuffer::bind(uint32 unit) const {
+    void D3D11VertexBuffer::bindToPipeline(uint32 unit) const {
         UINT stride = layout.getStride();
         UINT offset = 0;
         BZ_LOG_DXGI(context.getDeviceContext()->IASetVertexBuffers(unit, 1, bufferPtr.GetAddressOf(), &stride, &offset));
     }
 
-    void D3D11VertexBuffer::unbind(uint32 unit) const {
+    void D3D11VertexBuffer::unbindFromPipeline(uint32 unit) const {
         UINT dummy;
         BZ_LOG_DXGI(context.getDeviceContext()->IASetVertexBuffers(unit, 1, nullptr, &dummy, &dummy));
     }
@@ -58,11 +58,11 @@ namespace BZ {
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateBuffer(&bufferDesc, &data, &bufferPtr));
     }
 
-    void D3D11IndexBuffer::bind(uint32 unit) const {
+    void D3D11IndexBuffer::bindToPipeline(uint32 unit) const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetIndexBuffer(bufferPtr.Get(), DXGI_FORMAT_R32_UINT, 0));
     }
 
-    void D3D11IndexBuffer::unbind(uint32 unit) const {
+    void D3D11IndexBuffer::unbindFromPipeline(uint32 unit) const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0));
     }
 
@@ -91,13 +91,13 @@ namespace BZ {
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateBuffer(&bufferDesc, data ? &resData : nullptr, &bufferPtr));
     }
 
-    void D3D11ConstantBuffer::bind(uint32 unit) const {
+    void D3D11ConstantBuffer::bindToPipeline(uint32 unit) const {
         //TODO: binding to VS and PS. Better solution needed.
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetConstantBuffers(unit, 1, bufferPtr.GetAddressOf()));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetConstantBuffers(unit, 1, bufferPtr.GetAddressOf()));
     }
 
-    void D3D11ConstantBuffer::unbind(uint32 unit) const {
+    void D3D11ConstantBuffer::unbindFromPipeline(uint32 unit) const {
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetConstantBuffers(unit, 1, nullptr));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetConstantBuffers(unit, 1, nullptr));
     }
