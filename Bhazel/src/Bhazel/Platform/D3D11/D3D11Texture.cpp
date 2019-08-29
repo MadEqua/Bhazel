@@ -25,7 +25,7 @@ namespace BZ {
         this->width = width;
         this->height = height;
 
-        D3D11_TEXTURE2D_DESC texDesc = {0};
+        D3D11_TEXTURE2D_DESC texDesc = {};
         texDesc.Width = width;
         texDesc.Height = height;
         texDesc.MipLevels = 1;
@@ -38,14 +38,14 @@ namespace BZ {
         texDesc.CPUAccessFlags = 0;
         texDesc.MiscFlags = 0;
 
-        D3D11_SUBRESOURCE_DATA resData = {0};
+        D3D11_SUBRESOURCE_DATA resData = {};
         resData.pSysMem = data;
         resData.SysMemPitch = width * sizeof(uint8) * 4;
 
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateTexture2D(&texDesc, &resData, &texturePtr));
         stbi_image_free(data);
 
-        /*D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc = {0};
+        /*D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
         viewDesc.Format = texDesc.Format;
         viewDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
         viewDesc.Texture2D.MostDetailedMip = 0;
@@ -53,7 +53,7 @@ namespace BZ {
 
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateShaderResourceView(texturePtr.Get(), nullptr, &textureViewPtr));
 
-        D3D11_SAMPLER_DESC sampDesc = {0};
+        D3D11_SAMPLER_DESC sampDesc = {};
         sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
         sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
         sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -62,7 +62,7 @@ namespace BZ {
         sampDesc.MinLOD = 0;
         sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
         sampDesc.MipLODBias = 0.0f;
-        sampDesc.MaxAnisotropy = 0.0f;
+        sampDesc.MaxAnisotropy = 0;
         //sampDesc.BorderColor;
 
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateSamplerState(&sampDesc, &samplerViewPtr));

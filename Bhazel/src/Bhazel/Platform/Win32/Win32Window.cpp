@@ -378,7 +378,7 @@ namespace BZ {
         BZ_LOG_CORE_INFO("Creating Win32 Window: {0}. Dimensions: ({1}, {2})", data.title, data.width, data.height);
 
         //register window class
-        WNDCLASSEXW wndClass = {0};
+        WNDCLASSEXW wndClass = {};
         wndClass.cbSize = sizeof(wndClass);
         wndClass.style = CS_OWNDC;
         wndClass.lpfnWndProc = WndProc;
@@ -413,7 +413,7 @@ namespace BZ {
         graphicsContext = std::make_unique<D3D11Context>(hWnd);
 
         //Adjust client region size now that we can query the window DPI
-        RECT rect = {0};
+        RECT rect = {};
         rect.right = data.width;
         rect.bottom = data.height;
         ClientToScreen(hWnd, (POINT*) &rect.left);

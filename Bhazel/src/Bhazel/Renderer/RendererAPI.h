@@ -33,6 +33,6 @@ namespace BZ {
         static API getAPI() { return api; }
 
     private:
-        static const API api = API::D3D11;
+        static const API api = API::OpenGL;
     };
 }

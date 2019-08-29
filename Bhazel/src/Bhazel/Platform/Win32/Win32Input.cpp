@@ -29,7 +29,7 @@ namespace BZ {
     }
 
     std::pair<int, int> Win32Input::getMousePositionImpl() {
-        POINT pos = {0};
+        POINT pos = {};
         if(GetCursorPos(&pos)) {
             ScreenToClient(nativeWindow, &pos);
         }

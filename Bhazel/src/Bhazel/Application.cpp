@@ -8,6 +8,10 @@
 #include "Events/ApplicationEvent.h"
 #include "Bhazel/Layer.h"
 #include "Input.h"
+#include "Renderer/Renderer.h"
+
+#include "Bhazel/Application.h"
+#include "Bhazel/Window.h"
 
 
 namespace BZ {
@@ -25,7 +29,7 @@ namespace BZ {
     void Application::run() {
         window = std::unique_ptr<Window>(Window::create(BZ_BIND_EVENT_FN(Application::onEvent)));
         layerStack.onGraphicsContextCreated();
-        
+        Renderer::init();
         Input::init(window->getNativeWindowHandle());
 
 #ifndef BZ_DIST
@@ -44,7 +48,7 @@ namespace BZ {
                 acumTime = 0;
                 sstream.str(std::string());
                 sstream.clear();
-                sstream << window->getBaseTitle() << " | FPS: " << (1'000'000'000.0f / ns) << ". Millis: " << (ns / 1'000'000.0f) << ".";
+                sstream << window->getBaseTitle() << " | FPS: " << (1'000'000'000.0f / ns) << ". Millis: " << (ns / 1'000'000.0f);
                 window->setTitle(sstream.str());
             }
 #endif

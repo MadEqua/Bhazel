@@ -6,7 +6,6 @@
 #include "Bhazel/Renderer/Renderer.h"
 
 
-
 namespace BZ {
 
     void OpenGLRendererAPI::setClearColor(const glm::vec4& color) {

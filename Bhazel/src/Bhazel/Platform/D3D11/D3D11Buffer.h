@@ -12,8 +12,8 @@ namespace BZ {
     public:
         D3D11VertexBuffer(float *vertices, uint32 size, const BufferLayout &layout);
 
-        virtual void bind() const override;
-        virtual void unbind() const override;
+        virtual void bind(uint32 unit = 0) const override;
+        virtual void unbind(uint32 unit = 0) const override;
 
     private:
         D3D11Context &context;
@@ -25,8 +25,8 @@ namespace BZ {
     public:
         D3D11IndexBuffer(uint32 *indices, uint32 count);
 
-        virtual void bind() const override;
-        virtual void unbind() const override;
+        virtual void bind(uint32 unit = 0) const override;
+        virtual void unbind(uint32 unit = 0) const override;
 
     private:
         D3D11Context &context;
@@ -36,12 +36,13 @@ namespace BZ {
 
     class D3D11ConstantBuffer : public ConstantBuffer {
     public:
+        explicit D3D11ConstantBuffer(uint32 size);
         D3D11ConstantBuffer(void *data, uint32 size);
 
-        virtual void bind() const override;
-        virtual void unbind() const override;
+        virtual void bind(uint32 unit = 0) const override;
+        virtual void unbind(uint32 unit = 0) const override;
 
-        virtual void setData(void *data, uint32 size) override;
+        virtual void setData(const void *data, uint32 size) override;
 
         ID3D11Buffer* getNativeResource() { return bufferPtr.Get(); }
 

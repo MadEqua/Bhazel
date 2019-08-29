@@ -38,7 +38,7 @@ namespace BZ {
         BZ_ASSERT_CORE(buffer->getLayout().getElementCount(), "VertexBuffer has no layout.");
 
         for(const auto &element : buffer->getLayout()) {
-            D3D11_INPUT_ELEMENT_DESC ied = {0};
+            D3D11_INPUT_ELEMENT_DESC ied = {};
             ied.SemanticName = element.name.c_str();
             ied.SemanticIndex = 0; //TODO: inexistent on abstract API
             ied.Format = shaderDataTypeToD3D11(element.dataType, element.normalized);

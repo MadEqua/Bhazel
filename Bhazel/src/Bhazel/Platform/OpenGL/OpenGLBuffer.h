@@ -11,8 +11,8 @@ namespace BZ {
         OpenGLVertexBuffer(float *vertices, uint32 size, const BufferLayout &layout);
         virtual ~OpenGLVertexBuffer() override;
 
-        virtual void bind() const override;
-        virtual void unbind() const override;
+        virtual void bind(uint32 unit = 0) const override;
+        virtual void unbind(uint32 unit = 0) const override;
 
     private:
         GLuint rendererId;
@@ -24,8 +24,8 @@ namespace BZ {
         OpenGLIndexBuffer(uint32 *indices, uint32 count);
         virtual ~OpenGLIndexBuffer() override;
 
-        virtual void bind() const override;
-        virtual void unbind() const override;
+        virtual void bind(uint32 unit = 0) const override;
+        virtual void unbind(uint32 unit = 0) const override;
 
     private:
         GLuint rendererId;
@@ -34,12 +34,13 @@ namespace BZ {
 
     class OpenGLConstantBuffer : public ConstantBuffer {
     public:
+        explicit OpenGLConstantBuffer(uint32 size);
         OpenGLConstantBuffer(void *data, uint32 size);
         virtual ~OpenGLConstantBuffer() override;
 
-        virtual void bind() const override;
-        virtual void unbind() const override;
-        virtual void setData(void *data, uint32 size) override;
+        virtual void bind(uint32 unit = 0) const override;
+        virtual void unbind(uint32 unit = 0) const override;
+        virtual void setData(const void *data, uint32 size) override;
 
         GLuint getNativeHandle() { return rendererId; }
 

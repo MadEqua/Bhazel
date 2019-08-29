@@ -10,7 +10,7 @@ namespace BZ {
         windowHandle (windowHandle) {
 
         //Create SwapChain
-        DXGI_SWAP_CHAIN_DESC swapChainDesc = {0};
+        DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
         swapChainDesc.BufferDesc.Width = 0;
         swapChainDesc.BufferDesc.Height = 0;
         swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -40,7 +40,7 @@ namespace BZ {
         BZ_ASSERT_CORE(deviceContext, "Error creating DeviceContext!");
        
         //Set Depth and Stencil settings
-        D3D11_DEPTH_STENCIL_DESC dsDesc = {0};
+        D3D11_DEPTH_STENCIL_DESC dsDesc = {};
         dsDesc.DepthEnable = true;
         dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
         dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
@@ -52,7 +52,7 @@ namespace BZ {
 
         //Set Rasterizer settings
         wrl::ComPtr<ID3D11RasterizerState> rsState;
-        D3D11_RASTERIZER_DESC rsDesc = {0};
+        D3D11_RASTERIZER_DESC rsDesc = {};
         rsDesc.FillMode = D3D11_FILL_SOLID;
         rsDesc.CullMode = D3D11_CULL_BACK;
         rsDesc.FrontCounterClockwise = true;
@@ -70,7 +70,7 @@ namespace BZ {
         //Set default viewport
         wrl::ComPtr<ID3D11Texture2D> backBuffer;
         BZ_ASSERT_HRES_DXGI(swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
-        D3D11_TEXTURE2D_DESC backBufferDesc = {0};
+        D3D11_TEXTURE2D_DESC backBufferDesc = {};
         backBuffer->GetDesc(&backBufferDesc);
 
         D3D11_VIEWPORT vp;
@@ -107,7 +107,7 @@ namespace BZ {
         BZ_ASSERT_HRES_DXGI(swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
 
         wrl::ComPtr<ID3D11Texture2D> depthStencilBuffer;
-        D3D11_TEXTURE2D_DESC descDepthStencil = {0};
+        D3D11_TEXTURE2D_DESC descDepthStencil = {};
         backBuffer->GetDesc(&descDepthStencil); //Reuse back buffer description
         descDepthStencil.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
         descDepthStencil.Usage = D3D11_USAGE_DEFAULT;

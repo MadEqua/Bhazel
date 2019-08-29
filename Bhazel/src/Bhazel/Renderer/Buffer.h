@@ -109,12 +109,12 @@ namespace BZ {
         explicit Buffer(uint32 size) : size(size) {}
         virtual ~Buffer() = default;
 
-        virtual void setData(void *data, uint32 size) {
+        virtual void setData(const void *data, uint32 size) {
             BZ_ASSERT_ALWAYS_CORE("Buffer setData() is not implemented.");
         }
 
-        virtual void bind() const = 0;
-        virtual void unbind() const = 0;
+        virtual void bind(uint32 unit = 0) const = 0;
+        virtual void unbind(uint32 unit = 0) const = 0;
 
     protected:
         uint32 size;
@@ -149,9 +149,10 @@ namespace BZ {
 
     class ConstantBuffer : public Buffer {
     public:
+        static Ref<ConstantBuffer> create(uint32 size);
         static Ref<ConstantBuffer> create(void *data, uint32 size);
 
-        virtual void setData(void *data, uint32 size) = 0;
+        virtual void setData(const void *data, uint32 size) = 0;
 
     protected:
         explicit ConstantBuffer(uint32 size) : Buffer(size) {}

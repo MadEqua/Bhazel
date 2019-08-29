@@ -20,8 +20,13 @@ void ExampleLayer::onGraphicsContextCreated() {
             out vec3 vCol;
             out vec2 vTexCoord;
 
-            layout (std140, binding = 0) uniform Matrices {
+            layout (std140, binding = 0) uniform Frame {
+                mat4 viewMatrix;
+                mat4 ProjectionMatrix;
                 mat4 viewProjectionMatrix;
+            };
+
+            layout (std140, binding = 1) uniform Instance {
                 mat4 modelMatrix;
             };
 
@@ -42,14 +47,19 @@ void ExampleLayer::onGraphicsContextCreated() {
             
             void main() {
                 vec4 texCol = texture(colorTexture, vTexCoord);
-                //col = vec4(texCol.rgb, 1.0);
-                col = vec4(vCol, 1.0);
+                col = vec4(texCol.rgb, 1.0);
+                //col = vec4(vCol, 1.0);
             }
         )";
 
     const char* d3dVS = R"(
-            cbuffer CBuffer {
+            cbuffer Frame : register(b0) {
+                float4x4 viewMatrix;
+                float4x4 ProjectionMatrix;
                 float4x4 viewProjectionMatrix;
+            };
+
+            cbuffer Instance : register(b1) {
                 float4x4 modelMatrix;
             };
 
@@ -90,15 +100,6 @@ void ExampleLayer::onGraphicsContextCreated() {
         )";
 
     shader = BZ::RendererAPI::getAPI() == BZ::RendererAPI::API::OpenGL ? BZ::Shader::create(glVS, glFS) : BZ::Shader::create(d3dVS, d3dPS);
-
-    float data[32];
-    glm::mat4 idn(1.0f);
-    glm::mat4 trans = glm::translate(idn, glm::vec3(0.5f, 0, 0));
-    memcpy(&data, &idn, sizeof(float) * 16);
-    memcpy(&data[16], &trans, sizeof(float) * 16);
-    constantBuffer = BZ::ConstantBuffer::create(data, sizeof(data));
-    shader->addConstantBuffer(constantBuffer, BZ::ShaderType::Vertex);
-
     texture = BZ::Texture2D::create("test.jpg");
 
     float vertices[] = {
@@ -134,14 +135,16 @@ void ExampleLayer::onGraphicsContextCreated() {
     inputDescription->setIndexBuffer(indexBuffer);
 
     BZ::RenderCommand::setRenderMode(BZ::RenderMode::Triangles);
-
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+
+    cameraPos = pos = {};
+    cameraRot = 0;
 }
 
 void ExampleLayer::onUpdate(BZ::Timestep timestep) {
-    const float CAMERA_MOVE_SPEED = 3.0f * timestep;
+    const float CAMERA_MOVE_SPEED = 2.0f * timestep;
     const float CAMERA_ROT_SPEED = 180.0f * timestep;
-    const float TRI_MOVE_SPEED = 3.0f * timestep;
+    const float MOVE_SPEED = 3.0f * timestep;
     
     if(BZ::Input::isKeyPressed(BZ_KEY_A)) cameraPos.x -= CAMERA_MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_D)) cameraPos.x += CAMERA_MOVE_SPEED;
@@ -151,6 +154,12 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
 
     if(BZ::Input::isKeyPressed(BZ_KEY_Q)) cameraRot -= CAMERA_ROT_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_E)) cameraRot += CAMERA_ROT_SPEED;
+
+    if(BZ::Input::isKeyPressed(BZ_KEY_LEFT)) pos.x -= MOVE_SPEED;
+    else if(BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) pos.x += MOVE_SPEED;
+
+    if(BZ::Input::isKeyPressed(BZ_KEY_UP)) pos.y += MOVE_SPEED;
+    else if(BZ::Input::isKeyPressed(BZ_KEY_DOWN)) pos.y -= MOVE_SPEED;
 
     camera.setPosition(cameraPos);
     camera.setRotation(cameraRot);
@@ -167,9 +176,11 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
             BZ::Renderer::submit(shader, inputDescription, modelMatrix);
         }
     }*/
+    glm::mat4 modelMatrix(1.0);
+    modelMatrix = glm::translate(modelMatrix, pos);
 
     texture->bind(0);
-    BZ::Renderer::submit(shader, inputDescription);
+    BZ::Renderer::submit(shader, inputDescription, modelMatrix);
     BZ::Renderer::endScene();
 }
 

@@ -2,7 +2,6 @@
 
 #include "OpenGLContext.h"
 #include "OpenGLRendererAPI.h"
-#include "Bhazel/Renderer/RenderCommand.h"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -72,19 +71,19 @@ namespace BZ {
 
         switch(severity) {
         case GL_DEBUG_SEVERITY_HIGH:
-            BZ_LOG_CORE_ERROR("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: High. Message: {4}", id, sourceString, typeString, message);
+            BZ_LOG_CORE_ERROR("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: High. Message: {3}", id, sourceString, typeString, message);
             break;
         case GL_DEBUG_SEVERITY_MEDIUM:
-            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Medium. Message: {4}", id, sourceString, typeString, message);
+            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Medium. Message: {3}", id, sourceString, typeString, message);
             break;
         case GL_DEBUG_SEVERITY_LOW:
-            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Low. Message: {4}", id, sourceString, typeString, message);
+            BZ_LOG_CORE_WARN("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Low. Message: {3}", id, sourceString, typeString, message);
             break;
         case GL_DEBUG_SEVERITY_NOTIFICATION:
-            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Notification. Message: {4}", id, sourceString, typeString, message);
+            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Notification. Message: {3}", id, sourceString, typeString, message);
             break;
         default:
-            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Unknown. Message: {4}", id, sourceString, typeString, message);
+            BZ_LOG_CORE_INFO("OpenGL Debug - Id: 0x{0:04x}. Source: {1}. Type: {2}. Severity: Unknown. Message: {3}", id, sourceString, typeString, message);
         }
     }
 #endif

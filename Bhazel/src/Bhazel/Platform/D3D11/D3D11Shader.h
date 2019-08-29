@@ -1,7 +1,5 @@
 #pragma once
 
-//#include <glm/glm.hpp>
-
 #include "Bhazel/Renderer/Shader.h"
 
 #include "D3D11Context.h"
@@ -19,25 +17,11 @@ namespace BZ {
 
         ID3DBlob* getVertexShaderBlob() { return vertexShaderBlobPtr.Get(); }
 
-        /*void setUniformInt(const std::string &name, int v);
-
-        void setUniformFloat(const std::string &name, float v);
-        void setUniformFloat2(const std::string &name, const glm::vec2 &vec);
-        void setUniformFloat3(const std::string &name, const glm::vec3 &vec);
-        void setUniformFloat4(const std::string &name, const glm::vec4 &vec);
-
-        void setUniformMat3(const std::string &name, const glm::mat3 &mat);
-        void setUniformMat4(const std::string &name, const glm::mat4 &mat);*/
-
     private:
         D3D11Context &context;
 
-        wrl::ComPtr<ID3DBlob> vertexShaderBlobPtr; //Used for InputDescription validation
-
+        wrl::ComPtr<ID3DBlob> vertexShaderBlobPtr; //Used for InputDescription 
         wrl::ComPtr<ID3D11VertexShader> vertexShaderPtr;
         wrl::ComPtr<ID3D11PixelShader> pixelShaderPtr;
-
-        //Used to avoid allocations when constant buffer binding
-        mutable ID3D11Buffer * bufferArray[D3D11_COMMONSHADER_CONSTANT_BUFFER_HW_SLOT_COUNT];
     };
 }

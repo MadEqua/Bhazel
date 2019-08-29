@@ -88,56 +88,9 @@ namespace BZ {
 
     void OpenGLShader::bind() const {
         glUseProgram(rendererId);
-
-        //Bind the associated Constant Buffers
-        int i = 0;
-        for(auto &constantBuffer : vsConstantBuffers) {
-            OpenGLConstantBuffer &glConstantBuffer = static_cast<OpenGLConstantBuffer&>(*constantBuffer);
-            glBindBufferBase(GL_UNIFORM_BUFFER, i++, glConstantBuffer.getNativeHandle());
-        }
-
-        for(auto &constantBuffer : fsConstantBuffers) {
-            OpenGLConstantBuffer &glConstantBuffer = static_cast<OpenGLConstantBuffer&>(*constantBuffer);
-            glBindBufferBase(GL_UNIFORM_BUFFER, i++, glConstantBuffer.getNativeHandle());
-        }
     }
 
     void OpenGLShader::unbind() const {
         glUseProgram(0);
     }
-
-    /*void OpenGLShader::setUniformInt(const std::string &name, int v) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniform1i(loc, v);
-    }
-
-    void OpenGLShader::setUniformFloat(const std::string &name, float v) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniform1f(loc, v);
-    }
-
-    void OpenGLShader::setUniformFloat2(const std::string &name, const glm::vec2 &vec) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniform2fv(loc, 1, glm::value_ptr(vec));
-    }
-
-    void OpenGLShader::setUniformFloat3(const std::string &name, const glm::vec3 &vec) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniform3fv(loc, 1, glm::value_ptr(vec));
-    }
-
-    void OpenGLShader::setUniformFloat4(const std::string &name, const glm::vec4 &vec) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniform4fv(loc, 1, glm::value_ptr(vec));
-    }
-
-    void OpenGLShader::setUniformMat3(const std::string &name, const glm::mat3 &mat) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniformMatrix3fv(loc, 1, false, glm::value_ptr(mat));
-    }
-
-    void OpenGLShader::setUniformMat4(const std::string &name, const glm::mat4 &mat) {
-        GLint loc = glGetUniformLocation(rendererId, name.c_str());
-        glUniformMatrix4fv(loc, 1, false, glm::value_ptr(mat));
-    }*/
 }

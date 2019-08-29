@@ -15,11 +15,11 @@ namespace BZ {
         glDeleteBuffers(1, &rendererId);
     }
 
-    void OpenGLVertexBuffer::bind() const {
+    void OpenGLVertexBuffer::bind(uint32 unit) const {
         glBindBuffer(GL_ARRAY_BUFFER, rendererId);
     }
 
-    void OpenGLVertexBuffer::unbind() const {
+    void OpenGLVertexBuffer::unbind(uint32 unit) const {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
@@ -35,35 +35,40 @@ namespace BZ {
         glDeleteBuffers(1, &rendererId);
     }
 
-    void OpenGLIndexBuffer::bind() const {
+    void OpenGLIndexBuffer::bind(uint32 unit) const {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererId);
     }
 
-    void OpenGLIndexBuffer::unbind() const {
+    void OpenGLIndexBuffer::unbind(uint32 unit) const {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
+
+    OpenGLConstantBuffer::OpenGLConstantBuffer(uint32 size) :
+        OpenGLConstantBuffer(nullptr, size) {
+    }
 
     OpenGLConstantBuffer::OpenGLConstantBuffer(void *data, uint32 size) :
         ConstantBuffer(size) {
         glGenBuffers(1, &rendererId);
         glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
-        glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_READ);
+        glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
     }
 
     OpenGLConstantBuffer::~OpenGLConstantBuffer() {
         glDeleteBuffers(1, &rendererId);
     }
 
-    void OpenGLConstantBuffer::bind() const {
-        glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
+    void OpenGLConstantBuffer::bind(uint32 unit) const {
+        //glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
+        glBindBufferBase(GL_UNIFORM_BUFFER, unit, rendererId);
     }
 
-    void OpenGLConstantBuffer::unbind() const {
+    void OpenGLConstantBuffer::unbind(uint32 unit) const {
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
-    void OpenGLConstantBuffer::setData(void *data, uint32 size) {
+    void OpenGLConstantBuffer::setData(const void *data, uint32 size) {
         glBindBuffer(GL_UNIFORM_BUFFER, rendererId);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
     }

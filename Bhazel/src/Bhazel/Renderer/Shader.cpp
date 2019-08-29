@@ -9,13 +9,6 @@
 
 namespace BZ {
 
-    void Shader::addConstantBuffer(Ref<ConstantBuffer> &buffer, ShaderType type) {
-        if(type == ShaderType::Vertex)
-            vsConstantBuffers.emplace_back(buffer);
-        else if(type == ShaderType::Fragment)
-            fsConstantBuffers.emplace_back(buffer);
-    }
-
     Ref<Shader> Shader::create(const std::string &vertexSrc, const std::string &fragmentSrc) {
         switch(Renderer::getAPI())
         {
