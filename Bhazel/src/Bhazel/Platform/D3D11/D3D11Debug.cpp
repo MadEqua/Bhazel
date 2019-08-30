@@ -3,6 +3,7 @@
 #include "D3D11Debug.h"
 #include <D3D11SDKLayers.h>
 
+#ifndef BZ_DIST
 
 namespace BZ {
 
@@ -114,3 +115,4 @@ namespace BZ {
         next = dxgiInfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
     }
 }
+#endif

@@ -10,7 +10,7 @@ namespace BZ {
     public:
         ImGuiLayer();
 
-        void onAttach() override;
+        void onGraphicsContextCreated() override;
         void onDetach() override;
         void onImGuiRender() override;
 

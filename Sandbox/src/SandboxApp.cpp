@@ -168,19 +168,19 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
 
     BZ::Renderer::beginScene(camera);
 
-    /*glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+    texture->bindToPipeline(0);
+
+    glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f));
     for(int i = 0; i < 20; ++i) {
         for(int j = 0; j < 20; ++j) {
-            glm::vec3 pos(i * 0.11f, j * 0.11f, 0);
+            glm::vec3 pos(i * 0.31f, j * 0.31f, 0);
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), pos) * scaleMat;
             BZ::Renderer::submit(shader, inputDescription, modelMatrix);
         }
-    }*/
-    glm::mat4 modelMatrix(1.0);
+    }
+    /*glm::mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, pos);
-
-    texture->bindToPipeline(0);
-    BZ::Renderer::submit(shader, inputDescription, modelMatrix);
+    BZ::Renderer::submit(shader, inputDescription, modelMatrix);*/
     BZ::Renderer::endScene();
 }
 

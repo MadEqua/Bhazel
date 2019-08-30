@@ -6,13 +6,11 @@
 
 #include "Window.h"
 #include "Input.h"
-#include "Events/ApplicationEvent.h"
-#include "Bhazel/Layer.h"
+#include "Layer.h"
 #include "Input.h"
+#include "Events/ApplicationEvent.h"
 #include "Renderer/Renderer.h"
-
-#include "Bhazel/Application.h"
-#include "Bhazel/Window.h"
+#include "ImGui/ImGuiLayer.h"
 
 
 namespace BZ {
@@ -23,13 +21,13 @@ namespace BZ {
         //Init logger
         Log::getInstance();
 
-        BZ_ASSERT_CORE(!instance, "Application already exists")
-            instance = this;
+        BZ_ASSERT_CORE(!instance, "Application already exists");
+        instance = this;
 
         BZ_ASSERT_CORE(iniParser.parse("bhazel.ini"), "Failed to open \"bhazel.ini\" file.");
 
-        //imGuiLayer = new ImGuiLayer();
-        //pushOverlay(imGuiLayer);
+        imGuiLayer = new ImGuiLayer();
+        pushOverlay(imGuiLayer);
     }
 
     void Application::run() {
@@ -49,7 +47,7 @@ namespace BZ {
             Renderer::api = Renderer::API::D3D11;
         }
         else {
-            BZ_ASSERT_ALWAYS("Invalid Rendring API on .ini file: {0}.", renderingAPIString);
+            BZ_ASSERT_ALWAYS_CORE("Invalid Rendring API on .ini file: {0}.", renderingAPIString);
         }
         
         window = std::unique_ptr<Window>(Window::create(windowData, BZ_BIND_EVENT_FN(Application::onEvent)));
@@ -84,12 +82,11 @@ namespace BZ {
                 layer->onUpdate(timestep);
             }
 
-            /*imGuiLayer->begin();
+            imGuiLayer->begin();
             for(Layer *layer : layerStack) {
                 layer->onImGuiRender();
             }
-            imGuiLayer->end();*/
-
+            imGuiLayer->end();
 
             window->onUpdate();
         }

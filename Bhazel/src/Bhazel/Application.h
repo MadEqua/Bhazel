@@ -5,14 +5,13 @@
 #include "Bhazel/Core/Timer.h"
 #include "Bhazel/Core/Ini/IniParser.h"
 
-#include "Bhazel/ImGui/ImGuiLayer.h"
-
 
 namespace BZ {
 
     class Event;
     class WindowCloseEvent;
     class Layer;
+    class ImGuiLayer;
 
     class Application
     {
