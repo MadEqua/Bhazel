@@ -38,7 +38,7 @@ namespace BZ {
         windowData.title = settings.getFieldAsString("title", "Bhazel Engine");
         //windowData.fullScreen = settings.getFieldAsBasicType<bool>("fullScreen", false);
         windowData.vsync = settings.getFieldAsBasicType<bool>("vsync", true);
-        
+
         std::string renderingAPIString = settings.getFieldAsString("renderingAPI", "");
         if(renderingAPIString == "OpenGL" || renderingAPIString == "GL") {
             Renderer::api = Renderer::API::OpenGL;
@@ -49,7 +49,7 @@ namespace BZ {
         else {
             BZ_ASSERT_ALWAYS_CORE("Invalid Rendring API on .ini file: {0}.", renderingAPIString);
         }
-        
+
         window = std::unique_ptr<Window>(Window::create(windowData, BZ_BIND_EVENT_FN(Application::onEvent)));
         Renderer::init();
         Input::init(window->getNativeWindowHandle());

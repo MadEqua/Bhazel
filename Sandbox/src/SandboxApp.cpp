@@ -4,7 +4,9 @@
 #include <ImGui/imgui.h>
 
 
-ExampleLayer::ExampleLayer() : Layer("Example"), camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
+ExampleLayer::ExampleLayer() : 
+    Layer("Example"), 
+    camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
 }
 
 void ExampleLayer::onAttach() {
@@ -46,8 +48,7 @@ void ExampleLayer::onGraphicsContextCreated() {
             in vec2 vTexCoord;
             
             void main() {
-                vec4 texCol = texture(colorTexture, vTexCoord);
-                col = vec4(texCol.rgb, 1.0);
+                col = texture(colorTexture, vTexCoord);
                 //col = vec4(vCol, 1.0);
             }
         )";
@@ -134,7 +135,6 @@ void ExampleLayer::onGraphicsContextCreated() {
     inputDescription->addVertexBuffer(vertexBuffer, shader);
     inputDescription->setIndexBuffer(indexBuffer);
 
-    BZ::RenderCommand::setRenderMode(BZ::Renderer::RenderMode::Triangles);
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
     cameraPos = pos = {};
@@ -190,9 +190,6 @@ void ExampleLayer::onEvent(BZ::Event &event) {
 }
 
 void ExampleLayer::onImGuiRender() {
-    ImGui::Begin("Test");
-    ImGui::LabelText("Hello!", "");
-    ImGui::End();
 }
 
 bool ExampleLayer::onWindowResizeEvent(BZ::WindowResizeEvent &ev) {

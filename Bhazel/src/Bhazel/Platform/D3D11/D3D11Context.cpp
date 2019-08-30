@@ -40,7 +40,7 @@ namespace BZ {
         BZ_ASSERT_CORE(deviceContext, "Error creating DeviceContext!");
        
         //Set Depth and Stencil settings
-        D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+        /*D3D11_DEPTH_STENCIL_DESC dsDesc = {};
         dsDesc.DepthEnable = true;
         dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
         dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
@@ -48,7 +48,7 @@ namespace BZ {
 
         wrl::ComPtr<ID3D11DepthStencilState> dsState;
         BZ_ASSERT_HRES_DXGI(device->CreateDepthStencilState(&dsDesc, &dsState));
-        deviceContext->OMSetDepthStencilState(dsState.Get(), 1);
+        BZ_LOG_DXGI(deviceContext->OMSetDepthStencilState(dsState.Get(), 1));*/
 
         //Set Rasterizer settings
         wrl::ComPtr<ID3D11RasterizerState> rsState;
@@ -71,7 +71,7 @@ namespace BZ {
         wrl::ComPtr<ID3D11Texture2D> backBuffer;
         BZ_ASSERT_HRES_DXGI(swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
         D3D11_TEXTURE2D_DESC backBufferDesc = {};
-        backBuffer->GetDesc(&backBufferDesc);
+        BZ_LOG_DXGI(backBuffer->GetDesc(&backBufferDesc));
 
         D3D11_VIEWPORT vp;
         vp.Width = static_cast<float>(backBufferDesc.Width);
@@ -80,7 +80,7 @@ namespace BZ {
         vp.MaxDepth = 1.0f;
         vp.TopLeftX = 0;
         vp.TopLeftY = 0;
-        deviceContext->RSSetViewports(1, &vp);
+        BZ_LOG_DXGI(deviceContext->RSSetViewports(1, &vp));
 
         rendererAPI = std::make_unique<D3D11RendererAPI>(*this);
         RenderCommand::initRendererAPI(rendererAPI.get());
@@ -108,7 +108,7 @@ namespace BZ {
 
         wrl::ComPtr<ID3D11Texture2D> depthStencilBuffer;
         D3D11_TEXTURE2D_DESC descDepthStencil = {};
-        backBuffer->GetDesc(&descDepthStencil); //Reuse back buffer description
+        BZ_LOG_DXGI(backBuffer->GetDesc(&descDepthStencil)); //Reuse back buffer description
         descDepthStencil.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
         descDepthStencil.Usage = D3D11_USAGE_DEFAULT;
         descDepthStencil.BindFlags = D3D11_BIND_DEPTH_STENCIL;

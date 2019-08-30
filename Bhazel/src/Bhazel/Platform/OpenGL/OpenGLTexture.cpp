@@ -13,7 +13,7 @@ namespace BZ {
         stbi_set_flip_vertically_on_load(true);
 
         int width, height, channels;
-        stbi_uc *data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+        stbi_uc *data = stbi_load(path.c_str(), &width, &height, &channels, 4);
         BZ_ASSERT_CORE(data, "Failed to load image!");
         
         this->width = width;
@@ -25,12 +25,12 @@ namespace BZ {
         //GL 4.5
         //glCreateTextures(GL_TEXTURE_2D, 1, &rendererId);
 
-        BZ_ASSERT_GL(glTexStorage2D(GL_TEXTURE_2D, 1, GL_SRGB8, width, height));
+        BZ_ASSERT_GL(glTexStorage2D(GL_TEXTURE_2D, 1, GL_SRGB8_ALPHA8, width, height));
 
         //GL 4.5
         //glTextureStorage2D(rendererId, 1, GL_SRGB8, width, height);
 
-        BZ_ASSERT_GL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data));
+        BZ_ASSERT_GL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data));
         
         //GL 4.5
         //glTextureSubImage2D(rendererId, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);

@@ -39,7 +39,7 @@ namespace BZ {
             glm::mat4 projectionMatrix;
             glm::mat4 viewProjectionMatrix;
         };
-        static FrameData sceneData;
+        static FrameData frameData;
 
         struct InstanceData {
             glm::mat4 modelMatrix;

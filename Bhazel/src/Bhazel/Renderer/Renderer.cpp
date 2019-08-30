@@ -6,21 +6,26 @@
 
 #include "Shader.h"
 #include "InputDescription.h"
+#include "BlendingSettings.h"
 
 
 namespace BZ {
 
     Renderer::API Renderer::api = API::Unknown;
 
-    Renderer::FrameData Renderer::sceneData;
+    Renderer::FrameData Renderer::frameData;
     Renderer::InstanceData Renderer::instanceData;
 
     Ref<ConstantBuffer> Renderer::frameConstantBuffer;
     Ref<ConstantBuffer> Renderer::instanceConstantBuffer;
 
     void Renderer::init() {
-        frameConstantBuffer = ConstantBuffer::create(sizeof(sceneData));
+        frameConstantBuffer = ConstantBuffer::create(sizeof(frameData));
         instanceConstantBuffer = ConstantBuffer::create(sizeof(instanceData));
+
+        //TODO: set all pipeline defaults here
+        RenderCommand::setRenderMode(RenderMode::Triangles);
+        RenderCommand::setBlendingSettings(BlendingSettings());
     }
 
     void Renderer::destroy() {
@@ -30,11 +35,11 @@ namespace BZ {
     }
 
     void Renderer::beginScene(OrtographicCamera &camera) {
-        sceneData.viewMatrix = camera.getViewMatrix();
-        sceneData.projectionMatrix = camera.getProjectionMatrix();
-        sceneData.viewProjectionMatrix = camera.getViewProjectionMatrix();
+        frameData.viewMatrix = camera.getViewMatrix();
+        frameData.projectionMatrix = camera.getProjectionMatrix();
+        frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();
 
-        frameConstantBuffer->setData(&sceneData, sizeof(sceneData));
+        frameConstantBuffer->setData(&frameData, sizeof(frameData));
         frameConstantBuffer->bindToPipeline(0);
     }
 
@@ -49,6 +54,6 @@ namespace BZ {
         shader->bindToPipeline();
 
         inputDescription->bindToPipeline();
-        RenderCommand::drawIndexed(inputDescription);
+        RenderCommand::drawIndexed(inputDescription->getIndexBuffer()->getCount());
     }
 }

@@ -4,7 +4,7 @@
 #include "D3D11Context.h"
 
 #include "Bhazel/Renderer/Renderer.h"
-#include "Bhazel/Renderer/InputDescription.h"
+#include "Bhazel/Renderer/BlendingSettings.h"
 
 
 namespace BZ {
@@ -25,9 +25,44 @@ namespace BZ {
         stencilClearValue = value;
     }
 
+    void D3D11RendererAPI::clearColorBuffer() {
+        BZ_LOG_DXGI(deviceContext->ClearRenderTargetView(context.getBackBufferView(), reinterpret_cast<float*>(&clearColor)));
+    }
+
+    void D3D11RendererAPI::clearDepthBuffer() {
+        BZ_LOG_DXGI(deviceContext->ClearDepthStencilView(context.getDepthStencilView(), D3D11_CLEAR_DEPTH, depthClearValue, stencilClearValue));
+    }
+
+    void D3D11RendererAPI::clearStencilBuffer() {
+        BZ_LOG_DXGI(deviceContext->ClearDepthStencilView(context.getDepthStencilView(), D3D11_CLEAR_STENCIL, depthClearValue, stencilClearValue));
+    }
+
     void D3D11RendererAPI::clearColorAndDepthStencilBuffers() {
-        deviceContext->ClearRenderTargetView(context.getBackBufferView(), reinterpret_cast<float*>(&clearColor));
-        deviceContext->ClearDepthStencilView(context.getDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, depthClearValue, stencilClearValue);
+        BZ_LOG_DXGI(deviceContext->ClearRenderTargetView(context.getBackBufferView(), reinterpret_cast<float*>(&clearColor)));
+        BZ_LOG_DXGI(deviceContext->ClearDepthStencilView(context.getDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, depthClearValue, stencilClearValue));
+    }
+
+    void D3D11RendererAPI::setBlendingSettings(BlendingSettings &settings) {
+        const BlendingSetting &rgbSetting = settings.settingRGB;
+        const BlendingSetting &alphaSetting = settings.settingAlpha;
+
+        D3D11_BLEND_DESC blendDesc = {0};
+        blendDesc.AlphaToCoverageEnable = false;
+        blendDesc.IndependentBlendEnable = false;
+        blendDesc.RenderTarget[0].BlendEnable = settings.enableBlending;
+        if(settings.enableBlending) {
+            blendDesc.RenderTarget[0].SrcBlend = blendingFunctionToD3D(rgbSetting.sourceBlendingFunction);
+            blendDesc.RenderTarget[0].DestBlend = blendingFunctionToD3D(rgbSetting.destinationBlendingFunction);
+            blendDesc.RenderTarget[0].BlendOp = blendingEquationToD3D(rgbSetting.blendingEquation);
+            blendDesc.RenderTarget[0].SrcBlendAlpha = blendingFunctionToD3D(alphaSetting.sourceBlendingFunction);
+            blendDesc.RenderTarget[0].DestBlendAlpha = blendingFunctionToD3D(alphaSetting.destinationBlendingFunction);
+            blendDesc.RenderTarget[0].BlendOpAlpha = blendingEquationToD3D(alphaSetting.blendingEquation);
+        }
+        blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+        wrl::ComPtr<ID3D11BlendState> blendState;
+        BZ_ASSERT_HRES_DXGI(device->CreateBlendState(&blendDesc, &blendState));
+        BZ_LOG_DXGI(deviceContext->OMSetBlendState(blendState.Get(), nullptr, 0xffffffff));
     }
 
     void D3D11RendererAPI::setViewport(int left, int top, int width, int height) {
@@ -60,7 +95,69 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->IASetPrimitiveTopology(topology));
     }
 
-    void D3D11RendererAPI::drawIndexed(const Ref<InputDescription> &inputDesc) {
-        deviceContext->DrawIndexed(inputDesc->getIndexBuffer()->getCount(), 0, 0);
+    void D3D11RendererAPI::drawIndexed(uint32 indicesCount) {
+        BZ_LOG_DXGI(deviceContext->DrawIndexed(indicesCount, 0, 0));
+    }
+
+    D3D11_BLEND D3D11RendererAPI::blendingFunctionToD3D(BlendingFunction blendingFunction) {
+        switch(blendingFunction) {
+        case BlendingFunction::Zero:
+            return D3D11_BLEND_ZERO;
+        case BlendingFunction::One:
+            return D3D11_BLEND_ONE;
+        case BlendingFunction::SourceColor:
+            return D3D11_BLEND_SRC_COLOR;
+        case BlendingFunction::OneMinusSourceColor:
+            return D3D11_BLEND_INV_SRC_COLOR;
+        case BlendingFunction::DestinationColor:
+            return D3D11_BLEND_DEST_COLOR;
+        case BlendingFunction::OneMinusDestinationColor:
+            return D3D11_BLEND_INV_DEST_COLOR;
+        case BlendingFunction::SourceAlpha:
+            return D3D11_BLEND_SRC_ALPHA;
+        case BlendingFunction::OneMinusSourceAlpha:
+            return D3D11_BLEND_INV_SRC_ALPHA;
+        case BlendingFunction::DestinationAlpha:
+            return D3D11_BLEND_DEST_ALPHA;
+        case BlendingFunction::OneMinusDestinationAlpha:
+            return D3D11_BLEND_INV_DEST_ALPHA;
+        case BlendingFunction::ConstantColor:
+            BZ_ASSERT_ALWAYS_CORE("Blending mode not implemented on D3D11!");
+        case BlendingFunction::OneMinusConstantColor:
+            BZ_ASSERT_ALWAYS_CORE("Blending mode not implemented on D3D11!");
+        case BlendingFunction::ConstantAlpha:
+            BZ_ASSERT_ALWAYS_CORE("Blending mode not implemented on D3D11!");
+        case BlendingFunction::OneMinusConstantAlpha:
+            BZ_ASSERT_ALWAYS_CORE("Blending mode not implemented on D3D11!");
+        case BlendingFunction::AlphaSaturate:
+            return D3D11_BLEND_SRC_ALPHA_SAT;
+        case BlendingFunction::Source1Color:
+            return D3D11_BLEND_SRC1_COLOR;
+        case BlendingFunction::OneMinusSource1Color:
+            return D3D11_BLEND_INV_SRC1_COLOR;
+        case BlendingFunction::Source1Alpha:
+            return D3D11_BLEND_SRC1_ALPHA;
+        case BlendingFunction::OneMinusSource1Alpha:
+            return D3D11_BLEND_INV_SRC1_ALPHA;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown BlendingFunction!");
+        }
+    }
+
+    D3D11_BLEND_OP D3D11RendererAPI::blendingEquationToD3D(BlendingEquation blendingEquation) {
+        switch(blendingEquation) {
+        case BlendingEquation::Add:
+            return D3D11_BLEND_OP_ADD;
+        case BlendingEquation::SourceMinusDestination:
+            return D3D11_BLEND_OP_SUBTRACT;
+        case BlendingEquation::DestinationMinusSource:
+            return D3D11_BLEND_OP_REV_SUBTRACT;
+        case BlendingEquation::Min:
+            return D3D11_BLEND_OP_MIN;
+        case BlendingEquation::Max:
+            return D3D11_BLEND_OP_MAX;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown BlendingEquation!");
+        }
     }
 }

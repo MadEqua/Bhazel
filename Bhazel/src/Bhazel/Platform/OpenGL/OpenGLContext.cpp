@@ -1,10 +1,10 @@
 #include "bzpch.h"
 
+#include "OpenGLIncludes.h"
 #include "OpenGLContext.h"
 #include "OpenGLRendererAPI.h"
 
 #include <GLFW/glfw3.h>
-#include "OpenGLIncludes.h"
 
 
 namespace BZ {
