@@ -4,7 +4,7 @@
 #include "D3D11Context.h"
 
 #include "Bhazel/Renderer/Renderer.h"
-#include "Bhazel/Renderer/BlendingSettings.h"
+#include "Bhazel/Renderer/PipelineSettings.h"
 
 
 namespace BZ {
@@ -15,14 +15,6 @@ namespace BZ {
 
     void D3D11RendererAPI::setClearColor(const glm::vec4& color) {
         clearColor = color;
-    }
-
-    void D3D11RendererAPI::setDepthClearValue(float value) {
-        depthClearValue = value;
-    }
-
-    void D3D11RendererAPI::setStencilClearValue(int value) {
-        stencilClearValue = value;
     }
 
     void D3D11RendererAPI::clearColorBuffer() {
@@ -65,6 +57,24 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->OMSetBlendState(blendState.Get(), nullptr, 0xffffffff));
     }
 
+    void D3D11RendererAPI::setDepthSettings(DepthSettings &settings) {
+        depthClearValue = settings.depthClearValue;
+
+        D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+        wrl::ComPtr<ID3D11DepthStencilState> dsState;
+        UINT stencilRef;
+        BZ_LOG_DXGI(deviceContext->OMGetDepthStencilState(&dsState, &stencilRef));
+        if(dsState) 
+            BZ_LOG_DXGI(dsState->GetDesc(&dsDesc));
+
+        dsDesc.DepthEnable = settings.enableDepthTest;
+        dsDesc.DepthFunc = testFunctionToD3D(settings.testFunction);
+        dsDesc.DepthWriteMask = settings.enableDepthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+
+        BZ_ASSERT_HRES_DXGI(device->CreateDepthStencilState(&dsDesc, &dsState));
+        BZ_LOG_DXGI(deviceContext->OMSetDepthStencilState(dsState.Get(), stencilRef));
+    }
+
     void D3D11RendererAPI::setViewport(int left, int top, int width, int height) {
         D3D11_VIEWPORT viewport;
         viewport.TopLeftX = static_cast<FLOAT>(left);
@@ -87,6 +97,12 @@ namespace BZ {
             break;
         case Renderer::RenderMode::Triangles:
             topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+            break;
+        case Renderer::RenderMode::LineStrip:
+            topology = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+            break;
+        case Renderer::RenderMode::TriangleStrip:
+            topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
             break;
         default:
             BZ_LOG_ERROR("Unknown RenderMode. Setting triangles.");
@@ -158,6 +174,30 @@ namespace BZ {
             return D3D11_BLEND_OP_MAX;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BlendingEquation!");
+        }
+    }
+
+    D3D11_COMPARISON_FUNC D3D11RendererAPI::testFunctionToD3D(TestFunction testFunction) {
+        switch(testFunction)
+        {
+        case TestFunction::Always:
+            return D3D11_COMPARISON_ALWAYS;
+        case TestFunction::Never:
+            return D3D11_COMPARISON_NEVER;
+        case TestFunction::Less:
+            return D3D11_COMPARISON_LESS;
+        case TestFunction::LessOrEqual:
+            return D3D11_COMPARISON_LESS_EQUAL;
+        case TestFunction::Greater:
+            return D3D11_COMPARISON_GREATER;
+        case TestFunction::GreaterOrEqual:
+            return D3D11_COMPARISON_GREATER_EQUAL;
+        case TestFunction::Equal:
+            return D3D11_COMPARISON_EQUAL;
+        case TestFunction::NotEqual:
+            return D3D11_COMPARISON_NOT_EQUAL;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TestFunction!");
         }
     }
 }

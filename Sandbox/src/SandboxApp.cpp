@@ -6,16 +6,20 @@
 
 ExampleLayer::ExampleLayer() : 
     Layer("Example"), 
-    camera(-1.6f, 1.6f, -0.9f, 0.9f), cameraPos(0.0f), cameraRot(0.0f) {
+    camera(-16.0f / 9.0f, 16.0f / 9.0f, -1.0f, 1.0f) {
 }
 
 void ExampleLayer::onAttach() {
+    cameraPos = {0.0f, 0.0f};
+    pos = {};
+    cameraRot = 0;
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
     const char * glVS = R"(
             #version 430 core
             layout(location = 0) in vec3 pos;
+
             layout(location = 1) in vec3 col;
             layout(location = 2) in vec2 texCoord;
             
@@ -117,7 +121,7 @@ void ExampleLayer::onGraphicsContextCreated() {
         1.0f, 1.0f,
 
         -0.5f, 0.5f, 0.0f,
-        0.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
         0.0f, 1.0f,
     };
 
@@ -136,9 +140,6 @@ void ExampleLayer::onGraphicsContextCreated() {
     inputDescription->setIndexBuffer(indexBuffer);
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-
-    cameraPos = pos = {};
-    cameraRot = 0;
 }
 
 void ExampleLayer::onUpdate(BZ::Timestep timestep) {
@@ -170,17 +171,23 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
 
     texture->bindToPipeline(0);
 
-    glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f));
+    /*glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f));
     for(int i = 0; i < 20; ++i) {
         for(int j = 0; j < 20; ++j) {
             glm::vec3 pos(i * 0.31f, j * 0.31f, 0);
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), pos) * scaleMat;
             BZ::Renderer::submit(shader, inputDescription, modelMatrix);
         }
-    }
-    /*glm::mat4 modelMatrix(1.0);
+    }*/
+
+
+    glm::mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, pos);
-    BZ::Renderer::submit(shader, inputDescription, modelMatrix);*/
+    BZ::Renderer::submit(shader, inputDescription, modelMatrix);
+
+    modelMatrix = glm::translate(modelMatrix, pos + disp);
+    BZ::Renderer::submit(shader, inputDescription, modelMatrix);
+
     BZ::Renderer::endScene();
 }
 
@@ -190,6 +197,9 @@ void ExampleLayer::onEvent(BZ::Event &event) {
 }
 
 void ExampleLayer::onImGuiRender() {
+    ImGui::Begin("Test");
+    ImGui::SliderFloat3("disp", &disp[0], -1, 1);
+    ImGui::End();
 }
 
 bool ExampleLayer::onWindowResizeEvent(BZ::WindowResizeEvent &ev) {

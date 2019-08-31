@@ -7,19 +7,19 @@ namespace BZ {
 
     enum class BlendingFunction;
     enum class BlendingEquation;
+    enum class TestFunction;
 
     class OpenGLRendererAPI : public RendererAPI
     {
     public:
         virtual void setClearColor(const glm::vec4& color) override;
-        virtual void setDepthClearValue(float value) override;
-        virtual void setStencilClearValue(int value) override;
         virtual void clearColorBuffer() override;
         virtual void clearDepthBuffer() override;
         virtual void clearStencilBuffer() override;
         virtual void clearColorAndDepthStencilBuffers() override;
 
         virtual void setBlendingSettings(BlendingSettings &settings) override;
+        virtual void setDepthSettings(DepthSettings &settings) override;
 
         virtual void setViewport(int left, int top, int width, int height) override;
 
@@ -32,5 +32,6 @@ namespace BZ {
 
         GLenum blendingFunctionToGLenum(BlendingFunction blendingFunction);
         GLenum blendingEquationToGLenum(BlendingEquation blendingEquation);
+        GLenum testFunctionToGLenum(TestFunction testFunction);
     };
 }

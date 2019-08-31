@@ -6,7 +6,7 @@
 
 #include "Shader.h"
 #include "InputDescription.h"
-#include "BlendingSettings.h"
+#include "PipelineSettings.h"
 
 
 namespace BZ {
@@ -25,7 +25,8 @@ namespace BZ {
 
         //TODO: set all pipeline defaults here
         RenderCommand::setRenderMode(RenderMode::Triangles);
-        RenderCommand::setBlendingSettings(BlendingSettings());
+        RenderCommand::setBlendingSettings(BlendingSettings(false));
+        RenderCommand::setDepthSettings(DepthSettings(false, false));
     }
 
     void Renderer::destroy() {

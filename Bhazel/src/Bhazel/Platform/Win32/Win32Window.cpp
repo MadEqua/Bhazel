@@ -1,5 +1,8 @@
 #include "bzpch.h"
 
+#include <Windows.h>
+#include <Windowsx.h>
+
 #include <bitset>
 
 #include "Win32Window.h"

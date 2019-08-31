@@ -6,23 +6,21 @@ namespace BZ {
 
     class InputDescription;
     struct BlendingSettings;
+    struct DepthSettings;
 
     class RendererAPI {
     public:
         virtual ~RendererAPI() = default;
 
         virtual void setClearColor(const glm::vec4 &color) = 0;
-        virtual void setDepthClearValue(float value) = 0;
-        virtual void setStencilClearValue(int value) = 0;
         virtual void clearColorBuffer() = 0;
         virtual void clearDepthBuffer() = 0;
         virtual void clearStencilBuffer() = 0;
         virtual void clearColorAndDepthStencilBuffers() = 0;
 
-        //virtual void setDepthSettings() = 0;
-        //virtual void setStencilSettings() = 0;
-        
         virtual void setBlendingSettings(BlendingSettings &settings) = 0;
+        virtual void setDepthSettings(DepthSettings &settings) = 0;
+        //virtual void setStencilSettings() = 0;
 
         //virtual void setBackfaceCullingSettings();
 

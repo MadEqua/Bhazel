@@ -110,7 +110,7 @@ namespace BZ {
         case ShaderDataType::Mat2:
         case ShaderDataType::Mat3:
         case ShaderDataType::Mat4:
-            BZ_LOG_CORE_ERROR("D3D11 matrix vertex attributes not implemented.");
+            BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
             return DXGI_FORMAT_UNKNOWN;
 
         default:

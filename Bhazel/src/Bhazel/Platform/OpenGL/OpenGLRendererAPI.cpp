@@ -4,21 +4,13 @@
 #include "OpenGLRendererAPI.h"
 
 #include "Bhazel/Renderer/Renderer.h"
-#include "Bhazel/Renderer/BlendingSettings.h"
+#include "Bhazel/Renderer/PipelineSettings.h"
 
 
 namespace BZ {
 
     void OpenGLRendererAPI::setClearColor(const glm::vec4& color) {
         BZ_ASSERT_GL(glClearColor(color.r, color.g, color.b, color.a));
-    }
-
-    void OpenGLRendererAPI::setDepthClearValue(float value) {
-        BZ_ASSERT_GL(glClearDepthf(value));
-    }
-
-    void OpenGLRendererAPI::setStencilClearValue(int value) {
-        BZ_ASSERT_GL(glClearStencil(value));
     }
 
     void OpenGLRendererAPI::clearColorBuffer() {
@@ -62,6 +54,20 @@ namespace BZ {
         }
     }
 
+    void OpenGLRendererAPI::setDepthSettings(DepthSettings &settings) {
+        if(settings.enableDepthTest) {
+            BZ_ASSERT_GL(glEnable(GL_DEPTH_TEST));
+            BZ_ASSERT_GL(glDepthFunc(testFunctionToGLenum(settings.testFunction)));
+        }
+        else {
+            BZ_ASSERT_GL(glDisable(GL_DEPTH_TEST));
+        }
+
+        BZ_ASSERT_GL(glDepthMask(settings.enableDepthWrite ? GL_TRUE : GL_FALSE));
+        BZ_ASSERT_GL(glClearDepth(settings.depthClearValue));
+    }
+
+
     void OpenGLRendererAPI::setViewport(int left, int top, int width, int height) {
         BZ_ASSERT_GL(glViewport(left, top, width, height));
     }
@@ -78,6 +84,12 @@ namespace BZ {
         case Renderer::RenderMode::Triangles:
             renderMode = GL_TRIANGLES;
             break;
+        case Renderer::RenderMode::TriangleStrip:
+            renderMode = GL_TRIANGLE_STRIP;
+            break;
+        case Renderer::RenderMode::LineStrip:
+            renderMode = GL_LINE_STRIP;
+            break;
         default:
             BZ_LOG_ERROR("Unknown RenderMode. Setting triangles.");
             renderMode = GL_TRIANGLES;
@@ -87,30 +99,6 @@ namespace BZ {
     void OpenGLRendererAPI::drawIndexed(uint32 indicesCount) {
         BZ_ASSERT_GL(glDrawElements(renderMode, indicesCount, GL_UNSIGNED_INT, nullptr));
     }
-
-
-    /*GLenum OpenGLRendererAPI::comparisionFunctionToGLenum(ComparisionFunction comparisionFunction) {
-        switch(comparisionFunction) {
-        case ComparisionFunction::NEVER:
-            return GL_NEVER;
-        case ComparisionFunction::ALWAYS:
-            return GL_ALWAYS;
-        case ComparisionFunction::LESS:
-            return GL_LESS;
-        case ComparisionFunction::LESS_OR_EQUAL:
-            return GL_LEQUAL;
-        case ComparisionFunction::GREATER:
-            return GL_GREATER;
-        case ComparisionFunction::GREATER_OR_EQUAL:
-            return GL_GEQUAL;
-        case ComparisionFunction::EQUAL:
-            return GL_EQUAL;
-        case ComparisionFunction::NOT_EQUAL:
-            return GL_NOTEQUAL;
-        default:
-            return 0;
-        }
-    }*/
 
     GLenum OpenGLRendererAPI::blendingFunctionToGLenum(BlendingFunction blendingFunction) {
         switch(blendingFunction) {
@@ -171,6 +159,29 @@ namespace BZ {
             return GL_MAX;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BlendingEquation!");
+        }
+    }
+
+    GLenum OpenGLRendererAPI::testFunctionToGLenum(TestFunction testFunction) {
+        switch(testFunction) {
+        case TestFunction::Never:
+            return GL_NEVER;
+        case TestFunction::Always:
+            return GL_ALWAYS;
+        case TestFunction::Less:
+            return GL_LESS;
+        case TestFunction::LessOrEqual:
+            return GL_LEQUAL;
+        case TestFunction::Greater:
+            return GL_GREATER;
+        case TestFunction::GreaterOrEqual:
+            return GL_GEQUAL;
+        case TestFunction::Equal:
+            return GL_EQUAL;
+        case TestFunction::NotEqual:
+            return GL_NOTEQUAL;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TestFunction!");
         }
     }
 }

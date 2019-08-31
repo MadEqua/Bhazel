@@ -18,7 +18,6 @@
 
 #define BZ_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 
-#include <memory>
 namespace BZ {
 
     template<typename T>

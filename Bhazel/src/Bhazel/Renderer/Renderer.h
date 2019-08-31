@@ -21,7 +21,9 @@ namespace BZ {
         enum class RenderMode {
             Points,
             Lines,
-            Triangles
+            Triangles,
+            LineStrip,
+            TriangleStrip
         };
 
         static void init();

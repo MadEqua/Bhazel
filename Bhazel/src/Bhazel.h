@@ -17,6 +17,7 @@
 
 #include "Bhazel/Renderer/Renderer.h"
 #include "Bhazel/Renderer/RenderCommand.h"
+#include "Bhazel/Renderer/PipelineSettings.h"
 
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/Shader.h"

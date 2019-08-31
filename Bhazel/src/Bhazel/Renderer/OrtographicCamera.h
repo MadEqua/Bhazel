@@ -8,6 +8,7 @@ namespace BZ {
     {
     public:
         OrtographicCamera(float left, float right, float bottom, float top);
+        OrtographicCamera(float left, float right, float bottom, float top,  float n, float f);
 
         const glm::vec2& getPosition() const { return position; }
         void setPosition(const glm::vec2 &pos) { position = pos; computeViewMatrix(); }

@@ -1,5 +1,7 @@
 #include "bzpch.h"
 
+#include <Windows.h>
+
 #include <bitset>
 
 #include "Win32Input.h"

@@ -17,14 +17,6 @@ namespace BZ {
             rendererAPI->setClearColor(color);
         }
 
-        static void setDepthClearValue(float value) {
-            rendererAPI->setDepthClearValue(value);
-        }
-
-        static void setStencilClearValue(int value) {
-            rendererAPI->setStencilClearValue(value);
-        }
-
         static void clearColorBuffer() {
             rendererAPI->clearColorBuffer();
         }
@@ -45,6 +37,10 @@ namespace BZ {
         //---------------------------------------------------------------------
         static void setBlendingSettings(BlendingSettings &settings) {
             rendererAPI->setBlendingSettings(settings);
+        }
+
+        static void setDepthSettings(DepthSettings &settings) {
+            rendererAPI->setDepthSettings(settings);
         }
 
         //---------------------------------------------------------------------
