@@ -13,8 +13,7 @@ namespace BZ {
     static GLenum shaderTypeToGLenum(ShaderType shaderType);
 
     OpenGLShader::OpenGLShader(const std::string &filePath) {
-        const std::string &source = readFile(filePath);
-        auto &sources = preProcessSource(source);
+        auto &sources = readAndPreprocessFile(filePath);
         compile(sources);
     }
 

@@ -1,6 +1,7 @@
 #include "bzpch.h"
 
 #include "IniParser.h"
+#include "Bhazel/Core/Utils.h"
 
 #include <fstream>
 
@@ -31,13 +32,5 @@ namespace BZ {
         }
         inFile.close();
         return true;
-    }
-
-    std::string IniParser::trim(const std::string &in) const {
-        size_t first = in.find_first_not_of(' ');
-        if(first == std::string::npos)
-            return "";
-        size_t last = in.find_last_not_of(' ');
-        return in.substr(first, (last - first + 1));
     }
 }

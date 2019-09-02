@@ -14,8 +14,7 @@ namespace BZ {
     D3D11Shader::D3D11Shader(const std::string &filePath) :
         context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
 
-        const std::string &source = readFile(filePath);
-        auto &sources = preProcessSource(source);
+        auto &sources = readAndPreprocessFile(filePath);
         compile(sources);
     }
 

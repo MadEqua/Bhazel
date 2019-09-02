@@ -5,6 +5,7 @@
 
 #include "Bhazel/Platform/OpenGL/OpenGLShader.h"
 #include "Bhazel/Platform/D3D11/D3D11Shader.h"
+#include "Bhazel/Core/Utils.h"
 
 #include <fstream>
 
@@ -37,39 +38,37 @@ namespace BZ {
         }
     }
 
-    std::string Shader::readFile(const std::string & filePath) {
-        std::ifstream in(filePath, std::ios::in | std::ios::binary);
+    std::unordered_map<ShaderType, std::string> Shader::readAndPreprocessFile(const std::string & filePath) {
+        
+        std::ifstream in(filePath, std::ios::in);
         BZ_ASSERT_CORE(in, "Failed to load shader '{0}'.", filePath);
 
-        std::string result;
-        in.seekg(0, std::ios::end);
-        result.resize(in.tellg());
-        in.seekg(0, std::ios::beg);
-        in.read(&result[0], result.size());
-        in.close();
-        return result;
-    }
-
-    std::unordered_map<ShaderType, std::string> Shader::preProcessSource(const std::string &source) {
-        BZ_ASSERT_CORE(!source.empty(), "Source is empty!");
+        const char* typeToken = "#type";
+        const size_t typeTokenLength = strlen(typeToken);
 
         std::unordered_map<ShaderType, std::string> result;
+        std::stringstream sstream;
+        std::string line;
+        ShaderType currentType = ShaderType::Unknown;
 
-        const char* typeToken = "#type";
-        size_t typeTokenLength = strlen(typeToken);
-        size_t pos = source.find(typeToken, 0);
-        while(pos != std::string::npos) {
-            size_t eol = source.find_first_of("\r\n", pos);
-            BZ_ASSERT_CORE(eol != std::string::npos, "Shader syntax error! Missing newline after # line.");
-            size_t begin = pos + typeTokenLength + 1;
-            std::string typeString = source.substr(begin, eol - begin);
-            ShaderType type = shaderTypeFromString(typeString);
-
-            size_t nextLinePos = source.find_first_not_of("\r\n", eol);
-            pos = source.find(typeToken, nextLinePos);
-            result[type] = source.substr(nextLinePos, pos - (nextLinePos == std::string::npos ? source.size() - 1 : nextLinePos));
+        while(std::getline(in, line)) {
+            if(!line.empty()) {
+                if(line.find(typeToken) == 0) {
+                    if(currentType != ShaderType::Unknown) {
+                        result[currentType] = sstream.str();
+                        sstream.str("");
+                        sstream.clear();
+                    }
+                    std::string typeString = trim(line.substr(typeTokenLength, std::string::npos));
+                    currentType = shaderTypeFromString(typeString);
+                }
+                else if(currentType != ShaderType::Unknown) {
+                    sstream << line << std::endl;
+                }
+            }
         }
-
+        result[currentType] = sstream.str();
+        in.close();
         return result;
     }
 

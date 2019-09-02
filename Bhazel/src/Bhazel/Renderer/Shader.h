@@ -6,7 +6,9 @@
 namespace BZ {
 
     enum class ShaderType {
-        Vertex, Fragment
+        Vertex,
+        Fragment,
+        Unknown
     };
 
     class Shader {
@@ -20,8 +22,7 @@ namespace BZ {
         static Ref<Shader> create(const std::string &vertexSrc, const std::string &fragmentSrc);
 
     protected:
-        static std::string readFile(const std::string &filePath);
-        static std::unordered_map<ShaderType, std::string> preProcessSource(const std::string &source);
+        static std::unordered_map<ShaderType, std::string> readAndPreprocessFile(const std::string &filePath);
         static ShaderType shaderTypeFromString(const std::string &string);
     };
 }

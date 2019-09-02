@@ -12,6 +12,5 @@ namespace BZ {
 
     private:
         IniSettings out;
-        std::string trim(const std::string &in) const;
     };
 }
