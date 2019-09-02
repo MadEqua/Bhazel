@@ -8,9 +8,6 @@
 namespace BZ {
 
     class D3D11Context;
-    enum class BlendingFunction;
-    enum class BlendingEquation;
-    enum class TestFunction;
 
     class D3D11RendererAPI : public RendererAPI
     {
@@ -42,9 +39,5 @@ namespace BZ {
         glm::vec4 clearColor = {0, 0, 0, 0};
         float depthClearValue = 1.0f;
         int stencilClearValue = 0;
-
-        D3D11_BLEND blendingFunctionToD3D(BlendingFunction blendingFunction);
-        D3D11_BLEND_OP blendingEquationToD3D(BlendingEquation blendingEquation);
-        D3D11_COMPARISON_FUNC testFunctionToD3D(TestFunction testFunction);
     };
 }

@@ -52,8 +52,8 @@ namespace BZ {
 
         const Ref<D3D11Shader> &d3d11VertexShader = std::static_pointer_cast<D3D11Shader>(vertexShader);
         BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateInputLayout(ieds.data(), static_cast<UINT>(ieds.size()),
-                            d3d11VertexShader->getVertexShaderBlob()->GetBufferPointer(),
-                            d3d11VertexShader->getVertexShaderBlob()->GetBufferSize(),
+                            d3d11VertexShader->vertexShaderByteCodeBlobPtr->GetBufferPointer(),
+                            d3d11VertexShader->vertexShaderByteCodeBlobPtr->GetBufferSize(),
                             &inputLayoutPtr));
 
         vertexBuffers.emplace_back(buffer);

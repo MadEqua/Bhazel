@@ -9,6 +9,10 @@
 
 namespace BZ {
 
+    static D3D11_BLEND blendingFunctionToD3D(BlendingFunction blendingFunction);
+    static D3D11_BLEND_OP blendingEquationToD3D(BlendingEquation blendingEquation);
+    static D3D11_COMPARISON_FUNC testFunctionToD3D(TestFunction testFunction);
+
     D3D11RendererAPI::D3D11RendererAPI(D3D11Context &context) :
         context(context), device(context.getDevice()), deviceContext(context.getDeviceContext()), swapChain(context.getSwapChain()) {
     }
@@ -115,7 +119,7 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->DrawIndexed(indicesCount, 0, 0));
     }
 
-    D3D11_BLEND D3D11RendererAPI::blendingFunctionToD3D(BlendingFunction blendingFunction) {
+    static D3D11_BLEND blendingFunctionToD3D(BlendingFunction blendingFunction) {
         switch(blendingFunction) {
         case BlendingFunction::Zero:
             return D3D11_BLEND_ZERO;
@@ -160,7 +164,7 @@ namespace BZ {
         }
     }
 
-    D3D11_BLEND_OP D3D11RendererAPI::blendingEquationToD3D(BlendingEquation blendingEquation) {
+    static D3D11_BLEND_OP blendingEquationToD3D(BlendingEquation blendingEquation) {
         switch(blendingEquation) {
         case BlendingEquation::Add:
             return D3D11_BLEND_OP_ADD;
@@ -177,7 +181,7 @@ namespace BZ {
         }
     }
 
-    D3D11_COMPARISON_FUNC D3D11RendererAPI::testFunctionToD3D(TestFunction testFunction) {
+    static D3D11_COMPARISON_FUNC testFunctionToD3D(TestFunction testFunction) {
         switch(testFunction)
         {
         case TestFunction::Always:

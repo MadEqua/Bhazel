@@ -1,61 +1,78 @@
 #include "bzpch.h"
 
+#include "OpenGLIncludes.h"
+
 #include "OpenGLShader.h"
 #include "OpenGLBuffer.h"
 
-#include "OpenGLIncludes.h"
 #include <glm/gtc/type_ptr.hpp>
 
 
 namespace BZ {
 
+    static GLenum shaderTypeToGLenum(ShaderType shaderType);
+
+    OpenGLShader::OpenGLShader(const std::string &filePath) {
+        const std::string &source = readFile(filePath);
+        auto &sources = preProcessSource(source);
+        compile(sources);
+    }
+
     OpenGLShader::OpenGLShader(const std::string &vertexSrc, const std::string &fragmentSrc) {
+        std::unordered_map<ShaderType, std::string> sources;
+        sources[ShaderType::Vertex] = vertexSrc;
+        sources[ShaderType::Fragment] = fragmentSrc;
+        compile(sources);
+    }
 
-        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        const GLchar *source = (const GLchar *) vertexSrc.c_str();
-        BZ_ASSERT_GL(glShaderSource(vertexShader, 1, &source, 0));
-        BZ_ASSERT_GL(glCompileShader(vertexShader));
+    OpenGLShader::~OpenGLShader() {
+        BZ_ASSERT_GL(glDeleteProgram(rendererId));
+    }
 
-        GLint isCompiled = 0;
-        BZ_ASSERT_GL(glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled));
-        if(isCompiled == GL_FALSE) {
-            GLint maxLength = 0;
-            BZ_ASSERT_GL(glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength));
+    void OpenGLShader::bindToPipeline() const {
+        BZ_ASSERT_GL(glUseProgram(rendererId));
+    }
 
-            std::vector<GLchar> infoLog(maxLength);
-            BZ_ASSERT_GL(glGetShaderInfoLog(vertexShader, maxLength, &maxLength, &infoLog[0]));
+    void OpenGLShader::unbindFromPipeline() const {
+        BZ_ASSERT_GL(glUseProgram(0));
+    }
 
-            BZ_ASSERT_GL(glDeleteShader(vertexShader));
+    void OpenGLShader::compile(const std::unordered_map<ShaderType, std::string> &sources) {
+        BZ_ASSERT_CORE(sources.find(ShaderType::Vertex) != sources.end(), "Shader code should contain at least a Vertex shader!")
 
-            BZ_ASSERT_ALWAYS_CORE("Vertex shader compilation error:\n{0}", static_cast<char*>(infoLog.data()));
-            return;
+        BZ_ASSERT_GL(rendererId = glCreateProgram());
+
+        std::vector<GLuint> shaderIds;
+        shaderIds.reserve(sources.size());
+
+        for(auto &kv : sources) {
+            GLenum shaderType = shaderTypeToGLenum(kv.first);
+            const std::string &src = kv.second;
+
+            GLuint shaderId;
+            BZ_ASSERT_GL(shaderId = glCreateShader(shaderType));
+            const GLchar *source = static_cast<const GLchar *>(src.c_str());
+            BZ_ASSERT_GL(glShaderSource(shaderId, 1, &source, 0));
+            BZ_ASSERT_GL(glCompileShader(shaderId));
+
+            GLint isCompiled = 0;
+            BZ_ASSERT_GL(glGetShaderiv(shaderId, GL_COMPILE_STATUS, &isCompiled));
+            if(isCompiled == GL_FALSE) {
+                GLint maxLength = 0;
+                BZ_ASSERT_GL(glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &maxLength));
+
+                std::vector<GLchar> infoLog(maxLength);
+                BZ_ASSERT_GL(glGetShaderInfoLog(shaderId, maxLength, &maxLength, &infoLog[0]));
+
+                BZ_ASSERT_GL(glDeleteProgram(rendererId));
+                BZ_ASSERT_GL(glDeleteShader(shaderId));
+
+                BZ_ASSERT_ALWAYS_CORE("Shader compilation error:\n{0}", static_cast<char*>(infoLog.data()));
+            }
+
+            BZ_ASSERT_GL(glAttachShader(rendererId, shaderId));
+            shaderIds.emplace_back(shaderId);
         }
-
-        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        source = (const GLchar *) fragmentSrc.c_str();
-        BZ_ASSERT_GL(glShaderSource(fragmentShader, 1, &source, 0));
-        BZ_ASSERT_GL(glCompileShader(fragmentShader));
-
-        BZ_ASSERT_GL(glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiled));
-        if(isCompiled == GL_FALSE) {
-            GLint maxLength = 0;
-            BZ_ASSERT_GL(glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength));
-
-            std::vector<GLchar> infoLog(maxLength);
-            BZ_ASSERT_GL(glGetShaderInfoLog(fragmentShader, maxLength, &maxLength, &infoLog[0]));
-
-            BZ_ASSERT_GL(glDeleteShader(fragmentShader));
-            BZ_ASSERT_GL(glDeleteShader(vertexShader));
-
-            BZ_ASSERT_ALWAYS_CORE("Fragment shader compilation error:\n{0}", static_cast<char*>(infoLog.data()));
-
-            return;
-        }
-
-        rendererId = glCreateProgram();
-
-        BZ_ASSERT_GL(glAttachShader(rendererId, vertexShader));
-        BZ_ASSERT_GL(glAttachShader(rendererId, fragmentShader));
 
         BZ_ASSERT_GL(glLinkProgram(rendererId));
 
@@ -69,28 +86,26 @@ namespace BZ {
             BZ_ASSERT_GL(glGetProgramInfoLog(rendererId, maxLength, &maxLength, &infoLog[0]));
 
             BZ_ASSERT_GL(glDeleteProgram(rendererId));
-            BZ_ASSERT_GL(glDeleteShader(vertexShader));
-            BZ_ASSERT_GL(glDeleteShader(fragmentShader));
+            for(auto shaderId : shaderIds)
+                BZ_ASSERT_GL(glDeleteShader(shaderId));
 
             BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
             BZ_ASSERT_ALWAYS_CORE("OpenGLShader linking error.");
-            return;
         }
 
         // Always detach shaders after a successful link.
-        BZ_ASSERT_GL(glDetachShader(rendererId, vertexShader));
-        BZ_ASSERT_GL(glDetachShader(rendererId, fragmentShader));
+        for(auto shaderId : shaderIds)
+            BZ_ASSERT_GL(glDetachShader(rendererId, shaderId));
     }
 
-    OpenGLShader::~OpenGLShader() {
-        BZ_ASSERT_GL(glDeleteProgram(rendererId));
-    }
-
-    void OpenGLShader::bindToPipeline() const {
-        BZ_ASSERT_GL(glUseProgram(rendererId));
-    }
-
-    void OpenGLShader::unbindFromPipeline() const {
-        BZ_ASSERT_GL(glUseProgram(0));
+    static GLenum shaderTypeToGLenum(ShaderType shaderType) {
+        switch(shaderType) {
+        case ShaderType::Vertex:
+            return GL_VERTEX_SHADER;
+        case ShaderType::Fragment:
+            return GL_FRAGMENT_SHADER;
+        default:
+            BZ_ASSERT_ALWAYS("Unknown ShaderType!");
+        }
     }
 }

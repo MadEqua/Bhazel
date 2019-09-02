@@ -9,6 +9,10 @@
 
 namespace BZ {
 
+    static GLenum blendingFunctionToGLenum(BlendingFunction blendingFunction);
+    static GLenum blendingEquationToGLenum(BlendingEquation blendingEquation);
+    static GLenum testFunctionToGLenum(TestFunction testFunction);
+
     void OpenGLRendererAPI::setClearColor(const glm::vec4& color) {
         BZ_ASSERT_GL(glClearColor(color.r, color.g, color.b, color.a));
     }
@@ -100,7 +104,7 @@ namespace BZ {
         BZ_ASSERT_GL(glDrawElements(renderMode, indicesCount, GL_UNSIGNED_INT, nullptr));
     }
 
-    GLenum OpenGLRendererAPI::blendingFunctionToGLenum(BlendingFunction blendingFunction) {
+    static GLenum blendingFunctionToGLenum(BlendingFunction blendingFunction) {
         switch(blendingFunction) {
         case BlendingFunction::Zero:
             return GL_ZERO;
@@ -145,7 +149,7 @@ namespace BZ {
         }
     }
 
-    GLenum OpenGLRendererAPI::blendingEquationToGLenum(BlendingEquation blendingEquation) {
+    static GLenum blendingEquationToGLenum(BlendingEquation blendingEquation) {
         switch(blendingEquation) {
         case BlendingEquation::Add:
             return GL_FUNC_ADD;
@@ -162,7 +166,7 @@ namespace BZ {
         }
     }
 
-    GLenum OpenGLRendererAPI::testFunctionToGLenum(TestFunction testFunction) {
+    static GLenum testFunctionToGLenum(TestFunction testFunction) {
         switch(testFunction) {
         case TestFunction::Never:
             return GL_NEVER;

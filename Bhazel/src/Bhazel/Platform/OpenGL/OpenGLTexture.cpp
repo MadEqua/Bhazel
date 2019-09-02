@@ -14,7 +14,7 @@ namespace BZ {
 
         int width, height, channels;
         stbi_uc *data = stbi_load(path.c_str(), &width, &height, &channels, 4);
-        BZ_ASSERT_CORE(data, "Failed to load image!");
+        BZ_ASSERT_CORE(data, "Failed to load image '{0}'.", path);
         
         this->width = width;
         this->height = height;

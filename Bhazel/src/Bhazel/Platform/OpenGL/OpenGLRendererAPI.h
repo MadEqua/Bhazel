@@ -5,10 +5,6 @@
 
 namespace BZ {
 
-    enum class BlendingFunction;
-    enum class BlendingEquation;
-    enum class TestFunction;
-
     class OpenGLRendererAPI : public RendererAPI
     {
     public:
@@ -29,9 +25,5 @@ namespace BZ {
 
     private:
         int renderMode;
-
-        GLenum blendingFunctionToGLenum(BlendingFunction blendingFunction);
-        GLenum blendingEquationToGLenum(BlendingEquation blendingEquation);
-        GLenum testFunctionToGLenum(TestFunction testFunction);
     };
 }
