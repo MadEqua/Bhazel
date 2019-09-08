@@ -16,7 +16,7 @@ void ExampleLayer::onAttach() {
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
-    shader = BZ::Renderer::api == BZ::Renderer::API::OpenGL ? BZ::Shader::create("assets/shaders/Texture.glsl") : BZ::Shader::create("assets/shaders/Texture.hlsl");
+    auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Texture.glsl" : "assets/shaders/Texture.hlsl");
     texture = BZ::Texture2D::create("assets/textures/test.jpg");
 
     float vertices[] = {
@@ -92,13 +92,14 @@ void ExampleLayer::onUpdate(BZ::Timestep timestep) {
         }
     }*/
 
+    auto textureShader = shaderLibrary.get("Texture");
 
     glm::mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, pos);
-    BZ::Renderer::submit(shader, inputDescription, modelMatrix);
+    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
     modelMatrix = glm::translate(modelMatrix, pos + disp);
-    BZ::Renderer::submit(shader, inputDescription, modelMatrix);
+    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
     BZ::Renderer::endScene();
 }

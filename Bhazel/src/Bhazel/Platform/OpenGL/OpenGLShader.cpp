@@ -2,8 +2,8 @@
 
 #include "OpenGLIncludes.h"
 
+#include "Bhazel/Core/Utils.h"
 #include "OpenGLShader.h"
-#include "OpenGLBuffer.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -12,12 +12,14 @@ namespace BZ {
 
     static GLenum shaderTypeToGLenum(ShaderType shaderType);
 
-    OpenGLShader::OpenGLShader(const std::string &filePath) {
+    OpenGLShader::OpenGLShader(const std::string &filePath) :
+        Shader(Utils::getFileNameFromPath(filePath)) {
         auto &sources = readAndPreprocessFile(filePath);
         compile(sources);
     }
 
-    OpenGLShader::OpenGLShader(const std::string &vertexSrc, const std::string &fragmentSrc) {
+    OpenGLShader::OpenGLShader(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc) :
+        Shader(name) {
         std::unordered_map<ShaderType, std::string> sources;
         sources[ShaderType::Vertex] = vertexSrc;
         sources[ShaderType::Fragment] = fragmentSrc;
@@ -38,12 +40,13 @@ namespace BZ {
 
     void OpenGLShader::compile(const std::unordered_map<ShaderType, std::string> &sources) {
         BZ_ASSERT_CORE(sources.find(ShaderType::Vertex) != sources.end(), "Shader code should contain at least a Vertex shader!")
+        BZ_ASSERT_CORE(sources.size() <= 5, "Shader sources need to have at maximum 5 entries!")
 
         BZ_ASSERT_GL(rendererId = glCreateProgram());
 
-        std::vector<GLuint> shaderIds;
-        shaderIds.reserve(sources.size());
+        std::array<GLuint, 5> shaderIds;
 
+        int i = 0;
         for(auto &kv : sources) {
             GLenum shaderType = shaderTypeToGLenum(kv.first);
             const std::string &src = kv.second;
@@ -70,7 +73,7 @@ namespace BZ {
             }
 
             BZ_ASSERT_GL(glAttachShader(rendererId, shaderId));
-            shaderIds.emplace_back(shaderId);
+            shaderIds[i++] = shaderId;
         }
 
         BZ_ASSERT_GL(glLinkProgram(rendererId));
@@ -85,16 +88,15 @@ namespace BZ {
             BZ_ASSERT_GL(glGetProgramInfoLog(rendererId, maxLength, &maxLength, &infoLog[0]));
 
             BZ_ASSERT_GL(glDeleteProgram(rendererId));
-            for(auto shaderId : shaderIds)
-                BZ_ASSERT_GL(glDeleteShader(shaderId));
+            for(int i = 0; i < sources.size(); ++i)
+                BZ_ASSERT_GL(glDeleteShader(shaderIds[i]));
 
-            BZ_LOG_CORE_ERROR("{0}", static_cast<char*>(infoLog.data()));
-            BZ_ASSERT_ALWAYS_CORE("OpenGLShader linking error.");
+            BZ_ASSERT_ALWAYS_CORE("Shader linking error:\n{0}", static_cast<char*>(infoLog.data()));
         }
 
         // Always detach shaders after a successful link.
-        for(auto shaderId : shaderIds)
-            BZ_ASSERT_GL(glDetachShader(rendererId, shaderId));
+        for(int i = 0; i < sources.size(); ++i)
+            BZ_ASSERT_GL(glDetachShader(rendererId, shaderIds[i]));
     }
 
     static GLenum shaderTypeToGLenum(ShaderType shaderType) {

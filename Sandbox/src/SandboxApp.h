@@ -15,10 +15,11 @@ public:
     void onEvent(BZ::Event &event) override;
     void onImGuiRender() override;
 
-
 private:
+    //TODO: this is temporary
+    BZ::ShaderLibrary shaderLibrary;
+
     BZ::Ref<BZ::InputDescription> inputDescription;
-    BZ::Ref<BZ::Shader> shader;
     BZ::Ref<BZ::VertexBuffer> vertexBuffer;
     BZ::Ref<BZ::IndexBuffer> indexBuffer;
     BZ::Ref<BZ::Texture> texture;

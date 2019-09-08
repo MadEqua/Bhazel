@@ -17,16 +17,16 @@ namespace BZ {
 
         std::string line;
         while(std::getline(inFile, line)) {
-            line = trim(line);
+            line = Utils::trim(line);
             size_t equalPos = line.find('=');
             if(line[0] != ';' && equalPos != std::string::npos) {
-                std::string fieldName = trim(line.substr(0, equalPos));
+                std::string fieldName = Utils::trim(line.substr(0, equalPos));
                 if(out.containsField(fieldName)) {
                     BZ_LOG_CORE_WARN("IniParser. Duplicate field on .ini file: {0}. Only considering the first appearance.", filePath);
                     continue;
                 }
 
-                std::string fieldValue = trim(line.substr(equalPos + 1));
+                std::string fieldValue = Utils::trim(line.substr(equalPos + 1));
                 out.addField(fieldName, fieldValue);
             }
         }

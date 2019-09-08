@@ -2,6 +2,8 @@
 
 #include "D3D11Shader.h"
 
+#include "Bhazel/Core/Utils.h"
+
 #include "Bhazel/Application.h"
 #include "Bhazel/Window.h"
 #include "Bhazel/Renderer/GraphicsContext.h"
@@ -12,15 +14,16 @@ namespace BZ {
     static const char* shaderTypeToD3D(ShaderType shaderType);
 
     D3D11Shader::D3D11Shader(const std::string &filePath) :
+        Shader(Utils::getFileNameFromPath(filePath)),
         context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
 
         auto &sources = readAndPreprocessFile(filePath);
         compile(sources);
     }
 
-    D3D11Shader::D3D11Shader(const std::string &vertexSrc, const std::string &fragmentSrc) :
+    D3D11Shader::D3D11Shader(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc) :
+        Shader(name),
         context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
-
         std::unordered_map<ShaderType, std::string> sources;
         sources[ShaderType::Vertex] = vertexSrc;
         sources[ShaderType::Fragment] = fragmentSrc;

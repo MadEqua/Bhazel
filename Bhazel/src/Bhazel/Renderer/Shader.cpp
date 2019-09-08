@@ -25,13 +25,13 @@ namespace BZ {
         }
     }
 
-    Ref<Shader> Shader::create(const std::string &vertexSrc, const std::string &fragmentSrc) {
+    Ref<Shader> Shader::create(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc) {
         switch(Renderer::api)
         {
         case Renderer::API::OpenGL:
-            return MakeRef<OpenGLShader>(vertexSrc, fragmentSrc);
+            return MakeRef<OpenGLShader>(name, vertexSrc, fragmentSrc);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11Shader>(vertexSrc, fragmentSrc);
+            return MakeRef<D3D11Shader>(name, vertexSrc, fragmentSrc);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
@@ -59,7 +59,7 @@ namespace BZ {
                         sstream.str("");
                         sstream.clear();
                     }
-                    std::string typeString = trim(line.substr(typeTokenLength, std::string::npos));
+                    std::string typeString = Utils::trim(line.substr(typeTokenLength, std::string::npos));
                     currentType = shaderTypeFromString(typeString);
                 }
                 else if(currentType != ShaderType::Unknown) {
@@ -79,5 +79,36 @@ namespace BZ {
             return ShaderType::Fragment;
         else
             BZ_ASSERT_ALWAYS_CORE("Unknown shader type string: '{0}'", string);
+    }
+
+
+    void ShaderLibrary::add(const std::string &name, const Ref<Shader> &shader) {
+        BZ_ASSERT_CORE(!exists(name), "Adding name already in use!");
+        shaders[name] = shader;
+    }
+
+    void ShaderLibrary::add(const Ref<Shader> &shader) {
+        add(shader->getName(), shader);
+    }
+
+    Ref<Shader> ShaderLibrary::load(const std::string &filepath) {
+        auto shader = Shader::create(filepath);
+        add(shader);
+        return shader;
+    }
+
+    Ref<Shader> ShaderLibrary::load(const std::string &name, const std::string &filepath) {
+        auto shader = Shader::create(filepath);
+        add(name, shader);
+        return shader;
+    }
+
+    Ref<Shader> ShaderLibrary::get(const std::string &name) {
+        BZ_ASSERT_CORE(exists(name), "Non-existent name on shader library!");
+        return shaders[name];
+    }
+
+    bool ShaderLibrary::exists(const std::string &name) const {
+        return shaders.find(name) != shaders.end();
     }
 }

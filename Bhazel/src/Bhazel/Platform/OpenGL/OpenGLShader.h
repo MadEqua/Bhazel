@@ -8,7 +8,7 @@ namespace BZ {
     class OpenGLShader : public Shader {
     public:
         explicit OpenGLShader(const std::string &filePath);
-        OpenGLShader(const std::string &vertexSrc, const std::string &fragmentSrc);
+        OpenGLShader(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc);
         virtual ~OpenGLShader() override;
 
         void bindToPipeline() const;

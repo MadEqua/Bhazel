@@ -11,7 +11,7 @@ namespace BZ {
     class D3D11Shader : public Shader {
     public:
         explicit D3D11Shader(const std::string &filePath);
-        D3D11Shader(const std::string &vertexSrc, const std::string &fragmentSrc);
+        D3D11Shader(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc);
 
         void bindToPipeline() const;
         void unbindFromPipeline() const;
