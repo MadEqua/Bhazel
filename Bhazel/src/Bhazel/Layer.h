@@ -22,8 +22,8 @@ namespace BZ {
 
         virtual void onDetach() {}
 
-        virtual void onUpdate(Timestep timestep) {}
-        virtual void onImGuiRender() {}
+        virtual void onUpdate(TimeDuration deltaTime) {}
+        virtual void onImGuiRender(TimeDuration deltaTime) {}
 
         //Receiving events as soon as attached to the LayerStack
         virtual void onEvent(Event &event) {}

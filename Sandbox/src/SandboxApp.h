@@ -11,9 +11,9 @@ public:
     void onAttach() override;
     void onGraphicsContextCreated() override;
 
-    void onUpdate(BZ::Timestep timestep) override;
+    void onUpdate(BZ::TimeDuration deltaTime) override;
     void onEvent(BZ::Event &event) override;
-    void onImGuiRender() override;
+    void onImGuiRender(BZ::TimeDuration deltaTime) override;
 
 private:
     //TODO: this is temporary

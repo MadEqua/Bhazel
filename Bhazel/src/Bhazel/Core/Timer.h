@@ -5,16 +5,24 @@
 
 namespace BZ {
 
-    struct Timestep {
-        Timestep(float timeSeconds = 0.0f) : timeSeconds(timeSeconds) {}
+    class TimeDuration {
+    public:
+        TimeDuration();
+        TimeDuration(uint64 nanos);
+        TimeDuration(std::chrono::nanoseconds nanos);
 
-        float getSeconds() const { return timeSeconds; }
-        float getMilliseconds() const { return timeSeconds * 1000.0f; }
+        TimeDuration operator+(const TimeDuration &rhs);
+        TimeDuration operator-(const TimeDuration &rhs);
+        void operator+=(const TimeDuration &rhs);
+        void operator-=(const TimeDuration &rhs);
 
-        operator float() const { return timeSeconds; }
+        float asSeconds() const;
+        float asMillisecondsFloat() const;
+        uint64 asMillisecondsUint() const;
+        uint64 asNanoseconds() const;
 
     private:
-        float timeSeconds;
+        std::chrono::nanoseconds nanos;
     };
 
 
@@ -23,12 +31,7 @@ namespace BZ {
         Timer();
 
         void start();
-
-        float getElapsedSeconds() const;
-        uint32 getElapsedMilliseconds() const;
-        uint64 getElapsedNanoseconds() const;
-        
-        Timestep getAsTimestep() const;
+        TimeDuration getElapsedTime() const;
 
     private:
         bool started;

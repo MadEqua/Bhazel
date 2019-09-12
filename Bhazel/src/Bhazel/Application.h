@@ -2,8 +2,8 @@
 
 #include "Bhazel/Window.h"
 #include "Bhazel/LayerStack.h"
-#include "Bhazel/Core/Timer.h"
 #include "Bhazel/Core/Ini/IniParser.h"
+#include "Bhazel/Core/Timer.h"
 
 
 namespace BZ {
@@ -12,6 +12,13 @@ namespace BZ {
     class WindowCloseEvent;
     class Layer;
     class ImGuiLayer;
+
+    struct FrameStats {
+        TimeDuration lastFrameTime;
+        uint64 frameCount;
+        TimeDuration runningTime;
+    };
+
 
     class Application
     {
@@ -26,8 +33,10 @@ namespace BZ {
         void pushLayer(Layer *layer);
         void pushOverlay(Layer *overlay);
 
-        inline Window& getWindow() { return *window; }
-        inline static Application& getInstance() { return *instance; }
+        Window& getWindow() { return *window; }
+        const FrameStats &getFrameStats() const { return frameStats; }
+
+        static Application& getInstance() { return *instance; }
 
     private:
         bool onWindowClose(WindowCloseEvent &e);
@@ -37,8 +46,8 @@ namespace BZ {
         bool running = true;
 
         LayerStack layerStack;
-        Timer timer;
         IniParser iniParser;
+        FrameStats frameStats;
 
         static Application *instance;
     };

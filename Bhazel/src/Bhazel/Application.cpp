@@ -1,8 +1,6 @@
 #include "bzpch.h"
 
 #include "Application.h"
-#include "Bhazel/Core/Timer.h"
-#include "Bhazel/Core/Ini/IniParser.h"
 
 #include "Window.h"
 #include "Input.h"
@@ -11,6 +9,7 @@
 #include "Events/ApplicationEvent.h"
 #include "Renderer/Renderer.h"
 #include "ImGui/ImGuiLayer.h"
+#include "FrameStatsLayer.h"
 
 
 namespace BZ {
@@ -28,6 +27,8 @@ namespace BZ {
 
         imGuiLayer = new ImGuiLayer();
         pushOverlay(imGuiLayer);
+
+        pushOverlay(new FrameStatsLayer(*this));
     }
 
     void Application::run() {
@@ -47,7 +48,7 @@ namespace BZ {
             Renderer::api = Renderer::API::D3D11;
         }
         else {
-            BZ_ASSERT_ALWAYS_CORE("Invalid Rendring API on .ini file: {0}.", renderingAPIString);
+            BZ_ASSERT_ALWAYS_CORE("Invalid Rendering API on .ini file: {0}.", renderingAPIString);
         }
 
         window = std::unique_ptr<Window>(Window::create(windowData, BZ_BIND_EVENT_FN(Application::onEvent)));
@@ -55,40 +56,30 @@ namespace BZ {
         Input::init(window->getNativeWindowHandle());
         layerStack.onGraphicsContextCreated();
 
-#ifndef BZ_DIST
-        std::stringstream sstream;
-        uint64 acumTime = 0;
-#endif
+        Timer frameTimer;
+        frameStats = {};
 
         while(running) {
 
-            Timestep timestep = timer.getAsTimestep();
+            auto frameDuration = frameTimer.getElapsedTime();
+            frameStats.lastFrameTime = frameDuration;
+            frameStats.runningTime += frameDuration;
 
-#ifndef BZ_DIST
-            uint64 ns = timer.getElapsedNanoseconds();
-            acumTime += ns;
-            if(acumTime > 250'000'000) {
-                acumTime = 0;
-                sstream.str(std::string());
-                sstream.clear();
-                sstream << window->getBaseTitle() << " | FPS: " << (1'000'000'000.0f / ns) << ". Millis: " << (ns / 1'000'000.0f);
-                window->setTitle(sstream.str());
-            }
-#endif
-
-            timer.start();
+            frameTimer.start();
 
             for (Layer *layer : layerStack) {
-                layer->onUpdate(timestep);
+                layer->onUpdate(frameStats.lastFrameTime);
             }
 
             imGuiLayer->begin();
             for(Layer *layer : layerStack) {
-                layer->onImGuiRender();
+                layer->onImGuiRender(frameStats.lastFrameTime);
             }
             imGuiLayer->end();
 
             window->onUpdate();
+
+            frameStats.frameCount++;
         }
 
         Renderer::destroy();

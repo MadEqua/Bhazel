@@ -72,7 +72,7 @@ namespace BZ {
         ImGui::DestroyContext();
     }
 
-    void ImGuiLayer::onImGuiRender() {
+    void ImGuiLayer::onImGuiRender(TimeDuration deltaTime) {
         static bool show = true;
         ImGui::ShowDemoWindow(&show);
     }

@@ -4,7 +4,7 @@
 #include <ImGui/imgui.h>
 
 
-ExampleLayer::ExampleLayer() : 
+ExampleLayer::ExampleLayer() :
     Layer("Example"), 
     camera(-16.0f / 9.0f, 16.0f / 9.0f, -1.0f, 1.0f) {
 }
@@ -54,10 +54,10 @@ void ExampleLayer::onGraphicsContextCreated() {
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
 
-void ExampleLayer::onUpdate(BZ::Timestep timestep) {
-    const float CAMERA_MOVE_SPEED = 2.0f * timestep;
-    const float CAMERA_ROT_SPEED = 180.0f * timestep;
-    const float MOVE_SPEED = 3.0f * timestep;
+void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
+    const float CAMERA_MOVE_SPEED = 2.0f * deltaTime.asSeconds();
+    const float CAMERA_ROT_SPEED = 180.0f * deltaTime.asSeconds();
+    const float MOVE_SPEED = 3.0f * deltaTime.asSeconds();
     
     if(BZ::Input::isKeyPressed(BZ_KEY_A)) cameraPos.x -= CAMERA_MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_D)) cameraPos.x += CAMERA_MOVE_SPEED;
@@ -109,7 +109,7 @@ void ExampleLayer::onEvent(BZ::Event &event) {
     dispatcher.dispatch<BZ::WindowResizeEvent>(BZ_BIND_EVENT_FN(ExampleLayer::onWindowResizeEvent));
 }
 
-void ExampleLayer::onImGuiRender() {
+void ExampleLayer::onImGuiRender(BZ::TimeDuration deltaTime) {
     ImGui::Begin("Test");
     ImGui::SliderFloat3("disp", &disp[0], -1, 1);
     ImGui::End();
