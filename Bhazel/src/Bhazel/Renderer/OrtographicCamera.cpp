@@ -1,18 +1,20 @@
 #include "bzpch.h"
 
 #include "OrtographicCamera.h"
-#include  <glm/gtc/matrix_transform.hpp>
+#include "Bhazel/Core/Utils.h"
+
+#include <glm/gtc/matrix_transform.hpp>
 
 
 namespace BZ {
 
     OrtographicCamera::OrtographicCamera(float left, float right, float bottom, float top) :
-        OrtographicCamera(left, right, bottom, top, -1.0f, 1.0f) {
+        OrtographicCamera(left, right, bottom, top, 0.0f, 1.0f) {
     }
 
-    OrtographicCamera::OrtographicCamera(float left, float right, float bottom, float top, float n, float f) :
+    OrtographicCamera::OrtographicCamera(float left, float right, float bottom, float top, float near, float far) :
         position(0.0f), rotation(0.0f),
-            projectionMatrix(glm::ortho(left, right, bottom, top, n, f)) {
+            projectionMatrix(Utils::ortho(left, right, bottom, top, near, far)) {
             computeViewMatrix();
     }
 

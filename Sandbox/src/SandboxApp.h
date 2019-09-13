@@ -24,7 +24,7 @@ private:
     BZ::Ref<BZ::IndexBuffer> indexBuffer;
     BZ::Ref<BZ::Texture> texture;
 
-    BZ::OrtographicCamera camera;
+    BZ::Ref <BZ::OrtographicCamera> camera;
 
     glm::vec2 cameraPos;
     float cameraRot;

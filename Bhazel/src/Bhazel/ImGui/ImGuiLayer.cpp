@@ -57,6 +57,8 @@ namespace BZ {
 
             ImGui_ImplDX11_Init(context.getDevice(), context.getDeviceContext());
         }
+        else
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
     }
 
     void ImGuiLayer::onDetach() {
@@ -68,6 +70,8 @@ namespace BZ {
             ImGui_ImplDX11_Shutdown();
             ImGui_ImplWin32_Shutdown();
         }
+        else
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
 
         ImGui::DestroyContext();
     }
@@ -86,6 +90,9 @@ namespace BZ {
             ImGui_ImplDX11_NewFrame();
             ImGui_ImplWin32_NewFrame();
         }
+        else
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+
         ImGui::NewFrame();
     }
 
@@ -112,5 +119,7 @@ namespace BZ {
                 ImGui::RenderPlatformWindowsDefault();
             }
         }
+        else
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
     }
 }

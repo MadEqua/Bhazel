@@ -5,8 +5,7 @@
 
 
 ExampleLayer::ExampleLayer() :
-    Layer("Example"), 
-    camera(-16.0f / 9.0f, 16.0f / 9.0f, -1.0f, 1.0f) {
+    Layer("Example") {
 }
 
 void ExampleLayer::onAttach() {
@@ -16,6 +15,8 @@ void ExampleLayer::onAttach() {
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
+    camera = BZ::MakeRef<BZ::OrtographicCamera>(-16.0f / 9.0f, 16.0f / 9.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+
     auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Texture.glsl" : "assets/shaders/Texture.hlsl");
     texture = BZ::Texture2D::create("assets/textures/test.jpg");
 
@@ -74,12 +75,12 @@ void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
     if(BZ::Input::isKeyPressed(BZ_KEY_UP)) pos.y += MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_DOWN)) pos.y -= MOVE_SPEED;
 
-    camera.setPosition(cameraPos);
-    camera.setRotation(cameraRot);
+    camera->setPosition(cameraPos);
+    camera->setRotation(cameraRot);
 
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
-    BZ::Renderer::beginScene(camera);
+    BZ::Renderer::beginScene(*camera);
 
     texture->bindToPipeline(0);
 

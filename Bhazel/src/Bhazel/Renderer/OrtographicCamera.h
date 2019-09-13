@@ -1,5 +1,7 @@
 #pragma once
 
+#undef near
+#undef far
 
 namespace BZ {
 
@@ -8,7 +10,7 @@ namespace BZ {
     {
     public:
         OrtographicCamera(float left, float right, float bottom, float top);
-        OrtographicCamera(float left, float right, float bottom, float top,  float n, float f);
+        OrtographicCamera(float left, float right, float bottom, float top,  float near, float far);
 
         const glm::vec2& getPosition() const { return position; }
         void setPosition(const glm::vec2 &pos) { position = pos; computeViewMatrix(); }

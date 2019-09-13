@@ -1,6 +1,8 @@
 #include "bzpch.h"
 
 #include "Utils.h"
+#include "Bhazel/Renderer/Renderer.h"
+#include  <glm/gtc/matrix_transform.hpp>
 
 
 namespace BZ::Utils {
@@ -27,5 +29,32 @@ namespace BZ::Utils {
             return fileName.substr(0, dotPos);
         }
         return fileName;
+    }
+
+    glm::mat4 ortho(float left, float right, float bottom, float top, float zNear, float zFar) {
+        if(Renderer::api == Renderer::API::OpenGL)
+            return glm::orthoRH_NO(left, right, bottom, top, zNear, zFar);
+        else if(Renderer::api == Renderer::API::D3D11)
+            return glm::orthoRH_ZO(left, right, bottom, top, zNear, zFar);
+        else
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+    }
+
+    glm::mat4 frustum(float left, float right, float bottom, float top, float zNear, float zFar) {
+        if(Renderer::api == Renderer::API::OpenGL)
+            return glm::frustumRH_NO(left, right, bottom, top, zNear, zFar);
+        else if(Renderer::api == Renderer::API::D3D11)
+            return glm::frustumRH_ZO(left, right, bottom, top, zNear, zFar);
+        else
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+    }
+
+    glm::mat4 perspective(float fovy, float aspectRatio, float zNear, float zFar) {
+        if(Renderer::api == Renderer::API::OpenGL)
+            return glm::perspectiveRH_NO(fovy, aspectRatio, zNear, zFar);
+        else if(Renderer::api == Renderer::API::D3D11)
+            return glm::perspectiveRH_ZO(fovy, aspectRatio, zNear, zFar);
+        else
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
     }
 }
