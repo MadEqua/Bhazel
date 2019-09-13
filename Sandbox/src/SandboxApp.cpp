@@ -12,6 +12,7 @@ void ExampleLayer::onAttach() {
     cameraPos = {0.0f, 0.0f};
     pos = {};
     cameraRot = 0;
+    disp = {0.3f, 0.3f, 0.0f};
 }
 
 void ExampleLayer::onGraphicsContextCreated() {

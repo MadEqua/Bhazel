@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Bhazel/Core/Timer.h"
+
 
 namespace BZ {
 
@@ -36,19 +38,22 @@ namespace BZ {
 
         static API api;
     private:
-        struct FrameData {
+        struct alignas(16) FrameData {
             glm::mat4 viewMatrix;
             glm::mat4 projectionMatrix;
             glm::mat4 viewProjectionMatrix;
+            float runningTime;
         };
         static FrameData frameData;
 
-        struct InstanceData {
+        struct alignas(16) InstanceData {
             glm::mat4 modelMatrix;
         };
         static InstanceData instanceData;
 
         static Ref<ConstantBuffer> frameConstantBuffer;
         static Ref<ConstantBuffer> instanceConstantBuffer;
+
+        static Timer timer;
     };
 }

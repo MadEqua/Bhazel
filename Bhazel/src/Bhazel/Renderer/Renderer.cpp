@@ -19,6 +19,9 @@ namespace BZ {
     Ref<ConstantBuffer> Renderer::frameConstantBuffer;
     Ref<ConstantBuffer> Renderer::instanceConstantBuffer;
 
+    Timer Renderer::timer;
+
+
     void Renderer::init() {
         frameConstantBuffer = ConstantBuffer::create(sizeof(frameData));
         instanceConstantBuffer = ConstantBuffer::create(sizeof(instanceData));
@@ -27,6 +30,8 @@ namespace BZ {
         RenderCommand::setRenderMode(RenderMode::Triangles);
         RenderCommand::setBlendingSettings(BlendingSettings(false));
         RenderCommand::setDepthSettings(DepthSettings(false, false));
+
+        timer.start();
     }
 
     void Renderer::destroy() {
@@ -39,6 +44,7 @@ namespace BZ {
         frameData.viewMatrix = camera.getViewMatrix();
         frameData.projectionMatrix = camera.getProjectionMatrix();
         frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();
+        frameData.runningTime = timer.getElapsedTime().asSeconds();
 
         frameConstantBuffer->setData(&frameData, sizeof(frameData));
         frameConstantBuffer->bindToPipeline(0);

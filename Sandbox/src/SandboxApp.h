@@ -30,7 +30,7 @@ private:
     float cameraRot;
 
     glm::vec3 pos;
-    glm::vec3 disp = {0.3f,0.3f,0};
+    glm::vec3 disp;
 
     bool onWindowResizeEvent(BZ::WindowResizeEvent &ev);
 };
