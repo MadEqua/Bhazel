@@ -18,10 +18,10 @@ namespace BZ {
         BZ_ASSERT_CORE(status, "Failed to initialize Glad!");
 
         BZ_LOG_CORE_INFO("OpenGL Context:");
-        BZ_LOG_CORE_INFO("  Vendor: {0}", glGetString(GL_VENDOR));
-        BZ_LOG_CORE_INFO("  Renderer: {0}", glGetString(GL_RENDERER));
-        BZ_LOG_CORE_INFO("  Version: {0}", glGetString(GL_VERSION));
-        BZ_LOG_CORE_INFO("  GLSL Version: {0}", glGetString(GL_SHADING_LANGUAGE_VERSION));
+        BZ_LOG_CORE_INFO("  Vendor: {0}.", glGetString(GL_VENDOR));
+        BZ_LOG_CORE_INFO("  Renderer: {0}.", glGetString(GL_RENDERER));
+        BZ_LOG_CORE_INFO("  Version: {0}.", glGetString(GL_VERSION));
+        BZ_LOG_CORE_INFO("  GLSL Version: {0}.", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
         GLint res;
         BZ_ASSERT_GL(glBindFramebuffer(GL_FRAMEBUFFER, 0));

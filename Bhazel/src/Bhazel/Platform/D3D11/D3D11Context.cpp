@@ -38,7 +38,26 @@ namespace BZ {
         BZ_ASSERT_CORE(swapChain, "Error creating SwapChain!");
         BZ_ASSERT_CORE(device, "Error creating Device!");
         BZ_ASSERT_CORE(deviceContext, "Error creating DeviceContext!");
-       
+
+        wrl::ComPtr<IDXGIDevice> dXGIDevice;
+        wrl::ComPtr<IDXGIAdapter> dXGIAdapter;
+        DXGI_ADAPTER_DESC adapterDesc;
+        BZ_ASSERT_HRES_DXGI(device->QueryInterface(__uuidof(IDXGIDevice), (void **) &dXGIDevice));
+        BZ_ASSERT_HRES_DXGI(dXGIDevice->GetAdapter(&dXGIAdapter));
+        BZ_ASSERT_HRES_DXGI(dXGIAdapter->GetDesc(&adapterDesc));
+
+        BZ_LOG_CORE_INFO("D3D11 Context:");
+        std::wstring wdesc(adapterDesc.Description);
+        std::string desc(wdesc.begin(), wdesc.end());
+        BZ_LOG_CORE_INFO("  Description: {0}.", desc);
+        BZ_LOG_CORE_INFO("  VendorId: 0x{0:04x}.", adapterDesc.VendorId);
+        BZ_LOG_CORE_INFO("  DeviceId: 0x{0:04x}.", adapterDesc.DeviceId);
+        BZ_LOG_CORE_INFO("  SubSysId: 0x{0:04x}.", adapterDesc.SubSysId);
+        BZ_LOG_CORE_INFO("  Revision: 0x{0:04x}.", adapterDesc.Revision);
+        BZ_LOG_CORE_INFO("  DedicatedVideoMemory: {0} bytes.", adapterDesc.DedicatedVideoMemory);
+        BZ_LOG_CORE_INFO("  DedicatedSystemMemory: {0} bytes.", adapterDesc.DedicatedSystemMemory);
+        BZ_LOG_CORE_INFO("  SharedSystemMemory: {0} bytes.", adapterDesc.SharedSystemMemory);
+
         //Set Rasterizer settings
         wrl::ComPtr<ID3D11RasterizerState> rsState;
         D3D11_RASTERIZER_DESC rsDesc = {};
