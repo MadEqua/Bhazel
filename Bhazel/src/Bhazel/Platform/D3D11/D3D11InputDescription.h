@@ -18,8 +18,8 @@ namespace BZ {
         virtual void bindToPipeline() const override;
         virtual void unbindFromPipeline() const override;
 
-        virtual void addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) override;
-        virtual void setIndexBuffer(const Ref<IndexBuffer> &buffer) override;
+        virtual void addVertexBuffer(const Ref<Buffer> &buffer, const Ref<Shader> &vertexShader) override;
+        virtual void setIndexBuffer(const Ref<Buffer> &buffer) override;
 
     private:
         D3D11Context &context;
@@ -27,6 +27,6 @@ namespace BZ {
 
         std::vector<D3D11_INPUT_ELEMENT_DESC> ieds;
 
-        static DXGI_FORMAT shaderDataTypeToD3D11(ShaderDataType dataType, bool normalized);
+        static DXGI_FORMAT shaderDataTypeToD3D11(DataType dataType, bool normalized);
     };
 }

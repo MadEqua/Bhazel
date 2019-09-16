@@ -2,7 +2,11 @@
 
 namespace BZ {
 
-    enum class ShaderDataType {
+    enum class BufferType {
+        Vertex, Index, Constant, Generic
+    };
+
+    enum class DataType {
         Float,
         Int, Int16, Int8,
         Uint, Uint16, Uint8,
@@ -13,68 +17,15 @@ namespace BZ {
         Mat2, Mat3, Mat4
     };
 
-    static uint32 shaderDataTypeSize(ShaderDataType type) {
-        switch(type)
-        {
-        case ShaderDataType::Float:
-            return sizeof(float);
-        case ShaderDataType::Int:
-            return sizeof(int);
-        case ShaderDataType::Int16:
-            return sizeof(int16);
-        case ShaderDataType::Int8:
-            return sizeof(int8);
-        case ShaderDataType::Uint:
-            return sizeof(uint32);
-        case ShaderDataType::Uint16:
-            return sizeof(uint16);
-        case ShaderDataType::Uint8:
-            return sizeof(uint8);
-        case ShaderDataType::Bool:
-            return sizeof(bool);
-        case ShaderDataType::Vec2:
-            return sizeof(float) * 2;
-        case ShaderDataType::Vec3:
-            return sizeof(float) * 3;
-        case ShaderDataType::Vec4:
-            return sizeof(float) * 4;
-        case ShaderDataType::Vec2i:
-            return sizeof(int) * 2;
-        case ShaderDataType::Vec3i:
-            return sizeof(int) * 3;
-        case ShaderDataType::Vec4i:
-            return sizeof(int) * 4;
-        case ShaderDataType::Vec2ui:
-            return sizeof(uint32) * 2;
-        case ShaderDataType::Vec3ui:
-            return sizeof(uint32) * 3;
-        case ShaderDataType::Vec4ui:
-            return sizeof(uint32) * 4;
-        case ShaderDataType::Mat2:
-            return sizeof(float) * 4;
-        case ShaderDataType::Mat3:
-            return sizeof(float) * 9;
-        case ShaderDataType::Mat4:
-            return sizeof(float) * 16;
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown ShaderDataType.");
-            return 0;
-        }
-    }
-
-
     class BufferElement {
     public:
-        ShaderDataType dataType;
+        DataType dataType;
         std::string name;
         uint32 sizeBytes;
         uint32 offset;
         bool normalized;
 
-        BufferElement(ShaderDataType dataType, const std::string &name, bool normalized = false) :
-            dataType(dataType), name(name), sizeBytes(shaderDataTypeSize(dataType)), offset(0), normalized(normalized) {
-        }
-
+        BufferElement(DataType dataType, const std::string &name, bool normalized = false);
         uint32 getElementCount() const;
     };
 
@@ -82,10 +33,7 @@ namespace BZ {
     class BufferLayout {
     public:
         BufferLayout() = default;
-        BufferLayout(const std::initializer_list<BufferElement> &elements) : 
-            elements(elements), stride(0) {
-            calculateOffsetsAndStride();
-        }
+        BufferLayout(const std::initializer_list<BufferElement> &elements);
 
         const auto& getElements() const { return elements; }
         uint32 getElementCount() const { return static_cast<uint32>(elements.size()); }
@@ -106,55 +54,35 @@ namespace BZ {
 
     class Buffer {
     public:
-        explicit Buffer(uint32 size) : size(size) {}
         virtual ~Buffer() = default;
 
-        virtual void setData(const void *data, uint32 size) {
-            BZ_ASSERT_ALWAYS_CORE("Buffer setData() is not implemented.");
-        }
+        //Utility create functions
+        static Ref<Buffer> createVertexBuffer(const void *data, uint32 size, const BufferLayout &layout);
+        static Ref<Buffer> createIndexBuffer(const void *data, uint32 size);
+        static Ref<Buffer> createConstantBuffer(uint32 size);
+        static Ref<Buffer> createGenericBuffer(const void *data, uint32 size, const BufferLayout &layout);
 
-        virtual void bindToPipeline(uint32 unit = 0) const {};
-        virtual void unbindFromPipeline(uint32 unit = 0) const {};
-
-    protected:
-        uint32 size;
-    };
-
-
-    class VertexBuffer : public Buffer {
-    public:
-        static Ref<VertexBuffer> create(float *vertices, uint32 size, const BufferLayout &layout);
-
-        const BufferLayout& getLayout() const { return layout; };
-
-    protected:
-        explicit VertexBuffer(const BufferLayout &layout) : Buffer(size), layout(layout) {}
-
-        BufferLayout layout;
-    };
-
-
-    class IndexBuffer : public Buffer {
-    public:
-        static Ref<IndexBuffer> create(uint32 *indices, uint32 count);
-
-        uint32 getCount() const { return count; }
-
-    protected:
-        explicit IndexBuffer(uint32 count) : Buffer(count * sizeof(uint32)), count(count) {}
-
-        uint32 count;
-    };
-
-
-    class ConstantBuffer : public Buffer {
-    public:
-        static Ref<ConstantBuffer> create(uint32 size);
-        static Ref<ConstantBuffer> create(void *data, uint32 size);
+        static Ref<Buffer> create(BufferType type, uint32 size);
+        static Ref<Buffer> create(BufferType type, uint32 size, const void *data);
+        static Ref<Buffer> create(BufferType type, uint32 size, const void *data, const BufferLayout &layout);
 
         virtual void setData(const void *data, uint32 size) = 0;
 
+        virtual void bindToPipeline(uint32 unit = 0) const = 0;
+        virtual void unbindFromPipeline(uint32 unit = 0) const = 0;
+
+        uint32 getSize() const { return size; }
+        uint32 getCount() const { return count; }
+        BufferType getType() const { return type; }
+        const BufferLayout& getLayout() const { return layout; }
+
     protected:
-        explicit ConstantBuffer(uint32 size) : Buffer(size) {}
+        uint32 size;
+        uint32 count;
+        BufferType type;
+        BufferLayout layout;
+
+        Buffer(BufferType type, uint32 size) : type(type), size(size) {}
+        Buffer(BufferType type, uint32 size, const BufferLayout &layout) : type(type), size(size), layout(layout) {}
     };
 }

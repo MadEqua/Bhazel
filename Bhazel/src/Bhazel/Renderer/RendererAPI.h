@@ -28,6 +28,9 @@ namespace BZ {
         
         virtual void setRenderMode(Renderer::RenderMode mode) = 0;
 
+        virtual void draw(uint32 vertexCount) = 0;
         virtual void drawIndexed(uint32 indicesCount) = 0;
+
+        virtual void submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) = 0;
     };
 }

@@ -17,12 +17,12 @@ namespace BZ {
         virtual void bindToPipeline() const override;
         virtual void unbindFromPipeline() const override;
 
-        virtual void addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) override;
-        virtual void setIndexBuffer(const Ref<IndexBuffer> &buffer) override;
+        virtual void addVertexBuffer(const Ref<Buffer> &buffer, const Ref<Shader> &vertexShader) override;
+        virtual void setIndexBuffer(const Ref<Buffer> &buffer) override;
 
     private:
         GLuint rendererId;
 
-        static GLenum shaderDataTypeToGL(ShaderDataType dataType);
+        static GLenum shaderDataTypeToGL(DataType dataType);
     };
 }

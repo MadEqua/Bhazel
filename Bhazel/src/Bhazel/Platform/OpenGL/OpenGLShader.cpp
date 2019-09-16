@@ -39,8 +39,9 @@ namespace BZ {
     }
 
     void OpenGLShader::compile(const std::unordered_map<ShaderType, std::string> &sources) {
-        BZ_ASSERT_CORE(sources.find(ShaderType::Vertex) != sources.end(), "Shader code should contain at least a Vertex shader!")
         BZ_ASSERT_CORE(sources.size() <= 5, "Shader sources need to have at maximum 5 entries!")
+        BZ_ASSERT_CORE(sources.find(ShaderType::Vertex) != sources.end() || sources.find(ShaderType::Compute) != sources.end(), "Shader code should contain at least a Vertex or Compute shader!")
+        BZ_ASSERT_CORE(!(sources.find(ShaderType::Compute) != sources.end() && sources.size() > 1), "Compute shaders should be used as standalone!")
 
         BZ_ASSERT_GL(rendererId = glCreateProgram());
 
@@ -105,6 +106,8 @@ namespace BZ {
             return GL_VERTEX_SHADER;
         case ShaderType::Fragment:
             return GL_FRAGMENT_SHADER;
+        case ShaderType::Compute:
+            return GL_COMPUTE_SHADER;
         default:
             BZ_ASSERT_ALWAYS("Unknown ShaderType!");
         }

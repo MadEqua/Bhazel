@@ -3,6 +3,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <ImGui/imgui.h>
 
+#include <glm/gtc/random.hpp>
+
 
 ExampleLayer::ExampleLayer() :
     Layer("Example") {
@@ -40,18 +42,41 @@ void ExampleLayer::onGraphicsContextCreated() {
     };
 
     BZ::BufferLayout layout = {
-        {BZ::ShaderDataType::Vec3, "POSITION"},
-        {BZ::ShaderDataType::Vec3, "COLOR"},
-        {BZ::ShaderDataType::Vec2, "TEXCOORD"}
+        {BZ::DataType::Vec3, "POSITION"},
+        {BZ::DataType::Vec3, "COLOR"},
+        {BZ::DataType::Vec2, "TEXCOORD"}
     };
-    vertexBuffer = BZ::VertexBuffer::create(vertices, sizeof(vertices), layout);
+    vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), layout);
 
     uint32 indices[] = {0, 1, 2, 0, 2, 3};
-    indexBuffer = BZ::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32));
+    indexBuffer = BZ::Buffer::createIndexBuffer(indices, sizeof(indices));
 
     inputDescription = BZ::InputDescription::create();
     inputDescription->addVertexBuffer(vertexBuffer, shader);
     inputDescription->setIndexBuffer(indexBuffer);
+
+
+    //Compute shader test stuff
+    std::vector<Particle> particles;
+    particles.resize(PARTICLE_COUNT);
+
+    for(int i = 0; i < PARTICLE_COUNT; ++i) {
+        Particle &particle = particles[i];
+        particle.pos = glm::vec4(0);// glm::linearRand(glm::vec2(-1, -1), glm::vec2(1, 1));
+        particle.col = glm::vec4(glm::linearRand(0.1f, 1.0f), glm::linearRand(0.1f, 1.0f), glm::linearRand(0.1f, 1.0f), 1);
+    }
+
+    BZ::BufferLayout particleLayout = {
+        {BZ::DataType::Vec4, "POSITION"},
+        {BZ::DataType::Vec4, "COLOR"}
+    };
+
+    particlesBuffer = BZ::Buffer::createGenericBuffer(particles.data(), particles.size() * sizeof(Particle), particleLayout);
+    auto computeShader = shaderLibrary.load("assets/shaders/Compute.glsl");
+    auto particleShader = shaderLibrary.load("assets/shaders/Particle.glsl");
+
+    particlesInputDescription = BZ::InputDescription::create();
+    particlesInputDescription->addVertexBuffer(particlesBuffer, particleShader);
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
@@ -60,10 +85,10 @@ void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
     const float CAMERA_MOVE_SPEED = 2.0f * deltaTime.asSeconds();
     const float CAMERA_ROT_SPEED = 180.0f * deltaTime.asSeconds();
     const float MOVE_SPEED = 3.0f * deltaTime.asSeconds();
-    
+
     if(BZ::Input::isKeyPressed(BZ_KEY_A)) cameraPos.x -= CAMERA_MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_D)) cameraPos.x += CAMERA_MOVE_SPEED;
-    
+
     if(BZ::Input::isKeyPressed(BZ_KEY_W)) cameraPos.y += CAMERA_MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_S)) cameraPos.y -= CAMERA_MOVE_SPEED;
 
@@ -81,6 +106,9 @@ void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
 
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
+    BZ::Renderer::submitCompute(shaderLibrary.get("Compute"), PARTICLE_COUNT / WORK_GROUP_SIZE, 1, 1, {particlesBuffer});
+
+
     BZ::Renderer::beginScene(*camera);
 
     texture->bindToPipeline(0);
@@ -95,6 +123,7 @@ void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
     }*/
 
     auto textureShader = shaderLibrary.get("Texture");
+    auto particleShader = shaderLibrary.get("Particle");
 
     glm::mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, pos);
@@ -102,6 +131,8 @@ void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
 
     modelMatrix = glm::translate(modelMatrix, pos + disp);
     BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+
+    BZ::Renderer::submit(particleShader, particlesInputDescription, glm::mat4(1), BZ::Renderer::RenderMode::Points);
 
     BZ::Renderer::endScene();
 }

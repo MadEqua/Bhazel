@@ -4,6 +4,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include <initializer_list>
 #include <vector>
 #include <array>
 #include <unordered_map>

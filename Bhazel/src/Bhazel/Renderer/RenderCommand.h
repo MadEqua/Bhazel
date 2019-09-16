@@ -57,8 +57,18 @@ namespace BZ {
 
         //---------------------------------------------------------------------
         //---------------------------------------------------------------------
+        static void draw(uint32 vertexCount) {
+            rendererAPI->draw(vertexCount);
+        }
+
         static void drawIndexed(uint32 indicesCount) {
             rendererAPI->drawIndexed(indicesCount);
+        }
+
+        //---------------------------------------------------------------------
+        //---------------------------------------------------------------------
+        static void submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
+            rendererAPI->submitCompute(groupsX, groupsY, groupsZ);
         }
 
     private:

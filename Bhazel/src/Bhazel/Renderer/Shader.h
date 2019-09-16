@@ -1,13 +1,12 @@
 #pragma once
 
-#include "Buffer.h"
-
 
 namespace BZ {
 
     enum class ShaderType {
         Vertex,
         Fragment,
+        Compute,
         Unknown
     };
 

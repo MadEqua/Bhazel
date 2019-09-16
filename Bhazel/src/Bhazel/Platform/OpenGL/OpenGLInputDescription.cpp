@@ -21,13 +21,13 @@ namespace BZ {
         BZ_ASSERT_GL(glBindVertexArray(0));
     }
 
-    void OpenGLInputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) {
+    void OpenGLInputDescription::addVertexBuffer(const Ref<Buffer> &buffer, const Ref<Shader> &vertexShader) {
         //TODO use the vertex shader to do some validations
 
         BZ_ASSERT_CORE(buffer->getLayout().getElementCount(), "VertexBuffer has no layout.");
 
         BZ_ASSERT_GL(glBindVertexArray(rendererId));
-        BZ_ASSERT_GL(glBindBuffer(GL_ARRAY_BUFFER, static_cast<OpenGLVertexBuffer*>(buffer.get())->rendererId));
+        BZ_ASSERT_GL(glBindBuffer(GL_ARRAY_BUFFER, static_cast<OpenGLBuffer*>(buffer.get())->rendererId));
 
         int index = 0;
         for(const auto &element : buffer->getLayout()) {
@@ -42,46 +42,46 @@ namespace BZ {
         vertexBuffers.emplace_back(buffer);
     }
 
-    void OpenGLInputDescription::setIndexBuffer(const Ref<IndexBuffer> &buffer) {
+    void OpenGLInputDescription::setIndexBuffer(const Ref<Buffer> &buffer) {
         BZ_ASSERT_GL(glBindVertexArray(rendererId));
-        BZ_ASSERT_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<OpenGLIndexBuffer*>(buffer.get())->rendererId));
+        BZ_ASSERT_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<OpenGLBuffer*>(buffer.get())->rendererId));
 
         indexBuffer = buffer;
     }
 
-    GLenum OpenGLInputDescription::shaderDataTypeToGL(ShaderDataType dataType) {
+    GLenum OpenGLInputDescription::shaderDataTypeToGL(DataType dataType) {
         switch(dataType)
         {
-        case ShaderDataType::Float:
-        case ShaderDataType::Vec2:
-        case ShaderDataType::Vec3:
-        case ShaderDataType::Vec4:
-        case ShaderDataType::Mat2:
-        case ShaderDataType::Mat3:
-        case ShaderDataType::Mat4:
+        case DataType::Float:
+        case DataType::Vec2:
+        case DataType::Vec3:
+        case DataType::Vec4:
+        case DataType::Mat2:
+        case DataType::Mat3:
+        case DataType::Mat4:
             return GL_FLOAT;
-        case ShaderDataType::Int:
-        case ShaderDataType::Vec2i:
-        case ShaderDataType::Vec3i:
-        case ShaderDataType::Vec4i:
+        case DataType::Int:
+        case DataType::Vec2i:
+        case DataType::Vec3i:
+        case DataType::Vec4i:
             return GL_INT;
-        case ShaderDataType::Uint:
-        case ShaderDataType::Vec2ui:
-        case ShaderDataType::Vec3ui:
-        case ShaderDataType::Vec4ui:
+        case DataType::Uint:
+        case DataType::Vec2ui:
+        case DataType::Vec3ui:
+        case DataType::Vec4ui:
             return GL_UNSIGNED_INT;
-        case ShaderDataType::Int16:
+        case DataType::Int16:
             return GL_SHORT;
-        case ShaderDataType::Int8:
+        case DataType::Int8:
             return GL_BYTE;
-        case ShaderDataType::Uint16:
+        case DataType::Uint16:
             return GL_UNSIGNED_SHORT;
-        case ShaderDataType::Uint8:
+        case DataType::Uint8:
             return GL_UNSIGNED_BYTE;
-        case ShaderDataType::Bool:
+        case DataType::Bool:
             return GL_BOOL;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown ShaderDataType.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
             return 0;
         }
     }

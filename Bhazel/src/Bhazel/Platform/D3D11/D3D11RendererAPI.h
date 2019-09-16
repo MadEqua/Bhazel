@@ -27,7 +27,10 @@ namespace BZ {
 
         virtual void setRenderMode(Renderer::RenderMode mode) override;
 
+        virtual void draw(uint32 vertexCount) override;
         virtual void drawIndexed(uint32 indicesCount) override;
+
+        virtual void submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) override;
 
     private:
         D3D11Context &context;

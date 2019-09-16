@@ -100,9 +100,19 @@ namespace BZ {
         }
     }
 
+    void OpenGLRendererAPI::draw(uint32 vertexCount) {
+        BZ_ASSERT_GL(glDrawArrays(renderMode, 0, vertexCount));
+    }
+
     void OpenGLRendererAPI::drawIndexed(uint32 indicesCount) {
         BZ_ASSERT_GL(glDrawElements(renderMode, indicesCount, GL_UNSIGNED_INT, nullptr));
     }
+
+    void OpenGLRendererAPI::submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
+        BZ_ASSERT_GL(glDispatchCompute(groupsX, groupsY, groupsZ));
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    }
+
 
     static GLenum blendingFunctionToGLenum(BlendingFunction blendingFunction) {
         switch(blendingFunction) {

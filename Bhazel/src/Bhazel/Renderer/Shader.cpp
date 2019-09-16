@@ -13,8 +13,7 @@
 namespace BZ {
 
     Ref<Shader> Shader::create(const std::string &filePath) {
-        switch(Renderer::api)
-        {
+        switch(Renderer::api) {
         case Renderer::API::OpenGL:
             return MakeRef<OpenGLShader>(filePath);
         case Renderer::API::D3D11:
@@ -26,8 +25,7 @@ namespace BZ {
     }
 
     Ref<Shader> Shader::create(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc) {
-        switch(Renderer::api)
-        {
+        switch(Renderer::api) {
         case Renderer::API::OpenGL:
             return MakeRef<OpenGLShader>(name, vertexSrc, fragmentSrc);
         case Renderer::API::D3D11:
@@ -77,6 +75,8 @@ namespace BZ {
             return ShaderType::Vertex;
         else if(string == "Fragment" || string == "fragment" || string == "Pixel" || string == "pixel")
             return ShaderType::Fragment;
+        else if(string == "Compute" || string == "compute")
+            return ShaderType::Compute;
         else
             BZ_ASSERT_ALWAYS_CORE("Unknown shader type string: '{0}'", string);
     }

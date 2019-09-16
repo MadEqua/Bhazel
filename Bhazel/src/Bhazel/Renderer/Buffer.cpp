@@ -8,42 +8,100 @@
 
 namespace BZ {
 
-    uint32 BufferElement::getElementCount() const {
-        switch(dataType)
+    static uint32 shaderDataTypeSize(DataType type) {
+        switch(type)
         {
-        case ShaderDataType::Float:
-        case ShaderDataType::Int:
-        case ShaderDataType::Int16:
-        case ShaderDataType::Int8:
-        case ShaderDataType::Uint:
-        case ShaderDataType::Uint16:
-        case ShaderDataType::Uint8:
-        case ShaderDataType::Bool:
-            return 1;
-        case ShaderDataType::Vec2i:
-        case ShaderDataType::Vec2ui:
-        case ShaderDataType::Vec2:
-            return 2;
-        case ShaderDataType::Vec3i:
-        case ShaderDataType::Vec3ui:
-        case ShaderDataType::Vec3:
-            return 3;
-        case ShaderDataType::Vec4i:
-        case ShaderDataType::Vec4ui:
-        case ShaderDataType::Vec4:
-            return 4;
-        case ShaderDataType::Mat2:
-            return 4;
-        case ShaderDataType::Mat3:
-            return 9;
-        case ShaderDataType::Mat4:
-            return 16;
+        case DataType::Float:
+            return sizeof(float);
+        case DataType::Int:
+            return sizeof(int);
+        case DataType::Int16:
+            return sizeof(int16);
+        case DataType::Int8:
+            return sizeof(int8);
+        case DataType::Uint:
+            return sizeof(uint32);
+        case DataType::Uint16:
+            return sizeof(uint16);
+        case DataType::Uint8:
+            return sizeof(uint8);
+        case DataType::Bool:
+            return sizeof(bool);
+        case DataType::Vec2:
+            return sizeof(float) * 2;
+        case DataType::Vec3:
+            return sizeof(float) * 3;
+        case DataType::Vec4:
+            return sizeof(float) * 4;
+        case DataType::Vec2i:
+            return sizeof(int) * 2;
+        case DataType::Vec3i:
+            return sizeof(int) * 3;
+        case DataType::Vec4i:
+            return sizeof(int) * 4;
+        case DataType::Vec2ui:
+            return sizeof(uint32) * 2;
+        case DataType::Vec3ui:
+            return sizeof(uint32) * 3;
+        case DataType::Vec4ui:
+            return sizeof(uint32) * 4;
+        case DataType::Mat2:
+            return sizeof(float) * 4;
+        case DataType::Mat3:
+            return sizeof(float) * 9;
+        case DataType::Mat4:
+            return sizeof(float) * 16;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown ShaderDataType.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
             return 0;
         }
     }
 
+    BufferElement::BufferElement(DataType dataType, const std::string &name, bool normalized = false) :
+        dataType(dataType), name(name), sizeBytes(shaderDataTypeSize(dataType)), offset(0), normalized(normalized) {
+    }
+
+    uint32 BufferElement::getElementCount() const {
+        switch(dataType)
+        {
+        case DataType::Float:
+        case DataType::Int:
+        case DataType::Int16:
+        case DataType::Int8:
+        case DataType::Uint:
+        case DataType::Uint16:
+        case DataType::Uint8:
+        case DataType::Bool:
+            return 1;
+        case DataType::Vec2i:
+        case DataType::Vec2ui:
+        case DataType::Vec2:
+            return 2;
+        case DataType::Vec3i:
+        case DataType::Vec3ui:
+        case DataType::Vec3:
+            return 3;
+        case DataType::Vec4i:
+        case DataType::Vec4ui:
+        case DataType::Vec4:
+            return 4;
+        case DataType::Mat2:
+            return 4;
+        case DataType::Mat3:
+            return 9;
+        case DataType::Mat4:
+            return 16;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
+            return 0;
+        }
+    }
+
+
+    BufferLayout::BufferLayout(const std::initializer_list<BufferElement> &elements) :
+        elements(elements), stride(0) {
+        calculateOffsetsAndStride();
+    }
 
     void BufferLayout::calculateOffsetsAndStride() {
         uint32 offset = 0;
@@ -55,53 +113,52 @@ namespace BZ {
     }
 
 
-    Ref<VertexBuffer> VertexBuffer::create(float *vertices, uint32 size, const BufferLayout &layout) {
-        switch(Renderer::api)
-        {
+    Ref<Buffer> Buffer::createVertexBuffer(const void *data, uint32 size, const BufferLayout &layout) { 
+        return create(BufferType::Vertex, size, data, layout); 
+    }
+
+    Ref<Buffer> Buffer::createIndexBuffer(const void *data, uint32 size) { 
+        return create(BufferType::Index, size, data);
+    }
+
+    Ref<Buffer> Buffer::createConstantBuffer(uint32 size) { 
+        return create(BufferType::Constant, size);
+    }
+
+    Ref<Buffer> Buffer::createGenericBuffer(const void *data, uint32 size, const BufferLayout &layout) { 
+        return create(BufferType::Generic, size, data, layout);
+    }
+
+    Ref<Buffer> Buffer::create(BufferType type, uint32 size) {
+        switch(Renderer::api) {
         case Renderer::API::OpenGL:
-            return MakeRef<OpenGLVertexBuffer>(vertices, size, layout);
+            return MakeRef<OpenGLBuffer>(type, size);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11VertexBuffer>(vertices, size, layout);
+            return MakeRef<D3D11Buffer>(type, size);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Ref<IndexBuffer> IndexBuffer::create(uint32 *indices, uint32 count) {
-        switch(Renderer::api)
-        {
+    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data) {
+        switch(Renderer::api) {
         case Renderer::API::OpenGL:
-            return MakeRef<OpenGLIndexBuffer>(indices, count);
+            return MakeRef<OpenGLBuffer>(type, size, data);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11IndexBuffer>(indices, count);
+            return MakeRef<D3D11Buffer>(type, size, data);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-
-    Ref<ConstantBuffer> ConstantBuffer::create(uint32 size) {
-        switch(Renderer::api)
-        {
+    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, const BufferLayout &layout) {
+        switch(Renderer::api) {
         case Renderer::API::OpenGL:
-            return MakeRef<OpenGLConstantBuffer>(size);
+            return MakeRef<OpenGLBuffer>(type, size, data, layout);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11ConstantBuffer>(size);
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return nullptr;
-        }
-    }
-
-    Ref<ConstantBuffer> ConstantBuffer::create(void *data, uint32 size) {
-        switch(Renderer::api)
-        {
-        case Renderer::API::OpenGL:
-            return MakeRef<OpenGLConstantBuffer>(data, size);
-        case Renderer::API::D3D11:
-            return MakeRef<D3D11ConstantBuffer>(data, size);
+            return MakeRef<D3D11Buffer>(type, size, data, layout);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

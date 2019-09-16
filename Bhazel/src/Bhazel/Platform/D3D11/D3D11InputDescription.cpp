@@ -34,7 +34,7 @@ namespace BZ {
             indexBuffer->unbindFromPipeline();
     }
 
-    void D3D11InputDescription::addVertexBuffer(const Ref<VertexBuffer> &buffer, const Ref<Shader> &vertexShader) {
+    void D3D11InputDescription::addVertexBuffer(const Ref<Buffer> &buffer, const Ref<Shader> &vertexShader) {
         BZ_ASSERT_CORE(buffer->getLayout().getElementCount(), "VertexBuffer has no layout.");
 
         for(const auto &element : buffer->getLayout()) {
@@ -59,62 +59,62 @@ namespace BZ {
         vertexBuffers.emplace_back(buffer);
     }
 
-    void D3D11InputDescription::setIndexBuffer(const Ref<IndexBuffer> &buffer) {
+    void D3D11InputDescription::setIndexBuffer(const Ref<Buffer> &buffer) {
         indexBuffer = buffer;
     }
 
-    DXGI_FORMAT D3D11InputDescription::shaderDataTypeToD3D11(ShaderDataType dataType, bool normalized) {
+    DXGI_FORMAT D3D11InputDescription::shaderDataTypeToD3D11(DataType dataType, bool normalized) {
         switch(dataType)
         {
-        case ShaderDataType::Float:
+        case DataType::Float:
             return DXGI_FORMAT_R32_FLOAT;
 
-        case ShaderDataType::Int:
+        case DataType::Int:
             return  DXGI_FORMAT_R32_SINT;
-        case ShaderDataType::Int16:
+        case DataType::Int16:
             return normalized ? DXGI_FORMAT_R16_SNORM : DXGI_FORMAT_R16_SINT;
-        case ShaderDataType::Int8:
+        case DataType::Int8:
             return normalized ? DXGI_FORMAT_R8_SNORM : DXGI_FORMAT_R8_SINT;
 
-        case ShaderDataType::Uint:
+        case DataType::Uint:
             return  DXGI_FORMAT_R32_UINT;
-        case ShaderDataType::Uint16:
+        case DataType::Uint16:
             return normalized ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R16_UINT;
-        case ShaderDataType::Uint8:
+        case DataType::Uint8:
             return normalized ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8_UINT;
         
-        case ShaderDataType::Bool:
+        case DataType::Bool:
             return DXGI_FORMAT_R32_UINT;
 
-        case ShaderDataType::Vec2:
+        case DataType::Vec2:
             return DXGI_FORMAT_R32G32_FLOAT;
-        case ShaderDataType::Vec3:
+        case DataType::Vec3:
             return DXGI_FORMAT_R32G32B32_FLOAT;
-        case ShaderDataType::Vec4:
+        case DataType::Vec4:
             return DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-        case ShaderDataType::Vec2i:
+        case DataType::Vec2i:
             return DXGI_FORMAT_R32G32_SINT;
-        case ShaderDataType::Vec3i:
+        case DataType::Vec3i:
             return DXGI_FORMAT_R32G32B32_SINT;
-        case ShaderDataType::Vec4i:
+        case DataType::Vec4i:
             return DXGI_FORMAT_R32G32B32A32_SINT;
 
-        case ShaderDataType::Vec2ui:
+        case DataType::Vec2ui:
             return DXGI_FORMAT_R32G32_UINT;
-        case ShaderDataType::Vec3ui:
+        case DataType::Vec3ui:
             return DXGI_FORMAT_R32G32B32_UINT;
-        case ShaderDataType::Vec4ui:
+        case DataType::Vec4ui:
             return DXGI_FORMAT_R32G32B32A32_UINT;
 
-        case ShaderDataType::Mat2:
-        case ShaderDataType::Mat3:
-        case ShaderDataType::Mat4:
+        case DataType::Mat2:
+        case DataType::Mat3:
+        case DataType::Mat4:
             BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
             return DXGI_FORMAT_UNKNOWN;
 
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown ShaderDataType.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
             return DXGI_FORMAT_UNKNOWN;
         }
     }

@@ -4,6 +4,7 @@
 #include "RenderCommand.h"
 #include "OrtographicCamera.h"
 
+#include "Buffer.h"
 #include "Shader.h"
 #include "InputDescription.h"
 #include "PipelineSettings.h"
@@ -16,15 +17,15 @@ namespace BZ {
     Renderer::FrameData Renderer::frameData;
     Renderer::InstanceData Renderer::instanceData;
 
-    Ref<ConstantBuffer> Renderer::frameConstantBuffer;
-    Ref<ConstantBuffer> Renderer::instanceConstantBuffer;
+    Ref<Buffer> Renderer::frameConstantBuffer;
+    Ref<Buffer> Renderer::instanceConstantBuffer;
 
     Timer Renderer::timer;
 
 
     void Renderer::init() {
-        frameConstantBuffer = ConstantBuffer::create(sizeof(frameData));
-        instanceConstantBuffer = ConstantBuffer::create(sizeof(instanceData));
+        frameConstantBuffer = Buffer::createConstantBuffer(sizeof(frameData));
+        instanceConstantBuffer = Buffer::createConstantBuffer(sizeof(instanceData));
 
         //TODO: set all pipeline defaults here
         RenderCommand::setRenderMode(RenderMode::Triangles);
@@ -53,14 +54,34 @@ namespace BZ {
     void Renderer::endScene() {
     }
 
-    void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix) {
+    void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, RenderMode renderMode) {
         instanceData.modelMatrix = modelMatrix;
         instanceConstantBuffer->setData(&instanceData, sizeof(instanceData));
         instanceConstantBuffer->bindToPipeline(1);
 
+        //TODO we should not set this every draw call
         shader->bindToPipeline();
-
         inputDescription->bindToPipeline();
-        RenderCommand::drawIndexed(inputDescription->getIndexBuffer()->getCount());
+        RenderCommand::setRenderMode(renderMode);
+
+        //TODO: this is bad. branching and divisions.
+        if(inputDescription->hasIndexBuffer())
+            RenderCommand::drawIndexed(inputDescription->getIndexBuffer()->getSize() / sizeof(uint32));
+        else {
+            auto &vertexBuffer = inputDescription->getVertexBuffers()[0];
+            RenderCommand::draw(vertexBuffer->getSize() / vertexBuffer->getLayout().getStride());
+        }
+    }
+
+    void Renderer::submitCompute(const Ref<Shader> &computeShader, uint32 groupsX, uint32 groupsY, uint32 groupsZ, std::initializer_list<Ref<Buffer>> buffers) {
+        computeShader->bindToPipeline();
+
+        int unit = 0;
+        for(auto &buffer : buffers) {
+            BZ_ASSERT_CORE(buffer->getType() == BufferType::Generic, "Compute shader buffer should be a GenericBuffer!")
+            buffer->bindToPipeline(unit++);
+        }
+
+        RenderCommand::submitCompute(groupsX, groupsY, groupsZ);
     }
 }

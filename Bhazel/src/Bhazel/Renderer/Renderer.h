@@ -7,7 +7,7 @@ namespace BZ {
 
     class OrtographicCamera;
     class InputDescription;
-    class ConstantBuffer;
+    class Buffer;
     class Shader;
 
     class Renderer
@@ -34,7 +34,9 @@ namespace BZ {
         static void beginScene(OrtographicCamera &camera);
         static void endScene();
 
-        static void submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix = glm::mat4(1.0f));
+        static void submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix = glm::mat4(1.0f), RenderMode renderMode = RenderMode::Triangles);
+
+        static void submitCompute(const Ref<Shader> &computeShader, uint32 groupsX, uint32 groupsY, uint32 groupsZ, std::initializer_list<Ref<Buffer>> buffers);
 
         static API api;
     private:
@@ -51,8 +53,8 @@ namespace BZ {
         };
         static InstanceData instanceData;
 
-        static Ref<ConstantBuffer> frameConstantBuffer;
-        static Ref<ConstantBuffer> instanceConstantBuffer;
+        static Ref<Buffer> frameConstantBuffer;
+        static Ref<Buffer> instanceConstantBuffer;
 
         static Timer timer;
     };

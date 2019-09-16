@@ -4,55 +4,84 @@
 
 namespace BZ {
 
-    OpenGLVertexBuffer::OpenGLVertexBuffer(float *vertices, uint32 size, const BufferLayout &layout) :
-        VertexBuffer(layout) {
-        BZ_ASSERT_GL(glGenBuffers(1, &rendererId));
-        BZ_ASSERT_GL(glBindBuffer(GL_ARRAY_BUFFER, rendererId));
-        BZ_ASSERT_GL(glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW));
+    static uint32 bufferTypeToGL(BufferType bufferType);
+
+
+    OpenGLBuffer::OpenGLBuffer(BufferType type, uint32 size) :
+        OpenGLBuffer(type, size, nullptr, BufferLayout()) {
     }
 
-    OpenGLVertexBuffer::~OpenGLVertexBuffer() {
+    OpenGLBuffer::OpenGLBuffer(BufferType type, uint32 size, const void *data) :
+        OpenGLBuffer(type, size, data, BufferLayout()) {
+    }
+
+    OpenGLBuffer::OpenGLBuffer(BufferType type, uint32 size, const void *data, const BufferLayout &layout) :
+        Buffer(type, size, layout) {
+
+        uint32 bufferType = bufferTypeToGL(type);
+
+        BZ_ASSERT_GL(glGenBuffers(1, &rendererId));
+        BZ_ASSERT_GL(glBindBuffer(bufferType, rendererId));
+        BZ_ASSERT_GL(glBufferData(bufferType, size, data, GL_DYNAMIC_DRAW)); //TODO: use the correct flag
+    }
+
+    OpenGLBuffer::~OpenGLBuffer() {
         BZ_ASSERT_GL(glDeleteBuffers(1, &rendererId));
     }
 
-
-    OpenGLIndexBuffer::OpenGLIndexBuffer(uint32 *indices, uint32 count) : 
-        IndexBuffer(count) {
-        BZ_ASSERT_GL(glGenBuffers(1, &rendererId));
-        BZ_ASSERT_GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererId));
-        BZ_ASSERT_GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * count, indices, GL_STATIC_DRAW));
+    void OpenGLBuffer::bindToPipeline(uint32 unit) const {
+        switch(type) {
+        case BZ::BufferType::Vertex:
+        case BZ::BufferType::Index:
+            //On OpenGL these buffers don't bind to pipeline binding points, they bind to VAOs (InputDescriptions).
+            BZ_ASSERT_ALWAYS_CORE("Trying to bind vertex or index buffer to the GL pipeline!")
+            break;
+        case BZ::BufferType::Constant:
+            BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, rendererId));
+            break;
+        case BZ::BufferType::Generic:
+            BZ_ASSERT_GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, rendererId));
+            break;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
+        }
     }
 
-    OpenGLIndexBuffer::~OpenGLIndexBuffer() {
-        BZ_ASSERT_GL(glDeleteBuffers(1, &rendererId));
+    void OpenGLBuffer::unbindFromPipeline(uint32 unit) const {
+        switch(type) {
+        case BZ::BufferType::Vertex:
+        case BZ::BufferType::Index:
+            //On OpenGL these buffers don't bind to pipeline binding points, they bind to VAOs (InputDescriptions).
+            break;
+        case BZ::BufferType::Constant:
+            BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, 0));
+            break;
+        case BZ::BufferType::Generic:
+            BZ_ASSERT_GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, 0));
+            break;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
+        }
     }
 
-
-    OpenGLConstantBuffer::OpenGLConstantBuffer(uint32 size) :
-        OpenGLConstantBuffer(nullptr, size) {
+    void OpenGLBuffer::setData(const void *data, uint32 size) {
+        uint32 bufferType = bufferTypeToGL(type);
+        BZ_ASSERT_GL(glBindBuffer(bufferType, rendererId));
+        BZ_ASSERT_GL(glBufferSubData(bufferType, 0, size, data));
     }
 
-    OpenGLConstantBuffer::OpenGLConstantBuffer(void *data, uint32 size) :
-        ConstantBuffer(size) {
-        BZ_ASSERT_GL(glGenBuffers(1, &rendererId));
-        BZ_ASSERT_GL(glBindBuffer(GL_UNIFORM_BUFFER, rendererId));
-        BZ_ASSERT_GL(glBufferData(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW));
-    }
-
-    OpenGLConstantBuffer::~OpenGLConstantBuffer() {
-        BZ_ASSERT_GL(glDeleteBuffers(1, &rendererId));
-    }
-
-    void OpenGLConstantBuffer::bindToPipeline(uint32 unit) const {
-        BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, rendererId));
-    }
-
-    void OpenGLConstantBuffer::unbindFromPipeline(uint32 unit) const {
-        BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, 0));
-    }
-
-    void OpenGLConstantBuffer::setData(const void *data, uint32 size) {
-        BZ_ASSERT_GL(glBindBuffer(GL_UNIFORM_BUFFER, rendererId));
-        BZ_ASSERT_GL(glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data));
+    static uint32 bufferTypeToGL(BufferType bufferType) {
+        switch(bufferType) {
+        case BufferType::Vertex:
+            return GL_ARRAY_BUFFER;
+        case BZ::BufferType::Index:
+            return GL_ELEMENT_ARRAY_BUFFER;
+        case BZ::BufferType::Constant:
+            return GL_UNIFORM_BUFFER;
+        case BZ::BufferType::Generic:
+            return GL_SHADER_STORAGE_BUFFER;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
+        }
     }
 }
