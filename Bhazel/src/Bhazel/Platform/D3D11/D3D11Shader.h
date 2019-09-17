@@ -23,6 +23,7 @@ namespace BZ {
 
         wrl::ComPtr<ID3D11VertexShader> vertexShaderPtr;
         wrl::ComPtr<ID3D11PixelShader> pixelShaderPtr;
+        wrl::ComPtr<ID3D11ComputeShader> computeShaderPtr;
 
         void compile(const std::unordered_map<ShaderType, std::string> &sources);
 

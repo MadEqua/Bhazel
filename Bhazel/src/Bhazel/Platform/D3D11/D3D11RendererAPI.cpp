@@ -124,8 +124,7 @@ namespace BZ {
     }
 
     void D3D11RendererAPI::submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
-        //TODO
-        BZ_ASSERT_ALWAYS_CORE("Not implemented yet!");
+        BZ_LOG_DXGI(deviceContext->Dispatch(groupsX, groupsY, groupsZ));
     }
 
     static D3D11_BLEND blendingFunctionToD3D(BlendingFunction blendingFunction) {

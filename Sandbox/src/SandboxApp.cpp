@@ -71,9 +71,10 @@ void ExampleLayer::onGraphicsContextCreated() {
         {BZ::DataType::Vec4, "COLOR"}
     };
 
-    particlesBuffer = BZ::Buffer::createGenericBuffer(particles.data(), particles.size() * sizeof(Particle), particleLayout);
-    auto computeShader = shaderLibrary.load("assets/shaders/Compute.glsl");
-    auto particleShader = shaderLibrary.load("assets/shaders/Particle.glsl");
+    particlesBuffer = BZ::Buffer::createVertexBuffer(particles.data(), particles.size() * sizeof(Particle), particleLayout);
+
+    auto computeShader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Compute.glsl" : "assets/shaders/Compute.hlsl");
+    auto particleShader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Particle.glsl" : "assets/shaders/Particle.hlsl");
 
     particlesInputDescription = BZ::InputDescription::create();
     particlesInputDescription->addVertexBuffer(particlesBuffer, particleShader);

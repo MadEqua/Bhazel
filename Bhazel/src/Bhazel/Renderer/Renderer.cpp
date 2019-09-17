@@ -78,8 +78,7 @@ namespace BZ {
 
         int unit = 0;
         for(auto &buffer : buffers) {
-            BZ_ASSERT_CORE(buffer->getType() == BufferType::Generic, "Compute shader buffer should be a GenericBuffer!")
-            buffer->bindToPipeline(unit++);
+            buffer->bindToPipelineAsGeneric(unit++);
         }
 
         RenderCommand::submitCompute(groupsX, groupsY, groupsZ);

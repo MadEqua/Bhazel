@@ -17,8 +17,9 @@ namespace BZ {
     void D3D11InputDescription::bindToPipeline() const {
         BZ_LOG_DXGI(context.getDeviceContext()->IASetInputLayout(inputLayoutPtr.Get()));
         
-        for(auto &vb : vertexBuffers)
+        for(auto &vb : vertexBuffers) {
             vb->bindToPipeline();
+        }
 
         if(indexBuffer)
             indexBuffer->bindToPipeline();

@@ -31,18 +31,22 @@ namespace BZ {
     }
 
     void D3D11Shader::bindToPipeline() const {
+        BZ_LOG_DXGI(context.getDeviceContext()->CSSetShader(computeShaderPtr.Get(), nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetShader(vertexShaderPtr.Get(), nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetShader(pixelShaderPtr.Get(), nullptr, 0));
     }
 
     void D3D11Shader::unbindFromPipeline() const {
+        BZ_LOG_DXGI(context.getDeviceContext()->CSSetShader(nullptr, nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->VSSetShader(nullptr, nullptr, 0));
         BZ_LOG_DXGI(context.getDeviceContext()->PSSetShader(nullptr, nullptr, 0));
     }
 
     void D3D11Shader::compile(const std::unordered_map<ShaderType, std::string> &sources) {
-        BZ_ASSERT_CORE(sources.find(ShaderType::Vertex) != sources.end(), "Shader code should contain at least a Vertex shader!")
-        
+        BZ_ASSERT_CORE(sources.size() <= 5, "Shader sources need to have at maximum 5 entries!")
+        BZ_ASSERT_CORE(sources.find(ShaderType::Vertex) != sources.end() || sources.find(ShaderType::Compute) != sources.end(), "Shader code should contain at least a Vertex or Compute shader!")
+        BZ_ASSERT_CORE(!(sources.find(ShaderType::Compute) != sources.end() && sources.size() > 1), "Compute shaders should be used as standalone!")
+
         UINT flags1 = D3DCOMPILE_ENABLE_STRICTNESS;
 #ifndef BZ_DIST
         flags1 |= D3DCOMPILE_DEBUG;
@@ -79,6 +83,10 @@ namespace BZ {
                 BZ_ASSERT_HRES_DXGI(context.getDevice()->CreatePixelShader(byteCodeBlob->GetBufferPointer(),
                                     byteCodeBlob->GetBufferSize(), nullptr, &pixelShaderPtr));
                 break;
+            case ShaderType::Compute:
+                BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateComputeShader(byteCodeBlob->GetBufferPointer(),
+                                    byteCodeBlob->GetBufferSize(), nullptr, &computeShaderPtr));
+                break;
             default:
                 BZ_ASSERT_ALWAYS("Unknown ShaderType!")
                 break;
@@ -93,6 +101,8 @@ namespace BZ {
             return "vs_5_0";
         case ShaderType::Fragment:
             return "ps_5_0";
+        case ShaderType::Compute:
+            return "cs_5_0";
         default:
             BZ_ASSERT_ALWAYS("Unknown ShaderType!")
         }

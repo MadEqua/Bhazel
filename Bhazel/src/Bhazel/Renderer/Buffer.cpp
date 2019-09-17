@@ -57,7 +57,7 @@ namespace BZ {
         }
     }
 
-    BufferElement::BufferElement(DataType dataType, const std::string &name, bool normalized = false) :
+    BufferElement::BufferElement(DataType dataType, const std::string &name, bool normalized) :
         dataType(dataType), name(name), sizeBytes(shaderDataTypeSize(dataType)), offset(0), normalized(normalized) {
     }
 
@@ -123,10 +123,6 @@ namespace BZ {
 
     Ref<Buffer> Buffer::createConstantBuffer(uint32 size) { 
         return create(BufferType::Constant, size);
-    }
-
-    Ref<Buffer> Buffer::createGenericBuffer(const void *data, uint32 size, const BufferLayout &layout) { 
-        return create(BufferType::Generic, size, data, layout);
     }
 
     Ref<Buffer> Buffer::create(BufferType type, uint32 size) {

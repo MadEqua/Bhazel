@@ -39,9 +39,6 @@ namespace BZ {
         case BZ::BufferType::Constant:
             BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, rendererId));
             break;
-        case BZ::BufferType::Generic:
-            BZ_ASSERT_GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, rendererId));
-            break;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
         }
@@ -56,12 +53,17 @@ namespace BZ {
         case BZ::BufferType::Constant:
             BZ_ASSERT_GL(glBindBufferBase(GL_UNIFORM_BUFFER, unit, 0));
             break;
-        case BZ::BufferType::Generic:
-            BZ_ASSERT_GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, 0));
-            break;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
         }
+    }
+
+    void OpenGLBuffer::bindToPipelineAsGeneric(uint32 unit) const {
+        BZ_ASSERT_GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, rendererId));
+    }
+
+    void OpenGLBuffer::unbindFromPipelineAsGeneric(uint32 unit) const {
+        BZ_ASSERT_GL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit, 0));
     }
 
     void OpenGLBuffer::setData(const void *data, uint32 size) {
@@ -78,8 +80,6 @@ namespace BZ {
             return GL_ELEMENT_ARRAY_BUFFER;
         case BZ::BufferType::Constant:
             return GL_UNIFORM_BUFFER;
-        case BZ::BufferType::Generic:
-            return GL_SHADER_STORAGE_BUFFER;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
         }

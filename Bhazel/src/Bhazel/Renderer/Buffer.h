@@ -3,7 +3,7 @@
 namespace BZ {
 
     enum class BufferType {
-        Vertex, Index, Constant, Generic
+        Vertex, Index, Constant
     };
 
     enum class DataType {
@@ -60,7 +60,7 @@ namespace BZ {
         static Ref<Buffer> createVertexBuffer(const void *data, uint32 size, const BufferLayout &layout);
         static Ref<Buffer> createIndexBuffer(const void *data, uint32 size);
         static Ref<Buffer> createConstantBuffer(uint32 size);
-        static Ref<Buffer> createGenericBuffer(const void *data, uint32 size, const BufferLayout &layout);
+        //static Ref<Buffer> createGenericBuffer(const void *data, uint32 size, const BufferLayout &layout);
 
         static Ref<Buffer> create(BufferType type, uint32 size);
         static Ref<Buffer> create(BufferType type, uint32 size, const void *data);
@@ -70,6 +70,10 @@ namespace BZ {
 
         virtual void bindToPipeline(uint32 unit = 0) const = 0;
         virtual void unbindFromPipeline(uint32 unit = 0) const = 0;
+
+        //Bind and unbind as generic Read/Write buffers. Useful for compute shader usage.
+        virtual void bindToPipelineAsGeneric(uint32 unit = 0) const = 0;
+        virtual void unbindFromPipelineAsGeneric(uint32 unit = 0) const = 0;
 
         uint32 getSize() const { return size; }
         uint32 getCount() const { return count; }

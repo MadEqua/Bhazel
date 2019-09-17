@@ -19,8 +19,13 @@ namespace BZ {
         virtual void bindToPipeline(uint32 unit = 0) const override;
         virtual void unbindFromPipeline(uint32 unit = 0) const override;
 
+        virtual void bindToPipelineAsGeneric(uint32 unit = 0) const override;
+        virtual void unbindFromPipelineAsGeneric(uint32 unit = 0) const override;
+
     private:
         D3D11Context &context;
         wrl::ComPtr<ID3D11Buffer> bufferPtr;
+
+        mutable wrl::ComPtr<ID3D11UnorderedAccessView> unorderedAccessViewPtr;
     };
 }
