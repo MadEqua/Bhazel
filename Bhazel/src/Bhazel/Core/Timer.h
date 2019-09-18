@@ -18,7 +18,8 @@ namespace BZ {
 
         float asSeconds() const;
         float asMillisecondsFloat() const;
-        uint64 asMillisecondsUint() const;
+        uint32 asMillisecondsUint32() const;
+        uint64 asMillisecondsUint64() const;
         uint64 asNanoseconds() const;
 
     private:

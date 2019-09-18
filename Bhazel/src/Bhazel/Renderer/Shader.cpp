@@ -77,8 +77,10 @@ namespace BZ {
             return ShaderType::Fragment;
         else if(string == "Compute" || string == "compute")
             return ShaderType::Compute;
-        else
+        else {
             BZ_ASSERT_ALWAYS_CORE("Unknown shader type string: '{0}'", string);
+            return ShaderType::Unknown;
+        }
     }
 
 

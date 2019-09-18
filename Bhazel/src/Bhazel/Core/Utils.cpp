@@ -36,8 +36,10 @@ namespace BZ::Utils {
             return glm::orthoRH_NO(left, right, bottom, top, zNear, zFar);
         else if(Renderer::api == Renderer::API::D3D11)
             return glm::orthoRH_ZO(left, right, bottom, top, zNear, zFar);
-        else
+        else {
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return glm::mat4();
+        }
     }
 
     glm::mat4 frustum(float left, float right, float bottom, float top, float zNear, float zFar) {
@@ -45,8 +47,10 @@ namespace BZ::Utils {
             return glm::frustumRH_NO(left, right, bottom, top, zNear, zFar);
         else if(Renderer::api == Renderer::API::D3D11)
             return glm::frustumRH_ZO(left, right, bottom, top, zNear, zFar);
-        else
+        else {
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return glm::mat4();
+        }
     }
 
     glm::mat4 perspective(float fovy, float aspectRatio, float zNear, float zFar) {
@@ -54,7 +58,9 @@ namespace BZ::Utils {
             return glm::perspectiveRH_NO(fovy, aspectRatio, zNear, zFar);
         else if(Renderer::api == Renderer::API::D3D11)
             return glm::perspectiveRH_ZO(fovy, aspectRatio, zNear, zFar);
-        else
+        else {
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return glm::mat4();
+        }
     }
 }

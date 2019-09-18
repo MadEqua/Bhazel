@@ -104,7 +104,8 @@ namespace BZ {
         case ShaderType::Compute:
             return "cs_5_0";
         default:
-            BZ_ASSERT_ALWAYS("Unknown ShaderType!")
+            BZ_ASSERT_ALWAYS("Unknown ShaderType!");
+            return nullptr;
         }
     }
 }

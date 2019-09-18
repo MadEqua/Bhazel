@@ -82,6 +82,7 @@ namespace BZ {
             return GL_UNIFORM_BUFFER;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
+            return 0;
         }
     }
 }

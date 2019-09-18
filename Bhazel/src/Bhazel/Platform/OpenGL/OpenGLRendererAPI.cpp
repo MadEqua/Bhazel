@@ -156,6 +156,7 @@ namespace BZ {
             return GL_ONE_MINUS_SRC1_ALPHA;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BlendingFunction!");
+            return 0;
         }
     }
 
@@ -173,6 +174,7 @@ namespace BZ {
             return GL_MAX;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BlendingEquation!");
+            return 0;
         }
     }
 
@@ -196,6 +198,7 @@ namespace BZ {
             return GL_NOTEQUAL;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown TestFunction!");
+            return 0;
         }
     }
 }

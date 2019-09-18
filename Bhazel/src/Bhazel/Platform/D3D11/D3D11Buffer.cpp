@@ -140,6 +140,7 @@ namespace BZ {
             return D3D11_BIND_CONSTANT_BUFFER;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
+            return 0;
         }
     }
 }

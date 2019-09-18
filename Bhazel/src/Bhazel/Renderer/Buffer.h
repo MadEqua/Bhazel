@@ -60,7 +60,6 @@ namespace BZ {
         static Ref<Buffer> createVertexBuffer(const void *data, uint32 size, const BufferLayout &layout);
         static Ref<Buffer> createIndexBuffer(const void *data, uint32 size);
         static Ref<Buffer> createConstantBuffer(uint32 size);
-        //static Ref<Buffer> createGenericBuffer(const void *data, uint32 size, const BufferLayout &layout);
 
         static Ref<Buffer> create(BufferType type, uint32 size);
         static Ref<Buffer> create(BufferType type, uint32 size, const void *data);

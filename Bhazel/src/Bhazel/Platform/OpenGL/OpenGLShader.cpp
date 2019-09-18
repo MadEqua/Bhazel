@@ -110,6 +110,7 @@ namespace BZ {
             return GL_COMPUTE_SHADER;
         default:
             BZ_ASSERT_ALWAYS("Unknown ShaderType!");
+            return 0;
         }
     }
 }

@@ -169,6 +169,7 @@ namespace BZ {
             return D3D11_BLEND_INV_SRC1_ALPHA;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BlendingFunction!");
+            return D3D11_BLEND_ZERO;
         }
     }
 
@@ -186,6 +187,7 @@ namespace BZ {
             return D3D11_BLEND_OP_MAX;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown BlendingEquation!");
+            return D3D11_BLEND_OP_ADD;
         }
     }
 
@@ -210,6 +212,7 @@ namespace BZ {
             return D3D11_COMPARISON_NOT_EQUAL;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown TestFunction!");
+            return D3D11_COMPARISON_ALWAYS;
         }
     }
 }

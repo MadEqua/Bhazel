@@ -42,7 +42,11 @@ namespace BZ {
         return std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(nanos).count();
     }
 
-    uint64 TimeDuration::asMillisecondsUint() const {
+    uint32 TimeDuration::asMillisecondsUint32() const {
+        return static_cast<uint32>(std::chrono::duration_cast<std::chrono::milliseconds>(nanos).count());
+    }
+
+    uint64 TimeDuration::asMillisecondsUint64() const {
         return static_cast<uint64>(std::chrono::duration_cast<std::chrono::milliseconds>(nanos).count());
     }
 
