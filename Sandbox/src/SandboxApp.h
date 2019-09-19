@@ -35,7 +35,6 @@ private:
     //Compute shader test stuff
     constexpr static int PARTICLE_COUNT = 1024 * 1024;
     BZ::ParticleSystem particleSystem;
-    glm::vec3 particleSystemPosition;
 
     bool onWindowResizeEvent(BZ::WindowResizeEvent &ev);
 };

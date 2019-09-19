@@ -29,6 +29,8 @@ namespace BZ {
 
         virtual void draw(uint32 vertexCount) override;
         virtual void drawIndexed(uint32 indicesCount) override;
+        virtual void drawInstanced(uint32 vertexCount, uint32 instanceCount) override;
+        virtual void drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) override;
 
         virtual void submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) override;
 

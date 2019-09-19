@@ -7,7 +7,7 @@
 
 
 ExampleLayer::ExampleLayer() :
-    Layer("Example"), particleSystem(PARTICLE_COUNT), particleSystemPosition(0.0f) {
+    Layer("Example"), particleSystem(PARTICLE_COUNT) {
 }
 
 void ExampleLayer::onAttach() {
@@ -74,11 +74,11 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     if(BZ::Input::isKeyPressed(BZ_KEY_Q)) cameraRot -= CAMERA_ROT_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_E)) cameraRot += CAMERA_ROT_SPEED;
 
-    if(BZ::Input::isKeyPressed(BZ_KEY_LEFT)) particleSystemPosition.x -= MOVE_SPEED;
+    /*if(BZ::Input::isKeyPressed(BZ_KEY_LEFT)) particleSystemPosition.x -= MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) particleSystemPosition.x += MOVE_SPEED;
 
     if(BZ::Input::isKeyPressed(BZ_KEY_UP)) particleSystemPosition.y += MOVE_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_DOWN)) particleSystemPosition.y -= MOVE_SPEED;
+    else if(BZ::Input::isKeyPressed(BZ_KEY_DOWN)) particleSystemPosition.y -= MOVE_SPEED;*/
 
     //TODO: coordinate conversion
     /**if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_1)) {
@@ -114,7 +114,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     modelMatrix = glm::translate(modelMatrix, pos + disp);
     //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    particleSystem.render(particleSystemPosition);
+    particleSystem.render();
 
     BZ::Renderer::endScene();
 }
@@ -129,24 +129,37 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     ImGui::SliderFloat3("disp", &disp[0], -1, 1);
     ImGui::End();
 
-    constexpr float LIMIT = 1.0f;
+    constexpr float LIMIT = 0.5f;
+    constexpr float LIMIT2 = 1.5f;
     //TODO: temporary
     if(ImGui::Begin("Particles")) {
+        ImGui::Text("Emitter Position");
+        ImGui::SliderFloat3("##emmiterpos", &particleSystem.position[0], -LIMIT2, LIMIT2);
+        ImGui::Text("Emitter Scale");
+        ImGui::SliderFloat3("##emmitersc", &particleSystem.scale[0], 0.0f, LIMIT2);
+        ImGui::Text("Position Rotation");
+        ImGui::SliderFloat3("##emmiterrot", &particleSystem.eulerAngles[0], 0.0f, 359.0f);
+        ImGui::Separator();
+
         ImGui::Text("Position Range");
         ImGui::SliderFloat3("Min##pos", &particleSystem.ranges.positionRange.min[0], -LIMIT, LIMIT);
         ImGui::SliderFloat3("Max##pos", &particleSystem.ranges.positionRange.max[0], -LIMIT, LIMIT);
+        ImGui::Separator();
+        ImGui::Text("Size Range");
+        ImGui::SliderFloat3("Min##sz", &particleSystem.ranges.sizeRange.min[0], 0.0f, LIMIT * 2.0f);
+        ImGui::SliderFloat3("Max##sz", &particleSystem.ranges.sizeRange.max[0], 0.0f, LIMIT * 2.0f);
         ImGui::Separator();
         ImGui::Text("Life Range");
         ImGui::SliderFloat("Min##life", &particleSystem.ranges.lifeRange.min, 0, 10);
         ImGui::SliderFloat("Max##life", &particleSystem.ranges.lifeRange.max, 0, 10);
         ImGui::Separator();
         ImGui::Text("Velocity Range");
-        ImGui::SliderFloat3("Min##vel", &particleSystem.ranges.velocityRange.min[0], -LIMIT, LIMIT);
-        ImGui::SliderFloat3("Max##vel", &particleSystem.ranges.velocityRange.max[0], -LIMIT, LIMIT);
+        ImGui::SliderFloat3("Min##vel", &particleSystem.ranges.velocityRange.min[0], -LIMIT2, LIMIT2);
+        ImGui::SliderFloat3("Max##vel", &particleSystem.ranges.velocityRange.max[0], -LIMIT2, LIMIT2);
         ImGui::Separator();
         ImGui::Text("Acceleration Range");
-        ImGui::SliderFloat3("Min##accel", &particleSystem.ranges.accelerationRange.min[0], -LIMIT, LIMIT);
-        ImGui::SliderFloat3("Max##accel", &particleSystem.ranges.accelerationRange.max[0], -LIMIT, LIMIT);
+        ImGui::SliderFloat3("Min##accel", &particleSystem.ranges.accelerationRange.min[0], -LIMIT2, LIMIT2);
+        ImGui::SliderFloat3("Max##accel", &particleSystem.ranges.accelerationRange.max[0], -LIMIT2, LIMIT2);
         ImGui::Separator();
         ImGui::Text("Tint Range");
         ImGui::SliderFloat3("Min##tint", &particleSystem.ranges.tintRange.min[0], 0, 1);

@@ -45,8 +45,8 @@ namespace BZ {
             ied.Format = shaderDataTypeToD3D11(element.dataType, element.normalized);
             ied.InputSlot = static_cast<UINT>(vertexBuffers.size());
             ied.AlignedByteOffset = element.offset;
-            ied.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-            ied.InstanceDataStepRate = 0;
+            ied.InputSlotClass = element.perInstanceStep > 0 ? D3D11_INPUT_PER_INSTANCE_DATA : D3D11_INPUT_PER_VERTEX_DATA;
+            ied.InstanceDataStepRate = element.perInstanceStep;
 
             ieds.emplace_back(ied);
         }

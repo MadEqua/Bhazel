@@ -24,8 +24,9 @@ namespace BZ {
         uint32 sizeBytes;
         uint32 offset;
         bool normalized;
+        uint32 perInstanceStep;
 
-        BufferElement(DataType dataType, const std::string &name, bool normalized = false);
+        BufferElement(DataType dataType, const std::string &name, bool normalized = false, uint32 perInstanceStep = 0);
         uint32 getElementCount() const;
     };
 

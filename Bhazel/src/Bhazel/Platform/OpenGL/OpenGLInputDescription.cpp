@@ -36,6 +36,8 @@ namespace BZ {
                                   shaderDataTypeToGL(element.dataType),
                                   element.normalized ? GL_TRUE : GL_FALSE,
                                   buffer->getLayout().getStride(), reinterpret_cast<const void*>(element.offset)));
+            
+            BZ_ASSERT_GL(glVertexAttribDivisor(index, element.perInstanceStep));
             index++;
         }
 

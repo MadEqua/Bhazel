@@ -123,6 +123,14 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->DrawIndexed(indicesCount, 0, 0));
     }
 
+    void D3D11RendererAPI::drawInstanced(uint32 vertexCount, uint32 instanceCount) {
+        BZ_ASSERT_ALWAYS_CORE("Not implemented!");
+    }
+
+    void D3D11RendererAPI::drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) {
+        BZ_ASSERT_ALWAYS_CORE("Not implemented!");
+    }
+
     void D3D11RendererAPI::submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
         BZ_LOG_DXGI(deviceContext->Dispatch(groupsX, groupsY, groupsZ));
     }

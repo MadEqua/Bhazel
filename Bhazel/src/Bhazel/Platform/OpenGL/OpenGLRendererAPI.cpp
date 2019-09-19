@@ -108,6 +108,14 @@ namespace BZ {
         BZ_ASSERT_GL(glDrawElements(renderMode, indicesCount, GL_UNSIGNED_INT, nullptr));
     }
 
+    void OpenGLRendererAPI::drawInstanced(uint32 vertexCount, uint32 instanceCount) {
+        BZ_ASSERT_GL(glDrawArraysInstanced(renderMode, 0, vertexCount, instanceCount));
+    }
+
+    void OpenGLRendererAPI::drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) {
+        BZ_ASSERT_GL(glDrawElementsInstanced(renderMode, indicesCount, GL_UNSIGNED_INT, nullptr, instanceCount));
+    }
+
     void OpenGLRendererAPI::submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
         BZ_ASSERT_GL(glDispatchCompute(groupsX, groupsY, groupsZ));
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT); //TODO: better place for this

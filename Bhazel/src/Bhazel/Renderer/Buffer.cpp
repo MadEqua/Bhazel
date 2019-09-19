@@ -57,8 +57,8 @@ namespace BZ {
         }
     }
 
-    BufferElement::BufferElement(DataType dataType, const std::string &name, bool normalized) :
-        dataType(dataType), name(name), sizeBytes(shaderDataTypeSize(dataType)), offset(0), normalized(normalized) {
+    BufferElement::BufferElement(DataType dataType, const std::string &name, bool normalized, uint32 perInstanceStep) :
+        dataType(dataType), name(name), sizeBytes(shaderDataTypeSize(dataType)), offset(0), normalized(normalized), perInstanceStep(perInstanceStep) {
     }
 
     uint32 BufferElement::getElementCount() const {

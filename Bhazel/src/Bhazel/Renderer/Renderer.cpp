@@ -52,7 +52,7 @@ namespace BZ {
     void Renderer::endScene() {
     }
 
-    void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, RenderMode renderMode) {
+    void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, RenderMode renderMode, uint32 instances) {
         instanceData.modelMatrix = modelMatrix;
         instanceConstantBuffer->setData(&instanceData, sizeof(instanceData));
         instanceConstantBuffer->bindToPipeline(1);
@@ -62,12 +62,12 @@ namespace BZ {
         inputDescription->bindToPipeline();
         RenderCommand::setRenderMode(renderMode);
 
-        //TODO: this is bad. branching and divisions.
+        //TODO: this is bad. branching and divisions
         if(inputDescription->hasIndexBuffer())
-            RenderCommand::drawIndexed(inputDescription->getIndexBuffer()->getSize() / sizeof(uint32));
+            RenderCommand::drawInstancedIndexed(inputDescription->getIndexBuffer()->getSize() / sizeof(uint32), instances);
         else {
             auto &vertexBuffer = inputDescription->getVertexBuffers()[0];
-            RenderCommand::draw(vertexBuffer->getSize() / vertexBuffer->getLayout().getStride());
+            RenderCommand::drawInstanced(vertexBuffer->getSize() / vertexBuffer->getLayout().getStride(), instances);
         }
     }
 

@@ -30,6 +30,8 @@ namespace BZ {
 
         virtual void draw(uint32 vertexCount) = 0;
         virtual void drawIndexed(uint32 indicesCount) = 0;
+        virtual void drawInstanced(uint32 vertexCount, uint32 instanceCount) = 0;
+        virtual void drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) = 0;
 
         virtual void submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) = 0;
     };

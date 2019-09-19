@@ -65,6 +65,14 @@ namespace BZ {
             rendererAPI->drawIndexed(indicesCount);
         }
 
+        static void drawInstanced(uint32 vertexCount, uint32 instanceCount) {
+            rendererAPI->drawInstanced(vertexCount, instanceCount);
+        }
+
+        static void drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) {
+            rendererAPI->drawInstancedIndexed(indicesCount, instanceCount);
+        }
+
         //---------------------------------------------------------------------
         //---------------------------------------------------------------------
         static void submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
