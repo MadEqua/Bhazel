@@ -63,6 +63,8 @@ namespace BZ {
 
         rendererAPI = std::make_unique<OpenGLRendererAPI>();
         RenderCommand::initRendererAPI(rendererAPI.get());
+        
+        glEnable(GL_PROGRAM_POINT_SIZE); //TODO: delete
     }
 
     void OpenGLContext::swapBuffers() {

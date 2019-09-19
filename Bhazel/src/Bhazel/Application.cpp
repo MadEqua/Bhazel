@@ -68,12 +68,12 @@ namespace BZ {
             frameTimer.start();
 
             for (Layer *layer : layerStack) {
-                layer->onUpdate(frameStats.lastFrameTime);
+                layer->onUpdate(frameStats);
             }
 
             imGuiLayer->begin();
             for(Layer *layer : layerStack) {
-                layer->onImGuiRender(frameStats.lastFrameTime);
+                layer->onImGuiRender(frameStats);
             }
             imGuiLayer->end();
 

@@ -11,9 +11,9 @@ public:
     void onAttach() override;
     void onGraphicsContextCreated() override;
 
-    void onUpdate(BZ::TimeDuration deltaTime) override;
+    void onUpdate(const BZ::FrameStats &frameStats) override;
     void onEvent(BZ::Event &event) override;
-    void onImGuiRender(BZ::TimeDuration deltaTime) override;
+    void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
     //TODO: this is temporary
@@ -33,16 +33,9 @@ private:
     glm::vec3 disp;
 
     //Compute shader test stuff
-    constexpr static int PARTICLE_COUNT = 1024 * 32;
-    constexpr static int WORK_GROUP_SIZE = 256;
-
-    struct Particle {
-        glm::vec4 pos;
-        glm::vec4 col;
-    };
-
-    BZ::Ref<BZ::Buffer> particlesBuffer;
-    BZ::Ref<BZ::InputDescription> particlesInputDescription;
+    constexpr static int PARTICLE_COUNT = 1024 * 1024;
+    BZ::ParticleSystem particleSystem;
+    glm::vec3 particleSystemPosition;
 
     bool onWindowResizeEvent(BZ::WindowResizeEvent &ev);
 };

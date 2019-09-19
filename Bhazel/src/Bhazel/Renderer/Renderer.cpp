@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "RenderCommand.h"
 #include "OrtographicCamera.h"
+#include "Bhazel/Application.h"
 
 #include "Buffer.h"
 #include "Shader.h"
@@ -20,8 +21,6 @@ namespace BZ {
     Ref<Buffer> Renderer::frameConstantBuffer;
     Ref<Buffer> Renderer::instanceConstantBuffer;
 
-    Timer Renderer::timer;
-
 
     void Renderer::init() {
         frameConstantBuffer = Buffer::createConstantBuffer(sizeof(frameData));
@@ -31,8 +30,6 @@ namespace BZ {
         RenderCommand::setRenderMode(RenderMode::Triangles);
         RenderCommand::setBlendingSettings(BlendingSettings(false));
         RenderCommand::setDepthSettings(DepthSettings(false, false));
-
-        timer.start();
     }
 
     void Renderer::destroy() {
@@ -41,11 +38,12 @@ namespace BZ {
         instanceConstantBuffer.reset();
     }
 
-    void Renderer::beginScene(OrtographicCamera &camera) {
+    void Renderer::beginScene(OrtographicCamera &camera, const FrameStats &frameStats) {
         frameData.viewMatrix = camera.getViewMatrix();
         frameData.projectionMatrix = camera.getProjectionMatrix();
         frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();
-        frameData.runningTime = timer.getElapsedTime().asSeconds();
+        frameData.timeAndDelta.x = frameStats.runningTime.asSeconds();
+        frameData.timeAndDelta.y = frameStats.lastFrameTime.asSeconds();
 
         frameConstantBuffer->setData(&frameData, sizeof(frameData));
         frameConstantBuffer->bindToPipeline(0);

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Bhazel/Core/Timer.h"
-
 
 namespace BZ {
 
@@ -9,6 +7,7 @@ namespace BZ {
     class InputDescription;
     class Buffer;
     class Shader;
+    struct FrameStats;
 
     class Renderer
     {
@@ -31,7 +30,7 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        static void beginScene(OrtographicCamera &camera);
+        static void beginScene(OrtographicCamera &camera, const FrameStats &frameStats);
         static void endScene();
 
         static void submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix = glm::mat4(1.0f), RenderMode renderMode = RenderMode::Triangles);
@@ -40,22 +39,20 @@ namespace BZ {
 
         static API api;
     private:
-        struct alignas(16) FrameData {
+        struct FrameData {
             glm::mat4 viewMatrix;
             glm::mat4 projectionMatrix;
             glm::mat4 viewProjectionMatrix;
-            float runningTime;
+            alignas(16) glm::vec2 timeAndDelta;
         };
         static FrameData frameData;
 
-        struct alignas(16) InstanceData {
+        struct InstanceData {
             glm::mat4 modelMatrix;
         };
         static InstanceData instanceData;
 
         static Ref<Buffer> frameConstantBuffer;
         static Ref<Buffer> instanceConstantBuffer;
-
-        static Timer timer;
     };
 }

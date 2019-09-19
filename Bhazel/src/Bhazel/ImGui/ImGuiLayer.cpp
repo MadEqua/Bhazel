@@ -76,7 +76,7 @@ namespace BZ {
         ImGui::DestroyContext();
     }
 
-    void ImGuiLayer::onImGuiRender(TimeDuration deltaTime) {
+    void ImGuiLayer::onImGuiRender(const FrameStats &frameStats) {
         static bool show = true;
         ImGui::ShowDemoWindow(&show);
     }

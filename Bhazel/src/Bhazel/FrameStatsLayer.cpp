@@ -16,8 +16,8 @@ namespace BZ {
         frameTimeHistoryIdx(0) {
     }
 
-    void FrameStatsLayer::onImGuiRender(TimeDuration deltaTime) {
-        timeAcumMs += deltaTime.asMillisecondsUint32();
+    void FrameStatsLayer::onImGuiRender(const FrameStats &frameStats) {
+        timeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
         if(timeAcumMs >= refreshPeriodMs) {
             timeAcumMs = 0;
             visibleFrameStats = application.getFrameStats();

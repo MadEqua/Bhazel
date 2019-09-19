@@ -110,7 +110,7 @@ namespace BZ {
 
     void OpenGLRendererAPI::submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
         BZ_ASSERT_GL(glDispatchCompute(groupsX, groupsY, groupsZ));
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT); //TODO: better place for this
     }
 
 

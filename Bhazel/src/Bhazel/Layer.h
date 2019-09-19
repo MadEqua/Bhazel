@@ -7,6 +7,7 @@
 namespace BZ {
 
     class Event;
+    struct FrameStats;
 
     class Layer {
     public:
@@ -22,8 +23,8 @@ namespace BZ {
 
         virtual void onDetach() {}
 
-        virtual void onUpdate(TimeDuration deltaTime) {}
-        virtual void onImGuiRender(TimeDuration deltaTime) {}
+        virtual void onUpdate(const FrameStats &frameStats) {}
+        virtual void onImGuiRender(const FrameStats &frameStats) {}
 
         //Receiving events as soon as attached to the LayerStack
         virtual void onEvent(Event &event) {}

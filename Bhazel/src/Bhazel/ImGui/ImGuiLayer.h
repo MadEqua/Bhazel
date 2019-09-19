@@ -5,6 +5,8 @@
 
 namespace BZ {
 
+    struct FrameStats;
+
     class ImGuiLayer : public Layer
     {
     public:
@@ -12,7 +14,7 @@ namespace BZ {
 
         void onGraphicsContextCreated() override;
         void onDetach() override;
-        void onImGuiRender(TimeDuration deltaTime) override;
+        void onImGuiRender(const FrameStats &frameStats) override;
 
         void begin();
         void end();

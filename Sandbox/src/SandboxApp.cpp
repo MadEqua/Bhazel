@@ -7,7 +7,7 @@
 
 
 ExampleLayer::ExampleLayer() :
-    Layer("Example") {
+    Layer("Example"), particleSystem(PARTICLE_COUNT), particleSystemPosition(0.0f) {
 }
 
 void ExampleLayer::onAttach() {
@@ -55,37 +55,15 @@ void ExampleLayer::onGraphicsContextCreated() {
     inputDescription->addVertexBuffer(vertexBuffer, shader);
     inputDescription->setIndexBuffer(indexBuffer);
 
-
-    //Compute shader test stuff
-    std::vector<Particle> particles;
-    particles.resize(PARTICLE_COUNT);
-
-    for(int i = 0; i < PARTICLE_COUNT; ++i) {
-        Particle &particle = particles[i];
-        particle.pos = glm::vec4(0);// glm::linearRand(glm::vec2(-1, -1), glm::vec2(1, 1));
-        particle.col = glm::vec4(glm::linearRand(0.1f, 1.0f), glm::linearRand(0.1f, 1.0f), glm::linearRand(0.1f, 1.0f), 1);
-    }
-
-    BZ::BufferLayout particleLayout = {
-        {BZ::DataType::Vec4, "POSITION"},
-        {BZ::DataType::Vec4, "COLOR"}
-    };
-
-    particlesBuffer = BZ::Buffer::createVertexBuffer(particles.data(), static_cast<uint32>(particles.size()) * sizeof(Particle), particleLayout);
-
-    auto computeShader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Compute.glsl" : "assets/shaders/Compute.hlsl");
-    auto particleShader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Particle.glsl" : "assets/shaders/Particle.hlsl");
-
-    particlesInputDescription = BZ::InputDescription::create();
-    particlesInputDescription->addVertexBuffer(particlesBuffer, particleShader);
+    particleSystem.init();
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
 
-void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
-    const float CAMERA_MOVE_SPEED = 2.0f * deltaTime.asSeconds();
-    const float CAMERA_ROT_SPEED = 180.0f * deltaTime.asSeconds();
-    const float MOVE_SPEED = 3.0f * deltaTime.asSeconds();
+void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
+    const float CAMERA_MOVE_SPEED = 2.0f * frameStats.lastFrameTime.asSeconds();
+    const float CAMERA_ROT_SPEED = 180.0f * frameStats.lastFrameTime.asSeconds();
+    const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
 
     if(BZ::Input::isKeyPressed(BZ_KEY_A)) cameraPos.x -= CAMERA_MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_D)) cameraPos.x += CAMERA_MOVE_SPEED;
@@ -96,21 +74,25 @@ void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
     if(BZ::Input::isKeyPressed(BZ_KEY_Q)) cameraRot -= CAMERA_ROT_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_E)) cameraRot += CAMERA_ROT_SPEED;
 
-    if(BZ::Input::isKeyPressed(BZ_KEY_LEFT)) pos.x -= MOVE_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) pos.x += MOVE_SPEED;
+    if(BZ::Input::isKeyPressed(BZ_KEY_LEFT)) particleSystemPosition.x -= MOVE_SPEED;
+    else if(BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) particleSystemPosition.x += MOVE_SPEED;
 
-    if(BZ::Input::isKeyPressed(BZ_KEY_UP)) pos.y += MOVE_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_DOWN)) pos.y -= MOVE_SPEED;
+    if(BZ::Input::isKeyPressed(BZ_KEY_UP)) particleSystemPosition.y += MOVE_SPEED;
+    else if(BZ::Input::isKeyPressed(BZ_KEY_DOWN)) particleSystemPosition.y -= MOVE_SPEED;
+
+    //TODO: coordinate conversion
+    /**if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_1)) {
+        particleSystemPosition.x = BZ::Input::getMouseX();
+        particleSystemPosition.y = BZ::Input::getMouseY();
+    }*/
 
     camera->setPosition(cameraPos);
     camera->setRotation(cameraRot);
 
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
-    BZ::Renderer::submitCompute(shaderLibrary.get("Compute"), PARTICLE_COUNT / WORK_GROUP_SIZE, 1, 1, {particlesBuffer});
 
-
-    BZ::Renderer::beginScene(*camera);
+    BZ::Renderer::beginScene(*camera, frameStats);
 
     texture->bindToPipeline(0);
 
@@ -124,16 +106,15 @@ void ExampleLayer::onUpdate(BZ::TimeDuration deltaTime) {
     }*/
 
     auto textureShader = shaderLibrary.get("Texture");
-    auto particleShader = shaderLibrary.get("Particle");
 
     glm::mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, pos);
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
     modelMatrix = glm::translate(modelMatrix, pos + disp);
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    BZ::Renderer::submit(particleShader, particlesInputDescription, glm::mat4(1), BZ::Renderer::RenderMode::Points);
+    particleSystem.render(particleSystemPosition);
 
     BZ::Renderer::endScene();
 }
@@ -143,9 +124,35 @@ void ExampleLayer::onEvent(BZ::Event &event) {
     dispatcher.dispatch<BZ::WindowResizeEvent>(BZ_BIND_EVENT_FN(ExampleLayer::onWindowResizeEvent));
 }
 
-void ExampleLayer::onImGuiRender(BZ::TimeDuration deltaTime) {
+void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     ImGui::Begin("Test");
     ImGui::SliderFloat3("disp", &disp[0], -1, 1);
+    ImGui::End();
+
+    constexpr float LIMIT = 1.0f;
+    //TODO: temporary
+    if(ImGui::Begin("Particles")) {
+        ImGui::Text("Position Range");
+        ImGui::SliderFloat3("Min##pos", &particleSystem.ranges.positionRange.min[0], -LIMIT, LIMIT);
+        ImGui::SliderFloat3("Max##pos", &particleSystem.ranges.positionRange.max[0], -LIMIT, LIMIT);
+        ImGui::Separator();
+        ImGui::Text("Life Range");
+        ImGui::SliderFloat("Min##life", &particleSystem.ranges.lifeRange.min, 0, 10);
+        ImGui::SliderFloat("Max##life", &particleSystem.ranges.lifeRange.max, 0, 10);
+        ImGui::Separator();
+        ImGui::Text("Velocity Range");
+        ImGui::SliderFloat3("Min##vel", &particleSystem.ranges.velocityRange.min[0], -LIMIT, LIMIT);
+        ImGui::SliderFloat3("Max##vel", &particleSystem.ranges.velocityRange.max[0], -LIMIT, LIMIT);
+        ImGui::Separator();
+        ImGui::Text("Acceleration Range");
+        ImGui::SliderFloat3("Min##accel", &particleSystem.ranges.accelerationRange.min[0], -LIMIT, LIMIT);
+        ImGui::SliderFloat3("Max##accel", &particleSystem.ranges.accelerationRange.max[0], -LIMIT, LIMIT);
+        ImGui::Separator();
+        ImGui::Text("Tint Range");
+        ImGui::SliderFloat3("Min##tint", &particleSystem.ranges.tintRange.min[0], 0, 1);
+        ImGui::SliderFloat3("Max##tint", &particleSystem.ranges.tintRange.max[0], 0, 1);
+        ImGui::Separator();
+    }
     ImGui::End();
 }
 

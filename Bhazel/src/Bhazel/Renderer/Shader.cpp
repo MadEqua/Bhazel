@@ -106,7 +106,7 @@ namespace BZ {
     }
 
     Ref<Shader> ShaderLibrary::get(const std::string &name) {
-        BZ_ASSERT_CORE(exists(name), "Non-existent name on shader library!");
+        BZ_ASSERT_CORE(exists(name), "A shader with name '{0}' doesn't exist on the shader library!", name)
         return shaders[name];
     }
 

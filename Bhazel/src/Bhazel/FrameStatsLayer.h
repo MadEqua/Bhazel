@@ -7,12 +7,13 @@
 namespace BZ {
 
     class Application;
+    struct FrameStats;
 
     class FrameStatsLayer : public Layer {
     public:
         FrameStatsLayer(const Application &application);
 
-        void onImGuiRender(TimeDuration deltaTime) override;
+        void onImGuiRender(const FrameStats &frameStats) override;
 
     private:
         const Application &application;
