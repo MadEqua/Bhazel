@@ -36,21 +36,21 @@ namespace BZ {
 
         //TODO: all particle systems will have a buffer with this data. not good!
         float quadVertices[] = {
-            -0.5f, -0.5f, 0.0f,
+            -0.5f, -0.5f,
             0.0f, 0.0f,
             
-            0.5f, -0.5f, 0.0f,
+            0.5f, -0.5f,
             1.0f, 0.0f,
 
-            -0.5f, 0.5f, 0.0f,
+            -0.5f, 0.5f,
             0.0f, 1.0f,
 
-            0.5f, 0.5f, 0.0f,
+            0.5f, 0.5f, 
             1.0f, 1.0f
         };
 
         BufferLayout particleLayout = {
-            {DataType::Vec3, "POSITION"},
+            {DataType::Vec2, "POSITION"},
             {DataType::Vec2, "TEXCOORD"},
         };
 
@@ -72,10 +72,10 @@ namespace BZ {
 
         constantBuffer = Buffer::createConstantBuffer(sizeof(ranges));
 
-        particleTexture = Texture2D::create("assets/textures/alphatest.png");
+        particleTexture = Texture2D::create("assets/textures/particle.png");
     }
 
-    void ParticleSystem::render() {
+    void ParticleSystem::onUpdate() {
         //TODO: only send data if changed
         constantBuffer->setData(&ranges, sizeof(ranges));
         constantBuffer->bindToPipeline(2);

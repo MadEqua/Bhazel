@@ -3,7 +3,7 @@
 
 namespace BZ {
 
-    class OrtographicCamera;
+    class OrthographicCamera;
     class InputDescription;
     class Buffer;
     class Shader;
@@ -30,7 +30,7 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        static void beginScene(OrtographicCamera &camera, const FrameStats &frameStats);
+        static void beginScene(OrthographicCamera &camera, const FrameStats &frameStats);
         static void endScene();
 
         static void submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix = glm::mat4(1.0f), RenderMode renderMode = RenderMode::Triangles, uint32 instances = 1);

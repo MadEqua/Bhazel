@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 #include "RenderCommand.h"
-#include "OrtographicCamera.h"
+#include "OrthographicCamera.h"
 #include "Bhazel/Application.h"
 
 #include "Buffer.h"
@@ -38,7 +38,7 @@ namespace BZ {
         instanceConstantBuffer.reset();
     }
 
-    void Renderer::beginScene(OrtographicCamera &camera, const FrameStats &frameStats) {
+    void Renderer::beginScene(OrthographicCamera &camera, const FrameStats &frameStats) {
         frameData.viewMatrix = camera.getViewMatrix();
         frameData.projectionMatrix = camera.getProjectionMatrix();
         frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();

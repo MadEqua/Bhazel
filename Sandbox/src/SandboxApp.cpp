@@ -7,19 +7,15 @@
 
 
 ExampleLayer::ExampleLayer() :
-    Layer("Example"), particleSystem(PARTICLE_COUNT) {
+    Layer("Example"), 
+    particleSystem(PARTICLE_COUNT),
+    cameraController(1280.0f / 800.0f) {
 }
 
 void ExampleLayer::onAttach() {
-    cameraPos = {0.0f, 0.0f};
-    pos = {};
-    cameraRot = 0;
-    disp = {0.3f, 0.3f, 0.0f};
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
-    camera = BZ::MakeRef<BZ::OrtographicCamera>(-16.0f / 9.0f, 16.0f / 9.0f, -1.0f, 1.0f, 0.0f, 1.0f);
-
     auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Texture.glsl" : "assets/shaders/Texture.hlsl");
     texture = BZ::Texture2D::create("assets/textures/test.jpg");
 
@@ -61,18 +57,9 @@ void ExampleLayer::onGraphicsContextCreated() {
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
-    const float CAMERA_MOVE_SPEED = 2.0f * frameStats.lastFrameTime.asSeconds();
-    const float CAMERA_ROT_SPEED = 180.0f * frameStats.lastFrameTime.asSeconds();
+    cameraController.onUpdate(frameStats);
+
     const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
-
-    if(BZ::Input::isKeyPressed(BZ_KEY_A)) cameraPos.x -= CAMERA_MOVE_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_D)) cameraPos.x += CAMERA_MOVE_SPEED;
-
-    if(BZ::Input::isKeyPressed(BZ_KEY_W)) cameraPos.y += CAMERA_MOVE_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_S)) cameraPos.y -= CAMERA_MOVE_SPEED;
-
-    if(BZ::Input::isKeyPressed(BZ_KEY_Q)) cameraRot -= CAMERA_ROT_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_E)) cameraRot += CAMERA_ROT_SPEED;
 
     /*if(BZ::Input::isKeyPressed(BZ_KEY_LEFT)) particleSystemPosition.x -= MOVE_SPEED;
     else if(BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) particleSystemPosition.x += MOVE_SPEED;
@@ -86,13 +73,10 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
         particleSystemPosition.y = BZ::Input::getMouseY();
     }*/
 
-    camera->setPosition(cameraPos);
-    camera->setRotation(cameraRot);
-
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
 
-    BZ::Renderer::beginScene(*camera, frameStats);
+    BZ::Renderer::beginScene(cameraController.getCamera(), frameStats);
 
     texture->bindToPipeline(0);
 
@@ -109,17 +93,19 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     glm::mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, pos);
-    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
     modelMatrix = glm::translate(modelMatrix, pos + disp);
     //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    particleSystem.render();
+    particleSystem.onUpdate();
 
     BZ::Renderer::endScene();
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {
+    cameraController.onEvent(event);
+
     BZ::EventDispatcher dispatcher(event);
     dispatcher.dispatch<BZ::WindowResizeEvent>(BZ_BIND_EVENT_FN(ExampleLayer::onWindowResizeEvent));
 }

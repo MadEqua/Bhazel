@@ -6,11 +6,12 @@
 namespace BZ {
 
     //Meant for 2D rendering.
-    class OrtographicCamera
+    class OrthographicCamera
     {
     public:
-        OrtographicCamera(float left, float right, float bottom, float top);
-        OrtographicCamera(float left, float right, float bottom, float top,  float near, float far);
+        OrthographicCamera(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
+        
+        void computeProjectionMatrix(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
 
         const glm::vec2& getPosition() const { return position; }
         void setPosition(const glm::vec2 &pos) { position = pos; computeViewMatrix(); }
@@ -24,13 +25,13 @@ namespace BZ {
         const glm::mat4& getViewProjectionMatrix() const { return viewProjectionMatrix; }
 
     private:
+        void computeViewMatrix();
+
         glm::mat4 projectionMatrix;
         glm::mat4 viewMatrix;
         glm::mat4 viewProjectionMatrix;
         
         glm::vec2 position;
         float rotation;
-
-        void computeViewMatrix();
     };
 }

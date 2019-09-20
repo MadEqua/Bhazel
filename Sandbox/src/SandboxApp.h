@@ -24,16 +24,13 @@ private:
     BZ::Ref<BZ::Buffer> indexBuffer;
     BZ::Ref<BZ::Texture> texture;
 
-    BZ::Ref <BZ::OrtographicCamera> camera;
+    BZ::OrthographicCameraController cameraController;
 
-    glm::vec2 cameraPos;
-    float cameraRot;
-
-    glm::vec3 pos;
-    glm::vec3 disp;
+    glm::vec3 pos = {};
+    glm::vec3 disp = {0.3f, 0.3f, 0.0f};
 
     //Compute shader test stuff
-    constexpr static int PARTICLE_COUNT = 1024 * 1024;
+    constexpr static int PARTICLE_COUNT = 1024;
     BZ::ParticleSystem particleSystem;
 
     bool onWindowResizeEvent(BZ::WindowResizeEvent &ev);

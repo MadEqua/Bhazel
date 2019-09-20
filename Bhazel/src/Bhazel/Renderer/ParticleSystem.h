@@ -54,7 +54,7 @@ namespace BZ {
         ParticleSystem(uint32 particleCount);
 
         void init();
-        void render();
+        void onUpdate();
 
         /*void setPosition(const glm::vec3 &position) { this->position = position; }
         void setScale(const glm::vec3 &scale) { this->scale = scale; }
