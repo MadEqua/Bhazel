@@ -9,7 +9,7 @@
 ExampleLayer::ExampleLayer() :
     Layer("Example"), 
     particleSystem(PARTICLE_COUNT),
-    cameraController(1280.0f / 800.0f) {
+    cameraController(60.0f, 1280.0f / 800.0f) {
 }
 
 void ExampleLayer::onAttach() {
@@ -54,18 +54,14 @@ void ExampleLayer::onGraphicsContextCreated() {
     particleSystem.init();
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+
+    cameraController.getCamera().setPosition({0.0f, 0.0f, 1.5f});
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     cameraController.onUpdate(frameStats);
 
     const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
-
-    /*if(BZ::Input::isKeyPressed(BZ_KEY_LEFT)) particleSystemPosition.x -= MOVE_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) particleSystemPosition.x += MOVE_SPEED;
-
-    if(BZ::Input::isKeyPressed(BZ_KEY_UP)) particleSystemPosition.y += MOVE_SPEED;
-    else if(BZ::Input::isKeyPressed(BZ_KEY_DOWN)) particleSystemPosition.y -= MOVE_SPEED;*/
 
     //TODO: coordinate conversion
     /**if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_1)) {
@@ -75,28 +71,23 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
-
     BZ::Renderer::beginScene(cameraController.getCamera(), frameStats);
 
     texture->bindToPipeline(0);
 
-    /*glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), glm::vec3(0.3f));
-    for(int i = 0; i < 20; ++i) {
-        for(int j = 0; j < 20; ++j) {
-            glm::vec3 pos(i * 0.31f, j * 0.31f, 0);
-            glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), pos) * scaleMat;
-            BZ::Renderer::submit(shader, inputDescription, modelMatrix);
-        }
-    }*/
-
     auto textureShader = shaderLibrary.get("Texture");
 
-    glm::mat4 modelMatrix(1.0);
-    modelMatrix = glm::translate(modelMatrix, pos);
+    /*glm::mat4 modelMatrix(1.0);
     BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    modelMatrix = glm::translate(modelMatrix, pos + disp);
-    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
+    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
+    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
+    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);*/
 
     particleSystem.onUpdate();
 
@@ -111,10 +102,6 @@ void ExampleLayer::onEvent(BZ::Event &event) {
 }
 
 void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
-    ImGui::Begin("Test");
-    ImGui::SliderFloat3("disp", &disp[0], -1, 1);
-    ImGui::End();
-
     constexpr float LIMIT = 0.5f;
     constexpr float LIMIT2 = 1.5f;
     //TODO: temporary
@@ -123,7 +110,7 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
         ImGui::SliderFloat3("##emmiterpos", &particleSystem.position[0], -LIMIT2, LIMIT2);
         ImGui::Text("Emitter Scale");
         ImGui::SliderFloat3("##emmitersc", &particleSystem.scale[0], 0.0f, LIMIT2);
-        ImGui::Text("Position Rotation");
+        ImGui::Text("Emitter Rotation");
         ImGui::SliderFloat3("##emmiterrot", &particleSystem.eulerAngles[0], 0.0f, 359.0f);
         ImGui::Separator();
 

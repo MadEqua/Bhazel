@@ -25,5 +25,5 @@
 #include "Bhazel/Renderer/InputDescription.h"
 #include "Bhazel/Renderer/Texture.h"
 
-#include "Bhazel/Renderer/OrthographicCamera.h"
-#include "Bhazel/OrthographicCameraController.h"
+#include "Bhazel/Renderer/Camera.h"
+#include "Bhazel/CameraController.h"

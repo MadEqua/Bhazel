@@ -13,7 +13,7 @@ namespace BZ {
         bool isKeyPressedImpl(int keycode) override;
 
         bool isMouseButtonPressedImpl(int button) override;
-        std::pair<int, int> getMousePositionImpl() override;
+        glm::ivec2 getMousePositionImpl() override;
         int getMouseXImpl() override;
         int getMouseYImpl() override;
 

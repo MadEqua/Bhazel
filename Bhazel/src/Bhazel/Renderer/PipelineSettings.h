@@ -79,9 +79,9 @@ namespace BZ {
 
     struct DepthSettings {
         //Init common defaults: TestFunction = LessOrEqual, DepthClearValue = 1
-        explicit DepthSettings(bool enableDepthTest, bool enableDepthWrite);
+        DepthSettings(bool enableDepthTest, bool enableDepthWrite);
 
-        explicit DepthSettings(bool enableDepthTest, TestFunction testFunction, bool enableDepthWrite, float depthClearValue);
+        DepthSettings(bool enableDepthTest, TestFunction testFunction, bool enableDepthWrite, float depthClearValue);
 
         bool enableDepthTest;
         TestFunction testFunction;

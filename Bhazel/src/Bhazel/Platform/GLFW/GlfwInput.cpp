@@ -20,20 +20,18 @@ namespace BZ {
         return state == GLFW_PRESS;
     }
 
-    std::pair<int, int> GlfwInput::getMousePositionImpl() {
+    glm::ivec2 GlfwInput::getMousePositionImpl() {
         auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle());
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        return std::make_pair(static_cast<int>(xpos), static_cast<int>(ypos));
+        return glm::ivec2(static_cast<int>(xpos), static_cast<int>(ypos));
     }
 
     int GlfwInput::getMouseXImpl() {
-        auto[x, y] = getMousePositionImpl();
-        return x;
+        return getMousePositionImpl().x;
     }
 
     int GlfwInput::getMouseYImpl() {
-        auto[x, y] = getMousePositionImpl();
-        return y;
+        return getMousePositionImpl().y;
     }
 }

@@ -30,21 +30,19 @@ namespace BZ {
         return mouseButtons[button];
     }
 
-    std::pair<int, int> Win32Input::getMousePositionImpl() {
+    glm::ivec2 Win32Input::getMousePositionImpl() {
         POINT pos = {};
         if(GetCursorPos(&pos)) {
             ScreenToClient(nativeWindow, &pos);
         }
-        return std::make_pair<int, int>(static_cast<int>(pos.x), static_cast<int>(pos.y));
+        return glm::ivec2(static_cast<int>(pos.x), static_cast<int>(pos.y));
     }
 
     int Win32Input::getMouseXImpl() {
-        auto[x, y] = getMousePositionImpl();
-        return x;
+        return getMousePositionImpl().x;
     }
 
     int Win32Input::getMouseYImpl() {
-        auto[x, y] = getMousePositionImpl();
-        return y;
+        return getMousePositionImpl().y;
     }
 }

@@ -31,33 +31,33 @@ namespace BZ::Utils {
         return fileName;
     }
 
-    glm::mat4 ortho(float left, float right, float bottom, float top, float zNear, float zFar) {
+    glm::mat4 ortho(float left, float right, float bottom, float top, float near, float far) {
         if(Renderer::api == Renderer::API::OpenGL)
-            return glm::orthoRH_NO(left, right, bottom, top, zNear, zFar);
+            return glm::orthoRH_NO(left, right, bottom, top, near, far);
         else if(Renderer::api == Renderer::API::D3D11)
-            return glm::orthoRH_ZO(left, right, bottom, top, zNear, zFar);
+            return glm::orthoRH_ZO(left, right, bottom, top, near, far);
         else {
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return glm::mat4();
         }
     }
 
-    glm::mat4 frustum(float left, float right, float bottom, float top, float zNear, float zFar) {
+    glm::mat4 frustum(float left, float right, float bottom, float top, float near, float far) {
         if(Renderer::api == Renderer::API::OpenGL)
-            return glm::frustumRH_NO(left, right, bottom, top, zNear, zFar);
+            return glm::frustumRH_NO(left, right, bottom, top, near, far);
         else if(Renderer::api == Renderer::API::D3D11)
-            return glm::frustumRH_ZO(left, right, bottom, top, zNear, zFar);
+            return glm::frustumRH_ZO(left, right, bottom, top, near, far);
         else {
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return glm::mat4();
         }
     }
 
-    glm::mat4 perspective(float fovy, float aspectRatio, float zNear, float zFar) {
+    glm::mat4 perspective(float fovy, float aspectRatio, float near, float far) {
         if(Renderer::api == Renderer::API::OpenGL)
-            return glm::perspectiveRH_NO(fovy, aspectRatio, zNear, zFar);
+            return glm::perspectiveRH_NO(glm::radians(fovy), aspectRatio, near, far);
         else if(Renderer::api == Renderer::API::D3D11)
-            return glm::perspectiveRH_ZO(fovy, aspectRatio, zNear, zFar);
+            return glm::perspectiveRH_ZO(glm::radians(fovy), aspectRatio, near, far);
         else {
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return glm::mat4();

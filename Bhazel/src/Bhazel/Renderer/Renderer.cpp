@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 #include "RenderCommand.h"
-#include "OrthographicCamera.h"
+#include "Camera.h"
 #include "Bhazel/Application.h"
 
 #include "Buffer.h"
@@ -29,7 +29,7 @@ namespace BZ {
         //TODO: set all pipeline defaults here
         RenderCommand::setRenderMode(RenderMode::Triangles);
         RenderCommand::setBlendingSettings(BlendingSettings(false));
-        RenderCommand::setDepthSettings(DepthSettings(false, false));
+        RenderCommand::setDepthSettings(DepthSettings(true, true));
     }
 
     void Renderer::destroy() {
@@ -38,10 +38,11 @@ namespace BZ {
         instanceConstantBuffer.reset();
     }
 
-    void Renderer::beginScene(OrthographicCamera &camera, const FrameStats &frameStats) {
+    void Renderer::beginScene(Camera &camera, const FrameStats &frameStats) {
         frameData.viewMatrix = camera.getViewMatrix();
         frameData.projectionMatrix = camera.getProjectionMatrix();
         frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();
+        frameData.cameraPosition = camera.getPosition();
         frameData.timeAndDelta.x = frameStats.runningTime.asSeconds();
         frameData.timeAndDelta.y = frameStats.lastFrameTime.asSeconds();
 

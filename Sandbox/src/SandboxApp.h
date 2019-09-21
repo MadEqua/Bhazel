@@ -24,10 +24,7 @@ private:
     BZ::Ref<BZ::Buffer> indexBuffer;
     BZ::Ref<BZ::Texture> texture;
 
-    BZ::OrthographicCameraController cameraController;
-
-    glm::vec3 pos = {};
-    glm::vec3 disp = {0.3f, 0.3f, 0.0f};
+    BZ::PerspectiveCameraController cameraController;
 
     //Compute shader test stuff
     constexpr static int PARTICLE_COUNT = 1024;
