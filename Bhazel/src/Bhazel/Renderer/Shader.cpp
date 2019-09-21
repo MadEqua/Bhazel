@@ -3,6 +3,8 @@
 #include "Shader.h"
 #include "Renderer.h"
 
+#include "Bhazel/Application.h"
+
 #include "Bhazel/Platform/OpenGL/OpenGLShader.h"
 #include "Bhazel/Platform/D3D11/D3D11Shader.h"
 #include "Bhazel/Core/Utils.h"
@@ -13,11 +15,12 @@
 namespace BZ {
 
     Ref<Shader> Shader::create(const std::string &filePath) {
+        auto &assetsPath = Application::getInstance().getAssetsPath();
         switch(Renderer::api) {
         case Renderer::API::OpenGL:
-            return MakeRef<OpenGLShader>(filePath);
+            return MakeRef<OpenGLShader>(assetsPath + filePath);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11Shader>(filePath);
+            return MakeRef<D3D11Shader>(assetsPath + filePath);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

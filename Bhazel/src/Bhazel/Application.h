@@ -36,6 +36,8 @@ namespace BZ {
         Window& getWindow() { return *window; }
         const FrameStats &getFrameStats() const { return frameStats; }
 
+        const std::string getAssetsPath() const { return assetsPath; }
+        
         static Application& getInstance() { return *instance; }
 
     private:
@@ -48,6 +50,8 @@ namespace BZ {
         LayerStack layerStack;
         IniParser iniParser;
         FrameStats frameStats;
+
+        std::string assetsPath;
 
         static Application *instance;
     };

@@ -30,6 +30,8 @@ namespace BZ {
         else if(renderingAPIString == "D3D" || renderingAPIString == "D3D11") Renderer::api = Renderer::API::D3D11;
         else BZ_ASSERT_ALWAYS_CORE("Invalid Rendering API on .ini file: {0}.", renderingAPIString);
 
+        assetsPath = settings.getFieldAsString("assetsPath", "");
+
         imGuiLayer = new ImGuiLayer();
         pushOverlay(imGuiLayer);
 

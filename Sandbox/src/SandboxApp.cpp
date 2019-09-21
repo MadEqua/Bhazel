@@ -16,8 +16,8 @@ void ExampleLayer::onAttach() {
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
-    auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "assets/shaders/Texture.glsl" : "assets/shaders/Texture.hlsl");
-    texture = BZ::Texture2D::create("assets/textures/test.jpg");
+    auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "shaders/Texture.glsl" : "shaders/Texture.hlsl");
+    texture = BZ::Texture2D::create("textures/test.jpg");
 
     float vertices[] = {
         -0.5f, -0.5f, 0.0f,

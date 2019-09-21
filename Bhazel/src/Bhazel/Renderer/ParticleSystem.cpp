@@ -54,7 +54,7 @@ namespace BZ {
             {DataType::Vec2, "TEXCOORD"},
         };
 
-        particleShader = Shader::create(Renderer::api == Renderer::API::OpenGL ? "assets/shaders/Particle.glsl" : "assets/shaders/Particle.hlsl");
+        particleShader = Shader::create(Renderer::api == Renderer::API::OpenGL ? "shaders/Particle.glsl" : "shaders/Particle.hlsl");
 
         quadVertexBuffer = Buffer::createVertexBuffer(quadVertices, sizeof(quadVertices), particleLayout);
         quadInputDescription = InputDescription::create();
@@ -68,11 +68,11 @@ namespace BZ {
             particle.positionAndLife.w = -1.0f;
         }
         computeBuffer = Buffer::createVertexBuffer(particles.data(), static_cast<uint32>(particles.size()) * sizeof(Particle), particleLayout);
-        computeShader = Shader::create(Renderer::api == Renderer::API::OpenGL ? "assets/shaders/Compute.glsl" : "assets/shaders/Compute.hlsl");
+        computeShader = Shader::create(Renderer::api == Renderer::API::OpenGL ? "shaders/ParticlesCompute.glsl" : "shaders/ParticlesComputes.hlsl");
 
         constantBuffer = Buffer::createConstantBuffer(sizeof(ranges));
 
-        particleTexture = Texture2D::create("assets/textures/particle.png");
+        particleTexture = Texture2D::create("textures/particle.png");
     }
 
     void ParticleSystem::onUpdate() {
