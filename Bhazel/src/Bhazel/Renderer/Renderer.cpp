@@ -29,7 +29,7 @@ namespace BZ {
         //TODO: set all pipeline defaults here
         RenderCommand::setRenderMode(RenderMode::Triangles);
         RenderCommand::setBlendingSettings(BlendingSettings(false));
-        RenderCommand::setDepthSettings(DepthSettings(true, true));
+        RenderCommand::setDepthSettings(DepthSettings(false, false));
     }
 
     void Renderer::destroy() {

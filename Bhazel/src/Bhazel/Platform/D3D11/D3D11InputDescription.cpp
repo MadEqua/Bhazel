@@ -10,6 +10,8 @@
 
 namespace BZ {
 
+    static DXGI_FORMAT shaderDataTypeToD3D11(DataType dataType, DataElements dataElements, bool normalized);
+
     D3D11InputDescription::D3D11InputDescription() :
         context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
     }
@@ -42,7 +44,7 @@ namespace BZ {
             D3D11_INPUT_ELEMENT_DESC ied = {};
             ied.SemanticName = element.name.c_str();
             ied.SemanticIndex = 0; //TODO: inexistent on abstract API
-            ied.Format = shaderDataTypeToD3D11(element.dataType, element.normalized);
+            ied.Format = shaderDataTypeToD3D11(element.dataType, element.dataElements, element.normalized);
             ied.InputSlot = static_cast<UINT>(vertexBuffers.size());
             ied.AlignedByteOffset = element.offset;
             ied.InputSlotClass = element.perInstanceStep > 0 ? D3D11_INPUT_PER_INSTANCE_DATA : D3D11_INPUT_PER_VERTEX_DATA;
@@ -64,56 +66,173 @@ namespace BZ {
         indexBuffer = buffer;
     }
 
-    DXGI_FORMAT D3D11InputDescription::shaderDataTypeToD3D11(DataType dataType, bool normalized) {
-        switch(dataType)
-        {
-        case DataType::Float:
-            return DXGI_FORMAT_R32_FLOAT;
-
-        case DataType::Int:
-            return  DXGI_FORMAT_R32_SINT;
-        case DataType::Int16:
-            return normalized ? DXGI_FORMAT_R16_SNORM : DXGI_FORMAT_R16_SINT;
-        case DataType::Int8:
-            return normalized ? DXGI_FORMAT_R8_SNORM : DXGI_FORMAT_R8_SINT;
-
-        case DataType::Uint:
-            return  DXGI_FORMAT_R32_UINT;
-        case DataType::Uint16:
-            return normalized ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R16_UINT;
-        case DataType::Uint8:
-            return normalized ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8_UINT;
-        
-        case DataType::Bool:
-            return DXGI_FORMAT_R32_UINT;
-
-        case DataType::Vec2:
-            return DXGI_FORMAT_R32G32_FLOAT;
-        case DataType::Vec3:
-            return DXGI_FORMAT_R32G32B32_FLOAT;
-        case DataType::Vec4:
-            return DXGI_FORMAT_R32G32B32A32_FLOAT;
-
-        case DataType::Vec2i:
-            return DXGI_FORMAT_R32G32_SINT;
-        case DataType::Vec3i:
-            return DXGI_FORMAT_R32G32B32_SINT;
-        case DataType::Vec4i:
-            return DXGI_FORMAT_R32G32B32A32_SINT;
-
-        case DataType::Vec2ui:
-            return DXGI_FORMAT_R32G32_UINT;
-        case DataType::Vec3ui:
-            return DXGI_FORMAT_R32G32B32_UINT;
-        case DataType::Vec4ui:
-            return DXGI_FORMAT_R32G32B32A32_UINT;
-
-        case DataType::Mat2:
-        case DataType::Mat3:
-        case DataType::Mat4:
-            BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
-            return DXGI_FORMAT_UNKNOWN;
-
+    static DXGI_FORMAT shaderDataTypeToD3D11(DataType dataType, DataElements dataElements, bool normalized) {
+        switch(dataType) {
+        case DataType::Float32: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return DXGI_FORMAT_R32_FLOAT;
+            case DataElements::Vec2:
+                return DXGI_FORMAT_R32G32_FLOAT;
+            case DataElements::Vec3:
+                return DXGI_FORMAT_R32G32B32_FLOAT;
+            case DataElements::Vec4:
+                return DXGI_FORMAT_R32G32B32A32_FLOAT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+        case DataType::Float16: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return DXGI_FORMAT_R16_FLOAT;
+            case DataElements::Vec2:
+                return DXGI_FORMAT_R16G16_FLOAT;
+            case DataElements::Vec3:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 does not support Vec3 of Float16.");
+                return DXGI_FORMAT_UNKNOWN;
+            case DataElements::Vec4:
+                return DXGI_FORMAT_R16G16B16A16_FLOAT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+        case DataType::Int32: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return DXGI_FORMAT_R32_SINT;
+            case DataElements::Vec2:
+                return DXGI_FORMAT_R32G32_SINT;
+            case DataElements::Vec3:
+                return DXGI_FORMAT_R32G32B32_SINT;
+            case DataElements::Vec4:
+                return DXGI_FORMAT_R32G32B32A32_SINT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+        case DataType::Int16: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return normalized ? DXGI_FORMAT_R16_SNORM : DXGI_FORMAT_R16_SINT;
+            case DataElements::Vec2:
+                return normalized ? DXGI_FORMAT_R16G16_SNORM : DXGI_FORMAT_R16G16_SINT;
+            case DataElements::Vec3:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 does not support Vec3 of Int16.");
+                return DXGI_FORMAT_UNKNOWN;
+            case DataElements::Vec4:
+                return normalized ? DXGI_FORMAT_R16G16B16A16_SNORM : DXGI_FORMAT_R16G16B16A16_SINT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+        case DataType::Int8: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return normalized ? DXGI_FORMAT_R8_SNORM : DXGI_FORMAT_R8_SINT;
+            case DataElements::Vec2:
+                return normalized ? DXGI_FORMAT_R8G8_SNORM : DXGI_FORMAT_R8G8_SINT;
+            case DataElements::Vec3:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 does not support Vec3 of Int8.");
+                return DXGI_FORMAT_UNKNOWN;
+            case DataElements::Vec4:
+                return normalized ? DXGI_FORMAT_R8G8B8A8_SNORM : DXGI_FORMAT_R8G8B8A8_SINT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+        case DataType::Uint32: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return DXGI_FORMAT_R32_UINT;
+            case DataElements::Vec2:
+                return DXGI_FORMAT_R32G32_UINT;
+            case DataElements::Vec3:
+                return DXGI_FORMAT_R32G32B32_UINT;
+            case DataElements::Vec4:
+                return DXGI_FORMAT_R32G32B32A32_UINT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+        case DataType::Uint16: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return normalized ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R16_UINT;
+            case DataElements::Vec2:
+                return normalized ? DXGI_FORMAT_R16G16_UNORM : DXGI_FORMAT_R16G16_UINT;
+            case DataElements::Vec3:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 does not support Vec3 of Uint16.");
+                return DXGI_FORMAT_UNKNOWN;
+            case DataElements::Vec4:
+                return normalized ? DXGI_FORMAT_R16G16B16A16_UNORM : DXGI_FORMAT_R16G16B16A16_UINT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+        case DataType::Uint8: {
+            switch(dataElements) {
+            case DataElements::Scalar:
+                return normalized ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8_UINT;
+            case DataElements::Vec2:
+                return normalized ? DXGI_FORMAT_R8G8_UNORM : DXGI_FORMAT_R8G8_UINT;
+            case DataElements::Vec3:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 does not support Vec3 of Uint8.");
+                return DXGI_FORMAT_UNKNOWN;
+            case DataElements::Vec4:
+                return normalized ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UINT;
+            case DataElements::Mat2:
+            case DataElements::Mat3:
+            case DataElements::Mat4:
+                BZ_ASSERT_ALWAYS_CORE("D3D11 matrix vertex attributes not implemented.");
+                return DXGI_FORMAT_UNKNOWN;
+            default:
+                BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
             return DXGI_FORMAT_UNKNOWN;

@@ -38,9 +38,9 @@ void ExampleLayer::onGraphicsContextCreated() {
     };
 
     BZ::BufferLayout layout = {
-        {BZ::DataType::Vec3, "POSITION"},
-        {BZ::DataType::Vec3, "COLOR"},
-        {BZ::DataType::Vec2, "TEXCOORD"}
+        {BZ::DataType::Float32, BZ::DataElements::Vec3, "POSITION"},
+        {BZ::DataType::Float32, BZ::DataElements::Vec3, "COLOR"},
+        {BZ::DataType::Float32, BZ::DataElements::Vec2, "TEXCOORD"}
     };
     vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), layout);
 

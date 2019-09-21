@@ -65,29 +65,29 @@ namespace BZ {
         const glm::vec3& getRotation() const { return eulerAngles; }*/
 
         //TODO: Transform class with all of this. And caching of the resultant matrix.
-        glm::vec3 position;
-        glm::vec3 eulerAngles;
-        glm::vec3 scale;
+        glm::vec3 position = {};
+        glm::vec3 eulerAngles = {};
+        glm::vec3 scale = {1,1,1};
 
         ParticleRanges ranges;
 
     private:
         uint32 particleCount;
 
+        //TODO: these should be unique for all the Particle Systems
         Ref<Buffer> quadVertexBuffer;
         Ref<InputDescription> quadInputDescription;
 
-        Ref<Buffer> computeBuffer;
-
         Ref<Shader> computeShader;
         Ref<Shader> particleShader;
-        
+
+        static BlendingSettings particleBlendingSettings;
+        static BlendingSettings disableBlendingSettings;
+
+        Ref<Buffer> computeBuffer;
         Ref<Buffer> constantBuffer;
 
         Ref<Texture> particleTexture;
-
-        BlendingSettings particleBlendingSettings;
-        BlendingSettings disableBlendingSettings;
 
         constexpr static int WORK_GROUP_SIZE = 128;
     };

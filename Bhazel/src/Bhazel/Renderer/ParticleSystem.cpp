@@ -13,6 +13,9 @@
 
 namespace BZ {
 
+    BlendingSettings ParticleSystem::particleBlendingSettings = BlendingSettings({BlendingFunction::SourceAlpha, BlendingFunction::One, BlendingEquation::Add});
+    BlendingSettings ParticleSystem::disableBlendingSettings = BlendingSettings(false);
+
     ParticleSystem::ParticleRanges::ParticleRanges() :
         positionRange(glm::vec3(0.0f)),
         sizeRange(glm::vec3(0.01f, 0.01f, 0.0f), glm::vec3(0.01f, 0.01f, 0.0f)),
@@ -24,41 +27,36 @@ namespace BZ {
 
 
     ParticleSystem::ParticleSystem(uint32 particleCount) :
-        particleCount(particleCount), 
-        position(glm::vec3(0.0f)), 
-        scale(glm::vec3(1.0f)),
-        eulerAngles(glm::vec3(0.0f)),
-        particleBlendingSettings({BlendingFunction::SourceAlpha, BlendingFunction::OneMinusSourceAlpha, BlendingEquation::Add}),
-        disableBlendingSettings(false) {
+        particleCount(particleCount) {
     }
 
     void ParticleSystem::init() {
+        struct Vertex {
+            int8 pos[2];
+            uint8 texCoord[2];
+        };
 
-        //TODO: all particle systems will have a buffer with this data. not good!
-        float quadVertices[] = {
-            -0.5f, -0.5f,
-            0.0f, 0.0f,
-            
-            0.5f, -0.5f,
-            1.0f, 0.0f,
+        //-0.5 and 0.5 after normalization
+        const int8 MIN = -64;
+        const int8 MAX = 64;
 
-            -0.5f, 0.5f,
-            0.0f, 1.0f,
-
-            0.5f, 0.5f, 
-            1.0f, 1.0f
+        Vertex vertexBuffer[] = {
+            { { MIN, MIN }, {0, 0} },
+            { { MAX, MIN }, {1, 0} },
+            { { MIN, MAX }, {0, 1} },
+            { { MAX, MAX }, {1, 1} },
         };
 
         BufferLayout particleLayout = {
-            {DataType::Vec2, "POSITION"},
-            {DataType::Vec2, "TEXCOORD"},
+            {DataType::Int8, DataElements::Vec2, "POSITION", true},
+            {DataType::Uint8, DataElements::Vec2, "TEXCOORD"},
         };
 
         particleShader = Shader::create(Renderer::api == Renderer::API::OpenGL ? "shaders/Particle.glsl" : "shaders/Particle.hlsl");
-
-        quadVertexBuffer = Buffer::createVertexBuffer(quadVertices, sizeof(quadVertices), particleLayout);
+        quadVertexBuffer = Buffer::createVertexBuffer(&vertexBuffer, sizeof(vertexBuffer), particleLayout);
         quadInputDescription = InputDescription::create();
         quadInputDescription->addVertexBuffer(quadVertexBuffer, particleShader);
+        computeShader = Shader::create(Renderer::api == Renderer::API::OpenGL ? "shaders/ParticlesCompute.glsl" : "shaders/ParticlesComputes.hlsl");
 
         std::vector<Particle> particles;
         particles.resize(particleCount);
@@ -67,11 +65,9 @@ namespace BZ {
             Particle &particle = particles[i];
             particle.positionAndLife.w = -1.0f;
         }
+
         computeBuffer = Buffer::createVertexBuffer(particles.data(), static_cast<uint32>(particles.size()) * sizeof(Particle), particleLayout);
-        computeShader = Shader::create(Renderer::api == Renderer::API::OpenGL ? "shaders/ParticlesCompute.glsl" : "shaders/ParticlesComputes.hlsl");
-
         constantBuffer = Buffer::createConstantBuffer(sizeof(ranges));
-
         particleTexture = Texture2D::create("textures/particle.png");
     }
 

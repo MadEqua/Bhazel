@@ -27,9 +27,6 @@ layout(std140, binding = 0) buffer ParticleBuffer {
     Particle particles[];
 };
 
-vec3 visualVector(vec3 v) {
-    return normalize(v) * 0.5 + 0.5;
-}
 
 void main() {
     Particle p = particles[gl_InstanceID];

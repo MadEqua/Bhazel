@@ -7,26 +7,29 @@ namespace BZ {
     };
 
     enum class DataType {
-        Float,
-        Int, Int16, Int8,
-        Uint, Uint16, Uint8,
-        Bool,
+        Float32, Float16,
+        Int32, Int16, Int8,
+        Uint32, Uint16, Uint8
+    };
+
+    enum class DataElements {
+        Scalar,
         Vec2, Vec3, Vec4,
-        Vec2i, Vec3i, Vec4i,
-        Vec2ui, Vec3ui, Vec4ui,
         Mat2, Mat3, Mat4
     };
 
     class BufferElement {
     public:
         DataType dataType;
+        DataElements dataElements;
         std::string name;
-        uint32 sizeBytes;
-        uint32 offset;
         bool normalized;
         uint32 perInstanceStep;
+        
+        uint32 sizeBytes;
+        uint32 offset;
 
-        BufferElement(DataType dataType, const std::string &name, bool normalized = false, uint32 perInstanceStep = 0);
+        BufferElement(DataType dataType, DataElements dataElements, const std::string &name, bool normalized = false, uint32 perInstanceStep = 0);
         uint32 getElementCount() const;
     };
 

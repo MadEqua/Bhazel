@@ -5,6 +5,8 @@
 
 namespace BZ {
 
+    static GLenum shaderDataTypeToGL(DataType dataType);
+
     OpenGLInputDescription::OpenGLInputDescription() {
         BZ_ASSERT_GL(glGenVertexArrays(1, &rendererId));
     }
@@ -51,37 +53,24 @@ namespace BZ {
         indexBuffer = buffer;
     }
 
-    GLenum OpenGLInputDescription::shaderDataTypeToGL(DataType dataType) {
-        switch(dataType)
-        {
-        case DataType::Float:
-        case DataType::Vec2:
-        case DataType::Vec3:
-        case DataType::Vec4:
-        case DataType::Mat2:
-        case DataType::Mat3:
-        case DataType::Mat4:
+    static GLenum shaderDataTypeToGL(DataType dataType) {
+        switch(dataType) {
+        case DataType::Float32:
             return GL_FLOAT;
-        case DataType::Int:
-        case DataType::Vec2i:
-        case DataType::Vec3i:
-        case DataType::Vec4i:
+        case DataType::Float16:
+            return GL_HALF_FLOAT;
+        case DataType::Int32:
             return GL_INT;
-        case DataType::Uint:
-        case DataType::Vec2ui:
-        case DataType::Vec3ui:
-        case DataType::Vec4ui:
-            return GL_UNSIGNED_INT;
         case DataType::Int16:
             return GL_SHORT;
         case DataType::Int8:
             return GL_BYTE;
+        case DataType::Uint32:
+            return GL_UNSIGNED_INT;
         case DataType::Uint16:
             return GL_UNSIGNED_SHORT;
         case DataType::Uint8:
             return GL_UNSIGNED_BYTE;
-        case DataType::Bool:
-            return GL_BOOL;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
             return 0;

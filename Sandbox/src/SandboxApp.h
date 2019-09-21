@@ -27,7 +27,7 @@ private:
     BZ::PerspectiveCameraController cameraController;
 
     //Compute shader test stuff
-    constexpr static int PARTICLE_COUNT = 1024;
+    constexpr static int PARTICLE_COUNT = 1024 * 10;
     BZ::ParticleSystem particleSystem;
 
     bool onWindowResizeEvent(BZ::WindowResizeEvent &ev);

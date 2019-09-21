@@ -9,90 +9,46 @@
 namespace BZ {
 
     static uint32 shaderDataTypeSize(DataType type) {
-        switch(type)
-        {
-        case DataType::Float:
-            return sizeof(float);
-        case DataType::Int:
-            return sizeof(int);
+        switch(type) {
+        case DataType::Float32:
+        case DataType::Int32:
+        case DataType::Uint32:
+            return 4;
+        case DataType::Float16:
         case DataType::Int16:
-            return sizeof(int16);
-        case DataType::Int8:
-            return sizeof(int8);
-        case DataType::Uint:
-            return sizeof(uint32);
         case DataType::Uint16:
-            return sizeof(uint16);
+            return 2;
+        case DataType::Int8:
         case DataType::Uint8:
-            return sizeof(uint8);
-        case DataType::Bool:
-            return sizeof(bool);
-        case DataType::Vec2:
-            return sizeof(float) * 2;
-        case DataType::Vec3:
-            return sizeof(float) * 3;
-        case DataType::Vec4:
-            return sizeof(float) * 4;
-        case DataType::Vec2i:
-            return sizeof(int) * 2;
-        case DataType::Vec3i:
-            return sizeof(int) * 3;
-        case DataType::Vec4i:
-            return sizeof(int) * 4;
-        case DataType::Vec2ui:
-            return sizeof(uint32) * 2;
-        case DataType::Vec3ui:
-            return sizeof(uint32) * 3;
-        case DataType::Vec4ui:
-            return sizeof(uint32) * 4;
-        case DataType::Mat2:
-            return sizeof(float) * 4;
-        case DataType::Mat3:
-            return sizeof(float) * 9;
-        case DataType::Mat4:
-            return sizeof(float) * 16;
+            return 1;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
             return 0;
         }
     }
 
-    BufferElement::BufferElement(DataType dataType, const std::string &name, bool normalized, uint32 perInstanceStep) :
-        dataType(dataType), name(name), sizeBytes(shaderDataTypeSize(dataType)), offset(0), normalized(normalized), perInstanceStep(perInstanceStep) {
+    BufferElement::BufferElement(DataType dataType, DataElements dataElements,  const std::string &name, bool normalized, uint32 perInstanceStep) :
+        dataType(dataType), dataElements(dataElements), name(name), normalized(normalized), perInstanceStep(perInstanceStep),
+        sizeBytes(shaderDataTypeSize(dataType) * getElementCount()), offset(0) {
     }
 
     uint32 BufferElement::getElementCount() const {
-        switch(dataType)
-        {
-        case DataType::Float:
-        case DataType::Int:
-        case DataType::Int16:
-        case DataType::Int8:
-        case DataType::Uint:
-        case DataType::Uint16:
-        case DataType::Uint8:
-        case DataType::Bool:
+        switch(dataElements) {
+        case DataElements::Scalar:
             return 1;
-        case DataType::Vec2i:
-        case DataType::Vec2ui:
-        case DataType::Vec2:
+        case DataElements::Vec2:
             return 2;
-        case DataType::Vec3i:
-        case DataType::Vec3ui:
-        case DataType::Vec3:
+        case DataElements::Vec3:
             return 3;
-        case DataType::Vec4i:
-        case DataType::Vec4ui:
-        case DataType::Vec4:
+        case DataElements::Vec4:
+        case DataElements::Mat2:
             return 4;
-        case DataType::Mat2:
-            return 4;
-        case DataType::Mat3:
+        case DataElements::Mat3:
             return 9;
-        case DataType::Mat4:
+        case DataElements::Mat4:
             return 16;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
+            BZ_ASSERT_ALWAYS_CORE("Unknown DataElements.");
             return 0;
         }
     }

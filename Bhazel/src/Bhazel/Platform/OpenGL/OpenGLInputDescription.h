@@ -22,7 +22,5 @@ namespace BZ {
 
     private:
         GLuint rendererId;
-
-        static GLenum shaderDataTypeToGL(DataType dataType);
     };
 }

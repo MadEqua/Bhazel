@@ -26,7 +26,5 @@ namespace BZ {
         wrl::ComPtr<ID3D11InputLayout> inputLayoutPtr;
 
         std::vector<D3D11_INPUT_ELEMENT_DESC> ieds;
-
-        static DXGI_FORMAT shaderDataTypeToD3D11(DataType dataType, bool normalized);
     };
 }
