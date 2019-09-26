@@ -5,7 +5,6 @@
 *.sln
 *.vcxproj
 *.filters
-*.ini
 
 bin/
 bin-int/

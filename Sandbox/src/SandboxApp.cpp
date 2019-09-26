@@ -1,7 +1,7 @@
 #include "SandboxApp.h"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <ImGui/imgui.h>
+#include <imgui.h>
 
 #include <glm/gtc/random.hpp>
 

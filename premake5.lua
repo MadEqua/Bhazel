@@ -11,14 +11,6 @@ workspace "Bhazel"
 
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
--- Include directories relative to root folder (solution directory)
-includeDir = {}
-includeDir["GLFW"] = "Bhazel/vendor/GLFW/include"
-includeDir["glad"] = "Bhazel/vendor/glad/include"
-includeDir["ImGui"] = "Bhazel/vendor/imgui"
-includeDir["glm"] = "Bhazel/vendor/glm"
-includeDir["stb_image"] = "Bhazel/vendor/stb_image"
-
 include "Bhazel/vendor/glad"
 include "Bhazel/vendor/glfw_premake5.lua"
 include "Bhazel/vendor/imgui_premake5.lua"
@@ -46,13 +38,13 @@ project "Bhazel"
 
     includedirs
     {
-        "%{prj.name}/vendor/spdlog/include",
         "%{prj.name}/src",
-        "%{includeDir.GLFW}",
-        "%{includeDir.glad}",
-        "%{includeDir.ImGui}",
-        "%{includeDir.glm}",
-        "%{includeDir.stb_image}"
+        "%{prj.name}/vendor/spdlog/include",
+        "%{prj.name}/vendor/GLFW/include",
+        "%{prj.name}/vendor/glad/include",
+        "%{prj.name}/vendor/ImGui",
+        "%{prj.name}/vendor/glm",
+        "%{prj.name}/vendor/stb_image"
     }
 
     links
@@ -120,10 +112,11 @@ project "Sandbox"
 
     includedirs
     {
-        "Bhazel/vendor/spdlog/include",
+        "%{prj.name}/src",
         "Bhazel/src",
-        "Bhazel/vendor",
-        "%{includeDir.glm}"
+        "Bhazel/vendor/spdlog/include",
+        "Bhazel/vendor/glm",
+        "Bhazel/vendor/ImGui",
     }
 
     links
