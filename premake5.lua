@@ -11,15 +11,6 @@ workspace "Bhazel"
 
 outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
--- Include directories relative to root folder (solution directory)
-includeDir = {}
-includeDir["sdplog"] = "Bhazel/vendor/spdlog/include"
-includeDir["GLFW"] = "Bhazel/vendor/GLFW/include"
-includeDir["glad"] = "Bhazel/vendor/glad/include"
-includeDir["ImGui"] = "Bhazel/vendor/imgui"
-includeDir["glm"] = "Bhazel/vendor/glm"
-includeDir["stb_image"] = "Bhazel/vendor/stb_image"
-
 VULKAN_SDK_DIR = "C:/VulkanSDK/1.1.121.2"
 
 
@@ -50,12 +41,12 @@ project "Bhazel"
     includedirs
     {
         "%{prj.name}/src",
-        "%{includeDir.sdplog}",
-        "%{includeDir.GLFW}",
-        "%{includeDir.glad}",
-        "%{includeDir.ImGui}",
-        "%{includeDir.glm}",
-        "%{includeDir.stb_image}",
+        "%{prj.name}/vendor/spdlog/include",
+        "%{prj.name}/vendor/GLFW/include",
+        "%{prj.name}/vendor/glad/include",
+        "%{prj.name}/vendor/ImGui",
+        "%{prj.name}/vendor/glm",
+        "%{prj.name}/vendor/stb_image",
         "%{VULKAN_SDK_DIR}/Include"
     }
 
@@ -130,10 +121,11 @@ project "Sandbox"
 
     includedirs
     {
-        "Bhazel/vendor/spdlog/include",
+        "%{prj.name}/src",
         "Bhazel/src",
-        "Bhazel/vendor",
-        "%{includeDir.glm}"
+        "Bhazel/vendor/spdlog/include",
+        "Bhazel/vendor/glm",
+        "Bhazel/vendor/ImGui",
     }
 
     links

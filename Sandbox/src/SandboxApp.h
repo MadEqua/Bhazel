@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Bhazel.h>
-#include <ImGui/imgui.h>
+#include <imgui.h>
 
 
 class ExampleLayer : public BZ::Layer {
