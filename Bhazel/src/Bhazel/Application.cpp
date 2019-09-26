@@ -28,12 +28,13 @@ namespace BZ {
         std::string renderingAPIString = settings.getFieldAsString("renderingAPI", "");
         if(renderingAPIString == "OpenGL" || renderingAPIString == "GL") Renderer::api = Renderer::API::OpenGL;
         else if(renderingAPIString == "D3D" || renderingAPIString == "D3D11") Renderer::api = Renderer::API::D3D11;
+        else if(renderingAPIString == "VK" || renderingAPIString == "Vulkan") Renderer::api = Renderer::API::Vulkan;
         else BZ_ASSERT_ALWAYS_CORE("Invalid Rendering API on .ini file: {0}.", renderingAPIString);
 
         assetsPath = settings.getFieldAsString("assetsPath", "");
 
-        imGuiLayer = new ImGuiLayer();
-        pushOverlay(imGuiLayer);
+        //imGuiLayer = new ImGuiLayer();
+        //pushOverlay(imGuiLayer);
 
         pushOverlay(new FrameStatsLayer(*this));
     }
@@ -67,11 +68,11 @@ namespace BZ {
                 layer->onUpdate(frameStats);
             }
 
-            imGuiLayer->begin();
+            /*imGuiLayer->begin();
             for(Layer *layer : layerStack) {
                 layer->onImGuiRender(frameStats);
             }
-            imGuiLayer->end();
+            imGuiLayer->end();*/
 
             window->onUpdate();
 

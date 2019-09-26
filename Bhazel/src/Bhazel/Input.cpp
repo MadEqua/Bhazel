@@ -13,9 +13,9 @@ namespace BZ {
     Input* Input::instance = nullptr;
 
     void Input::init(void *nativeWindowHandle) {
-        switch(Renderer::api)
-        {
+        switch(Renderer::api) {
         case Renderer::API::OpenGL:
+        case Renderer::API::Vulkan:
             instance = new GlfwInput();
             break;
         case Renderer::API::D3D11:

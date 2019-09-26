@@ -11,7 +11,7 @@ namespace BZ {
 
     OpenGLContext::OpenGLContext(GLFWwindow *windowHandle) :
         windowHandle(windowHandle) {
-        BZ_ASSERT_CORE(windowHandle, "Window handle is null");
+        BZ_ASSERT_CORE(windowHandle, "Window handle is null!");
 
         glfwMakeContextCurrent(windowHandle);
         int status = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);

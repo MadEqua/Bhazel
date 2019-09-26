@@ -16,7 +16,8 @@ namespace BZ {
         enum class API {
             Unknown,
             OpenGL,
-            D3D11
+            D3D11,
+            Vulkan
         };
 
         enum class RenderMode {

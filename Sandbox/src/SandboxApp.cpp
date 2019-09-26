@@ -8,7 +8,7 @@
 
 ExampleLayer::ExampleLayer() :
     Layer("Example"), 
-    particleSystem(PARTICLE_COUNT),
+    //particleSystem(PARTICLE_COUNT),
     cameraController(60.0f, 1280.0f / 800.0f) {
 }
 
@@ -16,7 +16,7 @@ void ExampleLayer::onAttach() {
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
-    auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "shaders/Texture.glsl" : "shaders/Texture.hlsl");
+    /*auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "shaders/Texture.glsl" : "shaders/Texture.hlsl");
     texture = BZ::Texture2D::create("textures/test.jpg");
 
     float vertices[] = {
@@ -55,54 +55,54 @@ void ExampleLayer::onGraphicsContextCreated() {
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
-    cameraController.getCamera().setPosition({0.0f, 0.0f, 1.5f});
+    cameraController.getCamera().setPosition({0.0f, 0.0f, 1.5f});*/
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
-    cameraController.onUpdate(frameStats);
+    //cameraController.onUpdate(frameStats);
 
-    const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
+    //const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
 
-    //TODO: coordinate conversion
-    /**if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_1)) {
-        particleSystemPosition.x = BZ::Input::getMouseX();
-        particleSystemPosition.y = BZ::Input::getMouseY();
-    }*/
+    ////TODO: coordinate conversion
+    ///**if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_1)) {
+    //    particleSystemPosition.x = BZ::Input::getMouseX();
+    //    particleSystemPosition.y = BZ::Input::getMouseY();
+    //}*/
 
-    BZ::RenderCommand::clearColorAndDepthStencilBuffers();
+    //BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
-    BZ::Renderer::beginScene(cameraController.getCamera(), frameStats);
+    //BZ::Renderer::beginScene(cameraController.getCamera(), frameStats);
 
-    texture->bindToPipeline(0);
+    //texture->bindToPipeline(0);
 
-    auto textureShader = shaderLibrary.get("Texture");
+    //auto textureShader = shaderLibrary.get("Texture");
 
-    /*glm::mat4 modelMatrix(1.0);
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    ///*glm::mat4 modelMatrix(1.0);
+    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
+    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
+    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);*/
+    //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
+    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);*/
 
-    particleSystem.onUpdate();
+    //particleSystem.onUpdate();
 
-    BZ::Renderer::endScene();
+    //BZ::Renderer::endScene();
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {
-    cameraController.onEvent(event);
+    //cameraController.onEvent(event);
 
     BZ::EventDispatcher dispatcher(event);
     dispatcher.dispatch<BZ::WindowResizeEvent>(BZ_BIND_EVENT_FN(ExampleLayer::onWindowResizeEvent));
 }
 
 void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
-    constexpr float LIMIT = 0.5f;
+    /*constexpr float LIMIT = 0.5f;
     constexpr float LIMIT2 = 1.5f;
     //TODO: temporary
     if(ImGui::Begin("Particles")) {
@@ -139,11 +139,11 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
         ImGui::SliderFloat3("Max##tint", &particleSystem.ranges.tintRange.max[0], 0, 1);
         ImGui::Separator();
     }
-    ImGui::End();
+    ImGui::End();*/
 }
 
 bool ExampleLayer::onWindowResizeEvent(BZ::WindowResizeEvent &ev) {
-    BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
+    //BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
     return false;
 }
 

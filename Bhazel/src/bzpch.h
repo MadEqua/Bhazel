@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <sstream>
 #include <string>
+#include <optional>
+#include <set>
 
 #include <glm/glm.hpp>
 

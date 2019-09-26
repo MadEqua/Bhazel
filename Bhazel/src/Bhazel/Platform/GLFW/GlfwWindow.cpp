@@ -4,8 +4,10 @@
 #include "Bhazel/Events/ApplicationEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
+#include "Bhazel/Renderer/Renderer.h"
 
 #include "Bhazel/Platform/OpenGL/OpenGLContext.h"
+#include "Bhazel/Platform/Vulkan/VulkanContext.h"
 
 #include <GLFW/glfw3.h>
 
@@ -37,22 +39,31 @@ namespace BZ {
             isGLFWInitialized = true;
         }
 
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+        if(Renderer::api == Renderer::API::OpenGL) {
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #ifdef BZ_DIST
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_FALSE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_FALSE);
 #else
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
+            glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
+            glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+        }
+        else { //Vulkan
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        }
 
         window = glfwCreateWindow(static_cast<int>(data.width), static_cast<int>(data.height), data.title.c_str(), nullptr, nullptr);
         BZ_ASSERT_CORE(window, "Could not create GLFW Window!");
 
-        graphicsContext = std::make_unique<OpenGLContext>(window);
+        if(Renderer::api == Renderer::API::OpenGL)
+            graphicsContext = std::make_unique<OpenGLContext>(window);
+        else
+            graphicsContext = std::make_unique<VulkanContext>(window);
+
         graphicsContext->setVSync(data.vsync);
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));

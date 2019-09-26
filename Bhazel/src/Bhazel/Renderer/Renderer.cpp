@@ -23,8 +23,8 @@ namespace BZ {
 
 
     void Renderer::init() {
-        frameConstantBuffer = Buffer::createConstantBuffer(sizeof(frameData));
-        instanceConstantBuffer = Buffer::createConstantBuffer(sizeof(instanceData));
+        //frameConstantBuffer = Buffer::createConstantBuffer(sizeof(frameData));
+        //instanceConstantBuffer = Buffer::createConstantBuffer(sizeof(instanceData));
 
         //TODO: set all pipeline defaults here
         RenderCommand::setRenderMode(RenderMode::Triangles);
@@ -34,8 +34,8 @@ namespace BZ {
 
     void Renderer::destroy() {
         //Destroy this 'manually' to avoid the static destruction lottery
-        frameConstantBuffer.reset();
-        instanceConstantBuffer.reset();
+        //frameConstantBuffer.reset();
+        //instanceConstantBuffer.reset();
     }
 
     void Renderer::beginScene(Camera &camera, const FrameStats &frameStats) {
@@ -46,8 +46,8 @@ namespace BZ {
         frameData.timeAndDelta.x = frameStats.runningTime.asSeconds();
         frameData.timeAndDelta.y = frameStats.lastFrameTime.asSeconds();
 
-        frameConstantBuffer->setData(&frameData, sizeof(frameData));
-        frameConstantBuffer->bindToPipeline(0);
+        //frameConstantBuffer->setData(&frameData, sizeof(frameData));
+        //frameConstantBuffer->bindToPipeline(0);
     }
 
     void Renderer::endScene() {

@@ -16,6 +16,7 @@ namespace BZ {
         switch(Renderer::api)
         {
         case Renderer::API::OpenGL:
+        case Renderer::API::Vulkan:
             return new GlfwWindow(data, eventCallback);
         case Renderer::API::D3D11:
             return new Win32Window(data, eventCallback);

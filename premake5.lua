@@ -13,17 +13,20 @@ outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 -- Include directories relative to root folder (solution directory)
 includeDir = {}
+includeDir["sdplog"] = "Bhazel/vendor/spdlog/include"
 includeDir["GLFW"] = "Bhazel/vendor/GLFW/include"
 includeDir["glad"] = "Bhazel/vendor/glad/include"
 includeDir["ImGui"] = "Bhazel/vendor/imgui"
 includeDir["glm"] = "Bhazel/vendor/glm"
 includeDir["stb_image"] = "Bhazel/vendor/stb_image"
 
+VULKAN_SDK_DIR = "C:/VulkanSDK/1.1.121.2"
+
+
 include "Bhazel/vendor/glad"
 include "Bhazel/vendor/glfw_premake5.lua"
 include "Bhazel/vendor/imgui_premake5.lua"
 include "Bhazel/vendor/stb_image"
-
 
 project "Bhazel"
     location "Bhazel"
@@ -46,13 +49,19 @@ project "Bhazel"
 
     includedirs
     {
-        "%{prj.name}/vendor/spdlog/include",
         "%{prj.name}/src",
+        "%{includeDir.sdplog}",
         "%{includeDir.GLFW}",
         "%{includeDir.glad}",
         "%{includeDir.ImGui}",
         "%{includeDir.glm}",
-        "%{includeDir.stb_image}"
+        "%{includeDir.stb_image}",
+        "%{VULKAN_SDK_DIR}/Include"
+    }
+
+    libdirs
+    {
+        "%{VULKAN_SDK_DIR}/Lib"
     }
 
     links
@@ -61,7 +70,8 @@ project "Bhazel"
         "glad",
         "ImGui",
         "stb_image",
-        "opengl32.lib"
+        "vulkan-1.lib",
+        "opengl32.lib",
     }
 
     defines
