@@ -77,7 +77,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     //auto textureShader = shaderLibrary.get("Texture");
 
-    ///*glm::mat4 modelMatrix(1.0);
+    //glm::mat4 modelMatrix(1.0);
     //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
     //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
@@ -96,14 +96,14 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
 void ExampleLayer::onEvent(BZ::Event &event) {
     //cameraController.onEvent(event);
-
-    BZ::EventDispatcher dispatcher(event);
-    dispatcher.dispatch<BZ::WindowResizeEvent>(BZ_BIND_EVENT_FN(ExampleLayer::onWindowResizeEvent));
 }
 
 void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     /*constexpr float LIMIT = 0.5f;
     constexpr float LIMIT2 = 1.5f;
+
+    static BZ::Timer testTimer;
+
     //TODO: temporary
     if(ImGui::Begin("Particles")) {
         ImGui::Text("Emitter Position");
@@ -138,16 +138,14 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
         ImGui::SliderFloat3("Min##tint", &particleSystem.ranges.tintRange.min[0], 0, 1);
         ImGui::SliderFloat3("Max##tint", &particleSystem.ranges.tintRange.max[0], 0, 1);
         ImGui::Separator();
+
+        ImGui::LabelText("Timer test", "Counted time: %02f", testTimer.getCountedTime().asSeconds());
+        if(ImGui::Button("start")) testTimer.start();
+        if(ImGui::Button("pause")) testTimer.pause();
+        if(ImGui::Button("reset")) testTimer.reset();
     }
     ImGui::End();*/
 }
-
-bool ExampleLayer::onWindowResizeEvent(BZ::WindowResizeEvent &ev) {
-    //BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
-    return false;
-}
-
-
 
 BZ::Application* BZ::createApplication() {
     return new Sandbox();

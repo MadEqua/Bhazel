@@ -441,7 +441,7 @@ namespace BZ {
         DestroyWindow(hWnd);
     }
 
-    void Win32Window::onUpdate() {
+    void Win32Window::pollEvents() {
         MSG msg;
         while(PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
 
@@ -452,6 +452,9 @@ namespace BZ {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
+    }
+
+    void Win32Window::presentBuffer() {
         graphicsContext->swapBuffers();
     }
 

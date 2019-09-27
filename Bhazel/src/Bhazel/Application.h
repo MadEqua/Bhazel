@@ -10,6 +10,7 @@ namespace BZ {
 
     class Event;
     class WindowCloseEvent;
+    class WindowResizeEvent;
     class Layer;
     class ImGuiLayer;
 
@@ -42,13 +43,16 @@ namespace BZ {
 
     private:
         bool onWindowClose(WindowCloseEvent &e);
+        bool onWindowResize(WindowResizeEvent &e);
 
         std::unique_ptr<Window> window;
         ImGuiLayer* imGuiLayer;
         bool running = true;
+        bool minimized = false;
 
         LayerStack layerStack;
         IniParser iniParser;
+
         FrameStats frameStats;
 
         std::string assetsPath;

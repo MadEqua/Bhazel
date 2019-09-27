@@ -156,8 +156,11 @@ namespace BZ {
         }
     }
 
-    void GlfwWindow::onUpdate() {
+    void GlfwWindow::pollEvents() {
         glfwPollEvents();
+    }
+
+    void GlfwWindow::presentBuffer() {
         graphicsContext->swapBuffers();
     }
 
