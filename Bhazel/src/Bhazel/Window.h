@@ -27,7 +27,8 @@ namespace BZ {
         EventCallbackFn eventCallback;
         WindowData data;
 
-        virtual void onUpdate() = 0;
+        virtual void pollEvents() = 0;
+        virtual void presentBuffer() = 0;
         virtual void* getNativeWindowHandle() const = 0;
 
         uint32 getWidth() const { return data.width; }

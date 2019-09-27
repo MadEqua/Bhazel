@@ -11,7 +11,8 @@ namespace BZ {
         explicit Win32Window(const WindowData &data, EventCallbackFn eventCallback);
         virtual ~Win32Window() override;
 
-        virtual void onUpdate() override;
+        virtual void pollEvents() override;
+        virtual void presentBuffer() override;
         virtual void setTitle(const std::string &title) override;
 
         virtual void* getNativeWindowHandle() const override { return hWnd; }

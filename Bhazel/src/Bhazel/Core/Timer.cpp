@@ -16,16 +16,6 @@ namespace BZ {
         nanos(nanos) {
     }
 
-    TimeDuration TimeDuration::operator+(const TimeDuration &rhs) {
-        nanos += rhs.nanos;
-        return *this;
-    }
-
-    TimeDuration TimeDuration::operator-(const TimeDuration &rhs) {
-        nanos -= rhs.nanos;
-        return *this;
-    }
-
     void TimeDuration::operator+=(const TimeDuration &rhs) {
         nanos += rhs.nanos;
     }
@@ -51,23 +41,62 @@ namespace BZ {
     }
 
     uint64 TimeDuration::asNanoseconds() const {
-        return static_cast<uint64>(std::chrono::duration_cast<std::chrono::nanoseconds>(nanos).count());
+        return static_cast<uint64>(nanos.count());
     }
 
 
-    Timer::Timer() :
-        started(false) {
+    TimeDuration operator+(const TimeDuration &lhs, const TimeDuration &rhs) {
+        return TimeDuration(lhs.nanos + rhs.nanos);
+    }
+
+    TimeDuration operator-(const TimeDuration &lhs, const TimeDuration &rhs) {
+        return TimeDuration(lhs.nanos - rhs.nanos);
+    }
+
+    bool operator<(const TimeDuration &lhs, const TimeDuration &rhs) {
+        return lhs.nanos < rhs.nanos;
+    }
+
+    bool operator<=(const TimeDuration &lhs, const TimeDuration &rhs) {
+        return lhs.nanos <= rhs.nanos;
+    }
+
+    bool operator>(const TimeDuration &lhs, const TimeDuration &rhs) {
+        return lhs.nanos > rhs.nanos;
+    }
+
+    bool operator>=(const TimeDuration &lhs, const TimeDuration &rhs) {
+        return lhs.nanos >= rhs.nanos;
+    }
+
+
+    Timer::Timer() {
+        reset();
     }
 
     void Timer::start() {
-        startPoint = std::chrono::high_resolution_clock::now();
-        started = true;
+        if(state == State::Started) return;
+
+        lastStartPoint = std::chrono::high_resolution_clock::now();
+        state = State::Started;
     }
 
-    TimeDuration Timer::getElapsedTime() const {
-        if(started)
-            return TimeDuration(std::chrono::high_resolution_clock::now() - startPoint);
+    void Timer::pause() {
+        if(state == State::Paused) return;
+
+        state = State::Paused;
+        countedTime += TimeDuration(std::chrono::high_resolution_clock::now() - lastStartPoint);
+    }
+
+    void Timer::reset() {
+        state = State::Paused;
+        countedTime = TimeDuration();
+    }
+
+    TimeDuration Timer::getCountedTime() const {
+        if(state == State::Started)
+            return countedTime + TimeDuration(std::chrono::high_resolution_clock::now() - lastStartPoint);
         else
-            return TimeDuration();
+            return countedTime;
     }
 }

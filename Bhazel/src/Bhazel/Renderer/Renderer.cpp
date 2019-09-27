@@ -10,6 +10,8 @@
 #include "InputDescription.h"
 #include "PipelineSettings.h"
 
+#include "Bhazel/Events/ApplicationEvent.h"
+
 
 namespace BZ {
 
@@ -36,6 +38,11 @@ namespace BZ {
         //Destroy this 'manually' to avoid the static destruction lottery
         frameConstantBuffer.reset();
         instanceConstantBuffer.reset();
+    }
+
+    bool Renderer::onWindowResize(WindowResizeEvent &ev) {
+        BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
+        return false;
     }
 
     void Renderer::beginScene(Camera &camera, const FrameStats &frameStats) {

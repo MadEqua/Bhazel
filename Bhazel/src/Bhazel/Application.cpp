@@ -54,28 +54,34 @@ namespace BZ {
 
         Timer frameTimer;
         frameStats = {};
+        bool frameStartedMinimized;
 
         while(running) {
-
-            auto frameDuration = frameTimer.getElapsedTime();
-            frameStats.lastFrameTime = frameDuration;
-            frameStats.runningTime += frameDuration;
-
             frameTimer.start();
+            frameStartedMinimized = minimized;
 
-            for (Layer *layer : layerStack) {
-                layer->onUpdate(frameStats);
+            window->pollEvents();
+
+            if(!frameStartedMinimized) {
+
+                for(Layer *layer : layerStack) {
+                    layer->onUpdate(frameStats);
+                }
+
+                imGuiLayer->begin();
+                for(Layer *layer : layerStack) {
+                    layer->onImGuiRender(frameStats);
+                }
+                imGuiLayer->end();
+
+                window->presentBuffer();
+
+                auto frameDuration = frameTimer.getCountedTime();
+                frameStats.lastFrameTime = frameDuration;
+                frameStats.runningTime += frameDuration;
+                frameStats.frameCount++;
             }
-
-            imGuiLayer->begin();
-            for(Layer *layer : layerStack) {
-                layer->onImGuiRender(frameStats);
-            }
-            imGuiLayer->end();
-
-            window->onUpdate();
-
-            frameStats.frameCount++;
+            frameTimer.reset();
         }
 
         Renderer::destroy();
@@ -84,10 +90,11 @@ namespace BZ {
     void Application::onEvent(Event &e) {
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowCloseEvent>(BZ_BIND_EVENT_FN(Application::onWindowClose));
+        dispatcher.dispatch<WindowResizeEvent>(BZ_BIND_EVENT_FN(Application::onWindowResize));
 
         for (auto it = layerStack.end(); it != layerStack.begin(); ) {
-            (*--it)->onEvent(e);
             if (e.handled) break;
+            (*--it)->onEvent(e);
         }
     }
 
@@ -102,5 +109,16 @@ namespace BZ {
     bool Application::onWindowClose(WindowCloseEvent &e) {
         running = false;
         return true;
+    }
+
+    bool Application::onWindowResize(WindowResizeEvent &e) {
+        if(e.getWidth() == 0 || e.getHeight() == 0) {
+            minimized = true;
+            return true;
+        }
+
+        Renderer::onWindowResize(e);
+        minimized = false;
+        return false;
     }
 }

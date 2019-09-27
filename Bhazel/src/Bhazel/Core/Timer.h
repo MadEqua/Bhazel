@@ -11,8 +11,6 @@ namespace BZ {
         TimeDuration(uint64 nanos);
         TimeDuration(std::chrono::nanoseconds nanos);
 
-        TimeDuration operator+(const TimeDuration &rhs);
-        TimeDuration operator-(const TimeDuration &rhs);
         void operator+=(const TimeDuration &rhs);
         void operator-=(const TimeDuration &rhs);
 
@@ -24,18 +22,39 @@ namespace BZ {
 
     private:
         std::chrono::nanoseconds nanos;
+
+        friend TimeDuration operator+(const TimeDuration &lhs, const TimeDuration &rhs);
+        friend TimeDuration operator-(const TimeDuration &lhs, const TimeDuration &rhs);
+        friend bool operator<(const TimeDuration &lhs, const TimeDuration &rhs);
+        friend bool operator<=(const TimeDuration &lhs, const TimeDuration &rhs);
+        friend bool operator>(const TimeDuration &lhs, const TimeDuration &rhs);
+        friend bool operator>=(const TimeDuration &lhs, const TimeDuration &rhs);
     };
 
+    TimeDuration operator+(const TimeDuration &lhs, const TimeDuration &rhs);
+    TimeDuration operator-(const TimeDuration &lhs, const TimeDuration &rhs);
+    bool operator<(const TimeDuration &lhs, const TimeDuration &rhs);
+    bool operator<=(const TimeDuration &lhs, const TimeDuration &rhs);
+    bool operator>(const TimeDuration &lhs, const TimeDuration &rhs);
+    bool operator>=(const TimeDuration &lhs, const TimeDuration &rhs);
 
     class Timer {
     public:
         Timer();
 
         void start();
-        TimeDuration getElapsedTime() const;
+        void pause();
+        void reset();
+
+        TimeDuration getCountedTime() const;
 
     private:
-        bool started;
-        std::chrono::time_point<std::chrono::high_resolution_clock> startPoint;
+        enum class State {
+            Started, Paused
+        };
+        State state;
+        TimeDuration countedTime;
+
+        std::chrono::time_point<std::chrono::high_resolution_clock> lastStartPoint;
     };
 }

@@ -8,6 +8,7 @@ namespace BZ {
     class Buffer;
     class Shader;
     struct FrameStats;
+    class WindowResizeEvent;
 
     class Renderer
     {
@@ -29,6 +30,8 @@ namespace BZ {
 
         static void init();
         static void destroy();
+
+        static bool onWindowResize(WindowResizeEvent &ev);
 
         static void beginScene(Camera &camera, const FrameStats &frameStats);
         static void endScene();
