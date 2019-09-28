@@ -455,7 +455,7 @@ namespace BZ {
     }
 
     void Win32Window::presentBuffer() {
-        graphicsContext->swapBuffers();
+        graphicsContext->presentBuffer();
     }
 
     void Win32Window::setExtraHandlerFunction(LRESULT(*func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)) {

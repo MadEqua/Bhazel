@@ -11,7 +11,7 @@ namespace BZ {
     public:
         explicit D3D11Context(HWND windowHandle);
 
-        virtual void swapBuffers() override;
+        virtual void presentBuffer() override;
 
         void onWindowResize(uint32 width, uint32 height) override;
 

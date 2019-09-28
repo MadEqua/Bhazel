@@ -10,7 +10,7 @@ namespace BZ {
     public:
         virtual ~GraphicsContext() = default;
         
-        virtual void swapBuffers() = 0;
+        virtual void presentBuffer() = 0;
 
         //Called on app startup and on window resize
         virtual void onWindowResize(uint32 width, uint32 height) {}
