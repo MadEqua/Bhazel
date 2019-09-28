@@ -150,7 +150,7 @@ namespace BZ {
     }
 
     void GlfwWindow::presentBuffer() {
-        graphicsContext->swapBuffers();
+        graphicsContext->presentBuffer();
     }
 
     void GlfwWindow::setTitle(const std::string &title) {

@@ -65,7 +65,7 @@ namespace BZ {
         RenderCommand::initRendererAPI(rendererAPI.get());
     }
 
-    void OpenGLContext::swapBuffers() {
+    void OpenGLContext::presentBuffer() {
         glfwSwapBuffers(windowHandle);
     }
 

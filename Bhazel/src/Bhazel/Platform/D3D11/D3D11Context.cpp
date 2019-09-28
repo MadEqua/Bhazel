@@ -94,7 +94,7 @@ namespace BZ {
         RenderCommand::initRendererAPI(rendererAPI.get());
     }
 
-    void D3D11Context::swapBuffers() {
+    void D3D11Context::presentBuffer() {
         BZ_ASSERT_HRES_DXGI(swapChain->Present(static_cast<uint32>(vsync), 0));
     }
 
