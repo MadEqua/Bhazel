@@ -15,6 +15,82 @@ namespace BZ {
         windowHandle(windowHandle) {
         BZ_ASSERT_CORE(windowHandle, "Window handle is null!");
 
+        createInstance();
+        createSurface();
+
+        const std::vector<const char*> requiredDeviceExtensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+        physicalDevice = pickPhysicalDevice(requiredDeviceExtensions);
+        BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
+
+        createLogicalDevice(requiredDeviceExtensions);
+        createSyncObjects();
+
+        //TODO
+        BZ_LOG_CORE_INFO("Vulkan Context (TODO):");
+        //BZ_LOG_CORE_INFO("  Vendor: {0}.", glGetString(GL_VENDOR));
+        //BZ_LOG_CORE_INFO("  Renderer: {0}.", glGetString(GL_RENDERER));
+        //BZ_LOG_CORE_INFO("  Version: {0}.", glGetString(GL_VERSION));
+        //BZ_LOG_CORE_INFO("  GLSL Version: {0}.", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+        rendererAPI = std::make_unique<VulkanRendererAPI>();
+        RenderCommand::initRendererAPI(rendererAPI.get());
+    }
+
+    VulkanContext::~VulkanContext() {
+        BZ_ASSERT_VK(vkDeviceWaitIdle(device));
+
+        cleanupSwapChain();
+
+        for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(device, inFlightFences[i], nullptr);
+        }
+
+        vkDestroyDevice(device, nullptr);
+
+        vkDestroySurfaceKHR(instance, surface, nullptr);
+
+#ifndef BZ_DIST
+        auto func = getExtensionFunction<PFN_vkDestroyDebugUtilsMessengerEXT>(instance, "vkDestroyDebugUtilsMessengerEXT");
+        func(instance, debugMessenger, nullptr);
+#endif
+        vkDestroyInstance(instance, nullptr);
+    }
+
+    void VulkanContext::swapBuffers() {
+        //glfwSwapBuffers(windowHandle);
+        //TODO
+
+        draw();
+    }
+
+    void VulkanContext::setVSync(bool enabled) {
+        GraphicsContext::setVSync(enabled);
+
+        //TODO
+    }
+
+    void VulkanContext::onWindowResize(uint32 width, uint32 height) {
+        if(width == 0 || height == 0) return;
+
+        BZ_ASSERT_VK(vkDeviceWaitIdle(device));
+
+        if(swapChain != VK_NULL_HANDLE)
+            cleanupSwapChain();
+
+        createSwapChain();
+        createImageViews();
+
+        //Render pass depends on the format of the swapchain (it's rare for the format to change, but still...)
+        //Viewport and scissor rectangle size (possible to avoid if we set those to dynamic state)
+        //Framebuffers and command buffers depend on swapchain images
+        initTestStuff();
+    }
+
+    void VulkanContext::createInstance() {
         VkApplicationInfo appInfo = {};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         appInfo.pApplicationName = nullptr;
@@ -66,36 +142,15 @@ namespace BZ {
         auto func = getExtensionFunction<PFN_vkCreateDebugUtilsMessengerEXT>(instance, "vkCreateDebugUtilsMessengerEXT");
         BZ_ASSERT_VK(func(instance, &debugUtilsCreateInfo, nullptr, &debugMessenger));
 #endif
+    }
 
-        //Create surface (through GLFW)
+    void VulkanContext::createSurface() {
         BZ_ASSERT_VK(glfwCreateWindowSurface(instance, windowHandle, nullptr, &surface));
+    }
 
-        //Pick a physical device
-        const std::vector<const char*> requiredDeviceExtensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
-
-        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        uint32_t deviceCount = 0;
-        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
-        if(deviceCount == 0)
-            BZ_ASSERT_ALWAYS_CORE("No physical devices found!");
-
-        std::vector<VkPhysicalDevice> devices(deviceCount);
-        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
-        for(const auto& device : devices) {
-            if(isPhysicalDeviceSuitable(device, requiredDeviceExtensions)) {
-                physicalDevice = device;
-                break;
-            }
-        }
-        BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
-
-        //Setup a logical device to interface with the physical device
-        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-
+    void VulkanContext::createLogicalDevice(const std::vector<const char*> &requiredDeviceExtensions) {
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        std::set<uint32_t> uniqueQueueFamilies = {queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value()};
         float queuePriority = 1.0f;
         for(uint32_t queueFamily : uniqueQueueFamilies) {
             VkDeviceQueueCreateInfo queueCreateInfo = {};
@@ -118,10 +173,11 @@ namespace BZ {
         deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
         BZ_ASSERT_VK(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device));
 
-        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-        vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+        vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
+        vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
+    }
 
-        //Create Swapchain
+    void VulkanContext::createSwapChain() {
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -142,11 +198,11 @@ namespace BZ {
         swapChainCreateInfo.imageArrayLayers = 1;
         swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-        if(indices.graphicsFamily != indices.presentFamily) {
+        uint32_t queueFamilyIndicesArr[] = {queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value()};
+        if(queueFamilyIndices.graphicsFamily != queueFamilyIndices.presentFamily) {
             swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             swapChainCreateInfo.queueFamilyIndexCount = 2;
-            swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+            swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndicesArr;
         }
         else {
             swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -162,8 +218,11 @@ namespace BZ {
 
         swapChainImageFormat = surfaceFormat.format;
         swapChainExtent = extent;
+    }
 
+    void VulkanContext::createImageViews() {
         //Get the images created for the swapchain
+        uint32_t imageCount;
         BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr));
         swapChainImages.resize(imageCount);
         BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data()));
@@ -187,8 +246,9 @@ namespace BZ {
             imageViewCreateInfo.subresourceRange.layerCount = 1;
             BZ_ASSERT_VK(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapChainImageViews[i]));
         }
+    }
 
-        //Create sync objects
+    void VulkanContext::createSyncObjects() {
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -205,77 +265,25 @@ namespace BZ {
             BZ_ASSERT_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
             BZ_ASSERT_VK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
         }
-
-        doTestStuff(indices);
-
-
-        uint32_t extensionCount = 0;
-        BZ_ASSERT_VK(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr));
-        std::vector<VkExtensionProperties> extensions(extensionCount);
-        BZ_ASSERT_VK(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()));
-
-        //TODO
-        BZ_LOG_CORE_INFO("Vulkan Context:");
-        //BZ_LOG_CORE_INFO("  Vendor: {0}.", glGetString(GL_VENDOR));
-        //BZ_LOG_CORE_INFO("  Renderer: {0}.", glGetString(GL_RENDERER));
-        //BZ_LOG_CORE_INFO("  Version: {0}.", glGetString(GL_VERSION));
-        //BZ_LOG_CORE_INFO("  GLSL Version: {0}.", glGetString(GL_SHADING_LANGUAGE_VERSION));
-        BZ_LOG_CORE_INFO("  {0} available instance extensions:", extensionCount);
-        for(const auto& extension : extensions) {
-            BZ_LOG_CORE_INFO("    {0} - {1}.", extension.extensionName, extension.specVersion);
-        }
-
-        rendererAPI = std::make_unique<VulkanRendererAPI>();
-        RenderCommand::initRendererAPI(rendererAPI.get());
     }
 
-    VulkanContext::~VulkanContext() {
-        BZ_ASSERT_VK(vkDeviceWaitIdle(device));
-
-        for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(device, inFlightFences[i], nullptr);
+    void VulkanContext::cleanupSwapChain() {
+        for(size_t i = 0; i < swapChainFramebuffers.size(); i++) {
+            vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
         }
 
+        vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         vkDestroyCommandPool(device, commandPool, nullptr);
-
-        for(auto framebuffer : swapChainFramebuffers) {
-            vkDestroyFramebuffer(device, framebuffer, nullptr);
-        }
-
-        for(auto imageView : swapChainImageViews) {
-            vkDestroyImageView(device, imageView, nullptr);
-        }
-
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
-        vkDestroySurfaceKHR(instance, surface, nullptr);
 
         vkDestroyPipeline(device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         vkDestroyRenderPass(device, renderPass, nullptr);
 
-        vkDestroyDevice(device, nullptr);
+        for(size_t i = 0; i < swapChainImageViews.size(); i++) {
+            vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+        }
 
-        auto func = getExtensionFunction<PFN_vkDestroyDebugUtilsMessengerEXT>(instance, "vkDestroyDebugUtilsMessengerEXT");
-        func(instance, debugMessenger, nullptr);
-
-        vkDestroyInstance(instance, nullptr);
-    }
-
-    void VulkanContext::swapBuffers() {
-        //glfwSwapBuffers(windowHandle);
-        //TODO
-
-        draw();
-
-
-    }
-
-    void VulkanContext::setVSync(bool enabled) {
-        GraphicsContext::setVSync(enabled);
-
-        //TODO
+        vkDestroySwapchainKHR(device, swapChain, nullptr);
     }
 
     template<typename T>
@@ -285,6 +293,24 @@ namespace BZ {
         return func;
     }
 
+    VkPhysicalDevice VulkanContext::pickPhysicalDevice(const std::vector<const char*> &requiredDeviceExtensions) {
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        uint32_t deviceCount = 0;
+        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
+
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
+        for(const auto& device : devices) {
+            queueFamilyIndices = findQueueFamilies(device);
+
+            if(isPhysicalDeviceSuitable(device, requiredDeviceExtensions)) {
+                physicalDevice = device;
+                break;
+            }
+        }
+        return physicalDevice;
+    }
+
     bool VulkanContext::isPhysicalDeviceSuitable(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const {
         VkPhysicalDeviceProperties deviceProperties;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
@@ -292,7 +318,6 @@ namespace BZ {
         VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-        QueueFamilyIndices indices = findQueueFamilies(device);
         bool hasRequiredExtensions = checkDeviceExtensionSupport(device, requiredExtensions);
 
         bool isSwapChainAdequate = false;
@@ -301,7 +326,29 @@ namespace BZ {
             isSwapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty(); //TODO: have some requirements
         }
 
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices.isComplete() && hasRequiredExtensions && isSwapChainAdequate;
+        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && queueFamilyIndices.isComplete() && hasRequiredExtensions && isSwapChainAdequate;
+    }
+
+    bool VulkanContext::checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const {
+        uint32_t extensionCount;
+        BZ_ASSERT_VK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr));
+
+        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        BZ_ASSERT_VK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data()));
+
+        for(const char* extensionName : requiredExtensions) {
+            bool extensionFound = false;
+            for(const auto& extensionProp : availableExtensions) {
+                if(strcmp(extensionName, extensionProp.extensionName) == 0) {
+                    extensionFound = true;
+                    break;
+                }
+            }
+
+            if(!extensionFound)
+                return false;
+        }
+        return true;
     }
 
     VulkanContext::QueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device) const {
@@ -330,28 +377,6 @@ namespace BZ {
         }
 
         return indices;
-    }
-
-    bool VulkanContext::checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const {
-        uint32_t extensionCount;
-        BZ_ASSERT_VK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr));
-
-        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-        BZ_ASSERT_VK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data()));
-
-        for(const char* extensionName : requiredExtensions) {
-            bool extensionFound = false;
-            for(const auto& extensionProp : availableExtensions) {
-                if(strcmp(extensionName, extensionProp.extensionName) == 0) {
-                    extensionFound = true;
-                    break;
-                }
-            }
-
-            if(!extensionFound)
-                return false;
-        }
-        return true;
     }
 
     VulkanContext::SwapChainSupportDetails VulkanContext::querySwapChainSupport(VkPhysicalDevice device) const {
@@ -400,9 +425,9 @@ namespace BZ {
             return capabilities.currentExtent;
         }
         else {
-            //int w, h;
-            //glfwGetWindowSize(windowHandle, &w, &h);
-            VkExtent2D actualExtent = {1280, 800};
+            int w, h;
+            glfwGetFramebufferSize(windowHandle, &w, &h);
+            VkExtent2D actualExtent = {w, h};
 
             actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
             actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -436,7 +461,7 @@ namespace BZ {
     /////////////////////////////
     ///TODO : temporary stuff
     ////////////////////////////
-    void VulkanContext::doTestStuff(QueueFamilyIndices &queueFamilyIndices) {
+    void VulkanContext::createRenderPass() {
         VkAttachmentReference colorAttachmentRef = {};
         colorAttachmentRef.attachment = 0;
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -477,8 +502,9 @@ namespace BZ {
         renderPassInfo.pDependencies = &dependency;
 
         BZ_ASSERT_VK(vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass));
+    }
 
-
+    void VulkanContext::createGraphicsPipeline() {
         auto vertShaderCode = readFile("../../../assets/shaders/bin/vert.spv");
         auto fragShaderCode = readFile("../../../assets/shaders/bin/frag.spv");
 
@@ -500,7 +526,6 @@ namespace BZ {
         fragShaderStageInfo.pName = "main";
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-
 
         //Vertex input data format
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
@@ -615,7 +640,9 @@ namespace BZ {
 
         vkDestroyShaderModule(device, fragShaderModule, nullptr);
         vkDestroyShaderModule(device, vertShaderModule, nullptr);
+    }
 
+    void VulkanContext::createFramebuffers() {
         //Create Framebuffers for swapchain images
         swapChainFramebuffers.resize(swapChainImageViews.size());
         for(size_t i = 0; i < swapChainImageViews.size(); i++) {
@@ -632,7 +659,9 @@ namespace BZ {
 
             BZ_ASSERT_VK(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]));
         }
+    }
 
+    void VulkanContext::createCommandBuffers() {
         //Create command pool
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -679,14 +708,20 @@ namespace BZ {
             BZ_ASSERT_VK(vkEndCommandBuffer(commandBuffers[i]));
         }
     }
-    
+
+    void VulkanContext::initTestStuff() {
+        createRenderPass();
+        createGraphicsPipeline();
+        createFramebuffers();
+        createCommandBuffers();
+    }
+
     void VulkanContext::draw() {
         BZ_ASSERT_VK(vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX));
-        BZ_ASSERT_VK(vkResetFences(device, 1, &inFlightFences[currentFrame]));
 
         //This index will be used to pick the correct command buffer
         uint32_t imageIndex;
-        BZ_ASSERT_VK(vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex));
+        BZ_LOG_VK(vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex));
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -701,6 +736,8 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
+        BZ_ASSERT_VK(vkResetFences(device, 1, &inFlightFences[currentFrame]));
+
         BZ_ASSERT_VK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]));
 
         VkPresentInfoKHR presentInfo = {};
@@ -713,8 +750,7 @@ namespace BZ {
         presentInfo.pImageIndices = &imageIndex;
         presentInfo.pResults = nullptr; // Optional
 
-        BZ_ASSERT_VK(vkQueuePresentKHR(presentQueue, &presentInfo));
-
+        BZ_LOG_VK(vkQueuePresentKHR(presentQueue, &presentInfo));
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 

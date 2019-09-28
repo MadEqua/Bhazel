@@ -73,6 +73,8 @@ namespace BZ {
             win.data.width = w;
             win.data.height = h;
 
+            win.getGraphicsContext().onWindowResize(w, h);
+
             WindowResizeEvent event(w, h);
             win.eventCallback(event);
         };

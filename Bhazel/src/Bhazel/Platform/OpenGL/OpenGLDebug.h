@@ -16,7 +16,7 @@ namespace BZ {
     (call); \
     GLenum err = checkOpenGLErrors(); \
     if(err != GL_NO_ERROR) \
-        BZ_ASSERT_ALWAYS_CORE("OpenGL Error. Code: 0x{0:04x}.", err); \
+        BZ_ASSERT_ALWAYS_CORE("OpenGL Error! Code: 0x{0:04x}.", err); \
 }
 
 #define BZ_LOG_GL(call) { \

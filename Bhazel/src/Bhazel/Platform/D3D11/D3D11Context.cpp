@@ -98,7 +98,7 @@ namespace BZ {
         BZ_ASSERT_HRES_DXGI(swapChain->Present(static_cast<uint32>(vsync), 0));
     }
 
-    void D3D11Context::handleWindowResize(int witdh, int height) {
+    void D3D11Context::onWindowResize(uint32 width, uint32 height) {
         BZ_LOG_DXGI(deviceContext->OMSetRenderTargets(0, nullptr, nullptr));
         backBufferView.Reset();
         depthStencilView.Reset();

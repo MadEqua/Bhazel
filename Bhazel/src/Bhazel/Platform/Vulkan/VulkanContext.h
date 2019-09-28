@@ -15,19 +15,34 @@ namespace BZ {
         ~VulkanContext() override;
 
         void swapBuffers() override;
+
+        void onWindowResize(uint32 width, uint32 height) override;
+
         void setVSync(bool enabled) override;
 
     private:
+        struct QueueFamilyIndices {
+            std::optional<uint32_t> graphicsFamily;
+            std::optional<uint32_t> presentFamily;
+
+            bool isComplete() const {
+                return graphicsFamily && presentFamily;
+            }
+        };
+
         GLFWwindow *windowHandle;
 
         VkInstance instance;
         VkDevice device;
 
+        VkPhysicalDevice physicalDevice;
+        QueueFamilyIndices queueFamilyIndices;
+
         VkQueue graphicsQueue;
         VkQueue presentQueue;
 
         VkSurfaceKHR surface;
-        VkSwapchainKHR swapChain;
+        VkSwapchainKHR swapChain = VK_NULL_HANDLE;
         std::vector<VkImage> swapChainImages;
         VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
@@ -44,20 +59,22 @@ namespace BZ {
         VkDebugUtilsMessengerEXT debugMessenger;
 #endif
 
+        void createInstance();
+        void createSurface();
+        void createLogicalDevice(const std::vector<const char*> &requiredDeviceExtensions);
+        void createSwapChain();
+        void createImageViews();
+        void createSyncObjects();
+
+        void cleanupSwapChain();
+
         template<typename T>
         static T getExtensionFunction(VkInstance instance, const char *name);
 
+        VkPhysicalDevice pickPhysicalDevice(const std::vector<const char*> &requiredDeviceExtensions);
         bool isPhysicalDeviceSuitable(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const;
         bool checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const;
 
-        struct QueueFamilyIndices {
-            std::optional<uint32_t> graphicsFamily;
-            std::optional<uint32_t> presentFamily;
-
-            bool isComplete() {
-                return graphicsFamily && presentFamily;
-            }
-        };
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
 
         struct SwapChainSupportDetails {
@@ -75,6 +92,14 @@ namespace BZ {
 
 
         //TODO: temporary test stuff
+        void createRenderPass();
+        void createGraphicsPipeline();
+        void createFramebuffers();
+        void createCommandBuffers();
+
+        void initTestStuff();
+        void draw();
+
         VkRenderPass renderPass;
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
@@ -83,8 +108,6 @@ namespace BZ {
 
         std::vector<VkFramebuffer> swapChainFramebuffers;
 
-        void doTestStuff(QueueFamilyIndices &queueFamilyIndices);
-        void draw();
         VkShaderModule createShaderModule(const std::vector<char>& code);
 
         static std::vector<char> readFile(const std::string& filename);

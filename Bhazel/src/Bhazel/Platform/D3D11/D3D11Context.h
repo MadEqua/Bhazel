@@ -13,7 +13,7 @@ namespace BZ {
 
         virtual void swapBuffers() override;
 
-        void handleWindowResize(int witdh, int height);
+        void onWindowResize(uint32 width, uint32 height) override;
 
         ID3D11Device* getDevice() { return device.Get(); }
         ID3D11DeviceContext* getDeviceContext() { return deviceContext.Get(); }
