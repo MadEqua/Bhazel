@@ -27,12 +27,14 @@ namespace BZ {
         createLogicalDevice(requiredDeviceExtensions);
         createSyncObjects();
 
-        //TODO
-        BZ_LOG_CORE_INFO("Vulkan Context (TODO):");
-        //BZ_LOG_CORE_INFO("  Vendor: {0}.", glGetString(GL_VENDOR));
-        //BZ_LOG_CORE_INFO("  Renderer: {0}.", glGetString(GL_RENDERER));
-        //BZ_LOG_CORE_INFO("  Version: {0}.", glGetString(GL_VERSION));
-        //BZ_LOG_CORE_INFO("  GLSL Version: {0}.", glGetString(GL_SHADING_LANGUAGE_VERSION));
+        VkPhysicalDeviceProperties physicalDeviceProperties;
+        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+        BZ_LOG_CORE_INFO("Vulkan Context:");
+        BZ_LOG_CORE_INFO("  Device Name: {}.", physicalDeviceProperties.deviceName);
+        BZ_LOG_CORE_INFO("  Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion), VK_VERSION_MINOR(physicalDeviceProperties.apiVersion), VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
+        BZ_LOG_CORE_INFO("  Driver Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.driverVersion), VK_VERSION_MINOR(physicalDeviceProperties.driverVersion), VK_VERSION_PATCH(physicalDeviceProperties.driverVersion));
+        BZ_LOG_CORE_INFO("  VendorId: 0x{:04x}.", physicalDeviceProperties.vendorID);
+        BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
 
         rendererAPI = std::make_unique<VulkanRendererAPI>();
         RenderCommand::initRendererAPI(rendererAPI.get());
@@ -60,7 +62,7 @@ namespace BZ {
         vkDestroyInstance(instance, nullptr);
     }
 
-    void VulkanContext::swapBuffers() {
+    void VulkanContext::presentBuffer() {
         //glfwSwapBuffers(windowHandle);
         //TODO
 

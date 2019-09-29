@@ -14,7 +14,7 @@ namespace BZ {
         explicit VulkanContext(GLFWwindow *windowHandle);
         ~VulkanContext() override;
 
-        void swapBuffers() override;
+        void presentBuffer() override;
 
         void onWindowResize(uint32 width, uint32 height) override;
 

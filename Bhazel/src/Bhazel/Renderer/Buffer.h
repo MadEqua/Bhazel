@@ -79,13 +79,11 @@ namespace BZ {
         virtual void unbindFromPipelineAsGeneric(uint32 unit = 0) const = 0;
 
         uint32 getSize() const { return size; }
-        uint32 getCount() const { return count; }
         BufferType getType() const { return type; }
         const BufferLayout& getLayout() const { return layout; }
 
     protected:
         uint32 size;
-        uint32 count;
         BufferType type;
         BufferLayout layout;
 
