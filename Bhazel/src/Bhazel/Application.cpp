@@ -60,15 +60,13 @@ namespace BZ {
 
         Timer frameTimer;
         frameStats = {};
-        bool frameStartedMinimized;
 
         while(!window->isClosed()) {
             frameTimer.start();
-            frameStartedMinimized = window->isMinimized();
 
             window->pollEvents();
 
-            if(!frameStartedMinimized) {
+            if(!window->isMinimized()) {
 
                 layerStack.onUpdate(frameStats);
 

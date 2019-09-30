@@ -2,7 +2,7 @@
 
 #include "Bhazel/Renderer/GraphicsContext.h"
 
-#include "VulkanIncludes.h"
+#include "Bhazel/Platform/Vulkan/VulkanIncludes.h"
 
 
 struct GLFWwindow;
@@ -11,12 +11,11 @@ namespace BZ {
 
     class VulkanContext : public GraphicsContext {
     public:
-        explicit VulkanContext(GLFWwindow *windowHandle);
+        explicit VulkanContext(void *windowHandle);
         ~VulkanContext() override;
 
+        void onWindowResize(WindowResizedEvent& e) override;
         void presentBuffer() override;
-
-        void onWindowResize(uint32 width, uint32 height) override;
 
         void setVSync(bool enabled) override;
 
@@ -66,6 +65,7 @@ namespace BZ {
         void createImageViews();
         void createSyncObjects();
 
+        void recreateSwapChain();
         void cleanupSwapChain();
 
         template<typename T>

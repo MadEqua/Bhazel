@@ -1,18 +1,18 @@
 #include "bzpch.h"
 
-#include "VulkanContext.h"
-#include "VulkanRendererAPI.h"
+#include "Bhazel/Platform/Vulkan/VulkanContext.h"
+#include "Bhazel/Platform/Vulkan/VulkanRendererAPI.h"
+#include "Bhazel/Renderer/RenderCommand.h"
 
 #include <GLFW/glfw3.h>
-
 
 #include <fstream>
 
 
 namespace BZ {
 
-    VulkanContext::VulkanContext(GLFWwindow *windowHandle) :
-        windowHandle(windowHandle) {
+    VulkanContext::VulkanContext(void *windowHandle) :
+        windowHandle(static_cast<GLFWwindow*>(windowHandle)) {
         BZ_ASSERT_CORE(windowHandle, "Window handle is null!");
 
         createInstance();
@@ -26,6 +26,10 @@ namespace BZ {
 
         createLogicalDevice(requiredDeviceExtensions);
         createSyncObjects();
+
+        createSwapChain();
+        createImageViews();
+        initTestStuff();
 
         VkPhysicalDeviceProperties physicalDeviceProperties;
         vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
@@ -75,21 +79,8 @@ namespace BZ {
         //TODO
     }
 
-    void VulkanContext::onWindowResize(uint32 width, uint32 height) {
-        if(width == 0 || height == 0) return;
-
-        BZ_ASSERT_VK(vkDeviceWaitIdle(device));
-
-        if(swapChain != VK_NULL_HANDLE)
-            cleanupSwapChain();
-
-        createSwapChain();
-        createImageViews();
-
-        //Render pass depends on the format of the swapchain (it's rare for the format to change, but still...)
-        //Viewport and scissor rectangle size (possible to avoid if we set those to dynamic state)
-        //Framebuffers and command buffers depend on swapchain images
-        initTestStuff();
+    void VulkanContext::onWindowResize(WindowResizedEvent& e) {
+        recreateSwapChain();
     }
 
     void VulkanContext::createInstance() {
@@ -268,6 +259,22 @@ namespace BZ {
             BZ_ASSERT_VK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
         }
     }
+
+    void VulkanContext::recreateSwapChain() {
+        BZ_ASSERT_VK(vkDeviceWaitIdle(device));
+
+        if(swapChain != VK_NULL_HANDLE)
+            cleanupSwapChain();
+
+        createSwapChain();
+        createImageViews();
+
+        //Render pass depends on the format of the swapchain (it's rare for the format to change, but still...)
+        //Viewport and scissor rectangle size (possible to avoid if we set those to dynamic state)
+        //Framebuffers and command buffers depend on swapchain images
+        initTestStuff();
+    }
+
 
     void VulkanContext::cleanupSwapChain() {
         for(size_t i = 0; i < swapChainFramebuffers.size(); i++) {
@@ -723,7 +730,12 @@ namespace BZ {
 
         //This index will be used to pick the correct command buffer
         uint32_t imageIndex;
-        BZ_LOG_VK(vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex));
+        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        if(result != VK_SUCCESS) {
+            BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
+            recreateSwapChain();
+            return;
+        }
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -752,7 +764,11 @@ namespace BZ {
         presentInfo.pImageIndices = &imageIndex;
         presentInfo.pResults = nullptr; // Optional
 
-        BZ_LOG_VK(vkQueuePresentKHR(presentQueue, &presentInfo));
+        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        if(result != VK_SUCCESS) {
+            BZ_LOG_CORE_ERROR("VulkanContext failed to present image. Error: {}.", result);
+            recreateSwapChain();
+        }
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 

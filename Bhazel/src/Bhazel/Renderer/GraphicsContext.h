@@ -17,9 +17,6 @@ namespace BZ {
         virtual void onWindowResize(WindowResizedEvent& e) {};
         virtual void presentBuffer() = 0;
 
-        //Called on app startup and on window resize
-        virtual void onWindowResize(uint32 width, uint32 height) {}
-
         virtual void setVSync(bool enabled) { vsync = enabled; };
         bool isVSync() const { return vsync; }
 

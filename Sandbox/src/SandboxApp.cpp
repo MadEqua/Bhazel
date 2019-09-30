@@ -59,7 +59,7 @@ void ExampleLayer::onGraphicsContextCreated() {
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
-    cameraController->onUpdate(frameStats);
+    //cameraController->onUpdate(frameStats);
 
     //const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
 
