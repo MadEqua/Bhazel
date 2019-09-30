@@ -228,8 +228,8 @@ namespace BZ {
                 }
                 else {
                     WindowResizedEvent event(w, h);
-                    window->data.width = w;
-                    window->data.height = h;
+                    window->data.dimensions.x = w;
+                    window->data.dimensions.y = h;
                     window->eventCallback(event);
                 }
                 break;
@@ -379,7 +379,7 @@ namespace BZ {
     void Win32Window::init() {
         createKeyTranslationTable();
 
-        BZ_LOG_CORE_INFO("Creating Win32 Window: {0}. Dimensions: ({1}, {2})", data.title, data.width, data.height);
+        BZ_LOG_CORE_INFO("Creating Win32 Window: {0}. Dimensions: ({1}, {2})", data.title, data.dimensions.x, data.dimensions.y);
 
         //register window class
         WNDCLASSEXW wndClass = {};
@@ -416,8 +416,8 @@ namespace BZ {
 
         //Adjust client region size now that we can query the window DPI
         RECT rect = {};
-        rect.right = data.width;
-        rect.bottom = data.height;
+        rect.right = data.dimensions.x;
+        rect.bottom = data.dimensions.y;
         ClientToScreen(hWnd, (POINT*) &rect.left);
         ClientToScreen(hWnd, (POINT*) &rect.right);
 

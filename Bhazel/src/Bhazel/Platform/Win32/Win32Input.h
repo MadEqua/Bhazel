@@ -9,13 +9,12 @@ namespace BZ {
     public:
         explicit Win32Input(void *nativeWindowHandle) : nativeWindow(static_cast<HWND>(nativeWindowHandle)) {}
 
-    protected:
-        bool isKeyPressedImpl(int keycode) override;
+        bool isKeyPressed(int keycode) override;
 
-        bool isMouseButtonPressedImpl(int button) override;
-        glm::ivec2 getMousePositionImpl() override;
-        int getMouseXImpl() override;
-        int getMouseYImpl() override;
+        bool isMouseButtonPressed(int button) override;
+        glm::ivec2 getMousePosition() override;
+        int getMouseX() override;
+        int getMouseY() override;
 
     private:
         HWND nativeWindow;

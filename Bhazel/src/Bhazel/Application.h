@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Bhazel/Renderer/GraphicsContext.h"
-
 #include "Bhazel/Window.h"
+#include "Bhazel/Input.h"
 #include "Bhazel/LayerStack.h"
 #include "Bhazel/Core/Ini/IniParser.h"
 #include "Bhazel/Core/Timer.h"
@@ -37,6 +37,7 @@ namespace BZ {
 
         Window& getWindow() { return *window; }
         GraphicsContext& getGraphicsContext() { return *graphicsContext; }
+        Input& getInput() { return *input; }
 
         const FrameStats &getFrameStats() const { return frameStats; }
         const std::string& getAssetsPath() const { return assetsPath; }
@@ -46,6 +47,7 @@ namespace BZ {
     private:
         std::unique_ptr<Window> window;
         std::unique_ptr<GraphicsContext> graphicsContext;
+        std::unique_ptr<Input> input;
 
         bool onWindowResized(WindowResizedEvent &e);
 

@@ -17,7 +17,7 @@ namespace BZ {
 
     Application::Application() {
         //Init logger
-        Log::getInstance();
+        Log::get();
 
         BZ_ASSERT_CORE(!instance, "Application already exists");
         instance = this;
@@ -43,39 +43,33 @@ namespace BZ {
     void Application::run() {
         auto &settings = iniParser.getParsedIniSettings();
         WindowData windowData;
-        windowData.width = settings.getFieldAsBasicType<uint32>("width", 1280);
-        windowData.height = settings.getFieldAsBasicType<uint32>("height", 800);
+        windowData.dimensions.x = settings.getFieldAsBasicType<uint32>("width", 1280);
+        windowData.dimensions.y = settings.getFieldAsBasicType<uint32>("height", 800);
         windowData.title = settings.getFieldAsString("title", "Bhazel Engine Application");
         //windowData.fullScreen = settings.getFieldAsBasicType<bool>("fullScreen", false);
 
         window = std::unique_ptr<Window>(Window::create(windowData, BZ_BIND_EVENT_FN(Application::onEvent)));
         graphicsContext = std::unique_ptr<GraphicsContext>(GraphicsContext::create(window->getNativeWindowHandle()));
         graphicsContext->setVSync(settings.getFieldAsBasicType<bool>("vsync", true));
+        input = std::unique_ptr<Input>(Input::create(window->getNativeWindowHandle()));
 
         Renderer::init();
-        Input::init(window->getNativeWindowHandle());
         layerStack.onGraphicsContextCreated();
 
         Timer frameTimer;
         frameStats = {};
-        bool frameStartedMinimized;
 
         while(!window->isClosed()) {
             frameTimer.start();
-            frameStartedMinimized = window->isMinimized();
 
             window->pollEvents();
 
-            if(!frameStartedMinimized) {
+            if(!window->isMinimized()) {
 
-                for(Layer *layer : layerStack) {
-                    layer->onUpdate(frameStats);
-                }
+                layerStack.onUpdate(frameStats);
 
                 imGuiLayer->begin();
-                for(Layer *layer : layerStack) {
-                    layer->onImGuiRender(frameStats);
-                }
+                layerStack.onImGuiRender(frameStats);
                 imGuiLayer->end();
 
                 graphicsContext->presentBuffer();
@@ -97,10 +91,7 @@ namespace BZ {
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(Application::onWindowResized));
 
-        for (auto it = layerStack.end(); it != layerStack.begin(); ) {
-            if (e.handled) break;
-            (*--it)->onEvent(e);
-        }
+        layerStack.onEvent(e);
     }
 
     void Application::pushLayer(Layer *layer) {

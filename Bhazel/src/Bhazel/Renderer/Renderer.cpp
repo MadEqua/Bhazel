@@ -1,14 +1,14 @@
 #include "bzpch.h"
 
 #include "Renderer.h"
-#include "RenderCommand.h"
-#include "Camera.h"
+#include "Bhazel/Renderer/RenderCommand.h"
+#include "Bhazel/Renderer/Camera.h"
 #include "Bhazel/Application.h"
 
-#include "Buffer.h"
-#include "Shader.h"
-#include "InputDescription.h"
-#include "PipelineSettings.h"
+#include "Bhazel/Renderer/Buffer.h"
+#include "Bhazel/Renderer/Shader.h"
+#include "Bhazel/Renderer/InputDescription.h"
+#include "Bhazel/Renderer/PipelineSettings.h"
 
 #include "Bhazel/Events/WindowEvent.h"
 

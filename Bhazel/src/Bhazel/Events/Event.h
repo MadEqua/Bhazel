@@ -6,7 +6,7 @@ namespace BZ {
     enum class EventType {
         EventCategoryNone = 0,
         WindowClosed, WindowResized, WindowFocused, WindowLostFocus, WindowMoved, WindowIconified,
-        AppTick, AppUpdate, AppRender,
+        AppInitialized, AppTick, AppUpdate, AppRender,
         KeyPressed, KeyReleased, KeyTyped,
         MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
     };
