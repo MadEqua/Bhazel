@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Bhazel/Events/Event.h"
-#include "Bhazel/Core/Timer.h"
 
 
 namespace BZ {

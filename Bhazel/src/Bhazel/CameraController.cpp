@@ -2,7 +2,7 @@
 
 #include "CameraController.h"
 #include "Bhazel/Application.h"
-#include "Bhazel/Events/ApplicationEvent.h"
+#include "Bhazel/Events/WindowEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Input.h"
 #include "Bhazel/KeyCodes.h"
@@ -19,20 +19,21 @@ namespace BZ {
         auto cameraPosition = camera.getPosition();
         bool positionChanged = false;
 
-        if(Input::isKeyPressed(BZ_KEY_A)) {
+        Input &input = Application::getInstance().getInput();
+        if(input.isKeyPressed(BZ_KEY_A)) {
             cameraPosition.x -= cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
-        else if(Input::isKeyPressed(BZ_KEY_D)) {
+        else if(input.isKeyPressed(BZ_KEY_D)) {
             cameraPosition.x += cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
         
-        if(Input::isKeyPressed(BZ_KEY_W)) {
+        if(input.isKeyPressed(BZ_KEY_W)) {
             cameraPosition.y += cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
-        else if(Input::isKeyPressed(BZ_KEY_S)) {
+        else if(input.isKeyPressed(BZ_KEY_S)) {
             cameraPosition.y -= cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
@@ -44,11 +45,11 @@ namespace BZ {
             auto cameraRotation = camera.getRotation();
             bool rotationChanged = false;
 
-            if(Input::isKeyPressed(BZ_KEY_Q)) {
+            if(input.isKeyPressed(BZ_KEY_Q)) {
                 cameraRotation -= cameraRotationSpeed * frameStats.lastFrameTime.asSeconds();
                 rotationChanged = true;
             }
-            else if(Input::isKeyPressed(BZ_KEY_E)) {
+            else if(input.isKeyPressed(BZ_KEY_E)) {
                 cameraRotation += cameraRotationSpeed * frameStats.lastFrameTime.asSeconds();
                 rotationChanged = true;
             }
@@ -64,7 +65,7 @@ namespace BZ {
         return false;
     }
 
-    bool OrthographicCameraController::onWindowResized(WindowResizeEvent &e) {
+    bool OrthographicCameraController::onWindowResized(WindowResizedEvent &e) {
         aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());
         camera.computeProjectionMatrix(-aspectRatio * zoom, aspectRatio * zoom, -zoom, zoom);
         return false;
@@ -73,18 +74,20 @@ namespace BZ {
 
     PerspectiveCameraController::PerspectiveCameraController(float fovy, float aspectRatio, float zoom) :
         CameraController(PerspectiveCamera(fovy * zoom, aspectRatio), aspectRatio, zoom),
-        fovy(fovy) {
+        fovy(fovy),
+        windowSize(Application::getInstance().getWindow().getDimensions()) {
     }
 
     void PerspectiveCameraController::onUpdate(const FrameStats &frameStats) {
-        auto mousePosition = Input::getMousePosition();
+        Input &input = Application::getInstance().getInput();
+        auto mousePosition = input.getMousePosition();
         if(mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if(lastMousePosition.x != -1 && lastMousePosition.y != -1) {
 
                 auto dif = mousePosition - lastMousePosition;
                 lastMousePosition = mousePosition;
 
-                if(Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
+                if(input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
                     auto cameraRotation = camera.getRotation();
                     cameraRotation.y -= static_cast<float>(dif.x) * 0.2f;
                     cameraRotation.x -= static_cast<float>(dif.y) * 0.2f;
@@ -101,20 +104,20 @@ namespace BZ {
         bool positionChanged = false;
         glm::vec3 localMovement = {};
 
-        if(Input::isKeyPressed(BZ_KEY_A)) {
+        if(input.isKeyPressed(BZ_KEY_A)) {
             localMovement += glm::vec3(-1.0f, 0.0f, 0.0f);
             positionChanged = true;
         }
-        else if(Input::isKeyPressed(BZ_KEY_D)) {
+        else if(input.isKeyPressed(BZ_KEY_D)) {
             localMovement += glm::vec3(1.0, 0.0f, 0.0f);
             positionChanged = true;
         }
 
-        if(Input::isKeyPressed(BZ_KEY_W)) {
+        if(input.isKeyPressed(BZ_KEY_W)) {
             localMovement += glm::vec3(0.0f, 0.0f, -1.0f);
             positionChanged = true;
         }
-        else if(Input::isKeyPressed(BZ_KEY_S)) {
+        else if(input.isKeyPressed(BZ_KEY_S)) {
             localMovement += glm::vec3(0.0f, 0.0f, 1.0f);
             positionChanged = true;
         }
@@ -132,7 +135,7 @@ namespace BZ {
         return false;
     }
 
-    bool PerspectiveCameraController::onWindowResized(WindowResizeEvent &e) {
+    bool PerspectiveCameraController::onWindowResized(WindowResizedEvent &e) {
         windowSize.x = e.getWidth();
         windowSize.y = e.getHeight();
         aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());

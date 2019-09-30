@@ -1,19 +1,20 @@
 #include "bzpch.h"
 
-#include "OpenGLIncludes.h"
 #include "OpenGLContext.h"
-#include "OpenGLRendererAPI.h"
+#include "Bhazel/Platform/OpenGL/OpenGLIncludes.h"
+#include "Bhazel/Platform/OpenGL/OpenGLRendererAPI.h"
+#include "Bhazel/Renderer/RenderCommand.h"
 
 #include <GLFW/glfw3.h>
 
 
 namespace BZ {
 
-    OpenGLContext::OpenGLContext(GLFWwindow *windowHandle) :
-        windowHandle(windowHandle) {
-        BZ_ASSERT_CORE(windowHandle, "Window handle is null!");
+    OpenGLContext::OpenGLContext(void *windowHandle) :
+        windowHandle(static_cast<GLFWwindow*>(windowHandle)) {
+        BZ_ASSERT_CORE(windowHandle, "Window handle is null");
 
-        glfwMakeContextCurrent(windowHandle);
+        glfwMakeContextCurrent(this->windowHandle);
         int status = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
         BZ_ASSERT_CORE(status, "Failed to initialize Glad!");
 

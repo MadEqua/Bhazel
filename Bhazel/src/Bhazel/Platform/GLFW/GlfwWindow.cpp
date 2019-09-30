@@ -1,13 +1,10 @@
 #include "bzpch.h"
 
 #include "GlfwWindow.h"
-#include "Bhazel/Events/ApplicationEvent.h"
+#include "Bhazel/Events/WindowEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 #include "Bhazel/Renderer/Renderer.h"
-
-#include "Bhazel/Platform/OpenGL/OpenGLContext.h"
-#include "Bhazel/Platform/Vulkan/VulkanContext.h"
 
 #include <GLFW/glfw3.h>
 
@@ -30,7 +27,7 @@ namespace BZ {
     }
 
     void GlfwWindow::init() {
-        BZ_LOG_CORE_INFO("Creating GLFW Window: {0}. Dimensions: ({1}, {2})", data.title, data.width, data.height);
+        BZ_LOG_CORE_INFO("Creating GLFW Window: {0}. Dimensions: ({1}, {2})", data.title, data.dimensions.x, data.dimensions.y);
 
         if(!isGLFWInitialized) {
             glfwSetErrorCallback(GLFWErrorCallback);
@@ -56,38 +53,34 @@ namespace BZ {
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         }
 
-        window = glfwCreateWindow(static_cast<int>(data.width), static_cast<int>(data.height), data.title.c_str(), nullptr, nullptr);
-        BZ_ASSERT_CORE(window, "Could not create GLFW Window!");
-
-        if(Renderer::api == Renderer::API::OpenGL)
-            graphicsContext = std::make_unique<OpenGLContext>(window);
-        else
-            graphicsContext = std::make_unique<VulkanContext>(window);
-
-        graphicsContext->setVSync(data.vsync);
+        window = glfwCreateWindow(data.dimensions.x, data.dimensions.y, data.title.c_str(), nullptr, nullptr);
+        BZ_ASSERT_CORE(window, "Could not create GLFW Window!");  
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
 
-        auto resizeCallback = [](GLFWwindow *window, int w, int h) {
-            GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
-            win.data.width = w;
-            win.data.height = h;
+        glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int w, int h) {
+            GlfwWindow& win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+            
+            //Ignore minimizes and restores.
+            if (w == 0 || h == 0 || (w == win.data.dimensions.x && h == win.data.dimensions.y)) return;
 
-            win.getGraphicsContext().onWindowResize(w, h);
-
-            WindowResizeEvent event(w, h);
+            win.data.dimensions.x = w;
+            win.data.dimensions.y = h;
+            WindowResizedEvent event(w, h);
             win.eventCallback(event);
-        };
-        glfwSetFramebufferSizeCallback(window, resizeCallback);
+         });
 
-        //Send a resize event on app start. Same as Win32Window.
-        int w, h;
-        glfwGetFramebufferSize(window, &w, &h);
-        resizeCallback(window, w, h);
+        glfwSetWindowIconifyCallback(window, [](GLFWwindow* window, int iconified) {
+            GlfwWindow& win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+            win.minimized = static_cast<bool>(iconified);
+            WindowIconifiedEvent event(static_cast<bool>(iconified));
+            win.eventCallback(event);
+        });
 
         glfwSetWindowCloseCallback(window, [](GLFWwindow *window) {
             GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
-            WindowCloseEvent event;
+            win.closed = true;
+            WindowClosedEvent event;
             win.eventCallback(event);
         });
 
@@ -162,11 +155,7 @@ namespace BZ {
         glfwPollEvents();
     }
 
-    void GlfwWindow::presentBuffer() {
-        graphicsContext->presentBuffer();
-    }
-
-    void GlfwWindow::setTitle(const std::string &title) {
-        glfwSetWindowTitle(window, title.c_str());
+    void GlfwWindow::setTitle(const char* title) {
+        glfwSetWindowTitle(window, title);
     }
 }

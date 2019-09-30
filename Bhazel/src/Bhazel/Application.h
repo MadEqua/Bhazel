@@ -1,6 +1,8 @@
 #pragma once
 
+#include "Bhazel/Renderer/GraphicsContext.h"
 #include "Bhazel/Window.h"
+#include "Bhazel/Input.h"
 #include "Bhazel/LayerStack.h"
 #include "Bhazel/Core/Ini/IniParser.h"
 #include "Bhazel/Core/Timer.h"
@@ -9,8 +11,7 @@
 namespace BZ {
 
     class Event;
-    class WindowCloseEvent;
-    class WindowResizeEvent;
+    class WindowResizedEvent;
     class Layer;
     class ImGuiLayer;
 
@@ -35,20 +36,22 @@ namespace BZ {
         void pushOverlay(Layer *overlay);
 
         Window& getWindow() { return *window; }
-        const FrameStats &getFrameStats() const { return frameStats; }
+        GraphicsContext& getGraphicsContext() { return *graphicsContext; }
+        Input& getInput() { return *input; }
 
-        const std::string getAssetsPath() const { return assetsPath; }
+        const FrameStats &getFrameStats() const { return frameStats; }
+        const std::string& getAssetsPath() const { return assetsPath; }
         
         static Application& getInstance() { return *instance; }
 
     private:
-        bool onWindowClose(WindowCloseEvent &e);
-        bool onWindowResize(WindowResizeEvent &e);
-
         std::unique_ptr<Window> window;
+        std::unique_ptr<GraphicsContext> graphicsContext;
+        std::unique_ptr<Input> input;
+
+        bool onWindowResized(WindowResizedEvent &e);
+
         ImGuiLayer* imGuiLayer;
-        bool running = true;
-        bool minimized = false;
 
         LayerStack layerStack;
         IniParser iniParser;
@@ -60,6 +63,6 @@ namespace BZ {
         static Application *instance;
     };
 
-    //To be defined in Bhazel client applications
+    //To be defined in Bhazel client applications. It should return an object inherited from Application.
     Application* createApplication();
 }

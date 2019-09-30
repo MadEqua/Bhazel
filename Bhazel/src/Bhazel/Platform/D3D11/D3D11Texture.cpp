@@ -13,7 +13,7 @@
 namespace BZ {
 
     D3D11Texture2D::D3D11Texture2D(const std::string &path) :
-        context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())),
+        context(static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext())),
         path(path) {
 
         stbi_set_flip_vertically_on_load(true);

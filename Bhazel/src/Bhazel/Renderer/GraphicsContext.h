@@ -1,15 +1,20 @@
 #pragma once
 
-#include "RenderCommand.h"
+#include "Bhazel/Renderer/RendererAPI.h"
 
 
 namespace BZ {
 
+    class WindowResizedEvent;
+
     class GraphicsContext
     {
     public:
+        static GraphicsContext* create(void *windowHandle);
+
         virtual ~GraphicsContext() = default;
         
+        virtual void onWindowResize(WindowResizedEvent& e) {};
         virtual void presentBuffer() = 0;
 
         //Called on app startup and on window resize
@@ -21,6 +26,8 @@ namespace BZ {
         RendererAPI& getRendererAPI() { return *rendererAPI; }
 
     protected:
+        GraphicsContext() = default;
+
         bool vsync = true;
         std::unique_ptr<RendererAPI> rendererAPI;
     };

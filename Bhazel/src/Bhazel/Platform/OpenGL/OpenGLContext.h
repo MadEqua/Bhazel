@@ -8,7 +8,7 @@ namespace BZ {
 
     class OpenGLContext : public GraphicsContext {
     public:
-        explicit OpenGLContext(GLFWwindow *windowHandle);
+        explicit OpenGLContext(void *windowHandle);
 
         void presentBuffer() override;
         void setVSync(bool enabled) override;

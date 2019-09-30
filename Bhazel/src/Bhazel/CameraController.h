@@ -7,7 +7,7 @@ namespace BZ {
 
     struct FrameStats;
     class MouseScrolledEvent;
-    class WindowResizeEvent;
+    class WindowResizedEvent;
     class Event;
 
 
@@ -26,7 +26,7 @@ namespace BZ {
         CameraController(T &camera, float aspectRatio, float zoom);
 
         virtual bool onMouseScrolled(MouseScrolledEvent &e) = 0;
-        virtual bool onWindowResized(WindowResizeEvent &e) = 0;
+        virtual bool onWindowResized(WindowResizedEvent &e) = 0;
 
         float aspectRatio;
         float zoom;
@@ -46,7 +46,7 @@ namespace BZ {
     void CameraController<T>::onEvent(Event &e) {
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<MouseScrolledEvent>(BZ_BIND_EVENT_FN(CameraController<T>::onMouseScrolled));
-        dispatcher.dispatch<WindowResizeEvent>(BZ_BIND_EVENT_FN(CameraController<T>::onWindowResized));
+        dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(CameraController<T>::onWindowResized));
     }
 
 
@@ -59,7 +59,7 @@ namespace BZ {
 
     private:
         bool onMouseScrolled(MouseScrolledEvent &e) override;
-        bool onWindowResized(WindowResizeEvent &e) override;
+        bool onWindowResized(WindowResizedEvent &e) override;
 
         bool enableRotation;
         float cameraRotationSpeed = 180.0f;
@@ -75,7 +75,7 @@ namespace BZ {
 
     private:
         bool onMouseScrolled(MouseScrolledEvent &e) override;
-        bool onWindowResized(WindowResizeEvent &e) override;
+        bool onWindowResized(WindowResizedEvent &e) override;
 
         float fovy;
         glm::ivec2 lastMousePosition = {-1, -1};

@@ -1,7 +1,7 @@
 #include "bzpch.h"
 
 #include "D3D11RendererAPI.h"
-#include "D3D11Context.h"
+#include "Bhazel/Platform/D3D11/D3D11Context.h"
 
 #include "Bhazel/Renderer/Renderer.h"
 #include "Bhazel/Renderer/PipelineSettings.h"
@@ -124,11 +124,11 @@ namespace BZ {
     }
 
     void D3D11RendererAPI::drawInstanced(uint32 vertexCount, uint32 instanceCount) {
-        BZ_ASSERT_ALWAYS_CORE("Not implemented!");
+        BZ_LOG_DXGI(deviceContext->DrawInstanced(vertexCount, instanceCount, 0, 0));
     }
 
     void D3D11RendererAPI::drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) {
-        BZ_ASSERT_ALWAYS_CORE("Not implemented!");
+        BZ_LOG_DXGI(deviceContext->DrawIndexedInstanced(indicesCount, instanceCount, 0, 0, 0));
     }
 
     void D3D11RendererAPI::submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {

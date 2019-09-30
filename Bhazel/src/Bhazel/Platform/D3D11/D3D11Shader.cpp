@@ -15,7 +15,7 @@ namespace BZ {
 
     D3D11Shader::D3D11Shader(const std::string &filePath) :
         Shader(Utils::getFileNameFromPath(filePath)),
-        context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
+        context(static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext())) {
 
         auto &sources = readAndPreprocessFile(filePath);
         compile(sources);
@@ -23,7 +23,7 @@ namespace BZ {
 
     D3D11Shader::D3D11Shader(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc) :
         Shader(name),
-        context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
+        context(static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext())) {
         std::unordered_map<ShaderType, std::string> sources;
         sources[ShaderType::Vertex] = vertexSrc;
         sources[ShaderType::Fragment] = fragmentSrc;

@@ -52,7 +52,7 @@ namespace BZ {
         else if(Renderer::api == Renderer::API::D3D11) {
             Win32Window &window = static_cast<Win32Window&>(Application::getInstance().getWindow());
             ImGui_ImplWin32_Init(window.getNativeWindowHandle());
-            D3D11Context &context = static_cast<D3D11Context&>(window.getGraphicsContext());
+            D3D11Context &context = static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext());
             window.setExtraHandlerFunction(ImGui_ImplWin32_WndProcHandler);
 
             ImGui_ImplDX11_Init(context.getDevice(), context.getDeviceContext());

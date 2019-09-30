@@ -9,11 +9,10 @@ namespace BZ {
 
     class D3D11Context : public GraphicsContext {
     public:
-        explicit D3D11Context(HWND windowHandle);
+        explicit D3D11Context(void *windowHandle);
 
+        virtual void onWindowResize(WindowResizedEvent& e) override;
         virtual void presentBuffer() override;
-
-        void onWindowResize(uint32 width, uint32 height) override;
 
         ID3D11Device* getDevice() { return device.Get(); }
         ID3D11DeviceContext* getDeviceContext() { return deviceContext.Get(); }

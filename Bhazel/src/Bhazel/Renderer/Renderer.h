@@ -8,10 +8,9 @@ namespace BZ {
     class Buffer;
     class Shader;
     struct FrameStats;
-    class WindowResizeEvent;
+    class WindowResizedEvent;
 
-    class Renderer
-    {
+    class Renderer {
     public:
 
         enum class API {
@@ -32,7 +31,7 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        static bool onWindowResize(WindowResizeEvent &ev);
+        static void onWindowResize(WindowResizedEvent &ev);
 
         static void beginScene(Camera &camera, const FrameStats &frameStats);
         static void endScene();

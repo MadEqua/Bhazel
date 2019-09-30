@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Bhazel/Window.h"
-#include "Bhazel/KeyCodes.h"
 
 
 namespace BZ {
@@ -12,8 +11,7 @@ namespace BZ {
         virtual ~Win32Window() override;
 
         virtual void pollEvents() override;
-        virtual void presentBuffer() override;
-        virtual void setTitle(const std::string &title) override;
+        virtual void setTitle(const char* title) override;
 
         virtual void* getNativeWindowHandle() const override { return hWnd; }
 
@@ -26,5 +24,9 @@ namespace BZ {
 
         LPCWSTR CLASS_NAME = L"BhazelWindowClass";
         HWND hWnd;
+
+        bool inited = false;
+
+        friend LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     };
 }
