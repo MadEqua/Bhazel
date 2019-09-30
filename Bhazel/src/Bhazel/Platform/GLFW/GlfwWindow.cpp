@@ -26,7 +26,7 @@ namespace BZ {
     }
 
     void GlfwWindow::init() {
-        BZ_LOG_CORE_INFO("Creating GLFW Window: {0}. Dimensions: ({1}, {2})", data.title, data.width, data.height);
+        BZ_LOG_CORE_INFO("Creating GLFW Window: {0}. Dimensions: ({1}, {2})", data.title, data.dimensions.x, data.dimensions.y);
 
         if(!isGLFWInitialized) {
             glfwSetErrorCallback(GLFWErrorCallback);
@@ -47,8 +47,8 @@ namespace BZ {
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
 
-        window = glfwCreateWindow(static_cast<int>(data.width), static_cast<int>(data.height), data.title.c_str(), nullptr, nullptr);
-        BZ_ASSERT_CORE(window, "Could not create GLFW Window!");
+        window = glfwCreateWindow(data.dimensions.x, data.dimensions.y, data.title.c_str(), nullptr, nullptr);
+        BZ_ASSERT_CORE(window, "Could not create GLFW Window!");  
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
 
@@ -56,10 +56,10 @@ namespace BZ {
             GlfwWindow& win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
             
             //Ignore minimizes and restores.
-            if (w == 0 || h == 0 || (w == win.data.width && h == win.data.height)) return;
+            if (w == 0 || h == 0 || (w == win.data.dimensions.x && h == win.data.dimensions.y)) return;
 
-            win.data.width = w;
-            win.data.height = h;
+            win.data.dimensions.x = w;
+            win.data.dimensions.y = h;
             WindowResizedEvent event(w, h);
             win.eventCallback(event);
          });

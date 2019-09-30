@@ -1,14 +1,15 @@
 #include "bzpch.h"
+
 #include "LayerStack.h"
 #include "Bhazel/Layer.h"
+#include "Bhazel/Renderer/Renderer.h"
+#include "Bhazel/Events/Event.h"
+
 
 namespace BZ {
 
-    LayerStack::LayerStack() {
-    }
-    
     LayerStack::~LayerStack() {
-        for (Layer *layer : layers) {
+        for(Layer *layer : layers) {
             layer->onDetach();
             delete layer;
         }
@@ -27,7 +28,7 @@ namespace BZ {
     
     void LayerStack::popLayer(Layer *layer) {
         auto it = std::find(layers.begin(), layers.end(), layer);
-        if (it != layers.end()) {
+        if(it != layers.end()) {
             layers.erase(it);
             layerInsertIndex--;
             layer->onDetach();
@@ -43,9 +44,27 @@ namespace BZ {
     }
 
     void LayerStack::onGraphicsContextCreated() {
-        for(Layer *layer : layers) {
+        for(Layer* layer : layers) {
             layer->onGraphicsContextCreated();
         }
     }
 
+    void LayerStack::onUpdate(const FrameStats& frameStats) {
+        for(Layer* layer : layers) {
+            layer->onUpdate(frameStats);
+        }
+    }
+
+    void LayerStack::onImGuiRender(const FrameStats& frameStats) {
+        for(Layer* layer : layers) {
+            layer->onImGuiRender(frameStats);
+        }
+    }
+
+    void LayerStack::onEvent(Event& event) {
+        for(auto it = layers.end(); it != layers.begin(); ) {
+            if(event.handled) break;
+            (*--it)->onEvent(event);
+        }
+    }
 }

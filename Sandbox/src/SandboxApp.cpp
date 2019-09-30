@@ -7,9 +7,8 @@
 
 
 ExampleLayer::ExampleLayer() :
-    Layer("Example"), 
-    //particleSystem(PARTICLE_COUNT),
-    cameraController(60.0f, 1280.0f / 800.0f) {
+    Layer("Example") {
+    //particleSystem(PARTICLE_COUNT) {
 }
 
 void ExampleLayer::onAttach() {
@@ -55,11 +54,12 @@ void ExampleLayer::onGraphicsContextCreated() {
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
-    cameraController.getCamera().setPosition({0.0f, 0.0f, 1.5f});
+    cameraController = BZ::MakeRef<BZ::PerspectiveCameraController>(60.0f, 1280.0f / 800.0f);
+    cameraController->getCamera().setPosition({0.0f, 0.0f, 1.5f});
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
-    cameraController.onUpdate(frameStats);
+    cameraController->onUpdate(frameStats);
 
     const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
 
@@ -71,7 +71,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
-    BZ::Renderer::beginScene(cameraController.getCamera(), frameStats);
+    BZ::Renderer::beginScene(cameraController->getCamera(), frameStats);
 
     texture->bindToPipeline(0);
 
@@ -95,7 +95,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {
-    cameraController.onEvent(event);
+    cameraController->onEvent(event);
 }
 
 void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {

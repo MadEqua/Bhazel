@@ -10,8 +10,7 @@ namespace BZ {
     struct FrameStats;
     class WindowResizedEvent;
 
-    class Renderer
-    {
+    class Renderer {
     public:
 
         enum class API {

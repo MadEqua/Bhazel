@@ -5,12 +5,12 @@
 namespace BZ {
 
     class GlfwInput : public Input {
-    protected:
-        bool isKeyPressedImpl(int keycode) override;
+    public:
+        bool isKeyPressed(int keycode) override;
 
-        bool isMouseButtonPressedImpl(int button) override;
-        glm::ivec2 getMousePositionImpl() override;
-        int getMouseXImpl() override;
-        int getMouseYImpl() override;
+        bool isMouseButtonPressed(int button) override;
+        glm::ivec2 getMousePosition() override;
+        int getMouseX() override;
+        int getMouseY() override;
     };
 }

@@ -24,7 +24,7 @@ private:
     BZ::Ref<BZ::Buffer> indexBuffer;
     BZ::Ref<BZ::Texture> texture;
 
-    BZ::PerspectiveCameraController cameraController;
+    BZ::Ref<BZ::PerspectiveCameraController> cameraController;
 
     //Compute shader test stuff
     constexpr static int PARTICLE_COUNT = 1024 * 10;

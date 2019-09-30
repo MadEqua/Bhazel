@@ -7,8 +7,7 @@ namespace BZ {
 
     struct WindowData {
         std::string title;
-        uint32 width;
-        uint32 height;
+        glm::ivec2 dimensions;
         //bool fullScreen;
     };
 
@@ -26,8 +25,9 @@ namespace BZ {
         virtual void pollEvents() = 0;
         virtual void* getNativeWindowHandle() const = 0;
 
-        uint32 getWidth() const { return data.width; }
-        uint32 getHeight() const {return data.height;}
+        uint32 getWidth() const { return data.dimensions.x; }
+        uint32 getHeight() const {return data.dimensions.y;}
+        const glm::ivec2& getDimensions() const { return data.dimensions; }
 
         bool isMinimized() const { return minimized; }
         bool isClosed() const { return closed; }
