@@ -28,6 +28,9 @@ namespace BZ {
 
         uint32 getWidth() const { return data.width; }
         uint32 getHeight() const {return data.height;}
+
+        bool isMinimized() const { return minimized; }
+        bool isClosed() const { return closed; }
         
         void setBaseTitle(const char* title) { data.title = title; }
         const std::string& getBaseTitle() const {return data.title;}
@@ -36,5 +39,8 @@ namespace BZ {
 
     protected:
         Window(const WindowData &data, EventCallbackFn eventCallback);
+
+        bool minimized = false;
+        bool closed = false;
     };
 }

@@ -5,7 +5,7 @@
 #include "Bhazel/Window.h"
 #include "Bhazel/Input.h"
 #include "Bhazel/Layer.h"
-#include "Bhazel/Events/ApplicationEvent.h"
+#include "Bhazel/Events/WindowEvent.h"
 #include "Bhazel/Renderer/Renderer.h"
 #include "Bhazel/ImGui/ImGuiLayer.h"
 #include "Bhazel/FrameStatsLayer.h"
@@ -60,9 +60,9 @@ namespace BZ {
         frameStats = {};
         bool frameStartedMinimized;
 
-        while(running) {
+        while(!window->isClosed()) {
             frameTimer.start();
-            frameStartedMinimized = minimized;
+            frameStartedMinimized = window->isMinimized();
 
             window->pollEvents();
 
@@ -92,9 +92,10 @@ namespace BZ {
     }
 
     void Application::onEvent(Event &e) {
+        BZ_LOG_CORE_TRACE(e);
+
         EventDispatcher dispatcher(e);
-        dispatcher.dispatch<WindowCloseEvent>(BZ_BIND_EVENT_FN(Application::onWindowClose));
-        dispatcher.dispatch<WindowResizeEvent>(BZ_BIND_EVENT_FN(Application::onWindowResize));
+        dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(Application::onWindowResized));
 
         for (auto it = layerStack.end(); it != layerStack.begin(); ) {
             if (e.handled) break;
@@ -110,19 +111,9 @@ namespace BZ {
         layerStack.pushOverlay(overlay);
     }
 
-    bool Application::onWindowClose(WindowCloseEvent &e) {
-        running = false;
-        return true;
-    }
-
-    bool Application::onWindowResize(WindowResizeEvent &e) {
-        if(e.getWidth() == 0 || e.getHeight() == 0) {
-            minimized = true;
-            return true;
-        }
-
+    bool Application::onWindowResized(WindowResizedEvent &e) {
+        graphicsContext->onWindowResize(e);
         Renderer::onWindowResize(e);
-        minimized = false;
         return false;
     }
 }

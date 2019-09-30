@@ -11,8 +11,7 @@
 namespace BZ {
 
     class Event;
-    class WindowCloseEvent;
-    class WindowResizeEvent;
+    class WindowResizedEvent;
     class Layer;
     class ImGuiLayer;
 
@@ -48,12 +47,9 @@ namespace BZ {
         std::unique_ptr<Window> window;
         std::unique_ptr<GraphicsContext> graphicsContext;
 
-        bool onWindowClose(WindowCloseEvent &e);
-        bool onWindowResize(WindowResizeEvent &e);
+        bool onWindowResized(WindowResizedEvent &e);
 
         ImGuiLayer* imGuiLayer;
-        bool running = true;
-        bool minimized = false;
 
         LayerStack layerStack;
         IniParser iniParser;

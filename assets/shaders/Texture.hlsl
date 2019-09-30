@@ -4,7 +4,8 @@ cbuffer Frame : register(b0) {
     float4x4 viewMatrix;
     float4x4 ProjectionMatrix;
     float4x4 viewProjectionMatrix;
-    float time;
+    float3 cameraPosition;
+    float2 timeAndDelta;
 };
 
 cbuffer Instance : register(b1) {
@@ -28,8 +29,8 @@ VsOut main(VsIn input) {
     res.col = input.col;
     res.texCoord = input.texCoord;
 
-    input.pos.x += sin(time + input.pos.x * 0.1) * 0.2;
-    input.pos.y += cos(time + input.pos.x * 0.23) * 0.3;
+    input.pos.x += sin(timeAndDelta.x + input.pos.x * 0.1) * 0.2;
+    input.pos.y += cos(timeAndDelta.x + input.pos.x * 0.23) * 0.3;
 
     res.pos = mul(mul(viewProjectionMatrix, modelMatrix), float4(input.pos, 1.0));
     return res;

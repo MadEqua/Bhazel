@@ -1,7 +1,7 @@
 #include "bzpch.h"
 
 #include "GlfwWindow.h"
-#include "Bhazel/Events/ApplicationEvent.h"
+#include "Bhazel/Events/WindowEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 
@@ -54,16 +54,27 @@ namespace BZ {
 
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int w, int h) {
             GlfwWindow& win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+            
+            //Ignore minimizes and restores.
+            if (w == 0 || h == 0 || (w == win.data.width && h == win.data.height)) return;
+
             win.data.width = w;
             win.data.height = h;
-
-            WindowResizeEvent event(w, h);
+            WindowResizedEvent event(w, h);
             win.eventCallback(event);
          });
 
+        glfwSetWindowIconifyCallback(window, [](GLFWwindow* window, int iconified) {
+            GlfwWindow& win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+            win.minimized = static_cast<bool>(iconified);
+            WindowIconifiedEvent event(static_cast<bool>(iconified));
+            win.eventCallback(event);
+        });
+
         glfwSetWindowCloseCallback(window, [](GLFWwindow *window) {
             GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
-            WindowCloseEvent event;
+            win.closed = true;
+            WindowClosedEvent event;
             win.eventCallback(event);
         });
 

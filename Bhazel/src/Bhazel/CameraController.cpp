@@ -2,7 +2,7 @@
 
 #include "CameraController.h"
 #include "Bhazel/Application.h"
-#include "Bhazel/Events/ApplicationEvent.h"
+#include "Bhazel/Events/WindowEvent.h"
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Input.h"
 #include "Bhazel/KeyCodes.h"
@@ -64,7 +64,7 @@ namespace BZ {
         return false;
     }
 
-    bool OrthographicCameraController::onWindowResized(WindowResizeEvent &e) {
+    bool OrthographicCameraController::onWindowResized(WindowResizedEvent &e) {
         aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());
         camera.computeProjectionMatrix(-aspectRatio * zoom, aspectRatio * zoom, -zoom, zoom);
         return false;
@@ -132,7 +132,7 @@ namespace BZ {
         return false;
     }
 
-    bool PerspectiveCameraController::onWindowResized(WindowResizeEvent &e) {
+    bool PerspectiveCameraController::onWindowResized(WindowResizedEvent &e) {
         windowSize.x = e.getWidth();
         windowSize.y = e.getHeight();
         aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());

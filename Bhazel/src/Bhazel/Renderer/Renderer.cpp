@@ -10,7 +10,7 @@
 #include "InputDescription.h"
 #include "PipelineSettings.h"
 
-#include "Bhazel/Events/ApplicationEvent.h"
+#include "Bhazel/Events/WindowEvent.h"
 
 
 namespace BZ {
@@ -40,9 +40,8 @@ namespace BZ {
         instanceConstantBuffer.reset();
     }
 
-    bool Renderer::onWindowResize(WindowResizeEvent &ev) {
+    void Renderer::onWindowResize(WindowResizedEvent &ev) {
         BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
-        return false;
     }
 
     void Renderer::beginScene(Camera &camera, const FrameStats &frameStats) {

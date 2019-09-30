@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Bhazel/Window.h"
-#include "Bhazel/KeyCodes.h"
 
 
 namespace BZ {
@@ -25,5 +24,9 @@ namespace BZ {
 
         LPCWSTR CLASS_NAME = L"BhazelWindowClass";
         HWND hWnd;
+
+        bool inited = false;
+
+        friend LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
     };
 }

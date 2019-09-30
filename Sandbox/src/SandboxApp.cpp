@@ -8,7 +8,7 @@
 
 ExampleLayer::ExampleLayer() :
     Layer("Example"), 
-    particleSystem(PARTICLE_COUNT),
+    //particleSystem(PARTICLE_COUNT),
     cameraController(60.0f, 1280.0f / 800.0f) {
 }
 
@@ -51,7 +51,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     inputDescription->addVertexBuffer(vertexBuffer, shader);
     inputDescription->setIndexBuffer(indexBuffer);
 
-    particleSystem.init();
+    //particleSystem.init();
 
     BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -89,7 +89,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
     BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
 
-    particleSystem.onUpdate();
+    //particleSystem.onUpdate();
 
     BZ::Renderer::endScene();
 }
@@ -105,7 +105,7 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     static BZ::Timer testTimer;
 
     //TODO: temporary
-    if(ImGui::Begin("Particles")) {
+    /*if(ImGui::Begin("Particles")) {
         ImGui::Text("Emitter Position");
         ImGui::SliderFloat3("##emmiterpos", &particleSystem.position[0], -LIMIT2, LIMIT2);
         ImGui::Text("Emitter Scale");
@@ -144,7 +144,7 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
         if(ImGui::Button("pause")) testTimer.pause();
         if(ImGui::Button("reset")) testTimer.reset();
     }
-    ImGui::End();
+    ImGui::End();*/
 }
 
 

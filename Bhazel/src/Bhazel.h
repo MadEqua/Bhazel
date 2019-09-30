@@ -11,6 +11,7 @@
 
 #include "Bhazel/Input.h"
 #include "Bhazel/KeyCodes.h"
+#include "Bhazel/Events/WindowEvent.h"
 #include "Bhazel/Events/ApplicationEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 #include "Bhazel/Events/MouseEvent.h"

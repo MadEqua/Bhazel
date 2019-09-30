@@ -5,6 +5,8 @@
 
 namespace BZ {
 
+    class WindowResizedEvent;
+
     class GraphicsContext
     {
     public:
@@ -12,6 +14,7 @@ namespace BZ {
 
         virtual ~GraphicsContext() = default;
         
+        virtual void onWindowResize(WindowResizedEvent& e) {};
         virtual void presentBuffer() = 0;
 
         virtual void setVSync(bool enabled) { vsync = enabled; };
@@ -20,6 +23,8 @@ namespace BZ {
         RendererAPI& getRendererAPI() { return *rendererAPI; }
 
     protected:
+        GraphicsContext() = default;
+
         bool vsync = true;
         std::unique_ptr<RendererAPI> rendererAPI;
     };
