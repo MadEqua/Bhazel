@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Bhazel/Window.h"
-#include <memory>
 
 struct GLFWwindow;
 
@@ -14,10 +13,9 @@ namespace BZ {
         ~GlfwWindow() override;
 
         virtual void pollEvents() override;
-        virtual void presentBuffer() override;
 
         virtual void* getNativeWindowHandle() const override { return window; }
-        virtual void setTitle(const std::string &title) override;
+        virtual void setTitle(const char* title) override;
 
     private:
         void init();

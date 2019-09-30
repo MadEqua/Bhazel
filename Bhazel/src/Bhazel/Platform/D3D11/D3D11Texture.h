@@ -2,8 +2,8 @@
 
 #include "Bhazel/Renderer/Texture.h"
 
-#include "D3D11Context.h"
-#include "D3D11Includes.h"
+#include "Bhazel/Platform/D3D11/D3D11Context.h"
+#include "Bhazel/Platform/D3D11/D3D11Debug.h"
 
 
 namespace BZ {

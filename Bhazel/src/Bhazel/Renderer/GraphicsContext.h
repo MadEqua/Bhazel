@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RenderCommand.h"
+#include "Bhazel/Renderer/RendererAPI.h"
 
 
 namespace BZ {
@@ -8,6 +8,8 @@ namespace BZ {
     class GraphicsContext
     {
     public:
+        static GraphicsContext* create(void *windowHandle);
+
         virtual ~GraphicsContext() = default;
         
         virtual void presentBuffer() = 0;

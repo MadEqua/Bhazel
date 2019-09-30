@@ -3,7 +3,7 @@
 #include "Window.h"
 #include "Bhazel/Platform/GLFW/GlfwWindow.h"
 #include "Bhazel/Platform/Win32/Win32Window.h"
-#include "Bhazel/Renderer/RendererAPI.h"
+#include "Bhazel/Renderer/Renderer.h"
 
 
 namespace BZ {
@@ -13,8 +13,7 @@ namespace BZ {
     }
 
     Window* Window::create(const WindowData &data, EventCallbackFn eventCallback) {
-        switch(Renderer::api)
-        {
+        switch(Renderer::api) {
         case Renderer::API::OpenGL:
             return new GlfwWindow(data, eventCallback);
         case Renderer::API::D3D11:

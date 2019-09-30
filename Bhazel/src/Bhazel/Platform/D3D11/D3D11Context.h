@@ -9,7 +9,7 @@ namespace BZ {
 
     class D3D11Context : public GraphicsContext {
     public:
-        explicit D3D11Context(HWND windowHandle);
+        explicit D3D11Context(void *windowHandle);
 
         virtual void presentBuffer() override;
 

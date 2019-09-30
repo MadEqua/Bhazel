@@ -12,8 +12,7 @@ namespace BZ {
         virtual ~Win32Window() override;
 
         virtual void pollEvents() override;
-        virtual void presentBuffer() override;
-        virtual void setTitle(const std::string &title) override;
+        virtual void setTitle(const char* title) override;
 
         virtual void* getNativeWindowHandle() const override { return hWnd; }
 

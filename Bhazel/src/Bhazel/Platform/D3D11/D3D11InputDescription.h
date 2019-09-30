@@ -4,8 +4,8 @@
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Buffer.h"
 
-#include "D3D11Context.h"
-#include "D3D11Includes.h"
+#include "Bhazel/Platform/D3D11/D3D11Context.h"
+#include "Bhazel/Platform/D3D11/D3D11Includes.h"
 
 
 namespace BZ {

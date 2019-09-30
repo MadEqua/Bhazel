@@ -1,7 +1,7 @@
 #include "bzpch.h"
 
 #include "D3D11InputDescription.h"
-#include "D3D11Shader.h"
+#include "Bhazel/Platform/D3D11/D3D11Shader.h"
 
 #include "Bhazel/Application.h"
 #include "Bhazel/Window.h"
@@ -13,7 +13,7 @@ namespace BZ {
     static DXGI_FORMAT shaderDataTypeToD3D11(DataType dataType, DataElements dataElements, bool normalized);
 
     D3D11InputDescription::D3D11InputDescription() :
-        context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
+        context(static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext())) {
     }
 
     void D3D11InputDescription::bindToPipeline() const {

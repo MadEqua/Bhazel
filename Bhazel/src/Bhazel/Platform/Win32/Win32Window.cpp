@@ -10,6 +10,7 @@
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 
+#include "Bhazel/Application.h"
 #include "Bhazel/Platform/D3D11/D3D11Context.h"
 
 
@@ -212,7 +213,7 @@ namespace BZ {
                 Win32Window *window = (Win32Window*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
                 uint32 w = LOWORD(lParam);
                 uint32 h = HIWORD(lParam);
-                static_cast<D3D11Context&>(window->getGraphicsContext()).handleWindowResize(w, h);
+                static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext()).handleWindowResize(w, h);
                 WindowResizeEvent event(w, h);
                 window->data.width = w;
                 window->data.height = h;
@@ -413,9 +414,6 @@ namespace BZ {
         );
         BZ_ASSERT_CORE(hWnd, "Couldn't create window!");
 
-        graphicsContext = std::make_unique<D3D11Context>(hWnd);
-        graphicsContext->setVSync(data.vsync);
-
         //Adjust client region size now that we can query the window DPI
         RECT rect = {};
         rect.right = data.width;
@@ -454,15 +452,11 @@ namespace BZ {
         }
     }
 
-    void Win32Window::presentBuffer() {
-        graphicsContext->presentBuffer();
-    }
-
     void Win32Window::setExtraHandlerFunction(LRESULT(*func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)) {
         extraWndProcFunction = func;
     }
 
-    void Win32Window::setTitle(const std::string &title) {
-        SetWindowTextA(hWnd, title.c_str());
+    void Win32Window::setTitle(const char* title) {
+        SetWindowTextA(hWnd, title);
     }
 }

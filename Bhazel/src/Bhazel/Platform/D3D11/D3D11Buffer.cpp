@@ -23,7 +23,7 @@ namespace BZ {
 
     D3D11Buffer::D3D11Buffer(BufferType type, uint32 size, const void *data, const BufferLayout &layout) :
         Buffer(type, size, layout),
-        context(static_cast<D3D11Context&>(Application::getInstance().getWindow().getGraphicsContext())) {
+        context(static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext())) {
 
         D3D11_BUFFER_DESC bufferDesc = {};
         bufferDesc.ByteWidth = size;

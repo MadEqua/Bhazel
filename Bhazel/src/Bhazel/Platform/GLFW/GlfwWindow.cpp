@@ -5,8 +5,6 @@
 #include "Bhazel/Events/MouseEvent.h"
 #include "Bhazel/Events/KeyEvent.h"
 
-#include "Bhazel/Platform/OpenGL/OpenGLContext.h"
-
 #include <GLFW/glfw3.h>
 
 
@@ -52,25 +50,16 @@ namespace BZ {
         window = glfwCreateWindow(static_cast<int>(data.width), static_cast<int>(data.height), data.title.c_str(), nullptr, nullptr);
         BZ_ASSERT_CORE(window, "Could not create GLFW Window!");
 
-        graphicsContext = std::make_unique<OpenGLContext>(window);
-        graphicsContext->setVSync(data.vsync);
-
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
 
-        auto resizeCallback = [](GLFWwindow *window, int w, int h) {
-            GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+        glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int w, int h) {
+            GlfwWindow& win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
             win.data.width = w;
             win.data.height = h;
 
             WindowResizeEvent event(w, h);
             win.eventCallback(event);
-        };
-        glfwSetFramebufferSizeCallback(window, resizeCallback);
-
-        //Send a resize event on app start. Same as Win32Window.
-        int w, h;
-        glfwGetFramebufferSize(window, &w, &h);
-        resizeCallback(window, w, h);
+         });
 
         glfwSetWindowCloseCallback(window, [](GLFWwindow *window) {
             GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
@@ -149,11 +138,7 @@ namespace BZ {
         glfwPollEvents();
     }
 
-    void GlfwWindow::presentBuffer() {
-        graphicsContext->presentBuffer();
-    }
-
-    void GlfwWindow::setTitle(const std::string &title) {
-        glfwSetWindowTitle(window, title.c_str());
+    void GlfwWindow::setTitle(const char* title) {
+        glfwSetWindowTitle(window, title);
     }
 }

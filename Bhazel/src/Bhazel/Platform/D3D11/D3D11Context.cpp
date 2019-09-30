@@ -1,13 +1,14 @@
 #include "bzpch.h"
 
 #include "D3D11Context.h"
-#include "D3D11RendererAPI.h"
+#include "Bhazel/Platform/D3D11/D3D11RendererAPI.h"
+#include "Bhazel/Renderer/RenderCommand.h"
 
 
 namespace BZ {
 
-    D3D11Context::D3D11Context(HWND windowHandle) :
-        windowHandle (windowHandle) {
+    D3D11Context::D3D11Context(void *windowHandle) :
+        windowHandle(static_cast<HWND>(windowHandle)) {
 
         //Create SwapChain
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
@@ -22,7 +23,7 @@ namespace BZ {
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         swapChainDesc.BufferCount = 1;
-        swapChainDesc.OutputWindow = windowHandle;
+        swapChainDesc.OutputWindow = this->windowHandle;
         swapChainDesc.Windowed = true;
         swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
         swapChainDesc.Flags = 0;
