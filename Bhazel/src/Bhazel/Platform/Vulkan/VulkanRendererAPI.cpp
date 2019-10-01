@@ -4,7 +4,6 @@
 #include "VulkanRendererAPI.h"
 
 #include "Bhazel/Renderer/Renderer.h"
-#include "Bhazel/Renderer/PipelineSettings.h"
 
 
 namespace BZ {
@@ -24,16 +23,7 @@ namespace BZ {
     void VulkanRendererAPI::clearColorAndDepthStencilBuffers() {
     }
 
-    void VulkanRendererAPI::setBlendingSettings(BlendingSettings &settings) {
-    }
-
-    void VulkanRendererAPI::setDepthSettings(DepthSettings &settings) {
-    }
-
     void VulkanRendererAPI::setViewport(int left, int top, int width, int height) {
-    }
-
-    void VulkanRendererAPI::setRenderMode(Renderer::RenderMode mode) {
     }
 
     void VulkanRendererAPI::draw(uint32 vertexCount) {

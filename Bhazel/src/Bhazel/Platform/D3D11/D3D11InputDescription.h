@@ -24,7 +24,5 @@ namespace BZ {
     private:
         D3D11Context &context;
         wrl::ComPtr<ID3D11InputLayout> inputLayoutPtr;
-
-        std::vector<D3D11_INPUT_ELEMENT_DESC> ieds;
     };
 }

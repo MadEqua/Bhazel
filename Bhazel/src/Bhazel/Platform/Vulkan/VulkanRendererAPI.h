@@ -14,12 +14,12 @@ namespace BZ {
         virtual void clearStencilBuffer() override;
         virtual void clearColorAndDepthStencilBuffers() override;
 
-        virtual void setBlendingSettings(BlendingSettings &settings) override;
-        virtual void setDepthSettings(DepthSettings &settings) override;
+        //virtual void setBlendingSettings(BlendingSettings &settings) override;
+        //virtual void setDepthSettings(DepthSettings &settings) override;
 
         virtual void setViewport(int left, int top, int width, int height) override;
 
-        virtual void setRenderMode(Renderer::RenderMode mode) override;
+        //virtual void setRenderMode(Renderer::PrimitiveTopology mode) override;
 
         virtual void draw(uint32 vertexCount) override;
         virtual void drawIndexed(uint32 indicesCount) override;

@@ -35,13 +35,13 @@ namespace BZ {
 
         //---------------------------------------------------------------------
         //---------------------------------------------------------------------
-        static void setBlendingSettings(BlendingSettings &settings) {
+        /*static void setBlendingSettings(BlendingSettings &settings) {
             rendererAPI->setBlendingSettings(settings);
         }
 
         static void setDepthSettings(DepthSettings &settings) {
             rendererAPI->setDepthSettings(settings);
-        }
+        }*/
 
         //---------------------------------------------------------------------
         //---------------------------------------------------------------------
@@ -51,9 +51,9 @@ namespace BZ {
 
         //---------------------------------------------------------------------
         //---------------------------------------------------------------------
-        static void setRenderMode(Renderer::RenderMode mode) {
+        /*static void setRenderMode(Renderer::PrimitiveTopology mode) {
             rendererAPI->setRenderMode(mode);
-        }
+        }*/
 
         //---------------------------------------------------------------------
         //---------------------------------------------------------------------

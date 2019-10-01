@@ -35,7 +35,7 @@ namespace BZ {
         UINT miscFlags = 0;
         switch(type) {
         case BufferType::Vertex:
-            //stride = layout.getStride();
+            //stride = layout.getSize();
             miscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
             break;
         case BufferType::Index:
@@ -58,10 +58,10 @@ namespace BZ {
         switch(type) {
         case BufferType::Vertex:
         {
-            UINT stride = layout.getStride();
-            UINT offset = 0;
+            UINT size = layout.getSizeBytes();
+            UINT offsetBytes = 0;
             unbindFromPipelineAsGeneric();
-            BZ_LOG_DXGI(context.getDeviceContext()->IASetVertexBuffers(unit, 1, bufferPtr.GetAddressOf(), &stride, &offset));
+            BZ_LOG_DXGI(context.getDeviceContext()->IASetVertexBuffers(unit, 1, bufferPtr.GetAddressOf(), &size, &offsetBytes));
         }
             break;
         case BufferType::Index:
@@ -105,13 +105,13 @@ namespace BZ {
             D3D11_BUFFER_DESC bufferDesc = {};
             bufferPtr->GetDesc(&bufferDesc);
 
-            uint32 stride = layout.getStride();
+            uint32 size = layout.getSizeBytes();
 
             D3D11_UNORDERED_ACCESS_VIEW_DESC descUnorderedAccessView = {};
             descUnorderedAccessView.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
             descUnorderedAccessView.Buffer.FirstElement = 0;
             descUnorderedAccessView.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
-            descUnorderedAccessView.Buffer.NumElements = stride > 0 ? bufferDesc.ByteWidth / stride : bufferDesc.ByteWidth;
+            descUnorderedAccessView.Buffer.NumElements = size > 0 ? bufferDesc.ByteWidth / size : bufferDesc.ByteWidth;
             descUnorderedAccessView.Format = DXGI_FORMAT_R32_TYPELESS;
             BZ_ASSERT_HRES_DXGI(context.getDevice()->CreateUnorderedAccessView(bufferPtr.Get(), &descUnorderedAccessView, &unorderedAccessViewPtr));
         }

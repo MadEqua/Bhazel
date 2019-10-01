@@ -1,10 +1,11 @@
 #include "bzpch.h"
 
 #include "Buffer.h"
-#include "Renderer.h"
+#include "Bhazel/Renderer/Renderer.h"
 
-#include "Bhazel/Platform/OpenGL/OpenGLBuffer.h"
-#include "Bhazel/Platform/D3D11/D3D11Buffer.h"
+//#include "Bhazel/Platform/OpenGL/OpenGLBuffer.h"
+//#include "Bhazel/Platform/D3D11/D3D11Buffer.h"
+#include "Bhazel/Platform/Vulkan/VulkanBuffer.h"
 
 namespace BZ {
 
@@ -27,12 +28,12 @@ namespace BZ {
         }
     }
 
-    BufferElement::BufferElement(DataType dataType, DataElements dataElements,  const std::string &name, bool normalized, uint32 perInstanceStep) :
+    DataElement::DataElement(DataType dataType, DataElements dataElements, const std::string& name, bool normalized, uint32 perInstanceStep) :
         dataType(dataType), dataElements(dataElements), name(name), normalized(normalized), perInstanceStep(perInstanceStep),
-        sizeBytes(shaderDataTypeSize(dataType) * getElementCount()), offset(0) {
+        sizeBytes(shaderDataTypeSize(dataType)* getElementCount()), offsetBytes(0) {
     }
 
-    uint32 BufferElement::getElementCount() const {
+    uint32 DataElement::getElementCount() const {
         switch(dataElements) {
         case DataElements::Scalar:
             return 1;
@@ -54,22 +55,21 @@ namespace BZ {
     }
 
 
-    BufferLayout::BufferLayout(const std::initializer_list<BufferElement> &elements) :
-        elements(elements), stride(0) {
+    DataLayout::DataLayout(const std::initializer_list<DataElement>& elements) :
+        elements(elements), sizeBytes(0) {
         calculateOffsetsAndStride();
     }
 
-    void BufferLayout::calculateOffsetsAndStride() {
-        uint32 offset = 0;
-        for(auto &element : elements) {
-            element.offset = offset;
-            offset += element.sizeBytes;
-            stride += element.sizeBytes;
+    void DataLayout::calculateOffsetsAndStride() {
+        uint32 offsetBytes = 0;
+        for(auto& element : elements) {
+            element.offsetBytes = offsetBytes;
+            offsetBytes += element.sizeBytes;
+            sizeBytes += element.sizeBytes;
         }
     }
 
-
-    Ref<Buffer> Buffer::createVertexBuffer(const void *data, uint32 size, const BufferLayout &layout) { 
+    Ref<Buffer> Buffer::createVertexBuffer(const void *data, uint32 size, const DataLayout &layout) { 
         return create(BufferType::Vertex, size, data, layout); 
     }
 
@@ -83,10 +83,12 @@ namespace BZ {
 
     Ref<Buffer> Buffer::create(BufferType type, uint32 size) {
         switch(Renderer::api) {
-        case Renderer::API::OpenGL:
+        /*case Renderer::API::OpenGL:
             return MakeRef<OpenGLBuffer>(type, size);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11Buffer>(type, size);
+            return MakeRef<D3D11Buffer>(type, size);*/
+        case Renderer::API::Vulkan:
+            return MakeRef<VulkanBuffer>(type, size);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
@@ -95,22 +97,26 @@ namespace BZ {
 
     Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data) {
         switch(Renderer::api) {
-        case Renderer::API::OpenGL:
+        /*case Renderer::API::OpenGL:
             return MakeRef<OpenGLBuffer>(type, size, data);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11Buffer>(type, size, data);
+            return MakeRef<D3D11Buffer>(type, size, data);*/
+        case Renderer::API::Vulkan:
+            return MakeRef<VulkanBuffer>(type, size);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, const BufferLayout &layout) {
+    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, const DataLayout&layout) {
         switch(Renderer::api) {
-        case Renderer::API::OpenGL:
+        /*case Renderer::API::OpenGL:
             return MakeRef<OpenGLBuffer>(type, size, data, layout);
         case Renderer::API::D3D11:
-            return MakeRef<D3D11Buffer>(type, size, data, layout);
+            return MakeRef<D3D11Buffer>(type, size, data, layout);*/
+        case Renderer::API::Vulkan:
+            return MakeRef<VulkanBuffer>(type, size);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

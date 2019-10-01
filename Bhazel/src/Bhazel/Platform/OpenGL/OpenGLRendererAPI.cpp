@@ -76,22 +76,22 @@ namespace BZ {
         BZ_ASSERT_GL(glViewport(left, top, width, height));
     }
 
-    void OpenGLRendererAPI::setRenderMode(Renderer::RenderMode mode) {
+    void OpenGLRendererAPI::setRenderMode(Renderer::PrimitiveTopology mode) {
         switch(mode)
         {
-        case Renderer::RenderMode::Points:
+        case Renderer::PrimitiveTopology::Points:
             renderMode = GL_POINTS;
             break;
-        case Renderer::RenderMode::Lines:
+        case Renderer::PrimitiveTopology::Lines:
             renderMode = GL_LINES;
             break;
-        case Renderer::RenderMode::Triangles:
+        case Renderer::PrimitiveTopology::Triangles:
             renderMode = GL_TRIANGLES;
             break;
-        case Renderer::RenderMode::TriangleStrip:
+        case Renderer::PrimitiveTopology::TriangleStrip:
             renderMode = GL_TRIANGLE_STRIP;
             break;
-        case Renderer::RenderMode::LineStrip:
+        case Renderer::PrimitiveTopology::LineStrip:
             renderMode = GL_LINE_STRIP;
             break;
         default:

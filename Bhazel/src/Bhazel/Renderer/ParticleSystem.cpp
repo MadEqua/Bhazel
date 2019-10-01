@@ -13,8 +13,9 @@
 
 namespace BZ {
 
-    BlendingSettings ParticleSystem::particleBlendingSettings = BlendingSettings({BlendingFunction::SourceAlpha, BlendingFunction::One, BlendingEquation::Add});
-    BlendingSettings ParticleSystem::disableBlendingSettings = BlendingSettings(false);
+    //TODO: initialization
+    BlendState ParticleSystem::particleBlendState;
+    BlendState ParticleSystem::disableBlendState;
 
     ParticleSystem::ParticleRanges::ParticleRanges() :
         positionRange(glm::vec3(0.0f)),
@@ -73,7 +74,7 @@ namespace BZ {
 
     void ParticleSystem::onUpdate() {
         //TODO: only send data if changed
-        constantBuffer->setData(&ranges, sizeof(ranges));
+        /*constantBuffer->setData(&ranges, sizeof(ranges));
         constantBuffer->bindToPipeline(2);
 
         glm::mat4 modelMat(1.0f);
@@ -87,7 +88,7 @@ namespace BZ {
 
         particleTexture->bindToPipeline(0);
         RenderCommand::setBlendingSettings(particleBlendingSettings); //TODO: not sure if RenderCommands belong here
-        Renderer::submit(particleShader, quadInputDescription, modelMat, Renderer::RenderMode::TriangleStrip, particleCount);
-        RenderCommand::setBlendingSettings(disableBlendingSettings);
+        Renderer::submit(particleShader, quadInputDescription, modelMat, Renderer::PrimitiveTopology::TriangleStrip, particleCount);
+        RenderCommand::setBlendingSettings(disableBlendingSettings);*/
     }
 }

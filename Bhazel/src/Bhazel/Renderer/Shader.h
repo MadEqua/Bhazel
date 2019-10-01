@@ -12,21 +12,22 @@ namespace BZ {
 
     class Shader {
     public:
-        explicit Shader(const std::string &name) : name(name) {}
-        virtual ~Shader() = default;
+        static Ref<Shader> createFromSource(const std::string &filePath);
+        static Ref<Shader> createFromSource(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc);
 
-        virtual void bindToPipeline() const = 0;
-        virtual void unbindFromPipeline() const = 0;
-
-        const std::string& getName() const { return name; }
-
-        static Ref<Shader> create(const std::string &filePath);
-        static Ref<Shader> create(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc);
+        static Ref<Shader> createFromBlob(const std::string& name, const std::string& vertexPath, const std::string& fragmentPath);
+        
+       const std::string& getName() const { return name; }
 
     protected:
+        explicit Shader(const std::string& name) : name(name) {}
+        virtual ~Shader() = default;
+
         std::string name;
 
         static std::unordered_map<ShaderType, std::string> readAndPreprocessFile(const std::string &filePath);
+        static std::vector<char> readBlobFile(const std::string& filePath);
+
         static ShaderType shaderTypeFromString(const std::string &string);
     };
 
@@ -36,8 +37,9 @@ namespace BZ {
         void add(const std::string &name, const Ref<Shader> &shader);
         void add(const Ref<Shader> &shader);
 
-        Ref<Shader> load(const std::string &filepath);
-        Ref<Shader> load(const std::string &name, const std::string &filepath);
+        Ref<Shader> loadFromSource(const std::string &filepath);
+        Ref<Shader> loadFromSource(const std::string &name, const std::string &filepath);
+        Ref<Shader> loadFromBlob(const std::string& name, const std::string& vertexPath, const std::string& fragmentPath);
 
         Ref<Shader> get(const std::string &name);
         

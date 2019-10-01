@@ -8,7 +8,6 @@
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/InputDescription.h"
-#include "Bhazel/Renderer/PipelineSettings.h"
 
 #include "Bhazel/Events/WindowEvent.h"
 
@@ -29,9 +28,9 @@ namespace BZ {
         //instanceConstantBuffer = Buffer::createConstantBuffer(sizeof(instanceData));
 
         //TODO: set all pipeline defaults here
-        RenderCommand::setRenderMode(RenderMode::Triangles);
-        RenderCommand::setBlendingSettings(BlendingSettings(false));
-        RenderCommand::setDepthSettings(DepthSettings(false, false));
+        //RenderCommand::setRenderMode(PrimitiveTopology::Triangles);
+        //RenderCommand::setBlendingSettings(BlendingSettings(false));
+        //RenderCommand::setDepthSettings(DepthSettings(false, false));
     }
 
     void Renderer::destroy() {
@@ -59,22 +58,22 @@ namespace BZ {
     void Renderer::endScene() {
     }
 
-    void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, RenderMode renderMode, uint32 instances) {
+    void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, PrimitiveTopology renderMode, uint32 instances) {
         instanceData.modelMatrix = modelMatrix;
         instanceConstantBuffer->setData(&instanceData, sizeof(instanceData));
-        instanceConstantBuffer->bindToPipeline(1);
+        //instanceConstantBuffer->bindToPipeline(1);
 
         //TODO we should not set this every draw call
         shader->bindToPipeline();
         inputDescription->bindToPipeline();
-        RenderCommand::setRenderMode(renderMode);
+        //RenderCommand::setRenderMode(renderMode);
 
         //TODO: this is bad. branching and divisions
         if(inputDescription->hasIndexBuffer())
             RenderCommand::drawInstancedIndexed(inputDescription->getIndexBuffer()->getSize() / sizeof(uint32), instances);
         else {
             auto &vertexBuffer = inputDescription->getVertexBuffers()[0];
-            RenderCommand::drawInstanced(vertexBuffer->getSize() / vertexBuffer->getLayout().getStride(), instances);
+            RenderCommand::drawInstanced(vertexBuffer->getSize() / vertexBuffer->getLayout().getSizeBytes(), instances);
         }
     }
 
@@ -82,9 +81,9 @@ namespace BZ {
         computeShader->bindToPipeline();
 
         int unit = 0;
-        for(auto &buffer : buffers) {
+        /*for(auto &buffer : buffers) {
             buffer->bindToPipelineAsGeneric(unit++);
-        }
+        }*/
 
         RenderCommand::submitCompute(groupsX, groupsY, groupsZ);
     }

@@ -2,6 +2,7 @@
 #include "ImGuiLayer.h"
 
 #include "Bhazel/Application.h"
+#include "Bhazel/Renderer/Renderer.h"
 
 #include <imgui.h>
 

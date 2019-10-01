@@ -90,22 +90,22 @@ namespace BZ {
         BZ_LOG_DXGI(deviceContext->RSSetViewports(1, &viewport));
     }
 
-    void D3D11RendererAPI::setRenderMode(Renderer::RenderMode mode) {
+    void D3D11RendererAPI::setRenderMode(Renderer::PrimitiveTopology mode) {
         D3D_PRIMITIVE_TOPOLOGY topology;
         switch(mode) {
-        case Renderer::RenderMode::Points:
+        case Renderer::PrimitiveTopology::Points:
             topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
             break;
-        case Renderer::RenderMode::Lines:
+        case Renderer::PrimitiveTopology::Lines:
             topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
             break;
-        case Renderer::RenderMode::Triangles:
+        case Renderer::PrimitiveTopology::Triangles:
             topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
             break;
-        case Renderer::RenderMode::LineStrip:
+        case Renderer::PrimitiveTopology::LineStrip:
             topology = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
             break;
-        case Renderer::RenderMode::TriangleStrip:
+        case Renderer::PrimitiveTopology::TriangleStrip:
             topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
             break;
         default:

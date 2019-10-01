@@ -19,6 +19,11 @@ namespace BZ {
 
         void setVSync(bool enabled) override;
 
+        VkDevice getDevice() const { return device; }
+        VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
+
+        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
     private:
         struct QueueFamilyIndices {
             std::optional<uint32_t> graphicsFamily;
@@ -93,7 +98,6 @@ namespace BZ {
 
         //TODO: temporary test stuff
         void createRenderPass();
-        void createGraphicsPipeline();
         void createFramebuffers();
         void createCommandBuffers();
 
@@ -101,15 +105,9 @@ namespace BZ {
         void draw();
 
         VkRenderPass renderPass;
-        VkPipelineLayout pipelineLayout;
-        VkPipeline graphicsPipeline;
         VkCommandPool commandPool;
         std::vector<VkCommandBuffer> commandBuffers;
 
         std::vector<VkFramebuffer> swapChainFramebuffers;
-
-        VkShaderModule createShaderModule(const std::vector<char>& code);
-
-        static std::vector<char> readFile(const std::string& filename);
     };
 }

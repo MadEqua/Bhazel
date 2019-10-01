@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Bhazel/Renderer/PipelineState.h"
+
 
 namespace BZ {
 
@@ -20,14 +22,6 @@ namespace BZ {
             Vulkan
         };
 
-        enum class RenderMode {
-            Points,
-            Lines,
-            Triangles,
-            LineStrip,
-            TriangleStrip
-        };
-
         static void init();
         static void destroy();
 
@@ -36,7 +30,7 @@ namespace BZ {
         static void beginScene(Camera &camera, const FrameStats &frameStats);
         static void endScene();
 
-        static void submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix = glm::mat4(1.0f), RenderMode renderMode = RenderMode::Triangles, uint32 instances = 1);
+        static void submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix = glm::mat4(1.0f), PrimitiveTopology renderMode = PrimitiveTopology::Triangles, uint32 instances = 1);
         static void submitCompute(const Ref<Shader> &computeShader, uint32 groupsX, uint32 groupsY, uint32 groupsZ, std::initializer_list<Ref<Buffer>> buffers);
 
         static API api;

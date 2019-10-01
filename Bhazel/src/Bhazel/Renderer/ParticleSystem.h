@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PipelineSettings.h"
+#include "PipelineState.h"
 
 namespace BZ {
 
@@ -81,8 +81,8 @@ namespace BZ {
         Ref<Shader> computeShader;
         Ref<Shader> particleShader;
 
-        static BlendingSettings particleBlendingSettings;
-        static BlendingSettings disableBlendingSettings;
+        static BlendState particleBlendState;
+        static BlendState disableBlendState;
 
         Ref<Buffer> computeBuffer;
         Ref<Buffer> constantBuffer;

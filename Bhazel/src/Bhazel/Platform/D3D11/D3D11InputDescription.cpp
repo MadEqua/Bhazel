@@ -40,17 +40,20 @@ namespace BZ {
     void D3D11InputDescription::addVertexBuffer(const Ref<Buffer> &buffer, const Ref<Shader> &vertexShader) {
         BZ_ASSERT_CORE(buffer->getLayout().getElementCount(), "VertexBuffer has no layout.");
 
+        std::vector<D3D11_INPUT_ELEMENT_DESC> ieds(buffer->getLayout().getElementCount());
+
+        int index = 0;
         for(const auto &element : buffer->getLayout()) {
             D3D11_INPUT_ELEMENT_DESC ied = {};
             ied.SemanticName = element.name.c_str();
             ied.SemanticIndex = 0; //TODO: inexistent on abstract API
             ied.Format = shaderDataTypeToD3D11(element.dataType, element.dataElements, element.normalized);
             ied.InputSlot = static_cast<UINT>(vertexBuffers.size());
-            ied.AlignedByteOffset = element.offset;
+            ied.AlignedByteOffset = element.offsetBytes;
             ied.InputSlotClass = element.perInstanceStep > 0 ? D3D11_INPUT_PER_INSTANCE_DATA : D3D11_INPUT_PER_VERTEX_DATA;
             ied.InstanceDataStepRate = element.perInstanceStep;
 
-            ieds.emplace_back(ied);
+            ieds[index++] = ied;
         }
 
         const Ref<D3D11Shader> &d3d11VertexShader = std::static_pointer_cast<D3D11Shader>(vertexShader);
