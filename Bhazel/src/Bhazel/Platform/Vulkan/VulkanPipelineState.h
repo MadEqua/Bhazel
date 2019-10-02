@@ -14,12 +14,12 @@ namespace BZ {
         VulkanPipelineState(PipelineStateData &data);
         virtual ~VulkanPipelineState() override;
 
-        virtual void bind() override;
-
     private:
         VulkanContext& context;
 
         VkPipeline pipelineStateHandle;
         VkPipelineLayout pipelineLayoutHandle;
+
+        friend class VulkanContext;
     };
 }

@@ -2,7 +2,14 @@
 
 #include "Bhazel/Platform/Vulkan/VulkanContext.h"
 #include "Bhazel/Platform/Vulkan/VulkanRendererAPI.h"
+#include "Bhazel/Platform/Vulkan/VulkanTexture.h"
+#include "Bhazel/Platform/Vulkan/VulkanPipelineState.h"
+#include "Bhazel/Platform/Vulkan/VulkanFramebuffer.h"
+#include "Bhazel/Platform/Vulkan/VulkanBuffer.h"
+
 #include "Bhazel/Renderer/RenderCommand.h"
+#include "Bhazel/Renderer/Shader.h"
+#include "Bhazel/Renderer/Buffer.h"
 
 #include <GLFW/glfw3.h>
 
@@ -14,35 +21,7 @@ namespace BZ {
     VulkanContext::VulkanContext(void *windowHandle) :
         windowHandle(static_cast<GLFWwindow*>(windowHandle)) {
         BZ_ASSERT_CORE(windowHandle, "Window handle is null!");
-
-        createInstance();
-        createSurface();
-
-        const std::vector<const char*> requiredDeviceExtensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
-        physicalDevice = pickPhysicalDevice(requiredDeviceExtensions);
-        BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
-
-        createLogicalDevice(requiredDeviceExtensions);
-        createSyncObjects();
-
-        createSwapChain();
-        createImageViews();
-        initTestStuff();
-
-        VkPhysicalDeviceProperties physicalDeviceProperties;
-        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-        BZ_LOG_CORE_INFO("Vulkan Context:");
-        BZ_LOG_CORE_INFO("  Device Name: {}.", physicalDeviceProperties.deviceName);
-        BZ_LOG_CORE_INFO("  Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion), VK_VERSION_MINOR(physicalDeviceProperties.apiVersion), VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
-        BZ_LOG_CORE_INFO("  Driver Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.driverVersion), VK_VERSION_MINOR(physicalDeviceProperties.driverVersion), VK_VERSION_PATCH(physicalDeviceProperties.driverVersion));
-        BZ_LOG_CORE_INFO("  VendorId: 0x{:04x}.", physicalDeviceProperties.vendorID);
-        BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
-
-        rendererAPI = std::make_unique<VulkanRendererAPI>();
-        RenderCommand::initRendererAPI(rendererAPI.get());
-    }
+     }
 
     VulkanContext::~VulkanContext() {
         BZ_ASSERT_VK(vkDeviceWaitIdle(device));
@@ -64,6 +43,37 @@ namespace BZ {
         func(instance, debugMessenger, nullptr);
 #endif
         vkDestroyInstance(instance, nullptr);
+    }
+
+    void VulkanContext::init() {
+        createInstance();
+        createSurface();
+
+        const std::vector<const char *> requiredDeviceExtensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+        physicalDevice = pickPhysicalDevice(requiredDeviceExtensions);
+        BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
+
+        createLogicalDevice(requiredDeviceExtensions);
+        createSyncObjects();
+
+        createSwapChain();
+        createFramebuffers();
+        initTestStuff();
+
+        VkPhysicalDeviceProperties physicalDeviceProperties;
+        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+        BZ_LOG_CORE_INFO("Vulkan Context:");
+        BZ_LOG_CORE_INFO("  Device Name: {}.", physicalDeviceProperties.deviceName);
+        BZ_LOG_CORE_INFO("  Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion), VK_VERSION_MINOR(physicalDeviceProperties.apiVersion), VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
+        BZ_LOG_CORE_INFO("  Driver Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.driverVersion), VK_VERSION_MINOR(physicalDeviceProperties.driverVersion), VK_VERSION_PATCH(physicalDeviceProperties.driverVersion));
+        BZ_LOG_CORE_INFO("  VendorId: 0x{:04x}.", physicalDeviceProperties.vendorID);
+        BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
+
+        rendererAPI = std::make_unique<VulkanRendererAPI>();
+        RenderCommand::initRendererAPI(rendererAPI.get());
+
     }
 
     void VulkanContext::presentBuffer() {
@@ -88,6 +98,7 @@ namespace BZ {
             }
         }
         BZ_ASSERT_ALWAYS_CORE("Can't find a suitable memory type!");
+        return 0;
     }
 
     void VulkanContext::onWindowResize(WindowResizedEvent& e) {
@@ -220,43 +231,28 @@ namespace BZ {
         swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
         BZ_ASSERT_VK(vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapChain));
 
-        swapChainImageFormat = surfaceFormat.format;
+        //swapChainImageFormat = surfaceFormat.format;
         swapChainExtent = extent;
     }
 
-    void VulkanContext::createImageViews() {
+    void VulkanContext::createFramebuffers() {
         //Get the images created for the swapchain
+        std::vector<VkImage> swapChainImages;
         uint32_t imageCount;
         BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr));
         swapChainImages.resize(imageCount);
         BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data()));
 
         //Create Views for the images
-        swapChainImageViews.resize(swapChainImages.size());
-        for(size_t i = 0; i < swapChainImages.size(); i++) {
-            VkImageViewCreateInfo imageViewCreateInfo = {};
-            imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            imageViewCreateInfo.image = swapChainImages[i];
-            imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            imageViewCreateInfo.format = swapChainImageFormat;
-            imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-            imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-            imageViewCreateInfo.subresourceRange.levelCount = 1;
-            imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-            imageViewCreateInfo.subresourceRange.layerCount = 1;
-            BZ_ASSERT_VK(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapChainImageViews[i]));
+       swapChainFramebuffers.resize(imageCount);
+       for(size_t i = 0; i < swapChainImages.size(); i++) {
+            auto textureRef = VulkanTexture2D::create(swapChainImages[i], swapChainExtent.width, swapChainExtent.height);
+            auto textureViewRef = TextureView::create(textureRef);
+            swapChainFramebuffers[i] = Framebuffer::create({ textureViewRef });
         }
     }
 
     void VulkanContext::createSyncObjects() {
-        imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -278,7 +274,7 @@ namespace BZ {
             cleanupSwapChain();
 
         createSwapChain();
-        createImageViews();
+        createFramebuffers();
 
         //Render pass depends on the format of the swapchain (it's rare for the format to change, but still...)
         //Viewport and scissor rectangle size (possible to avoid if we set those to dynamic state)
@@ -288,18 +284,10 @@ namespace BZ {
 
 
     void VulkanContext::cleanupSwapChain() {
-        for(size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-            vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
-        }
-
         vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         vkDestroyCommandPool(device, commandPool, nullptr);
 
-        vkDestroyRenderPass(device, renderPass, nullptr);
-
-        for(size_t i = 0; i < swapChainImageViews.size(); i++) {
-            vkDestroyImageView(device, swapChainImageViews[i], nullptr);
-        }
+        swapChainFramebuffers.clear();
 
         vkDestroySwapchainKHR(device, swapChain, nullptr);
     }
@@ -475,72 +463,9 @@ namespace BZ {
         }
     }
 
-
     /////////////////////////////
     ///TODO : temporary stuff
     ////////////////////////////
-    void VulkanContext::createRenderPass() {
-        VkAttachmentReference colorAttachmentRef = {};
-        colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-        //Create subpass
-        VkSubpassDescription subpass = {};
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &colorAttachmentRef; //The index of the attachment in this array is directly referenced from the fragment shader
-
-        //Create render pass
-        VkAttachmentDescription colorAttachment = {};
-        colorAttachment.format = swapChainImageFormat;
-        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        //For synchronization with the swapchain framebuffer/image
-        VkSubpassDependency dependency = {};
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubpass = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.srcAccessMask = 0;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-        VkRenderPassCreateInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &colorAttachment;
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
-
-        BZ_ASSERT_VK(vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass));
-    }
-
-    void VulkanContext::createFramebuffers() {
-        //Create Framebuffers for swapchain images
-        swapChainFramebuffers.resize(swapChainImageViews.size());
-        for(size_t i = 0; i < swapChainImageViews.size(); i++) {
-            VkImageView attachments[] = {swapChainImageViews[i]};
-
-            VkFramebufferCreateInfo framebufferInfo = {};
-            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = renderPass;
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = attachments;
-            framebufferInfo.width = swapChainExtent.width;
-            framebufferInfo.height = swapChainExtent.height;
-            framebufferInfo.layers = 1;
-
-            BZ_ASSERT_VK(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]));
-        }
-    }
-
     void VulkanContext::createCommandBuffers() {
         //Create command pool
         VkCommandPoolCreateInfo poolInfo = {};
@@ -568,19 +493,36 @@ namespace BZ {
 
             BZ_ASSERT_VK(vkBeginCommandBuffer(commandBuffers[i], &beginInfo));
 
+            //TODO do it well
+            const VulkanFramebuffer &vkFramebuffer = static_cast<const VulkanFramebuffer&>(*swapChainFramebuffers[i]);
+
             //Record a render pass
             VkRenderPassBeginInfo renderPassBeginInfo = {};
             renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassBeginInfo.renderPass = renderPass;
-            renderPassBeginInfo.framebuffer = swapChainFramebuffers[i];
-            renderPassBeginInfo.renderArea.offset = {0, 0};
+            renderPassBeginInfo.renderPass = vkFramebuffer.renderPassHandle;
+            renderPassBeginInfo.framebuffer = vkFramebuffer.framebufferHandle;
+            renderPassBeginInfo.renderArea.offset = { 0, 0 };
             renderPassBeginInfo.renderArea.extent = swapChainExtent;
-            VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+            VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
             renderPassBeginInfo.clearValueCount = 1;
             renderPassBeginInfo.pClearValues = &clearColor;
             vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+            //TODO do it well
+            const VulkanPipelineState &vkPipeState = static_cast<const VulkanPipelineState &>(*pipelineState);
+
+            vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.pipelineStateHandle);
+
+            std::vector<VkBuffer> vkBuffers(pipelineState->getData().vertexBuffers.size());
+            std::vector<VkDeviceSize> offsets(pipelineState->getData().vertexBuffers.size(), 0);
+            int idx = 0;
+            for(const auto &vb : pipelineState->getData().vertexBuffers) {
+                //TODO do it well
+                const VulkanBuffer &vkBuffer = static_cast<const VulkanBuffer &>(*vb);
+                vkBuffers[idx] = vkBuffer.bufferHandle;
+            }
+            vkCmdBindVertexBuffers(commandBuffers[i], 0, vkBuffers.size(), vkBuffers.data(), offsets.data());
+
             vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
             vkCmdEndRenderPass(commandBuffers[i]);
@@ -590,8 +532,30 @@ namespace BZ {
     }
 
     void VulkanContext::initTestStuff() {
-        createRenderPass();
-        createFramebuffers();
+        PipelineStateData pipelineStateData;
+        pipelineStateData.shader = Shader::createFromBlob("test", "shaders/bin/vert.spv", "shaders/bin/frag.spv");
+
+        DataLayout layout = {
+            {DataType::Float32, DataElements::Vec2, "POSITION"},
+            {DataType::Float32, DataElements::Vec3, "COLOR"},
+        };
+        float data[] = {
+            0.0f, -0.5f,
+            1.0f, 0.0f, 0.0f,
+            0.5f, 0.5f,
+            0.0f, 1.0f, 0.0f,
+            -0.5f, 0.5f,
+            0.0f, 0.0f, 1.0f,
+        };
+
+        pipelineStateData.vertexBuffers = { Buffer::createVertexBuffer(data, sizeof(data), layout) };
+        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(swapChainExtent.width), static_cast<float>(swapChainExtent.height)} };
+        pipelineStateData.blendingState.attachmentBlendingStates = { {} };
+        pipelineStateData.framebuffer = swapChainFramebuffers[0]; //All the framebuffers have a similar VkRenderPass
+
+        pipelineState= PipelineState::create(pipelineStateData);
+
         createCommandBuffers();
     }
 

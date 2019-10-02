@@ -23,7 +23,6 @@
 
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/Shader.h"
-#include "Bhazel/Renderer/InputDescription.h"
 #include "Bhazel/Renderer/Texture.h"
 
 #include "Bhazel/Renderer/Camera.h"

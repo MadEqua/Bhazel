@@ -23,7 +23,7 @@ namespace BZ {
         WindowData data;
 
         virtual void pollEvents() = 0;
-        virtual void* getNativeWindowHandle() const = 0;
+        virtual void* getNativeHandle() const = 0;
 
         uint32 getWidth() const { return data.dimensions.x; }
         uint32 getHeight() const {return data.dimensions.y;}

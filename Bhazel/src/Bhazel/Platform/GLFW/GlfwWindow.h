@@ -14,7 +14,7 @@ namespace BZ {
 
         virtual void pollEvents() override;
 
-        virtual void* getNativeWindowHandle() const override { return window; }
+        virtual void* getNativeHandle() const override { return window; }
         virtual void setTitle(const char* title) override;
 
     private:

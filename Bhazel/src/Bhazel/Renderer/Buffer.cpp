@@ -28,8 +28,8 @@ namespace BZ {
         }
     }
 
-    DataElement::DataElement(DataType dataType, DataElements dataElements, const std::string& name, bool normalized, uint32 perInstanceStep) :
-        dataType(dataType), dataElements(dataElements), name(name), normalized(normalized), perInstanceStep(perInstanceStep),
+    DataElement::DataElement(DataType dataType, DataElements dataElements, const std::string& name, bool normalized) :
+        dataType(dataType), dataElements(dataElements), name(name), normalized(normalized),
         sizeBytes(shaderDataTypeSize(dataType)* getElementCount()), offsetBytes(0) {
     }
 
@@ -55,8 +55,8 @@ namespace BZ {
     }
 
 
-    DataLayout::DataLayout(const std::initializer_list<DataElement>& elements) :
-        elements(elements), sizeBytes(0) {
+    DataLayout::DataLayout(const std::initializer_list<DataElement>& elements, DataRate dataRate) :
+        elements(elements), sizeBytes(0), dataRate(dataRate) {
         calculateOffsetsAndStride();
     }
 
@@ -116,7 +116,7 @@ namespace BZ {
         case Renderer::API::D3D11:
             return MakeRef<D3D11Buffer>(type, size, data, layout);*/
         case Renderer::API::Vulkan:
-            return MakeRef<VulkanBuffer>(type, size);
+            return MakeRef<VulkanBuffer>(type, size, data, layout);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

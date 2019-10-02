@@ -1,12 +1,11 @@
 #include "bzpch.h"
 
 #include "ParticleSystem.h"
-#include "Buffer.h"
-#include "InputDescription.h"
-#include "Shader.h"
-#include "Renderer.h"
-#include "RenderCommand.h"
-#include "Texture.h"
+#include "Bhazel/Renderer/Buffer.h"
+#include "Bhazel/Renderer/Shader.h"
+#include "Bhazel/Renderer/Renderer.h"
+#include "Bhazel/Renderer/RenderCommand.h"
+#include "Bhazel/Renderer/Texture.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -14,8 +13,8 @@
 namespace BZ {
 
     //TODO: initialization
-    BlendState ParticleSystem::particleBlendState;
-    BlendState ParticleSystem::disableBlendState;
+    BlendingState ParticleSystem::particleBlendState;
+    BlendingState ParticleSystem::disableBlendState;
 
     ParticleSystem::ParticleRanges::ParticleRanges() :
         positionRange(glm::vec3(0.0f)),
@@ -32,7 +31,7 @@ namespace BZ {
     }
 
     void ParticleSystem::init() {
-        struct Vertex {
+        /*struct Vertex {
             int8 pos[2];
             uint8 texCoord[2];
         };
@@ -48,7 +47,7 @@ namespace BZ {
             { { MAX, MAX }, {1, 1} },
         };
 
-        BufferLayout particleLayout = {
+        DataLayout particleLayout = {
             {DataType::Int8, DataElements::Vec2, "POSITION", true},
             {DataType::Uint8, DataElements::Vec2, "TEXCOORD"},
         };
@@ -69,7 +68,7 @@ namespace BZ {
 
         computeBuffer = Buffer::createVertexBuffer(particles.data(), static_cast<uint32>(particles.size()) * sizeof(Particle), particleLayout);
         constantBuffer = Buffer::createConstantBuffer(sizeof(ranges));
-        particleTexture = Texture2D::create("textures/particle.png");
+        particleTexture = Texture2D::create("textures/particle.png");*/
     }
 
     void ParticleSystem::onUpdate() {

@@ -47,13 +47,14 @@ namespace BZ {
     }
 
     Ref<Shader> Shader::createFromBlob(const std::string& name, const std::string& vertexPath, const std::string& fragmentPath) {
+        auto &assetsPath = Application::getInstance().getAssetsPath();
         switch(Renderer::api) {
             /*case Renderer::API::OpenGL:
-                return MakeRef<OpenGLShader>(name, vertexBlob, fragmentBlob);
+                return MakeRef<OpenGLShader>(name, assetsPath + vertexBlob, assetsPath + fragmentBlob);
             case Renderer::API::D3D11:
-                return MakeRef<D3D11Shader>(name, vertexBlob, fragmentBlob);*/
+                return MakeRef<D3D11Shader>(name, assetsPath + ertexBlob, assetsPath + fragmentBlob);*/
         case Renderer::API::Vulkan:
-            return MakeRef<VulkanShader>(name, vertexPath, fragmentPath);
+            return MakeRef<VulkanShader>(name, assetsPath + vertexPath, assetsPath + fragmentPath);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

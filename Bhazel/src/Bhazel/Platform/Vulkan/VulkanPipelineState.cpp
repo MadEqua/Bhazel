@@ -7,6 +7,8 @@
 #include "Bhazel/Platform/Vulkan/VulkanShader.h"
 #include "Bhazel/Renderer/Buffer.h"
 
+#include "Bhazel/Platform/Vulkan/VulkanFramebuffer.h"
+
 
 namespace BZ {
 
@@ -25,32 +27,33 @@ namespace BZ {
         PipelineState(data),
         context(static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext())) {
 
-        BZ_ASSERT_CORE(data.shader, "PipelineState needs a shader!");
-
         //Vertex input data format
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions(data.vertexBuffers.size());
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions(data.vertexBuffers.size());
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
         uint32 bufferIndex = 0;
         for(const auto& vb : data.vertexBuffers) {
             const DataLayout& layout = vb->getLayout();
+
+            VkVertexInputBindingDescription bindingDescription = {};
+            bindingDescription.binding = bufferIndex;
+            bindingDescription.stride = layout.getSizeBytes();
+            bindingDescription.inputRate = layout.getDataRate() == DataRate::PerInstance ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+            bindingDescriptions.emplace_back(bindingDescription);
+
             uint32 elementIndex = 0;
-            for(const auto& element : layout) {
-                VkVertexInputBindingDescription bindingDescription = {};
-                bindingDescription.binding = bufferIndex;
-                bindingDescription.stride = layout.getSizeBytes();
-                bindingDescription.inputRate = element.perInstanceStep > 0 ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+            for(const auto &element : layout) {
 
                 VkVertexInputAttributeDescription attributeDescription = {};
-                attributeDescription.binding = bindingDescription.binding;
+                attributeDescription.binding = bufferIndex;
                 attributeDescription.location = elementIndex;
                 attributeDescription.format = dataTypeToVk(element.dataType, element.dataElements, element.normalized);
                 attributeDescription.offset = element.offsetBytes;
 
-                bindingDescriptions[elementIndex] = bindingDescription;
-                attributeDescriptions[elementIndex] = attributeDescription;
+                attributeDescriptions.emplace_back(attributeDescription);
                 elementIndex++;
             }
+
             bufferIndex++;
         }
 
@@ -71,7 +74,7 @@ namespace BZ {
 
         //Viewport and scissor setup. This is ignored if the viewport (or scissor) is declared dynamic.
         std::vector<VkViewport> viewports(data.viewports.size());
-        std::vector<VkRect2D> scissors(data.viewports.size());
+        //std::vector<VkRect2D> scissors();
         uint32 idx = 0;
         for(const auto& vp : data.viewports) {
             VkViewport viewport = {};
@@ -83,12 +86,12 @@ namespace BZ {
             viewport.maxDepth = vp.maxDepth;
 
             //TODO: support scissor
-            VkRect2D scissor = {};
-            scissor.offset = { 0, 0 };
-            scissor.extent = { vp.width, vp.height };
+            //VkRect2D scissor = {};
+            //scissor.offset = { 0, 0 };
+            //scissor.extent = { static_cast<uint32_t>(vp.width), static_cast<uint32_t>(vp.height) };
 
             viewports[idx] = viewport;
-            scissors[idx] = scissor;
+            //scissors[idx] = scissor;
             idx++;
         }
 
@@ -96,8 +99,8 @@ namespace BZ {
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = static_cast<uint32_t>(viewports.size());
         viewportState.pViewports = viewports.data();
-        viewportState.scissorCount = static_cast<uint32_t>(scissors.size());
-        viewportState.pScissors = scissors.data();
+        viewportState.scissorCount = 0;// static_cast<uint32_t>(scissors.size());
+        viewportState.pScissors = nullptr;// scissors.data();
 
         //Rasterizer setup
         VkPipelineRasterizationStateCreateInfo rasterizerState = {};
@@ -196,7 +199,7 @@ namespace BZ {
         //Create the graphics pipeline
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = shader.shaderStageCreateInfos.size();
+        pipelineInfo.stageCount = static_cast<uint32_t>(shader.shaderStageCreateInfos.size());
         pipelineInfo.pStages = shader.shaderStageCreateInfos.data();
         pipelineInfo.pVertexInputState = &vertexInputInfoState;
         pipelineInfo.pInputAssemblyState = &inputAssemblyState;
@@ -207,25 +210,17 @@ namespace BZ {
         pipelineInfo.pColorBlendState = &colorBlendingState;
         pipelineInfo.pDynamicState = nullptr; // TODO
         pipelineInfo.layout = pipelineLayoutHandle;
-        pipelineInfo.renderPass = renderPass;
+        pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).renderPassHandle; //TODO: do it right
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1; // Optional
 
         BZ_ASSERT_VK(vkCreateGraphicsPipelines(context.getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipelineStateHandle));
-
-        //TODO: call destroy on Shader?
-        vkDestroyShaderModule(device, fragShaderModule, nullptr);
-        vkDestroyShaderModule(device, vertShaderModule, nullptr);
     }
 
     VulkanPipelineState::~VulkanPipelineState() {
         vkDestroyPipeline(context.getDevice(), pipelineStateHandle, nullptr);
         vkDestroyPipelineLayout(context.getDevice(), pipelineLayoutHandle, nullptr);
-    }
-
-    void VulkanPipelineState::bind() {
-        //TODO
     }
 
     static VkFormat dataTypeToVk(DataType dataType, DataElements dataElements, bool normalized) {

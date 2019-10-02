@@ -51,9 +51,10 @@ namespace BZ {
         //windowData.fullScreen = settings.getFieldAsBasicType<bool>("fullScreen", false);
 
         window = std::unique_ptr<Window>(Window::create(windowData, BZ_BIND_EVENT_FN(Application::onEvent)));
-        graphicsContext = std::unique_ptr<GraphicsContext>(GraphicsContext::create(window->getNativeWindowHandle()));
+        graphicsContext = std::unique_ptr<GraphicsContext>(GraphicsContext::create(window->getNativeHandle()));
         graphicsContext->setVSync(settings.getFieldAsBasicType<bool>("vsync", true));
-        input = std::unique_ptr<Input>(Input::create(window->getNativeWindowHandle()));
+        graphicsContext->init();
+        input = std::unique_ptr<Input>(Input::create(window->getNativeHandle()));
 
         Renderer::init();
         layerStack.onGraphicsContextCreated();

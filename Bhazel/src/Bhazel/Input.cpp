@@ -14,12 +14,11 @@ namespace BZ {
         case Renderer::API::OpenGL:
         case Renderer::API::Vulkan:
             return new GlfwInput();
-            break;
         case Renderer::API::D3D11:
             return new Win32Input(nativeWindowHandle);
-            break;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown Renderer API.");
+            return nullptr;
         }
     }
 }

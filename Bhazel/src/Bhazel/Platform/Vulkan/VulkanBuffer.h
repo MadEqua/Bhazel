@@ -23,5 +23,7 @@ namespace BZ {
 
         VkDeviceMemory memoryHandle;
         VkBuffer bufferHandle;
+
+        friend class VulkanContext;
     };
 }

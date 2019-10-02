@@ -81,8 +81,8 @@ namespace BZ {
         Ref<Shader> computeShader;
         Ref<Shader> particleShader;
 
-        static BlendState particleBlendState;
-        static BlendState disableBlendState;
+        static BlendingState particleBlendState;
+        static BlendingState disableBlendState;
 
         Ref<Buffer> computeBuffer;
         Ref<Buffer> constantBuffer;

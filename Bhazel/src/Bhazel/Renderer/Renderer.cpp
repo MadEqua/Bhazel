@@ -7,7 +7,6 @@
 
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/Shader.h"
-#include "Bhazel/Renderer/InputDescription.h"
 
 #include "Bhazel/Events/WindowEvent.h"
 
@@ -64,21 +63,21 @@ namespace BZ {
         //instanceConstantBuffer->bindToPipeline(1);
 
         //TODO we should not set this every draw call
-        shader->bindToPipeline();
-        inputDescription->bindToPipeline();
+        //shader->bindToPipeline();
+        //inputDescription->bindToPipeline();
         //RenderCommand::setRenderMode(renderMode);
 
         //TODO: this is bad. branching and divisions
-        if(inputDescription->hasIndexBuffer())
+        /*if(inputDescription->hasIndexBuffer())
             RenderCommand::drawInstancedIndexed(inputDescription->getIndexBuffer()->getSize() / sizeof(uint32), instances);
         else {
             auto &vertexBuffer = inputDescription->getVertexBuffers()[0];
             RenderCommand::drawInstanced(vertexBuffer->getSize() / vertexBuffer->getLayout().getSizeBytes(), instances);
-        }
+        }*/
     }
 
     void Renderer::submitCompute(const Ref<Shader> &computeShader, uint32 groupsX, uint32 groupsY, uint32 groupsZ, std::initializer_list<Ref<Buffer>> buffers) {
-        computeShader->bindToPipeline();
+        //computeShader->bindToPipeline();
 
         int unit = 0;
         /*for(auto &buffer : buffers) {

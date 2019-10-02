@@ -3,6 +3,8 @@
 #include "Bhazel/Renderer/GraphicsContext.h"
 
 #include "Bhazel/Platform/Vulkan/VulkanIncludes.h"
+#include "Bhazel/Renderer/Framebuffer.h"
+#include "Bhazel/Renderer/PipelineState.h"
 
 
 struct GLFWwindow;
@@ -13,6 +15,8 @@ namespace BZ {
     public:
         explicit VulkanContext(void *windowHandle);
         ~VulkanContext() override;
+
+        void init() override;
 
         void onWindowResize(WindowResizedEvent& e) override;
         void presentBuffer() override;
@@ -34,6 +38,8 @@ namespace BZ {
             }
         };
 
+        constexpr static int MAX_FRAMES_IN_FLIGHT = 2;
+
         GLFWwindow *windowHandle;
 
         VkInstance instance;
@@ -47,15 +53,16 @@ namespace BZ {
 
         VkSurfaceKHR surface;
         VkSwapchainKHR swapChain = VK_NULL_HANDLE;
-        std::vector<VkImage> swapChainImages;
-        VkFormat swapChainImageFormat;
+        //std::vector<Ref<Texture>> swapChainTextures;
+        //VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
-        std::vector<VkImageView> swapChainImageViews;
+        //std::array<Ref<TextureView>, MAX_FRAMES_IN_FLIGHT> swapChainTextureViews;
+        std::vector<Ref<Framebuffer>> swapChainFramebuffers;
 
-        const int MAX_FRAMES_IN_FLIGHT = 2;
-        std::vector<VkSemaphore> imageAvailableSemaphores;
-        std::vector<VkSemaphore> renderFinishedSemaphores;
-        std::vector<VkFence> inFlightFences;
+
+        std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> imageAvailableSemaphores;
+        std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> renderFinishedSemaphores;
+        std::array<VkFence, MAX_FRAMES_IN_FLIGHT> inFlightFences;
 
         size_t currentFrame = 0;
 
@@ -67,7 +74,7 @@ namespace BZ {
         void createSurface();
         void createLogicalDevice(const std::vector<const char*> &requiredDeviceExtensions);
         void createSwapChain();
-        void createImageViews();
+        void createFramebuffers();
         void createSyncObjects();
 
         void recreateSwapChain();
@@ -97,17 +104,14 @@ namespace BZ {
 
 
         //TODO: temporary test stuff
-        void createRenderPass();
-        void createFramebuffers();
         void createCommandBuffers();
 
         void initTestStuff();
         void draw();
 
-        VkRenderPass renderPass;
+        Ref<PipelineState> pipelineState;
+
         VkCommandPool commandPool;
         std::vector<VkCommandBuffer> commandBuffers;
-
-        std::vector<VkFramebuffer> swapChainFramebuffers;
     };
 }

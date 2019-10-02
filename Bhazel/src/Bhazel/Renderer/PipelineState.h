@@ -50,7 +50,7 @@ namespace BZ {
         float depthBiasConstantFactor = 0.0f;
         float depthBiasClamp = 0.0f;
         float depthBiasSlopeFactor = 0.0f;
-        float lineWidth = 0.0f;
+        float lineWidth = 1.0f;
     };
 
     struct MultisampleState {
@@ -157,27 +157,29 @@ namespace BZ {
 
     class Shader;
     class Buffer;
+    class Framebuffer;
 
     struct PipelineStateData {
-        Ref<Shader> shader; //TODO: should this hold references?
-        std::vector<Ref<Buffer>> vertexBuffers;
-        std::vector<Ref<Buffer>> indexBuffers;
+        Ref<Shader> shader;
+        std::vector<Ref<Buffer>> vertexBuffers; //Used to get the DataLayout
+        std::vector<Ref<Buffer>> indexBuffers; //TODO: is this needed?
         PrimitiveTopology primitiveTopology;
         std::vector<Viewport> viewports;
         RasterizerState rasterizerState;
         MultisampleState multiSampleState;
         DepthStencilState depthStencilState;
         BlendingState blendingState;
+        Ref<Framebuffer> framebuffer; //Used to get the RenderPass (on Vulkan)
     };
 
     class PipelineState {
     public:
         static Ref<PipelineState> create(PipelineStateData& data);
 
-        virtual void bind() = 0;
+        const PipelineStateData &getData() const { return data; }
 
     protected:
-        PipelineState(PipelineStateData& data) : data(std::move(data)) {}
+        explicit PipelineState(const PipelineStateData &data);
         virtual ~PipelineState() = default;
 
     private:

@@ -19,28 +19,32 @@ namespace BZ {
         Mat2, Mat3, Mat4
     };
 
+    enum class DataRate {
+        PerVertex, PerInstance
+    };
+
     struct DataElement {
         DataType dataType;
         DataElements dataElements;
         std::string name;
         bool normalized;
-        uint32 perInstanceStep;
 
         uint32 sizeBytes;
         uint32 offsetBytes;
 
-        DataElement(DataType dataType, DataElements dataElements, const std::string& name, bool normalized = false, uint32 perInstanceStep = 0);
+        DataElement(DataType dataType, DataElements dataElements, const std::string& name, bool normalized = false);
         uint32 getElementCount() const;
     };
 
     class DataLayout {
     public:
         DataLayout() = default;
-        DataLayout(const std::initializer_list<DataElement>& elements);
+        DataLayout(const std::initializer_list<DataElement>& elements, DataRate dataRate = DataRate::PerVertex);
 
         const auto& getElements() const { return elements; }
         uint32 getElementCount() const { return static_cast<uint32>(elements.size()); }
         uint32 getSizeBytes() const { return sizeBytes; }
+        DataRate getDataRate() const { return dataRate; }
 
         std::vector<DataElement>::iterator begin() { return elements.begin(); }
         std::vector<DataElement>::iterator end() { return elements.end(); }
@@ -50,6 +54,7 @@ namespace BZ {
     private:
         std::vector<DataElement> elements;
         uint32 sizeBytes;
+        DataRate dataRate;
 
         void calculateOffsetsAndStride();
     };

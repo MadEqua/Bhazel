@@ -35,6 +35,8 @@ namespace BZ {
     }
 
     VulkanShader::~VulkanShader() {
+        for(auto &sm : shaderModules)
+            vkDestroyShaderModule(context.getDevice(), sm, nullptr);
     }
 
     VkShaderModule VulkanShader::createShaderModule(const std::vector<char> &codeBlob) {

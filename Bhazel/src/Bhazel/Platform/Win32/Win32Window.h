@@ -13,7 +13,7 @@ namespace BZ {
         virtual void pollEvents() override;
         virtual void setTitle(const char* title) override;
 
-        virtual void* getNativeWindowHandle() const override { return hWnd; }
+        virtual void* getNativeHandle() const override { return hWnd; }
 
         //Win32Window will call this Handler function after its own handling of the events
         void setExtraHandlerFunction(LRESULT (CALLBACK *func)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam));

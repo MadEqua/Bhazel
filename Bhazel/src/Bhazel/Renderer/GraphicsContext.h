@@ -12,6 +12,8 @@ namespace BZ {
     public:
         static GraphicsContext* create(void *windowHandle);
 
+        virtual void init() = 0;
+
         virtual ~GraphicsContext() = default;
         
         virtual void onWindowResize(WindowResizedEvent& e) {};

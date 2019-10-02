@@ -42,6 +42,8 @@ namespace BZ {
 
         BZ_ASSERT_VK(vkAllocateMemory(context.getDevice(), &allocInfo, nullptr, &memoryHandle));
         BZ_ASSERT_VK(vkBindBufferMemory(context.getDevice(), bufferHandle, memoryHandle, 0));
+
+        setData(data, size);
     }
 
     VulkanBuffer::~VulkanBuffer() {

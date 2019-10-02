@@ -47,12 +47,12 @@ namespace BZ {
 
         // Setup Platform/Renderer bindings
         if(Renderer::api == Renderer::API::OpenGL) {
-            ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeWindowHandle()), true);
+            ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeHandle()), true);
             ImGui_ImplOpenGL3_Init("#version 430");
         }
         else if(Renderer::api == Renderer::API::D3D11) {
             Win32Window &window = static_cast<Win32Window&>(Application::getInstance().getWindow());
-            ImGui_ImplWin32_Init(window.getNativeWindowHandle());
+            ImGui_ImplWin32_Init(window.getNativeHandle());
             D3D11Context &context = static_cast<D3D11Context&>(Application::getInstance().getGraphicsContext());
             window.setExtraHandlerFunction(ImGui_ImplWin32_WndProcHandler);
 
