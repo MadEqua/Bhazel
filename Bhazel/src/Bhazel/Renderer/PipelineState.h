@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Bhazel/Renderer/Buffer.h"
+
 
 namespace BZ {
 
@@ -156,13 +158,12 @@ namespace BZ {
     };
 
     class Shader;
-    class Buffer;
     class Framebuffer;
 
     struct PipelineStateData {
         Ref<Shader> shader;
-        std::vector<Ref<Buffer>> vertexBuffers; //Used to get the DataLayout
-        std::vector<Ref<Buffer>> indexBuffers; //TODO: is this needed?
+        DataLayout dataLayout; //Supporting a single vertex buffer
+        //std::vector<Ref<Buffer>> indexBuffers; //TODO
         PrimitiveTopology primitiveTopology;
         std::vector<Viewport> viewports;
         RasterizerState rasterizerState;

@@ -28,30 +28,23 @@ namespace BZ {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions;
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
-        uint32 bufferIndex = 0;
-        for(const auto& vb : data.vertexBuffers) {
-            const DataLayout& layout = vb->getLayout();
+        VkVertexInputBindingDescription bindingDescription = {};
+        bindingDescription.binding = 0;
+        bindingDescription.stride = data.dataLayout.getSizeBytes();
+        bindingDescription.inputRate = data.dataLayout.getDataRate() == DataRate::PerInstance ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+        bindingDescriptions.emplace_back(bindingDescription);
 
-            VkVertexInputBindingDescription bindingDescription = {};
-            bindingDescription.binding = bufferIndex;
-            bindingDescription.stride = layout.getSizeBytes();
-            bindingDescription.inputRate = layout.getDataRate() == DataRate::PerInstance ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
-            bindingDescriptions.emplace_back(bindingDescription);
+        uint32 elementIndex = 0;
+        for(const auto &element : data.dataLayout) {
 
-            uint32 elementIndex = 0;
-            for(const auto &element : layout) {
+            VkVertexInputAttributeDescription attributeDescription = {};
+            attributeDescription.binding = 0;
+            attributeDescription.location = elementIndex;
+            attributeDescription.format = dataTypeToVk(element.dataType, element.dataElements, element.normalized);
+            attributeDescription.offset = element.offsetBytes;
 
-                VkVertexInputAttributeDescription attributeDescription = {};
-                attributeDescription.binding = bufferIndex;
-                attributeDescription.location = elementIndex;
-                attributeDescription.format = dataTypeToVk(element.dataType, element.dataElements, element.normalized);
-                attributeDescription.offset = element.offsetBytes;
-
-                attributeDescriptions.emplace_back(attributeDescription);
-                elementIndex++;
-            }
-
-            bufferIndex++;
+            attributeDescriptions.emplace_back(attributeDescription);
+            elementIndex++;
         }
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfoState = {};

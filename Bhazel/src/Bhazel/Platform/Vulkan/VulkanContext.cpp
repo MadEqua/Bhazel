@@ -28,6 +28,8 @@ namespace BZ {
 
         cleanupSwapChain();
 
+        vertexBuffer.reset();
+
         for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
@@ -289,7 +291,6 @@ namespace BZ {
         vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         vkDestroyCommandPool(device, commandPool, nullptr);
 
-
         vkDestroySwapchainKHR(device, swapChain, nullptr);
     }
 
@@ -511,14 +512,9 @@ namespace BZ {
             const VulkanPipelineState &vkPipeState = static_cast<const VulkanPipelineState &>(*pipelineState);
             vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.getNativeHandle());
 
-            std::vector<VkBuffer> vkBuffers(pipelineState->getData().vertexBuffers.size());
-            std::vector<VkDeviceSize> offsets(pipelineState->getData().vertexBuffers.size(), 0);
-            int idx = 0;
-            for(const auto &vb : pipelineState->getData().vertexBuffers) {
-                const VulkanBuffer &vkBuffer = static_cast<const VulkanBuffer &>(*vb);
-                vkBuffers[idx] = vkBuffer.getNativeHandle();
-            }
-            vkCmdBindVertexBuffers(commandBuffers[i], 0, vkBuffers.size(), vkBuffers.data(), offsets.data());
+            VkBuffer vkBuffers[] = { static_cast<const VulkanBuffer &>(*vertexBuffer).getNativeHandle() };
+            VkDeviceSize offsets[] = { 0 };
+            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vkBuffers, offsets);
 
             vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
 
@@ -545,7 +541,9 @@ namespace BZ {
             0.0f, 0.0f, 1.0f,
         };
 
-        pipelineStateData.vertexBuffers = { Buffer::createVertexBuffer(data, sizeof(data), layout) };
+        vertexBuffer = Buffer::createVertexBuffer(data, sizeof(data), layout);
+
+        pipelineStateData.dataLayout = layout;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(swapChainExtent.width), static_cast<float>(swapChainExtent.height)} };
         pipelineStateData.blendingState.attachmentBlendingStates = { {} };

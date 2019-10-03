@@ -109,6 +109,7 @@ namespace BZ {
         void initTestStuff();
         void draw();
 
+        Ref<Buffer> vertexBuffer;
         Ref<PipelineState> pipelineState;
 
         VkCommandPool commandPool;
