@@ -59,7 +59,6 @@ namespace BZ {
         void calculateOffsetsAndStride();
     };
 
-
     class Buffer {
     public:
         virtual ~Buffer() = default;

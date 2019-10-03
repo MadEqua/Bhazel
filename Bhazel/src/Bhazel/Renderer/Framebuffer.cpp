@@ -2,7 +2,6 @@
 
 #include "Framebuffer.h"
 
-#include "Bhazel/Application.h"
 #include "Bhazel/Renderer/Renderer.h"
 
 #include "Bhazel/Platform/Vulkan/VulkanFramebuffer.h"

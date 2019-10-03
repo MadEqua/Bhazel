@@ -2,19 +2,15 @@
 
 #include "VulkanTexture.h"
 
-#include "Bhazel/Application.h"
-#include "Bhazel/Platform/Vulkan/VulkanContext.h"
-
 
 namespace BZ {
 
-    Ref<VulkanTexture2D> VulkanTexture2D::create(VkImage vkImage, uint32 width, uint32 height) {
+    Ref<VulkanTexture2D> VulkanTexture2D::wrap(VkImage vkImage, uint32 width, uint32 height) {
         return MakeRef<VulkanTexture2D>(vkImage, width, height);
     }
 
     VulkanTexture2D::VulkanTexture2D(const std::string& path, TextureFormat format) :
-        context(static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext())),
-        Texture2D(format) {
+        Texture2D(format), ownsVkImage(true) {
 
         int width, height;
         const byte *data = loadFile(path.c_str(), true, width, height);
@@ -26,11 +22,10 @@ namespace BZ {
     }
 
     VulkanTexture2D::VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height) :
-        context(static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext())),
-        imageHandle(vkImage),
-        Texture2D(TextureFormat::Unknown) {
+        Texture2D(TextureFormat::Unknown), ownsVkImage(false) {
 
-        BZ_ASSERT_CORE(vkImage != VK_NULL_HANDLE, "Invalid vkImage!");
+        BZ_ASSERT_CORE(vkImage != VK_NULL_HANDLE, "Invalid VkImage!");
+        nativeHandle = vkImage;
 
         //TODO
         dimensions.x = width;
@@ -38,22 +33,20 @@ namespace BZ {
     }
 
     VulkanTexture2D::~VulkanTexture2D() {
-        vkDestroyImage(context.getDevice(), imageHandle, nullptr);
+        if(ownsVkImage)
+            vkDestroyImage(getGraphicsContext().getDevice(), nativeHandle, nullptr);
     }
 
+
     VulkanTextureView::VulkanTextureView(const Ref<Texture> &texture) :
-        context(static_cast<VulkanContext &>(Application::getInstance().getGraphicsContext())),
         TextureView(texture) {
 
         BZ_ASSERT_CORE(texture, "Invalid Texture reference!");
 
-        //TODO: this cast is bad
-        VulkanTexture2D &vkTexture = static_cast<VulkanTexture2D&>(*texture);
-
         //TODO: fill correctly
         VkImageViewCreateInfo imageViewCreateInfo = {};
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewCreateInfo.image = vkTexture.imageHandle;
+        imageViewCreateInfo.image = static_cast<VulkanTexture2D &>(*texture).getNativeHandle();
         imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         imageViewCreateInfo.format = textureFormatToVk(texture->getFormat());
         imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -65,7 +58,11 @@ namespace BZ {
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.layerCount = 1;
-        BZ_ASSERT_VK(vkCreateImageView(context.getDevice(), &imageViewCreateInfo, nullptr, &imageViewHandle));
+        BZ_ASSERT_VK(vkCreateImageView(getGraphicsContext().getDevice(), &imageViewCreateInfo, nullptr, &nativeHandle));
+    }
+
+    VulkanTextureView::~VulkanTextureView() {
+        vkDestroyImageView(getGraphicsContext().getDevice(), nativeHandle, nullptr);
     }
 
     VkFormat textureFormatToVk(TextureFormat format) {

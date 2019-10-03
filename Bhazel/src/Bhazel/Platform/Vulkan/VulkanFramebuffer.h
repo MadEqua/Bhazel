@@ -2,26 +2,22 @@
 
 #include "Bhazel/Renderer/Framebuffer.h"
 #include "Bhazel/Platform/Vulkan/VulkanIncludes.h"
+#include "Bhazel/Platform/Vulkan/VulkanGpuObject.h"
 
 
 namespace BZ {
 
-    class VulkanContext;
+    struct VulkanFramebufferHandles {
+        VkRenderPass renderPassHandle;
+        VkFramebuffer frameBufferHandle;
+    };
 
-    class VulkanFramebuffer : public Framebuffer {
+    class VulkanFramebuffer : public Framebuffer, public VulkanGpuObject<VulkanFramebufferHandles> {
     public:
         VulkanFramebuffer(const std::vector<Ref<TextureView>> &textureViews);
         ~VulkanFramebuffer() override;
 
     private:
-        VulkanContext &context;
-
-        VkRenderPass renderPassHandle;
-        VkFramebuffer framebufferHandle;
-
         void initRenderPass();
-
-        friend class VulkanContext;
-        friend class VulkanPipelineState;
     };
 }

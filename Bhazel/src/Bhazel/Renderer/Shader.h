@@ -18,6 +18,7 @@ namespace BZ {
         static Ref<Shader> createFromBlob(const std::string& name, const std::string& vertexPath, const std::string& fragmentPath);
         
        const std::string& getName() const { return name; }
+       //const uint32 getStageCount() const { return 2; } //TODO
 
     protected:
         explicit Shader(const std::string& name) : name(name) {}

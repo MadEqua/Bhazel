@@ -2,8 +2,6 @@
 
 #include "VulkanPipelineState.h"
 
-#include "Bhazel/Application.h"
-#include "Bhazel/Platform/Vulkan/VulkanContext.h"
 #include "Bhazel/Platform/Vulkan/VulkanShader.h"
 #include "Bhazel/Renderer/Buffer.h"
 
@@ -24,8 +22,7 @@ namespace BZ {
     static VkStencilOp stencilOperationsToVk(StencilOperation operation);
 
     VulkanPipelineState::VulkanPipelineState(PipelineStateData &data) :
-        PipelineState(data),
-        context(static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext())) {
+        PipelineState(data) {
 
         //Vertex input data format
         std::vector<VkVertexInputBindingDescription> bindingDescriptions;
@@ -74,7 +71,7 @@ namespace BZ {
 
         //Viewport and scissor setup. This is ignored if the viewport (or scissor) is declared dynamic.
         std::vector<VkViewport> viewports(data.viewports.size());
-        //std::vector<VkRect2D> scissors();
+        std::vector<VkRect2D> scissors(data.viewports.size());
         uint32 idx = 0;
         for(const auto& vp : data.viewports) {
             VkViewport viewport = {};
@@ -86,12 +83,12 @@ namespace BZ {
             viewport.maxDepth = vp.maxDepth;
 
             //TODO: support scissor
-            //VkRect2D scissor = {};
-            //scissor.offset = { 0, 0 };
-            //scissor.extent = { static_cast<uint32_t>(vp.width), static_cast<uint32_t>(vp.height) };
+            VkRect2D scissor = {};
+            scissor.offset = { 0, 0 };
+            scissor.extent = { static_cast<uint32_t>(vp.width), static_cast<uint32_t>(vp.height) };
 
             viewports[idx] = viewport;
-            //scissors[idx] = scissor;
+            scissors[idx] = scissor;
             idx++;
         }
 
@@ -99,8 +96,8 @@ namespace BZ {
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = static_cast<uint32_t>(viewports.size());
         viewportState.pViewports = viewports.data();
-        viewportState.scissorCount = 0;// static_cast<uint32_t>(scissors.size());
-        viewportState.pScissors = nullptr;// scissors.data();
+        viewportState.scissorCount = static_cast<uint32_t>(scissors.size());
+        viewportState.pScissors = scissors.data();
 
         //Rasterizer setup
         VkPipelineRasterizationStateCreateInfo rasterizerState = {};
@@ -192,15 +189,29 @@ namespace BZ {
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        BZ_ASSERT_VK(vkCreatePipelineLayout(context.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayoutHandle));
+        BZ_ASSERT_VK(vkCreatePipelineLayout(getGraphicsContext().getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayoutHandle));
 
+        //Shader setup. TODO
         VulkanShader& shader = static_cast<VulkanShader&>(*data.shader);
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
+        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        vertShaderStageInfo.module = shader.getNativeHandle().vertexModule;
+        vertShaderStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
+        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        fragShaderStageInfo.module = shader.getNativeHandle().fragmentModule;
+        fragShaderStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo shaderStagesCreateInfos[] = { vertShaderStageInfo, fragShaderStageInfo };
 
         //Create the graphics pipeline
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = static_cast<uint32_t>(shader.shaderStageCreateInfos.size());
-        pipelineInfo.pStages = shader.shaderStageCreateInfos.data();
+        pipelineInfo.stageCount = 2;
+        pipelineInfo.pStages = shaderStagesCreateInfos;
         pipelineInfo.pVertexInputState = &vertexInputInfoState;
         pipelineInfo.pInputAssemblyState = &inputAssemblyState;
         pipelineInfo.pViewportState = &viewportState;
@@ -210,17 +221,17 @@ namespace BZ {
         pipelineInfo.pColorBlendState = &colorBlendingState;
         pipelineInfo.pDynamicState = nullptr; // TODO
         pipelineInfo.layout = pipelineLayoutHandle;
-        pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).renderPassHandle; //TODO: do it right
+        pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).getNativeHandle().renderPassHandle;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1; // Optional
 
-        BZ_ASSERT_VK(vkCreateGraphicsPipelines(context.getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipelineStateHandle));
+        BZ_ASSERT_VK(vkCreateGraphicsPipelines(getGraphicsContext().getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &nativeHandle));
     }
 
     VulkanPipelineState::~VulkanPipelineState() {
-        vkDestroyPipeline(context.getDevice(), pipelineStateHandle, nullptr);
-        vkDestroyPipelineLayout(context.getDevice(), pipelineLayoutHandle, nullptr);
+        vkDestroyPipeline(getGraphicsContext().getDevice(), nativeHandle, nullptr);
+        vkDestroyPipelineLayout(getGraphicsContext().getDevice(), pipelineLayoutHandle, nullptr);
     }
 
     static VkFormat dataTypeToVk(DataType dataType, DataElements dataElements, bool normalized) {

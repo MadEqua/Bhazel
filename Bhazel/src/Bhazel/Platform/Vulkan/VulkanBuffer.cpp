@@ -1,8 +1,6 @@
 #include "bzpch.h"
 
 #include "VulkanBuffer.h"
-#include "Bhazel/Application.h"
-#include "Bhazel/Platform/Vulkan/VulkanContext.h"
 
 
 namespace BZ {
@@ -19,8 +17,7 @@ namespace BZ {
     }
 
     VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void* data, const DataLayout& layout) :
-        Buffer(type, size, layout),
-        context(static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext())) {
+        Buffer(type, size, layout) {
 
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -28,34 +25,34 @@ namespace BZ {
         bufferInfo.usage = bufferTypeToVK(type);
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; //TODO
 
-        BZ_ASSERT_VK(vkCreateBuffer(context.getDevice(), &bufferInfo, nullptr, &bufferHandle));
+        BZ_ASSERT_VK(vkCreateBuffer(getGraphicsContext().getDevice(), &bufferInfo, nullptr, &nativeHandle));
 
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(context.getDevice(), bufferHandle, &memRequirements);
+        vkGetBufferMemoryRequirements(getGraphicsContext().getDevice(), nativeHandle, &memRequirements);
 
         VkMemoryAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
 
         //TODO: pick correct flags for usage
-        allocInfo.memoryTypeIndex = context.findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        allocInfo.memoryTypeIndex = getGraphicsContext().findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-        BZ_ASSERT_VK(vkAllocateMemory(context.getDevice(), &allocInfo, nullptr, &memoryHandle));
-        BZ_ASSERT_VK(vkBindBufferMemory(context.getDevice(), bufferHandle, memoryHandle, 0));
+        BZ_ASSERT_VK(vkAllocateMemory(getGraphicsContext().getDevice(), &allocInfo, nullptr, &memoryHandle));
+        BZ_ASSERT_VK(vkBindBufferMemory(getGraphicsContext().getDevice(), nativeHandle, memoryHandle, 0));
 
         setData(data, size);
     }
 
     VulkanBuffer::~VulkanBuffer() {
-        vkDestroyBuffer(context.getDevice(), bufferHandle, nullptr);
-        vkFreeMemory(context.getDevice(), memoryHandle, nullptr);
+        vkDestroyBuffer(getGraphicsContext().getDevice(), nativeHandle, nullptr);
+        vkFreeMemory(getGraphicsContext().getDevice(), memoryHandle, nullptr);
     }
 
     void VulkanBuffer::setData(const void *data, uint32 size) {
         void *ptr;
-        BZ_ASSERT_VK(vkMapMemory(context.getDevice(), memoryHandle, 0, size, 0, &ptr));
+        BZ_ASSERT_VK(vkMapMemory(getGraphicsContext().getDevice(), memoryHandle, 0, size, 0, &ptr));
         memcpy(ptr, data, size);
-        vkUnmapMemory(context.getDevice(), memoryHandle);
+        vkUnmapMemory(getGraphicsContext().getDevice(), memoryHandle);
     }
 
     static uint32 bufferTypeToVK(BufferType bufferType) {

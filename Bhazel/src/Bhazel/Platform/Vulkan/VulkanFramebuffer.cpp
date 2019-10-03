@@ -2,15 +2,12 @@
 
 #include "VulkanFramebuffer.h"
 
-#include "Bhazel/Application.h"
-#include "Bhazel/Platform/Vulkan/VulkanContext.h"
 #include "Bhazel/Platform/Vulkan/VulkanTexture.h"
 
 
 namespace BZ {
 
     VulkanFramebuffer::VulkanFramebuffer(const std::vector<Ref<TextureView>> &textureViews) :
-        context(static_cast<VulkanContext &>(Application::getInstance().getGraphicsContext())),
         Framebuffer(textureViews) {
 
         //TODO: this will create identical render passes. have a pool?
@@ -18,25 +15,24 @@ namespace BZ {
 
         std::vector<VkImageView> vkImageViews(textureViews.size());
         for(int i = 0; i < textureViews.size(); ++i) {
-            const VulkanTextureView &vkTextureView = static_cast<const VulkanTextureView &>(*textureViews[i]); //TODO: bad
-            vkImageViews[i] = vkTextureView.imageViewHandle;
+            vkImageViews[i] = static_cast<VulkanTextureView&>(*textureViews[i]).getNativeHandle();
         }
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPassHandle;
+        framebufferInfo.renderPass = nativeHandle.renderPassHandle;
         framebufferInfo.attachmentCount = static_cast<uint32_t>(vkImageViews.size());
         framebufferInfo.pAttachments = vkImageViews.data();
         framebufferInfo.width = textureViews[0]->getTexture()->getWidth();
         framebufferInfo.height = textureViews[0]->getTexture()->getHeight();
         framebufferInfo.layers = textureViews[0]->getTexture()->getDepth();
 
-        BZ_ASSERT_VK(vkCreateFramebuffer(context.getDevice(), &framebufferInfo, nullptr, &framebufferHandle));
+        BZ_ASSERT_VK(vkCreateFramebuffer(getGraphicsContext().getDevice(), &framebufferInfo, nullptr, &nativeHandle.frameBufferHandle));
     }
 
     VulkanFramebuffer::~VulkanFramebuffer() {
-        vkDestroyFramebuffer(context.getDevice(), framebufferHandle, nullptr);
-        vkDestroyRenderPass(context.getDevice(), renderPassHandle, nullptr);
+        vkDestroyFramebuffer(getGraphicsContext().getDevice(), nativeHandle.frameBufferHandle, nullptr);
+        vkDestroyRenderPass(getGraphicsContext().getDevice(), nativeHandle.renderPassHandle, nullptr);
     }
 
     void VulkanFramebuffer::initRenderPass() {
@@ -79,6 +75,6 @@ namespace BZ {
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        BZ_ASSERT_VK(vkCreateRenderPass(context.getDevice(), &renderPassInfo, nullptr, &renderPassHandle));
+        BZ_ASSERT_VK(vkCreateRenderPass(getGraphicsContext().getDevice(), &renderPassInfo, nullptr, &nativeHandle.renderPassHandle));
     }
 }

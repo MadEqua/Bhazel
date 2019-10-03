@@ -3,44 +3,34 @@
 #include "Bhazel/Renderer/Texture.h"
 
 #include "Bhazel/Platform/Vulkan/VulkanIncludes.h"
+#include "Bhazel/Platform/Vulkan/VulkanGpuObject.h"
 
 
 namespace BZ {
-
-    class VulkanContext;
 
     //TODO to a good location. this is used in many places.
     VkFormat textureFormatToVk(TextureFormat format);
 
 
-    class VulkanTexture2D : public Texture2D {
+    class VulkanTexture2D : public Texture2D, public VulkanGpuObject<VkImage> {
     public:
-        static Ref<VulkanTexture2D> create(VkImage vkImage, uint32 width, uint32 height);
+        static Ref<VulkanTexture2D> wrap(VkImage vkImage, uint32 width, uint32 height);
 
-        explicit VulkanTexture2D(const std::string &path, TextureFormat format);
+        VulkanTexture2D(const std::string &path, TextureFormat format);
         
         //Coming from an already existent VkImage. Used on the swapchain images.
-        explicit VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height);
+        VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height);
 
         ~VulkanTexture2D() override;
 
     private:
-        VulkanContext &context;
-        VkImage imageHandle;
-
-        friend class VulkanTextureView;
+        bool ownsVkImage;
     };
 
 
-    class VulkanTextureView : public TextureView {
+    class VulkanTextureView : public TextureView, public VulkanGpuObject<VkImageView> {
     public:
         explicit VulkanTextureView(const Ref<Texture>& texture);
-        virtual ~VulkanTextureView() = default;
-
-    private:
-        VulkanContext& context;
-        VkImageView imageViewHandle;
-
-        friend class VulkanFramebuffer;
+        ~VulkanTextureView() override;
     };
 }

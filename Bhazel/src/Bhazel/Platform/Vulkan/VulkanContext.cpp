@@ -73,7 +73,6 @@ namespace BZ {
 
         rendererAPI = std::make_unique<VulkanRendererAPI>();
         RenderCommand::initRendererAPI(rendererAPI.get());
-
     }
 
     void VulkanContext::presentBuffer() {
@@ -89,7 +88,7 @@ namespace BZ {
         //TODO
     }
 
-    uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
         for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
@@ -246,7 +245,7 @@ namespace BZ {
         //Create Views for the images
        swapChainFramebuffers.resize(imageCount);
        for(size_t i = 0; i < swapChainImages.size(); i++) {
-            auto textureRef = VulkanTexture2D::create(swapChainImages[i], swapChainExtent.width, swapChainExtent.height);
+            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], swapChainExtent.width, swapChainExtent.height);
             auto textureViewRef = TextureView::create(textureRef);
             swapChainFramebuffers[i] = Framebuffer::create({ textureViewRef });
         }
@@ -284,10 +283,12 @@ namespace BZ {
 
 
     void VulkanContext::cleanupSwapChain() {
+        pipelineState.reset();
+        swapChainFramebuffers.clear();
+
         vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         vkDestroyCommandPool(device, commandPool, nullptr);
 
-        swapChainFramebuffers.clear();
 
         vkDestroySwapchainKHR(device, swapChain, nullptr);
     }
@@ -493,14 +494,13 @@ namespace BZ {
 
             BZ_ASSERT_VK(vkBeginCommandBuffer(commandBuffers[i], &beginInfo));
 
-            //TODO do it well
             const VulkanFramebuffer &vkFramebuffer = static_cast<const VulkanFramebuffer&>(*swapChainFramebuffers[i]);
-
+            
             //Record a render pass
             VkRenderPassBeginInfo renderPassBeginInfo = {};
             renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassBeginInfo.renderPass = vkFramebuffer.renderPassHandle;
-            renderPassBeginInfo.framebuffer = vkFramebuffer.framebufferHandle;
+            renderPassBeginInfo.renderPass = vkFramebuffer.getNativeHandle().renderPassHandle;
+            renderPassBeginInfo.framebuffer = vkFramebuffer.getNativeHandle().frameBufferHandle;
             renderPassBeginInfo.renderArea.offset = { 0, 0 };
             renderPassBeginInfo.renderArea.extent = swapChainExtent;
             VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -508,18 +508,15 @@ namespace BZ {
             renderPassBeginInfo.pClearValues = &clearColor;
             vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            //TODO do it well
             const VulkanPipelineState &vkPipeState = static_cast<const VulkanPipelineState &>(*pipelineState);
-
-            vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.pipelineStateHandle);
+            vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.getNativeHandle());
 
             std::vector<VkBuffer> vkBuffers(pipelineState->getData().vertexBuffers.size());
             std::vector<VkDeviceSize> offsets(pipelineState->getData().vertexBuffers.size(), 0);
             int idx = 0;
             for(const auto &vb : pipelineState->getData().vertexBuffers) {
-                //TODO do it well
                 const VulkanBuffer &vkBuffer = static_cast<const VulkanBuffer &>(*vb);
-                vkBuffers[idx] = vkBuffer.bufferHandle;
+                vkBuffers[idx] = vkBuffer.getNativeHandle();
             }
             vkCmdBindVertexBuffers(commandBuffers[i], 0, vkBuffers.size(), vkBuffers.data(), offsets.data());
 
@@ -554,7 +551,7 @@ namespace BZ {
         pipelineStateData.blendingState.attachmentBlendingStates = { {} };
         pipelineStateData.framebuffer = swapChainFramebuffers[0]; //All the framebuffers have a similar VkRenderPass
 
-        pipelineState= PipelineState::create(pipelineStateData);
+        pipelineState = PipelineState::create(pipelineStateData);
 
         createCommandBuffers();
     }
