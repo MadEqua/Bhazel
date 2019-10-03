@@ -8,23 +8,19 @@
 
 namespace BZ {
 
-    //TODO to a good location. this is used in many places.
-    VkFormat textureFormatToVk(TextureFormat format);
-
-
     class VulkanTexture2D : public Texture2D, public VulkanGpuObject<VkImage> {
     public:
-        static Ref<VulkanTexture2D> wrap(VkImage vkImage, uint32 width, uint32 height);
+        static Ref<VulkanTexture2D> wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
 
         VulkanTexture2D(const std::string &path, TextureFormat format);
         
         //Coming from an already existent VkImage. Used on the swapchain images.
-        VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height);
+        VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
 
         ~VulkanTexture2D() override;
 
     private:
-        bool ownsVkImage;
+        bool isWrapping;
     };
 
 

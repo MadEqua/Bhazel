@@ -14,6 +14,57 @@
 
 namespace BZ {
 
+    TextureFormat::TextureFormat(TextureFormatEnum format) : 
+        format(format)  {
+    }
+
+    bool TextureFormat::isColor() const {
+        switch(format) {
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_sRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_sRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_sRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_sRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_sRGB:
+            return true;
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
+            return false;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
+            return false;
+        };
+    }
+
+    bool TextureFormat::isDepthStencil() const {
+        switch(format) {
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_sRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_sRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_sRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_sRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_sRGB:
+            return false;
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
+            return true;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
+            return false;
+        };
+    }
+
+
     Texture::Texture(TextureFormat format) :
         format(format) {
     }
@@ -62,5 +113,6 @@ namespace BZ {
 
     TextureView::TextureView(const Ref<Texture> &texture) :
         texture(texture) {
+        BZ_ASSERT_CORE(texture, "Invalid Texture!");
     }
 }

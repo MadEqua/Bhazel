@@ -3,15 +3,32 @@
 
 namespace BZ {
 
-    enum class TextureFormat {
-        Unknown
+    enum class TextureFormatEnum {
+        Undefined,
+        R8, R8_sRGB,
+        R8G8, R8G8_sRGB,
+        R8G8B8, R8G8B8_sRGB,
+        R8G8B8A8, R8G8B8A8_sRGB,
+        B8G8R8A8, B8G8R8A8_sRGB,
+        D16S8,
+        D24S8,
+    };
+
+    struct TextureFormat {
+        TextureFormat(TextureFormatEnum format);
+
+        TextureFormatEnum format;
+
+        TextureFormatEnum operator()() { return format; }
+        bool isColor() const;
+        bool isDepthStencil() const;
     };
 
     class Texture {
     public:
         virtual ~Texture() = default;
 
-        TextureFormat getFormat() const { return format; }
+        const TextureFormat& getFormat() const { return format; }
 
         uint32 getWidth() const { return dimensions.x; }
         uint32 getHeight() const { return dimensions.y; }
@@ -41,6 +58,7 @@ namespace BZ {
         static Ref<TextureView> create(const Ref<Texture> &texture);
         virtual ~TextureView() = default;
 
+        TextureFormat getFormat() const { return texture->getFormat(); } //TODO: have its own format?
         Ref<Texture> getTexture() const { return texture; }
 
     protected:

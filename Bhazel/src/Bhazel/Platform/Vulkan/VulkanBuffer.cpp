@@ -1,12 +1,10 @@
 #include "bzpch.h"
 
 #include "VulkanBuffer.h"
+#include "Bhazel/Platform/Vulkan/VulkanConversions.h"
 
 
 namespace BZ {
-
-    static uint32 bufferTypeToVK(BufferType bufferType);
-
 
     VulkanBuffer::VulkanBuffer(BufferType type, uint32 size) :
         VulkanBuffer(type, size, nullptr, DataLayout()) {
@@ -53,19 +51,5 @@ namespace BZ {
         BZ_ASSERT_VK(vkMapMemory(getGraphicsContext().getDevice(), memoryHandle, 0, size, 0, &ptr));
         memcpy(ptr, data, size);
         vkUnmapMemory(getGraphicsContext().getDevice(), memoryHandle);
-    }
-
-    static uint32 bufferTypeToVK(BufferType bufferType) {
-        switch(bufferType) {
-        case BufferType::Vertex:
-            return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        case BZ::BufferType::Index:
-            return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-        case BZ::BufferType::Constant:
-            return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown BufferType!");
-            return 0;
-        }
     }
 }

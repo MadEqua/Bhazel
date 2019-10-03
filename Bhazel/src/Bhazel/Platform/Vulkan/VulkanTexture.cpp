@@ -1,16 +1,17 @@
 #include "bzpch.h"
 
 #include "VulkanTexture.h"
+#include "Bhazel/Platform/Vulkan/VulkanConversions.h"
 
 
 namespace BZ {
 
-    Ref<VulkanTexture2D> VulkanTexture2D::wrap(VkImage vkImage, uint32 width, uint32 height) {
-        return MakeRef<VulkanTexture2D>(vkImage, width, height);
+    Ref<VulkanTexture2D> VulkanTexture2D::wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) {
+        return MakeRef<VulkanTexture2D>(vkImage, width, height, vkFormat);
     }
 
     VulkanTexture2D::VulkanTexture2D(const std::string& path, TextureFormat format) :
-        Texture2D(format), ownsVkImage(true) {
+        Texture2D(format), isWrapping(false) {
 
         int width, height;
         const byte *data = loadFile(path.c_str(), true, width, height);
@@ -21,27 +22,24 @@ namespace BZ {
         //TODO
     }
 
-    VulkanTexture2D::VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height) :
-        Texture2D(TextureFormat::Unknown), ownsVkImage(false) {
+    VulkanTexture2D::VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) :
+        Texture2D(vkFormatToTextureFormat(vkFormat)), isWrapping(true) {
 
         BZ_ASSERT_CORE(vkImage != VK_NULL_HANDLE, "Invalid VkImage!");
         nativeHandle = vkImage;
 
-        //TODO
         dimensions.x = width;
         dimensions.y = height;
     }
 
     VulkanTexture2D::~VulkanTexture2D() {
-        if(ownsVkImage)
+        if(!isWrapping)
             vkDestroyImage(getGraphicsContext().getDevice(), nativeHandle, nullptr);
     }
 
 
     VulkanTextureView::VulkanTextureView(const Ref<Texture> &texture) :
         TextureView(texture) {
-
-        BZ_ASSERT_CORE(texture, "Invalid Texture reference!");
 
         //TODO: fill correctly
         VkImageViewCreateInfo imageViewCreateInfo = {};
@@ -63,16 +61,5 @@ namespace BZ {
 
     VulkanTextureView::~VulkanTextureView() {
         vkDestroyImageView(getGraphicsContext().getDevice(), nativeHandle, nullptr);
-    }
-
-    VkFormat textureFormatToVk(TextureFormat format) {
-        switch(format) {
-        case TextureFormat::Unknown:
-            //TODO
-            return VK_FORMAT_B8G8R8A8_UNORM;
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
-            return VK_FORMAT_UNDEFINED;
-        }
     }
 }

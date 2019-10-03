@@ -6,6 +6,7 @@
 #include "Bhazel/Platform/Vulkan/VulkanPipelineState.h"
 #include "Bhazel/Platform/Vulkan/VulkanFramebuffer.h"
 #include "Bhazel/Platform/Vulkan/VulkanBuffer.h"
+#include "Bhazel/Platform/Vulkan/VulkanConversions.h"
 
 #include "Bhazel/Renderer/RenderCommand.h"
 #include "Bhazel/Renderer/Shader.h"
@@ -232,7 +233,7 @@ namespace BZ {
         swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
         BZ_ASSERT_VK(vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapChain));
 
-        //swapChainImageFormat = surfaceFormat.format;
+        swapChainImageFormat = surfaceFormat.format;
         swapChainExtent = extent;
     }
 
@@ -247,9 +248,24 @@ namespace BZ {
         //Create Views for the images
        swapChainFramebuffers.resize(imageCount);
        for(size_t i = 0; i < swapChainImages.size(); i++) {
-            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], swapChainExtent.width, swapChainExtent.height);
+            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], swapChainExtent.width, swapChainExtent.height, swapChainImageFormat);
             auto textureViewRef = TextureView::create(textureRef);
-            swapChainFramebuffers[i] = Framebuffer::create({ textureViewRef });
+
+            AttachmentDescription attachmentDesc;
+            attachmentDesc.format = textureRef->getFormat();
+            attachmentDesc.samples = 1;
+            attachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
+            attachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
+            attachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
+            attachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
+            attachmentDesc.initialLayout = TextureLayout::Undefined;
+            attachmentDesc.finalLayout = TextureLayout::Present;
+
+            Framebuffer::Builder builder;
+            builder.addColorAttachment(attachmentDesc, textureViewRef);
+            builder.setDimensions(glm::ivec3(swapChainExtent.width, swapChainExtent.height, 1));
+
+            swapChainFramebuffers[i] = builder.build();
         }
     }
 
@@ -569,7 +585,7 @@ namespace BZ {
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;

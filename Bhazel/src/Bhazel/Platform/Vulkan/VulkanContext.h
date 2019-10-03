@@ -54,7 +54,7 @@ namespace BZ {
         VkSurfaceKHR surface;
         VkSwapchainKHR swapChain = VK_NULL_HANDLE;
         //std::vector<Ref<Texture>> swapChainTextures;
-        //VkFormat swapChainImageFormat;
+        VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
         //std::array<Ref<TextureView>, MAX_FRAMES_IN_FLIGHT> swapChainTextureViews;
         std::vector<Ref<Framebuffer>> swapChainFramebuffers;
