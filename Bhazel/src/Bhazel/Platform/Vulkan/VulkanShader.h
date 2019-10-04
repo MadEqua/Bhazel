@@ -9,24 +9,17 @@
 namespace BZ {
 
     struct VulkanShaderNativeHandles {
-        VkShaderModule vertexModule;
-        VkShaderModule fragmentModule;
+        std::array<VkShaderModule, Shader::SHADER_STAGES_COUNT> modules;
     };
 
     class VulkanShader : public Shader, public VulkanGpuObject<VulkanShaderNativeHandles> {
     public:
-        //explicit VulkanShader(const std::string &filePath);
-        //VulkanShader(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc);
-        VulkanShader(const std::string& name, const std::string& vertexPath, const std::string& fragmentPath);
+        VulkanShader(const char *name, const std::array<std::string, SHADER_STAGES_COUNT> &codeStrings);
+        VulkanShader(const char *name, const std::array<std::vector<char>, SHADER_STAGES_COUNT> &binaryBlobs);
+
         ~VulkanShader() override;
 
     private:
-        struct CreateInfos {
-            VkPipelineShaderStageCreateInfo vertexCreateInfo;
-            VkPipelineShaderStageCreateInfo fragmentCreateInfo;
-        };
-        CreateInfos createInfos;
-
-        VkShaderModule createShaderModule(const std::vector<char> &codeBlob);
+        VkShaderModule createShaderModuleFromBinaryBlob(const std::vector<char> &binaryBlob);
     };
 }

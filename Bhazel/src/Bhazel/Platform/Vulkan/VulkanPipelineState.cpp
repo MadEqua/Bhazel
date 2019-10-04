@@ -173,27 +173,28 @@ namespace BZ {
 
         BZ_ASSERT_VK(vkCreatePipelineLayout(getGraphicsContext().getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayoutHandle));
 
-        //Shader setup. TODO
-        VulkanShader& shader = static_cast<VulkanShader&>(*data.shader);
-        VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
-        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        vertShaderStageInfo.module = shader.getNativeHandle().vertexModule;
-        vertShaderStageInfo.pName = "main";
+        //Shader setup.
+        std::array<VkPipelineShaderStageCreateInfo, Shader::SHADER_STAGES_COUNT> shaderStagesCreateInfos;
 
-        VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        fragShaderStageInfo.module = shader.getNativeHandle().fragmentModule;
-        fragShaderStageInfo.pName = "main";
-
-        VkPipelineShaderStageCreateInfo shaderStagesCreateInfos[] = { vertShaderStageInfo, fragShaderStageInfo };
+        idx = 0;
+        for(int i = 0; i < Shader::SHADER_STAGES_COUNT; ++i) {
+            ShaderStage shaderStage = static_cast<ShaderStage>(i);
+            if(data.shader->isStagePresent(shaderStage)) {
+                VulkanShader &vulkanShader = static_cast<VulkanShader &>(*data.shader);
+                VkPipelineShaderStageCreateInfo shaderCreateInfo = {};
+                shaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                shaderCreateInfo.stage = shaderStageToVk(shaderStage);
+                shaderCreateInfo.module = vulkanShader.getNativeHandle().modules[i];
+                shaderCreateInfo.pName = "main";
+                shaderStagesCreateInfos[idx++] = shaderCreateInfo;
+            }
+        }
 
         //Create the graphics pipeline
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = 2;
-        pipelineInfo.pStages = shaderStagesCreateInfos;
+        pipelineInfo.stageCount = idx;
+        pipelineInfo.pStages = shaderStagesCreateInfos.data();
         pipelineInfo.pVertexInputState = &vertexInputInfoState;
         pipelineInfo.pInputAssemblyState = &inputAssemblyState;
         pipelineInfo.pViewportState = &viewportState;

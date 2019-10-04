@@ -3,8 +3,6 @@
 #include <Windows.h>
 #include <Windowsx.h>
 
-#include <bitset>
-
 #include "Win32Window.h"
 #include "Bhazel/Events/WindowEvent.h"
 #include "Bhazel/Events/MouseEvent.h"

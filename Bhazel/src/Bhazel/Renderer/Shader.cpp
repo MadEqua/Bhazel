@@ -1,9 +1,8 @@
 #include "bzpch.h"
 
 #include "Shader.h"
-#include "Renderer.h"
 
-#include "Bhazel/Application.h"
+#include "Bhazel/Renderer/Renderer.h"
 
 #include "Bhazel/Platform/OpenGL/OpenGLShader.h"
 #include "Bhazel/Platform/D3D11/D3D11Shader.h"
@@ -15,89 +14,100 @@
 
 namespace BZ {
 
-    Ref<Shader> Shader::createFromSource(const std::string &filePath) {
-        auto &assetsPath = Application::getInstance().getAssetsPath();
-        switch(Renderer::api) {
-        /*case Renderer::API::OpenGL:
-            return MakeRef<OpenGLShader>(assetsPath + filePath);
-        case Renderer::API::D3D11:
-            return MakeRef<D3D11Shader>(assetsPath + filePath);*/
-        case Renderer::API::Vulkan:
-            BZ_ASSERT_ALWAYS_CORE("Not implemented!");
-            return nullptr;
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return nullptr;
-        }
+    Shader::Builder& Shader::Builder::fromSingleSourceFile(const char *filePath) {
+        BZ_ASSERT_CORE(!useBinaryBlob.has_value() || !useBinaryBlob.value(), "Shader is already using binary data!");
+
+        std::string path = Application::getInstance().getAssetsPath() + filePath;
+        readAndPreprocessSingleSourceFile(path.c_str(), codeStrings);
+        useBinaryBlob = false;
+        return *this;
     }
 
-    Ref<Shader> Shader::createFromSource(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc) {
-        switch(Renderer::api) {
-        /*case Renderer::API::OpenGL:
-            return MakeRef<OpenGLShader>(name, vertexSrc, fragmentSrc);
-        case Renderer::API::D3D11:
-            return MakeRef<D3D11Shader>(name, vertexSrc, fragmentSrc);*/
-        case Renderer::API::Vulkan:
-            BZ_ASSERT_ALWAYS_CORE("Not implemented!");
-            return nullptr;
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return nullptr;
-        }
+    Shader::Builder& Shader::Builder::fromString(ShaderStage type, const char *code) {
+        BZ_ASSERT_CORE(!useBinaryBlob.has_value() || !useBinaryBlob.value(), "Shader is already using binary data!");
+
+        codeStrings[static_cast<int>(type)] = code;
+        useBinaryBlob = false;
+        return *this;
     }
 
-    Ref<Shader> Shader::createFromBlob(const std::string& name, const std::string& vertexPath, const std::string& fragmentPath) {
-        auto &assetsPath = Application::getInstance().getAssetsPath();
+    Shader::Builder& Shader::Builder::fromBinaryFile(ShaderStage type, const char *filePath) {
+        BZ_ASSERT_CORE(!useBinaryBlob.has_value() || useBinaryBlob.value(), "Shader is already using text data!")
+
+        std::string path = Application::getInstance().getAssetsPath() + filePath;
+        binaryBlobs[static_cast<int>(type)] = readBinaryFile(path.c_str());
+        useBinaryBlob = true;
+        return *this;
+    }
+
+    Shader::Builder& Shader::Builder::fromSourceFile(ShaderStage type, const char *filePath) {
+        BZ_ASSERT_CORE(!useBinaryBlob.has_value() || !useBinaryBlob.value(), "Shader is already using binary data!");
+
+        std::string path = Application::getInstance().getAssetsPath() + filePath;
+        codeStrings[static_cast<int>(type)] = readSourceFile(path.c_str());
+        useBinaryBlob = false;
+        return *this;
+    }
+
+    Shader::Builder& Shader::Builder::setName(const char *name) {
+        this->name = name;
+        return *this;
+    }
+
+    Ref<Shader> Shader::Builder::build() const {
+        BZ_ASSERT_CORE(useBinaryBlob.has_value(), "No shader data was set on the Builder!");
+        BZ_ASSERT_CORE(name, "Shader needs a name!");
+
         switch(Renderer::api) {
             /*case Renderer::API::OpenGL:
-                return MakeRef<OpenGLShader>(name, assetsPath + vertexBlob, assetsPath + fragmentBlob);
+                return MakeRef<OpenGLTexture2D>(assetsPath + path);
             case Renderer::API::D3D11:
-                return MakeRef<D3D11Shader>(name, assetsPath + ertexBlob, assetsPath + fragmentBlob);*/
+                return MakeRef<D3D11Texture2D>(assetsPath + path);*/
         case Renderer::API::Vulkan:
-            return MakeRef<VulkanShader>(name, assetsPath + vertexPath, assetsPath + fragmentPath);
+            if(*useBinaryBlob)
+                return MakeRef<VulkanShader>(name, binaryBlobs);
+            else
+                return MakeRef<VulkanShader>(name, codeStrings);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    std::unordered_map<ShaderType, std::string> Shader::readAndPreprocessFile(const std::string & filePath) {
-        
-        std::ifstream in(filePath, std::ios::in);
-        BZ_ASSERT_CORE(in, "Failed to load shader '{0}'.", filePath);
+    void Shader::Builder::readAndPreprocessSingleSourceFile(const char *filePath, std::array<std::string, SHADER_STAGES_COUNT> &out) {
+        std::ifstream file(filePath, std::ios::in);
+        BZ_ASSERT_CORE(file, "Failed to load file '{}'!", filePath);
 
-        const char* typeToken = "#type";
+        const char *typeToken = "#type";
         const size_t typeTokenLength = strlen(typeToken);
 
-        std::unordered_map<ShaderType, std::string> result;
         std::stringstream sstream;
         std::string line;
-        ShaderType currentType = ShaderType::Unknown;
+        std::optional<ShaderStage> currentType;
 
-        while(std::getline(in, line)) {
+        while(std::getline(file, line)) {
             if(!line.empty()) {
                 if(line.find(typeToken) == 0) {
-                    if(currentType != ShaderType::Unknown) {
-                        result[currentType] = sstream.str();
+                    if(currentType.has_value()) {
+                        out[static_cast<int>(*currentType)] = sstream.str();
                         sstream.str("");
                         sstream.clear();
                     }
                     std::string typeString = Utils::trim(line.substr(typeTokenLength, std::string::npos));
                     currentType = shaderTypeFromString(typeString);
                 }
-                else if(currentType != ShaderType::Unknown) {
+                else if(currentType.has_value()) {
                     sstream << line << std::endl;
                 }
             }
         }
-        result[currentType] = sstream.str();
-        in.close();
-        return result;
+        out[static_cast<int>(*currentType)] = sstream.str();
+        file.close();
     }
 
-    std::vector<char> Shader::readBlobFile(const std::string& filePath) {
+    std::vector<char> Shader::Builder::readBinaryFile(const char *filePath) {
         std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-        BZ_ASSERT_CORE(file, "Cannot open file {}", filePath);
+        BZ_ASSERT_CORE(file, "Failed to load file '{}'!", filePath);
 
         size_t fileSize = (size_t)file.tellg();
         std::vector<char> buffer(fileSize);
@@ -107,53 +117,81 @@ namespace BZ {
         return buffer;
     }
 
-    ShaderType Shader::shaderTypeFromString(const std::string &string) {
+    std::string Shader::Builder::readSourceFile(const char *filePath) {
+        std::ifstream file(filePath, std::ios::in);
+        BZ_ASSERT_CORE(file, "Failed to load file '{}'!", filePath);
+        
+        size_t fileSize = (size_t)file.tellg();
+        std::string content;
+        content.reserve(fileSize);
+        file.seekg(0);
+        content.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+        file.close();
+        return content;
+    }
+
+    ShaderStage Shader::Builder::shaderTypeFromString(const std::string &string) {
         if(string == "Vertex" || string == "vertex")
-            return ShaderType::Vertex;
+            return ShaderStage::Vertex;
+        else if(string == "TesselationEvaluation" || string == "TE")
+            return ShaderStage::TesselationEvaluation;
+        else if(string == "TesselationControl" || string == "TC")
+            return ShaderStage::TesselationControl;
+        else if(string == "Geometry" || string == "geometry")
+            return ShaderStage::Geometry;
         else if(string == "Fragment" || string == "fragment" || string == "Pixel" || string == "pixel")
-            return ShaderType::Fragment;
+            return ShaderStage::Fragment;
         else if(string == "Compute" || string == "compute")
-            return ShaderType::Compute;
+            return ShaderStage::Compute;
         else {
-            BZ_ASSERT_ALWAYS_CORE("Unknown shader type string: '{0}'", string);
-            return ShaderType::Unknown;
+            BZ_ASSERT_ALWAYS_CORE("Unknown shader type string: '{}'", string);
+            return ShaderStage::Vertex;
         }
     }
 
 
-    void ShaderLibrary::add(const std::string &name, const Ref<Shader> &shader) {
+    Shader::Shader(const char *name, const std::array<std::string, SHADER_STAGES_COUNT> &codeStrings) :
+        name(name) {
+        for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
+            stages[i] = !codeStrings[i].empty();
+        }
+    }
+
+    Shader::Shader(const char *name, const std::array<std::vector<char>, SHADER_STAGES_COUNT> &binaryBlobs) :
+        name(name) {
+        for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
+            stages[i] = !binaryBlobs[i].empty();
+        }
+    }
+
+    uint32 Shader::getStageCount() const {
+        uint32 count = 0;
+        for(int i = 0; i < SHADER_STAGES_COUNT; ++i)
+            if(stages[i]) count++;
+        return count;
+    }
+
+    bool Shader::isStagePresent(ShaderStage stage) const {
+        return stages[static_cast<int>(stage)];
+    }
+
+
+
+    void ShaderLibrary::add(const char *name, const Ref<Shader> &shader) {
         BZ_ASSERT_CORE(!exists(name), "Adding name already in use!");
         shaders[name] = shader;
     }
 
     void ShaderLibrary::add(const Ref<Shader> &shader) {
-        add(shader->getName(), shader);
+        add(shader->getName().c_str(), shader);
     }
 
-    Ref<Shader> ShaderLibrary::loadFromSource(const std::string &filepath) {
-        auto shader = Shader::createFromSource(filepath);
-        add(shader);
-        return shader;
-    }
-
-    Ref<Shader> ShaderLibrary::loadFromSource(const std::string &name, const std::string &filepath) {
-        auto shader = Shader::createFromSource(filepath);
-        add(name, shader);
-        return shader;
-    }
-
-    Ref<Shader> ShaderLibrary::loadFromBlob(const std::string& name, const std::string& vertexPath, const std::string& fragmentPath) {
-        auto shader = Shader::createFromBlob(name, vertexPath, fragmentPath);
-        add(name, shader);
-        return shader;
-    }
-
-    Ref<Shader> ShaderLibrary::get(const std::string &name) {
-        BZ_ASSERT_CORE(exists(name), "A shader with name '{0}' doesn't exist on the shader library!", name)
+    Ref<Shader> ShaderLibrary::get(const char *name) {
+        BZ_ASSERT_CORE(exists(name), "A shader with name '{}' doesn't exist on the shader library!", name)
         return shaders[name];
     }
 
-    bool ShaderLibrary::exists(const std::string &name) const {
+    bool ShaderLibrary::exists(const char *name) const {
         return shaders.find(name) != shaders.end();
     }
 }

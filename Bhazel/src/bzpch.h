@@ -12,6 +12,7 @@
 #include <string>
 #include <optional>
 #include <set>
+#include <bitset>
 
 #include <glm/glm.hpp>
 

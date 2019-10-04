@@ -25,7 +25,7 @@ namespace BZ {
         wrl::ComPtr<ID3D11PixelShader> pixelShaderPtr;
         wrl::ComPtr<ID3D11ComputeShader> computeShaderPtr;
 
-        void compile(const std::unordered_map<ShaderType, std::string> &sources);
+        void compile(const std::unordered_map<ShaderStage, std::string> &sources);
 
         friend class D3D11InputDescription;
     };

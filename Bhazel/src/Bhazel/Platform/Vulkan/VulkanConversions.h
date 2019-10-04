@@ -5,6 +5,7 @@
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/Texture.h"
 #include "Bhazel/Renderer/PipelineState.h"
+#include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Framebuffer.h"
 
 
@@ -26,4 +27,5 @@ namespace BZ {
    VkAttachmentLoadOp loadOperationToVk(LoadOperation operation);
    VkAttachmentStoreOp storeOperationToVk(StoreOperation operation);
    VkImageLayout textureLayoutToVk(TextureLayout layout);
+   VkShaderStageFlagBits shaderStageToVk(ShaderStage stage);
 }

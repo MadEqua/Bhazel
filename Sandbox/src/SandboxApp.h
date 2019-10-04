@@ -17,7 +17,7 @@ public:
 
 private:
     //TODO: this is temporary
-    BZ::ShaderLibrary shaderLibrary;
+    //BZ::ShaderLibrary shaderLibrary;
 
     BZ::Ref<BZ::InputDescription> inputDescription;
     BZ::Ref<BZ::Buffer> vertexBuffer;

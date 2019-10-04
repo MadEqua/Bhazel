@@ -17,6 +17,6 @@ namespace BZ {
     private:
         uint32 rendererId;
 
-        void compile(const std::unordered_map<ShaderType, std::string> &sources);
+        void compile(const std::unordered_map<ShaderStage, std::string> &sources);
     };
 }

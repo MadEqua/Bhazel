@@ -508,4 +508,24 @@ namespace BZ {
             return VK_IMAGE_LAYOUT_UNDEFINED;
         }
     }
+
+    VkShaderStageFlagBits shaderStageToVk(ShaderStage stage) {
+        switch(stage) {
+        case ShaderStage::Vertex:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderStage::TesselationEvaluation:
+            return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        case ShaderStage::TesselationControl:
+            return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+        case ShaderStage::Geometry:
+            return VK_SHADER_STAGE_GEOMETRY_BIT;
+        case ShaderStage::Fragment:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        case ShaderStage::Compute:
+            return VK_SHADER_STAGE_COMPUTE_BIT;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown ShaderStage!");
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        }
+    }
 }

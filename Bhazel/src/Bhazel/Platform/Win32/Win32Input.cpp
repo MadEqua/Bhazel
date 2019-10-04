@@ -2,8 +2,6 @@
 
 #include <Windows.h>
 
-#include <bitset>
-
 #include "Win32Input.h"
 #include "Bhazel/Application.h"
 #include "Bhazel/KeyCodes.h"

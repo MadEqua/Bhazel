@@ -542,7 +542,12 @@ namespace BZ {
 
     void VulkanContext::initTestStuff() {
         PipelineStateData pipelineStateData;
-        pipelineStateData.shader = Shader::createFromBlob("test", "shaders/bin/vert.spv", "shaders/bin/frag.spv");
+
+        Shader::Builder builder;
+        builder.setName("test");
+        builder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/vert.spv");
+        builder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/frag.spv");
+        pipelineStateData.shader = builder.build();
 
         DataLayout layout = {
             {DataType::Float32, DataElements::Vec2, "POSITION"},

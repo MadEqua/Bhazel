@@ -21,7 +21,7 @@ namespace BZ {
         return *this;
     }
 
-    Framebuffer::Builder& Framebuffer::Builder::setDimensions(const glm::ivec3 &dimensions) {
+    Framebuffer::Builder &Framebuffer::Builder::setDimensions(const glm::ivec3 &dimensions) {
         this->dimensions = dimensions;
         return *this;
     }
