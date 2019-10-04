@@ -30,7 +30,7 @@ namespace BZ {
             attributeDescription.binding = 0;
             attributeDescription.location = elementIndex;
             attributeDescription.format = dataTypeToVk(element.dataType, element.dataElements, element.normalized);
-            attributeDescription.offset = element.offsetBytes;
+            attributeDescription.offset = element.getOffsetBytes();
 
             attributeDescriptions.emplace_back(attributeDescription);
             elementIndex++;

@@ -31,7 +31,7 @@ namespace BZ {
             Ref<Shader> build() const;
         private:
             std::optional<bool> useBinaryBlob;
-            const char *name = nullptr;
+            const char *name = "Unnamed Shader";
             std::array<std::string, SHADER_STAGES_COUNT> codeStrings;
             std::array<std::vector<char>, SHADER_STAGES_COUNT> binaryBlobs;
 

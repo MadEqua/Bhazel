@@ -23,17 +23,25 @@ namespace BZ {
         PerVertex, PerInstance
     };
 
-    struct DataElement {
+    class DataElement {
+    public:
         DataType dataType;
         DataElements dataElements;
         std::string name;
         bool normalized;
 
+        DataElement(DataType dataType, DataElements dataElements, const char *name, bool normalized = false);
+        
+        uint32 getDataTypeSizeBytes() const;
+        uint32 getElementCount() const;
+        uint32 getSizeBytes() const { return sizeBytes; }
+        uint32 getOffsetBytes() const { return offsetBytes; }
+
+    private:
         uint32 sizeBytes;
         uint32 offsetBytes;
 
-        DataElement(DataType dataType, DataElements dataElements, const std::string& name, bool normalized = false);
-        uint32 getElementCount() const;
+        friend class DataLayout;
     };
 
     class DataLayout {

@@ -9,8 +9,13 @@
 
 namespace BZ {
 
-    static uint32 shaderDataTypeSize(DataType type) {
-        switch(type) {
+    DataElement::DataElement(DataType dataType, DataElements dataElements, const char *name, bool normalized) :
+        dataType(dataType), dataElements(dataElements), name(name), normalized(normalized),
+        sizeBytes(getDataTypeSizeBytes() * getElementCount()), offsetBytes(0) {
+    }
+
+    uint32 DataElement::getDataTypeSizeBytes() const {
+        switch(dataType) {
         case DataType::Float32:
         case DataType::Int32:
         case DataType::Uint32:
@@ -26,11 +31,6 @@ namespace BZ {
             BZ_ASSERT_ALWAYS_CORE("Unknown DataType.");
             return 0;
         }
-    }
-
-    DataElement::DataElement(DataType dataType, DataElements dataElements, const std::string& name, bool normalized) :
-        dataType(dataType), dataElements(dataElements), name(name), normalized(normalized),
-        sizeBytes(shaderDataTypeSize(dataType)* getElementCount()), offsetBytes(0) {
     }
 
     uint32 DataElement::getElementCount() const {
@@ -57,6 +57,7 @@ namespace BZ {
 
     DataLayout::DataLayout(const std::initializer_list<DataElement>& elements, DataRate dataRate) :
         elements(elements), sizeBytes(0), dataRate(dataRate) {
+        BZ_ASSERT_CORE(elements.size() > 0, "DataLayout created without DataElements!");
         calculateOffsetsAndStride();
     }
 
