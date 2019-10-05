@@ -43,8 +43,6 @@ namespace BZ {
         vertexInputInfoState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
         vertexInputInfoState.pVertexAttributeDescriptions = attributeDescriptions.data();
 
-        //TODO: index buffers
-
         //Input assembly stage setup
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {};
         inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -58,9 +56,9 @@ namespace BZ {
         for(const auto& vp : data.viewports) {
             VkViewport viewport = {};
             viewport.x = vp.left;
-            viewport.y = vp.top;
+            viewport.y = vp.height; //Inverting the space (+y -> up)
             viewport.width = vp.width;
-            viewport.height = vp.height;
+            viewport.height = -vp.height; //Inverting the space (+y -> up) 
             viewport.minDepth = vp.minDepth;
             viewport.maxDepth = vp.maxDepth;
 

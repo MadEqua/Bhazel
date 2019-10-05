@@ -103,7 +103,7 @@ namespace BZ {
         case Renderer::API::D3D11:
             return MakeRef<D3D11Buffer>(type, size, data);*/
         case Renderer::API::Vulkan:
-            return MakeRef<VulkanBuffer>(type, size);
+            return MakeRef<VulkanBuffer>(type, size, data);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

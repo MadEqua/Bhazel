@@ -30,6 +30,7 @@ namespace BZ {
         cleanupSwapChain();
 
         vertexBuffer.reset();
+        indexBuffer.reset();
 
         for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -53,7 +54,8 @@ namespace BZ {
         createSurface();
 
         const std::vector<const char *> requiredDeviceExtensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            VK_KHR_MAINTENANCE1_EXTENSION_NAME,
         };
         physicalDevice = pickPhysicalDevice(requiredDeviceExtensions);
         BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
@@ -532,7 +534,9 @@ namespace BZ {
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vkBuffers, offsets);
 
-            vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+            vkCmdBindIndexBuffer(commandBuffers[i], static_cast<const VulkanBuffer &>(*indexBuffer).getNativeHandle(), 0, VK_INDEX_TYPE_UINT16);
+
+            vkCmdDrawIndexed(commandBuffers[i], 6, 1, 0, 0, 0);
 
             vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -553,16 +557,20 @@ namespace BZ {
             {DataType::Float32, DataElements::Vec2, "POSITION"},
             {DataType::Float32, DataElements::Vec3, "COLOR"},
         };
-        float data[] = {
-            0.0f, -0.5f,
+        float vertices[] = {
+            -0.5f, -0.5f,
             1.0f, 0.0f, 0.0f,
-            0.5f, 0.5f,
+            0.5f, -0.5f,
             0.0f, 1.0f, 0.0f,
-            -0.5f, 0.5f,
+            0.5f, 0.5f,
             0.0f, 0.0f, 1.0f,
+            -0.5f, 0.5f,
+            1.0f, 1.0f, 1.0f,
         };
+        uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
-        vertexBuffer = Buffer::createVertexBuffer(data, sizeof(data), layout);
+        vertexBuffer = Buffer::createVertexBuffer(vertices, sizeof(vertices), layout);
+        indexBuffer = Buffer::createIndexBuffer(indices, sizeof(indices));
 
         pipelineStateData.dataLayout = layout;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;

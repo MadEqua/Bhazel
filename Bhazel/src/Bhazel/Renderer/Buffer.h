@@ -31,7 +31,7 @@ namespace BZ {
         bool normalized;
 
         DataElement(DataType dataType, DataElements dataElements, const char *name, bool normalized = false);
-        
+
         uint32 getDataTypeSizeBytes() const;
         uint32 getElementCount() const;
         uint32 getSizeBytes() const { return sizeBytes; }
