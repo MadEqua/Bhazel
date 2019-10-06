@@ -2,6 +2,7 @@
 
 #include "VulkanConversions.h"
 
+
 namespace BZ {
 
     uint32 bufferTypeToVK(BufferType bufferType) {
@@ -302,7 +303,7 @@ namespace BZ {
         }
     }
 
-    VkSampleCountFlagBits sampleCountToVk(uint32 count) {
+    VkSampleCountFlagBits sampleCountToVk(uint8 count) {
         switch(count) {
         case 1:
             return VK_SAMPLE_COUNT_1_BIT;
@@ -324,15 +325,15 @@ namespace BZ {
         }
     }
 
-    VkColorComponentFlags colorMaskToVk(uint32 mask) {
+    VkColorComponentFlags colorMaskToVk(uint8 mask) {
         uint32 result = 0;
-        if((1 << (ColorMaskFlags::Red - 1)) && mask)
+        if(isSet(mask, ColorMaskFlags::Red))
             result |= VK_COLOR_COMPONENT_R_BIT;
-        if((1 << (ColorMaskFlags::Green - 1)) && mask)
+        if(isSet(mask, ColorMaskFlags::Green))
             result |= VK_COLOR_COMPONENT_G_BIT;
-        if((1 << (ColorMaskFlags::Blue - 1)) && mask)
+        if(isSet(mask, ColorMaskFlags::Blue))
             result |= VK_COLOR_COMPONENT_B_BIT;
-        if((1 << (ColorMaskFlags::Alpha - 1)) && mask)
+        if(isSet(mask, ColorMaskFlags::Alpha))
             result |= VK_COLOR_COMPONENT_A_BIT;
         return result;
     }
@@ -427,21 +428,21 @@ namespace BZ {
 
     VkStencilOp stencilOperationsToVk(StencilOperation operation) {
         switch(operation) {
-        case Keep:
+        case StencilOperation::Keep:
             return VK_STENCIL_OP_KEEP;
-        case Zero:
+        case StencilOperation::Zero:
             return VK_STENCIL_OP_ZERO;
-        case Replace:
+        case StencilOperation::Replace:
             return VK_STENCIL_OP_REPLACE;
-        case IncrementAndClamp:
+        case StencilOperation::IncrementAndClamp:
             return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
-        case DecrementAndClamp:
+        case StencilOperation::DecrementAndClamp:
             return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
-        case IncrementAndWrap:
+        case StencilOperation::IncrementAndWrap:
             return VK_STENCIL_OP_INCREMENT_AND_WRAP;
-        case DecrementAndWrap:
+        case StencilOperation::DecrementAndWrap:
             return VK_STENCIL_OP_DECREMENT_AND_WRAP;
-        case Invert:
+        case StencilOperation::Invert:
             return VK_STENCIL_OP_INVERT;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown StencilOperation!");
@@ -526,6 +527,33 @@ namespace BZ {
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown ShaderStage!");
             return VK_SHADER_STAGE_VERTEX_BIT;
+        }
+    }
+
+    VkShaderStageFlags shaderStageMaskToVk(uint8 mask) {
+        uint32 result = 0;
+        if(isSet(mask, ShaderStageFlags::Vertex))
+            result |= VK_SHADER_STAGE_VERTEX_BIT;
+        if(isSet(mask, ShaderStageFlags::TesselationControl))
+            result |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+        if(isSet(mask, ShaderStageFlags::TesselationEvaluation))
+            result |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        if(isSet(mask, ShaderStageFlags::Geometry))
+            result |= VK_SHADER_STAGE_GEOMETRY_BIT;
+        if(isSet(mask, ShaderStageFlags::Fragment))
+            result |= VK_SHADER_STAGE_FRAGMENT_BIT;
+        if(isSet(mask, ShaderStageFlags::Compute))
+            result |= VK_SHADER_STAGE_COMPUTE_BIT;
+        return result;
+    }
+
+    VkDescriptorType descriptorTypeToVk(DescriptorType type) {
+        switch(type) {
+        case DescriptorType::ConstantBuffer:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown DescriptorType!");
+            return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         }
     }
 }

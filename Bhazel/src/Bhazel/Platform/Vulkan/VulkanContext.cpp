@@ -581,6 +581,17 @@ namespace BZ {
         pipelineState = PipelineState::create(pipelineStateData);
 
         createCommandBuffers();
+
+        //TODO
+        /*struct ConstantData {
+            glm::mat4 model;
+            glm::mat4 view;
+            glm::mat4 proj;
+        } constantData;
+        desc.shaderStageFlags = ShaderStageFlags::Vertex;
+
+        constantBuffer = Buffer::createConstantBuffer(sizeof(ConstantData), desc);
+        constantBuffer->setData(&constantData, sizeof(ConstantData));*/
     }
 
     void VulkanContext::draw() {

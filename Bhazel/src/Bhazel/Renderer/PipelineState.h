@@ -64,7 +64,7 @@ namespace BZ {
         bool enableAlphaToOne = false;
     };
 
-    enum StencilOperation {
+    enum class StencilOperation {
         Keep,
         Zero,
         Replace,
@@ -128,14 +128,16 @@ namespace BZ {
         Max
     };
 
-    enum ColorMaskFlags {
+    enum class ColorMaskFlags {
         Disable = 0,
         Red = 1,
         Green = 2,
         Blue = 4,
         Alpha = 8,
-        All = (((Red | Green) | Blue) | Alpha)
+        All = Red | Green | Blue | Alpha
     };
+
+    EnumClassFlagOperators(ColorMaskFlags);
 
     struct BlendingStateAttachment {
         bool enableBlending = false;
@@ -145,7 +147,7 @@ namespace BZ {
         BlendingFactor srcAlphaBlendingFactor = BlendingFactor::One;
         BlendingFactor dstAlphaBlendingFactor = BlendingFactor::One;
         BlendingOperation alphaBlendingOperation = BlendingOperation::Add;
-        uint32 writeMask = ColorMaskFlags::All;
+        uint8 writeMask = flagsToMask(ColorMaskFlags::All);
     };
 
     struct BlendingState
@@ -159,18 +161,19 @@ namespace BZ {
 
     class Shader;
     class Framebuffer;
+    class DescriptorSetLayout;
 
     struct PipelineStateData {
         Ref<Shader> shader;
+        std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
         DataLayout dataLayout; //Supporting a single vertex buffer
-        //std::vector<Ref<Buffer>> indexBuffers; //TODO
         PrimitiveTopology primitiveTopology;
         std::vector<Viewport> viewports;
         RasterizerState rasterizerState;
         MultisampleState multiSampleState;
         DepthStencilState depthStencilState;
         BlendingState blendingState;
-        Ref<Framebuffer> framebuffer; //Used to get the RenderPass (on Vulkan)
+        Ref<Framebuffer> framebuffer; //Used on Vulkan to get the RenderPass
     };
 
     class PipelineState {

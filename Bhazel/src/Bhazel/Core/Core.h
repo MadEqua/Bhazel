@@ -32,3 +32,12 @@ namespace BZ {
     template<typename T, class... Args>
     inline Ref<T> MakeRef(Args&&... args) { return std::make_shared<T>(std::forward<Args>(args)...); }
 }
+
+#define EnumClassFlagOperators(e_) \
+    inline e_ operator& (e_ a, e_ b){return static_cast<e_>(static_cast<int>(a)& static_cast<int>(b));} \
+    inline e_ operator| (e_ a, e_ b){return static_cast<e_>(static_cast<int>(a)| static_cast<int>(b));} \
+    inline e_& operator|= (e_& a, e_ b){a = a | b; return a;}; \
+    inline e_& operator&= (e_& a, e_ b) { a = a & b; return a; }; \
+    inline e_  operator~ (e_ a) { return static_cast<e_>(~static_cast<int>(a));} \
+    inline bool isSet(uint8 mask, e_ flag) { return (mask & static_cast<uint8>(flag));} \
+    inline uint8 flagsToMask(e_ e) {return static_cast<uint8>(e);}

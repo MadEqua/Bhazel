@@ -5,8 +5,8 @@ namespace BZ {
 
     enum class ShaderStage {
         Vertex,
-        TesselationEvaluation,
         TesselationControl,
+        TesselationEvaluation,
         Geometry,
         Fragment,
         Compute

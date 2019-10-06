@@ -3,8 +3,8 @@
 #include "VulkanPipelineState.h"
 
 #include "Bhazel/Platform/Vulkan/VulkanShader.h"
-
 #include "Bhazel/Platform/Vulkan/VulkanFramebuffer.h"
+#include "Bhazel/Platform/Vulkan/VulkanDescriptorSet.h"
 #include "Bhazel/Platform/Vulkan/VulkanConversions.h"
 
 
@@ -161,17 +161,23 @@ namespace BZ {
         colorBlendingState.pAttachments = blendAttachmentStates.data();
         memcpy(colorBlendingState.blendConstants, &data.blendingState.blendingConstants[0], 4 * sizeof(float));
 
-        //TODO
+        //Descriptor Set Layout setup
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts(data.descriptorSetLayouts.size());
+        idx = 0;
+        for(const auto &layout : data.descriptorSetLayouts) {
+            descriptorSetLayouts[idx++] = static_cast<const VulkanDescriptorSetLayout&>(*layout).getNativeHandle();
+        }
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 0;
-        pipelineLayoutInfo.pSetLayouts = nullptr;
-        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        pipelineLayoutInfo.setLayoutCount = static_cast<uint32>(descriptorSetLayouts.size());
+        pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+        pipelineLayoutInfo.pushConstantRangeCount = 0; //TODO
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
         BZ_ASSERT_VK(vkCreatePipelineLayout(getGraphicsContext().getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayoutHandle));
 
-        //Shader setup.
+        //Shader setup
         std::array<VkPipelineShaderStageCreateInfo, Shader::SHADER_STAGES_COUNT> shaderStagesCreateInfos;
 
         idx = 0;

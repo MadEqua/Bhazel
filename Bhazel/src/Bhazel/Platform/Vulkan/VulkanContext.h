@@ -111,6 +111,7 @@ namespace BZ {
 
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
+        Ref<Buffer> constantBuffer;
         Ref<PipelineState> pipelineState;
 
         VkCommandPool commandPool;

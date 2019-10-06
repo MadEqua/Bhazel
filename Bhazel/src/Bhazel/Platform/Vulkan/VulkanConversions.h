@@ -7,6 +7,7 @@
 #include "Bhazel/Renderer/PipelineState.h"
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Framebuffer.h"
+#include "Bhazel/Renderer/DescriptorSet.h"
 
 
 namespace BZ {
@@ -18,8 +19,8 @@ namespace BZ {
    VkPrimitiveTopology primitiveTopologyToVk(PrimitiveTopology topology);
    VkPolygonMode polygonModeToVk(PolygonMode mode);
    VkCullModeFlags cullModeToVk(CullMode mode);
-   VkSampleCountFlagBits sampleCountToVk(uint32 count);
-   VkColorComponentFlags colorMaskToVk(uint32 mask);
+   VkSampleCountFlagBits sampleCountToVk(uint8 count);
+   VkColorComponentFlags colorMaskToVk(uint8 mask);
    VkBlendFactor blendingFactorToVk(BlendingFactor factor);
    VkBlendOp blendingOperationToVk(BlendingOperation operation);
    VkCompareOp testFunctionToVk(TestFunction function);
@@ -28,4 +29,6 @@ namespace BZ {
    VkAttachmentStoreOp storeOperationToVk(StoreOperation operation);
    VkImageLayout textureLayoutToVk(TextureLayout layout);
    VkShaderStageFlagBits shaderStageToVk(ShaderStage stage);
+   VkShaderStageFlags shaderStageMaskToVk(uint8 mask);
+   VkDescriptorType descriptorTypeToVk(DescriptorType type);
 }
