@@ -74,7 +74,7 @@ namespace BZ {
         bool hasDepthStencilAttachment() const { return depthStencilAttachment.has_value(); }
 
     protected:
-        Framebuffer(const Builder &builder);
+        explicit Framebuffer(const Builder &builder);
 
         std::vector<Attachment> colorAttachments;
         std::optional<Attachment> depthStencilAttachment;

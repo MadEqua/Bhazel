@@ -16,7 +16,7 @@ namespace BZ {
     //On Vulkan this will manage a VkFramebuffer and a correspondent VkRenderPass with a single SubRenderPass.
     class VulkanFramebuffer : public Framebuffer, public VulkanGpuObject<VulkanFramebufferHandles> {
     public:
-        VulkanFramebuffer(const Builder &builder);
+        explicit VulkanFramebuffer(const Builder &builder);
         ~VulkanFramebuffer() override;
 
     private:

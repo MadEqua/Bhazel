@@ -3,6 +3,8 @@
 
 namespace BZ {
 
+    class Buffer;
+
     enum class ShaderStageFlags {
         Vertex = 1,
         TesselationControl = 2,
@@ -17,18 +19,83 @@ namespace BZ {
     EnumClassFlagOperators(ShaderStageFlags);
 
     enum class DescriptorType {
-        ConstantBuffer
+        Sampler,
+        CombinedTextureSampler,
+        SampledTexture,
+        StorageTexture,
+        ConstantTexelBuffer,
+        StorageTexelBuffer,
+        ConstantBuffer,
+        StorageBuffer,
+        ConstantBufferDynamic,
+        StorageBufferDynamic,
+        InputAttachment,
+
+        Count
     };
 
+
     class DescriptorSetLayout {
+    protected:
+        struct DescriptorDesc {
+            DescriptorType type;
+            uint8 shaderStageVisibililtyMask;
+            uint32 arrayCount;
+        };
+
     public:
-        DescriptorSetLayout(DescriptorType type, uint8 shaderStageVisibilityMask) : 
-            type(type), shaderStageVisibilityMask(shaderStageVisibilityMask) {}
+        class Builder {
+        public:
+            Builder &addDescriptorDesc(DescriptorType type, uint8 shaderStageVisibilityMask, uint32 arrayCount);
+            Ref<DescriptorSetLayout> build() const;
 
-       virtual ~DescriptorSetLayout() = 0;
+        private:
+            std::vector<DescriptorDesc> descriptorDescs; //By order of binding
 
-    private:
-        uint8 shaderStageVisibilityMask;
-        DescriptorType type;
+            friend class DescriptorSetLayout;
+            friend class VulkanDescriptorSetLayout;
+        };
+
+        const std::vector<DescriptorDesc>& getDescriptorDescs() const { return descriptorDescs; }
+
+    protected:
+        explicit DescriptorSetLayout(const Builder &builder);
+        virtual ~DescriptorSetLayout() = default;
+
+        std::vector<DescriptorDesc> descriptorDescs;
+    };
+
+
+    class DescriptorSet {
+    public:
+        virtual void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) = 0;
+    protected:
+        DescriptorSet(const Ref<DescriptorSetLayout> &layout);
+
+        Ref<DescriptorSetLayout> layout;
+    };
+
+
+    class DescriptorPool {
+    public:
+        class Builder {
+        public:
+            Builder& addDescriptorTypeCount(DescriptorType type, uint32 count);
+            Ref<DescriptorPool> build() const;
+
+        private:
+            uint32 countPerType[static_cast<int>(DescriptorType::Count)] = {0};
+            uint32 totalCount = 0;
+
+            friend class DescriptorPool;
+            friend class VulkanDescriptorPool;
+        };
+
+        virtual Ref<DescriptorSet> getDescriptorSet(const Ref<DescriptorSetLayout> &layout) const  = 0;
+        //virtual Ref<DescriptorSet> getDescriptorSets(const std::vector <Ref<DescriptorSetLayout>) const  = 0;
+
+    protected:
+        explicit DescriptorPool(const Builder &builder);
+        virtual ~DescriptorPool() = default;
     };
 }

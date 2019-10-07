@@ -28,12 +28,12 @@ namespace BZ {
         framebufferInfo.height = dimensions.y;
         framebufferInfo.layers = dimensions.z;
 
-        BZ_ASSERT_VK(vkCreateFramebuffer(getGraphicsContext().getDevice(), &framebufferInfo, nullptr, &nativeHandle.frameBufferHandle));
+        BZ_ASSERT_VK(vkCreateFramebuffer(getDevice(), &framebufferInfo, nullptr, &nativeHandle.frameBufferHandle));
     }
 
     VulkanFramebuffer::~VulkanFramebuffer() {
-        vkDestroyFramebuffer(getGraphicsContext().getDevice(), nativeHandle.frameBufferHandle, nullptr);
-        vkDestroyRenderPass(getGraphicsContext().getDevice(), nativeHandle.renderPassHandle, nullptr);
+        vkDestroyFramebuffer(getDevice(), nativeHandle.frameBufferHandle, nullptr);
+        vkDestroyRenderPass(getDevice(), nativeHandle.renderPassHandle, nullptr);
     }
 
     void VulkanFramebuffer::initRenderPass() {
@@ -101,6 +101,6 @@ namespace BZ {
         renderPassInfo.dependencyCount = 0;
         renderPassInfo.pDependencies = nullptr;
 
-        BZ_ASSERT_VK(vkCreateRenderPass(getGraphicsContext().getDevice(), &renderPassInfo, nullptr, &nativeHandle.renderPassHandle));
+        BZ_ASSERT_VK(vkCreateRenderPass(getDevice(), &renderPassInfo, nullptr, &nativeHandle.renderPassHandle));
     }
 }

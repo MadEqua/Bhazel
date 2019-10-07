@@ -175,7 +175,7 @@ namespace BZ {
         pipelineLayoutInfo.pushConstantRangeCount = 0; //TODO
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-        BZ_ASSERT_VK(vkCreatePipelineLayout(getGraphicsContext().getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayoutHandle));
+        BZ_ASSERT_VK(vkCreatePipelineLayout(getDevice(), &pipelineLayoutInfo, nullptr, &nativeHandle.pipelineLayout));
 
         //Shader setup
         std::array<VkPipelineShaderStageCreateInfo, Shader::SHADER_STAGES_COUNT> shaderStagesCreateInfos;
@@ -207,17 +207,17 @@ namespace BZ {
         pipelineInfo.pDepthStencilState = &depthStencilState;
         pipelineInfo.pColorBlendState = &colorBlendingState;
         pipelineInfo.pDynamicState = nullptr; // TODO
-        pipelineInfo.layout = pipelineLayoutHandle;
+        pipelineInfo.layout = nativeHandle.pipelineLayout;
         pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).getNativeHandle().renderPassHandle;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
 
-        BZ_ASSERT_VK(vkCreateGraphicsPipelines(getGraphicsContext().getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &nativeHandle));
+        BZ_ASSERT_VK(vkCreateGraphicsPipelines(getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &nativeHandle.pipeline));
     }
 
     VulkanPipelineState::~VulkanPipelineState() {
-        vkDestroyPipeline(getGraphicsContext().getDevice(), nativeHandle, nullptr);
-        vkDestroyPipelineLayout(getGraphicsContext().getDevice(), pipelineLayoutHandle, nullptr);
+        vkDestroyPipeline(getDevice(), nativeHandle.pipeline, nullptr);
+        vkDestroyPipelineLayout(getDevice(), nativeHandle.pipelineLayout, nullptr);
     }
 }

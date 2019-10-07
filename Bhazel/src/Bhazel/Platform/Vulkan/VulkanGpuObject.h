@@ -13,8 +13,12 @@ namespace BZ {
             return nativeHandle;
         }
 
-        VulkanContext& getGraphicsContext() const {
+        static VulkanContext& getGraphicsContext() {
             return static_cast<VulkanContext &>(Application::getInstance().getGraphicsContext());
+        }
+
+        static VkDevice getDevice() {
+            return static_cast<VulkanContext &>(Application::getInstance().getGraphicsContext()).getDevice();
         }
 
     protected:

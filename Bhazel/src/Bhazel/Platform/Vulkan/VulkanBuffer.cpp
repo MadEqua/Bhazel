@@ -23,10 +23,10 @@ namespace BZ {
         bufferInfo.usage = bufferTypeToVK(type);
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; //TODO
 
-        BZ_ASSERT_VK(vkCreateBuffer(getGraphicsContext().getDevice(), &bufferInfo, nullptr, &nativeHandle));
+        BZ_ASSERT_VK(vkCreateBuffer(getDevice(), &bufferInfo, nullptr, &nativeHandle));
 
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(getGraphicsContext().getDevice(), nativeHandle, &memRequirements);
+        vkGetBufferMemoryRequirements(getDevice(), nativeHandle, &memRequirements);
 
         VkMemoryAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -35,21 +35,25 @@ namespace BZ {
         //TODO: pick correct flags for usage
         allocInfo.memoryTypeIndex = getGraphicsContext().findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-        BZ_ASSERT_VK(vkAllocateMemory(getGraphicsContext().getDevice(), &allocInfo, nullptr, &memoryHandle));
-        BZ_ASSERT_VK(vkBindBufferMemory(getGraphicsContext().getDevice(), nativeHandle, memoryHandle, 0));
+        BZ_ASSERT_VK(vkAllocateMemory(getDevice(), &allocInfo, nullptr, &memoryHandle));
+        BZ_ASSERT_VK(vkBindBufferMemory(getDevice(), nativeHandle, memoryHandle, 0));
 
-        setData(data, size);
+        if(data)
+            setData(data, size);
     }
 
     VulkanBuffer::~VulkanBuffer() {
-        vkDestroyBuffer(getGraphicsContext().getDevice(), nativeHandle, nullptr);
-        vkFreeMemory(getGraphicsContext().getDevice(), memoryHandle, nullptr);
+        vkDestroyBuffer(getDevice(), nativeHandle, nullptr);
+        vkFreeMemory(getDevice(), memoryHandle, nullptr);
     }
 
     void VulkanBuffer::setData(const void *data, uint32 size) {
+        BZ_ASSERT_CORE(data, "Data is null!")
+        BZ_ASSERT_CORE(data > 0, "Data size is not valid!")
+
         void *ptr;
-        BZ_ASSERT_VK(vkMapMemory(getGraphicsContext().getDevice(), memoryHandle, 0, size, 0, &ptr));
+        BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, 0, size, 0, &ptr));
         memcpy(ptr, data, size);
-        vkUnmapMemory(getGraphicsContext().getDevice(), memoryHandle);
+        vkUnmapMemory(getDevice(), memoryHandle);
     }
 }

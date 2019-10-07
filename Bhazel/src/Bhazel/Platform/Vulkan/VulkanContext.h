@@ -5,6 +5,9 @@
 #include "Bhazel/Platform/Vulkan/VulkanIncludes.h"
 #include "Bhazel/Renderer/Framebuffer.h"
 #include "Bhazel/Renderer/PipelineState.h"
+#include "Bhazel/Renderer/DescriptorSet.h"
+
+#include "Bhazel/Core/Timer.h"
 
 
 struct GLFWwindow;
@@ -38,7 +41,7 @@ namespace BZ {
             }
         };
 
-        constexpr static int MAX_FRAMES_IN_FLIGHT = 2;
+        constexpr static int MAX_FRAMES_IN_FLIGHT = 8;
 
         GLFWwindow *windowHandle;
 
@@ -59,6 +62,7 @@ namespace BZ {
         //std::array<Ref<TextureView>, MAX_FRAMES_IN_FLIGHT> swapChainTextureViews;
         std::vector<Ref<Framebuffer>> swapChainFramebuffers;
 
+        Ref<DescriptorPool> descriptorPool;
 
         std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> imageAvailableSemaphores;
         std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> renderFinishedSemaphores;
@@ -76,6 +80,7 @@ namespace BZ {
         void createSwapChain();
         void createFramebuffers();
         void createSyncObjects();
+        void createDescriptorPool();
 
         void recreateSwapChain();
         void cleanupSwapChain();
@@ -109,9 +114,19 @@ namespace BZ {
         void initTestStuff();
         void draw();
 
+        Timer timer;
+        struct ConstantData {
+            glm::mat4 model = glm::mat4(1.0f);
+            glm::mat4 view = glm::mat4(1.0f);
+            glm::mat4 proj = glm::mat4(1.0f);
+        } constantData;
+
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
         Ref<Buffer> constantBuffer;
+        Ref<DescriptorSet> descriptorSet;
+        Ref<DescriptorSetLayout> descriptorSetLayout;
+
         Ref<PipelineState> pipelineState;
 
         VkCommandPool commandPool;

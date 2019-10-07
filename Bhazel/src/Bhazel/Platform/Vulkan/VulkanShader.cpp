@@ -23,7 +23,7 @@ namespace BZ {
 
     VulkanShader::~VulkanShader() {
         for(int i = 0; i < SHADER_STAGES_COUNT; ++i)
-            vkDestroyShaderModule(getGraphicsContext().getDevice(), nativeHandle.modules[i], nullptr);
+            vkDestroyShaderModule(getDevice(), nativeHandle.modules[i], nullptr);
     }
 
     VkShaderModule VulkanShader::createShaderModuleFromBinaryBlob(const std::vector<char> &binaryBlob) {
@@ -33,7 +33,7 @@ namespace BZ {
         createInfo.pCode = reinterpret_cast<const uint32_t*>(binaryBlob.data());
 
         VkShaderModule shaderModule;
-        BZ_ASSERT_VK(vkCreateShaderModule(getGraphicsContext().getDevice(), &createInfo, nullptr, &shaderModule));
+        BZ_ASSERT_VK(vkCreateShaderModule(getDevice(), &createInfo, nullptr, &shaderModule));
         return shaderModule;
     }
 }

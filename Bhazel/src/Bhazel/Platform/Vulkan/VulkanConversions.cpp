@@ -549,8 +549,28 @@ namespace BZ {
 
     VkDescriptorType descriptorTypeToVk(DescriptorType type) {
         switch(type) {
+        case DescriptorType::Sampler:
+            return VK_DESCRIPTOR_TYPE_SAMPLER;
+        case DescriptorType::CombinedTextureSampler:
+            return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        case DescriptorType::SampledTexture:
+            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case DescriptorType::StorageTexture:
+            return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case DescriptorType::ConstantTexelBuffer:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+        case DescriptorType::StorageTexelBuffer:
+            return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
         case DescriptorType::ConstantBuffer:
             return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case DescriptorType::StorageBuffer:
+            return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        case DescriptorType::ConstantBufferDynamic:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        case DescriptorType::StorageBufferDynamic:
+            return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        case DescriptorType::InputAttachment:
+            return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown DescriptorType!");
             return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;

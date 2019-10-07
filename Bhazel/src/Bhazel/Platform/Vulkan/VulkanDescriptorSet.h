@@ -9,7 +9,26 @@ namespace BZ {
 
     class VulkanDescriptorSetLayout : public DescriptorSetLayout, public VulkanGpuObject<VkDescriptorSetLayout> {
     public:
-        VulkanDescriptorSetLayout(DescriptorType type, uint8 shaderStageVisibilityMask);
+        explicit VulkanDescriptorSetLayout(const Builder &builder);
        ~VulkanDescriptorSetLayout() override;
+    };
+
+
+    class VulkanDescriptorSet : public DescriptorSet, public VulkanGpuObject<VkDescriptorSet> {
+    public:
+        static Ref<DescriptorSet> wrap(VkDescriptorSet vkDescriptorSet, const Ref<DescriptorSetLayout> &layout);
+
+        explicit VulkanDescriptorSet(VkDescriptorSet vkDescriptorSet, const Ref<DescriptorSetLayout> &layout);
+        
+        void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) override;
+    };
+
+
+    class VulkanDescriptorPool : public DescriptorPool, public VulkanGpuObject<VkDescriptorPool> {
+    public:
+        explicit VulkanDescriptorPool(const Builder &builder);
+        ~VulkanDescriptorPool() override;
+
+        Ref<DescriptorSet> getDescriptorSet(const Ref<DescriptorSetLayout> &layout) const override;
     };
 }

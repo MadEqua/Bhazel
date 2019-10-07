@@ -14,7 +14,7 @@ namespace BZ {
 
     class VulkanShader : public Shader, public VulkanGpuObject<VulkanShaderNativeHandles> {
     public:
-        VulkanShader(const Builder &builder);
+        explicit VulkanShader(const Builder &builder);
         ~VulkanShader() override;
 
     private:

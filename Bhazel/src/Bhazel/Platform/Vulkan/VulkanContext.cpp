@@ -7,10 +7,13 @@
 #include "Bhazel/Platform/Vulkan/VulkanFramebuffer.h"
 #include "Bhazel/Platform/Vulkan/VulkanBuffer.h"
 #include "Bhazel/Platform/Vulkan/VulkanConversions.h"
+#include "Bhazel/Platform/Vulkan/VulkanDescriptorSet.h"
 
 #include "Bhazel/Renderer/RenderCommand.h"
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Buffer.h"
+
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <GLFW/glfw3.h>
 
@@ -31,6 +34,10 @@ namespace BZ {
 
         vertexBuffer.reset();
         indexBuffer.reset();
+        constantBuffer.reset();
+        descriptorPool.reset();
+        descriptorSet.reset();
+        descriptorSetLayout.reset();
 
         for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -65,6 +72,8 @@ namespace BZ {
 
         createSwapChain();
         createFramebuffers();
+        createDescriptorPool();
+
         initTestStuff();
 
         VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -202,7 +211,7 @@ namespace BZ {
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
         VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
-        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+        uint32_t imageCount = MAX_FRAMES_IN_FLIGHT;//swapChainSupport.capabilities.minImageCount + 1; TODO
         if(swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
             imageCount = swapChainSupport.capabilities.maxImageCount;
         }
@@ -284,6 +293,12 @@ namespace BZ {
             BZ_ASSERT_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
             BZ_ASSERT_VK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
         }
+    }
+
+    void VulkanContext::createDescriptorPool() {
+        DescriptorPool::Builder builder;
+        builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
+        descriptorPool = builder.build();
     }
 
     void VulkanContext::recreateSwapChain() {
@@ -528,13 +543,17 @@ namespace BZ {
             vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
             const VulkanPipelineState &vkPipeState = static_cast<const VulkanPipelineState &>(*pipelineState);
-            vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.getNativeHandle());
+            vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.getNativeHandle().pipeline);
 
             VkBuffer vkBuffers[] = { static_cast<const VulkanBuffer &>(*vertexBuffer).getNativeHandle() };
             VkDeviceSize offsets[] = { 0 };
             vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vkBuffers, offsets);
 
             vkCmdBindIndexBuffer(commandBuffers[i], static_cast<const VulkanBuffer &>(*indexBuffer).getNativeHandle(), 0, VK_INDEX_TYPE_UINT16);
+
+            VkDescriptorSet descSets[] = { static_cast<const VulkanDescriptorSet &>(*descriptorSet).getNativeHandle() };
+            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.getNativeHandle().pipelineLayout,
+                0, 1, descSets, 0, nullptr);
 
             vkCmdDrawIndexed(commandBuffers[i], 6, 1, 0, 0, 0);
 
@@ -547,13 +566,13 @@ namespace BZ {
     void VulkanContext::initTestStuff() {
         PipelineStateData pipelineStateData;
 
-        Shader::Builder builder;
-        builder.setName("test");
-        builder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/vert.spv");
-        builder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/frag.spv");
-        pipelineStateData.shader = builder.build();
+        Shader::Builder shaderBuilder;
+        shaderBuilder.setName("test");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/vert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/frag.spv");
+        pipelineStateData.shader = shaderBuilder.build();
 
-        DataLayout layout = {
+        DataLayout dataLayout = {
             {DataType::Float32, DataElements::Vec2, "POSITION"},
             {DataType::Float32, DataElements::Vec3, "COLOR"},
         };
@@ -569,29 +588,31 @@ namespace BZ {
         };
         uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
-        vertexBuffer = Buffer::createVertexBuffer(vertices, sizeof(vertices), layout);
+        vertexBuffer = Buffer::createVertexBuffer(vertices, sizeof(vertices), dataLayout);
         indexBuffer = Buffer::createIndexBuffer(indices, sizeof(indices));
 
-        pipelineStateData.dataLayout = layout;
+        constantBuffer = Buffer::createConstantBuffer(sizeof(ConstantData));
+        constantBuffer->setData(&constantData, sizeof(ConstantData));
+
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBuffer, flagsToMask(ShaderStageFlags::Vertex), 1);
+        descriptorSetLayout = descriptorSetLayoutBuilder.build();
+
+        descriptorSet = descriptorPool->getDescriptorSet(descriptorSetLayout);
+        descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantData));
+
+        pipelineStateData.dataLayout = dataLayout;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(swapChainExtent.width), static_cast<float>(swapChainExtent.height)} };
         pipelineStateData.blendingState.attachmentBlendingStates = { {} };
         pipelineStateData.framebuffer = swapChainFramebuffers[0]; //All the framebuffers have a similar VkRenderPass
+        pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
 
         pipelineState = PipelineState::create(pipelineStateData);
 
+        timer.start();
+
         createCommandBuffers();
-
-        //TODO
-        /*struct ConstantData {
-            glm::mat4 model;
-            glm::mat4 view;
-            glm::mat4 proj;
-        } constantData;
-        desc.shaderStageFlags = ShaderStageFlags::Vertex;
-
-        constantBuffer = Buffer::createConstantBuffer(sizeof(ConstantData), desc);
-        constantBuffer->setData(&constantData, sizeof(ConstantData));*/
     }
 
     void VulkanContext::draw() {
@@ -605,6 +626,9 @@ namespace BZ {
             recreateSwapChain();
             return;
         }
+
+        constantData.model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::sin(timer.getCountedTime().asSeconds()), 0.0f, 0.0f));
+        constantBuffer->setData(&constantData, sizeof(ConstantData));
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

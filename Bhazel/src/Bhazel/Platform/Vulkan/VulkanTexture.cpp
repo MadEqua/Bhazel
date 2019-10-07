@@ -34,7 +34,7 @@ namespace BZ {
 
     VulkanTexture2D::~VulkanTexture2D() {
         if(!isWrapping)
-            vkDestroyImage(getGraphicsContext().getDevice(), nativeHandle, nullptr);
+            vkDestroyImage(getDevice(), nativeHandle, nullptr);
     }
 
 
@@ -56,10 +56,10 @@ namespace BZ {
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.layerCount = 1;
-        BZ_ASSERT_VK(vkCreateImageView(getGraphicsContext().getDevice(), &imageViewCreateInfo, nullptr, &nativeHandle));
+        BZ_ASSERT_VK(vkCreateImageView(getDevice(), &imageViewCreateInfo, nullptr, &nativeHandle));
     }
 
     VulkanTextureView::~VulkanTextureView() {
-        vkDestroyImageView(getGraphicsContext().getDevice(), nativeHandle, nullptr);
+        vkDestroyImageView(getDevice(), nativeHandle, nullptr);
     }
 }

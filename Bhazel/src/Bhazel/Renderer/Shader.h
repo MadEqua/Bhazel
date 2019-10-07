@@ -49,7 +49,7 @@ namespace BZ {
        bool isStagePresent(ShaderStage stage) const;
 
     protected:
-        Shader(const Builder &builder);
+        explicit Shader(const Builder &builder);
         virtual ~Shader() = default;
 
         std::bitset<SHADER_STAGES_COUNT> stages;

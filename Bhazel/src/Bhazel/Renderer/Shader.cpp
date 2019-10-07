@@ -145,7 +145,7 @@ namespace BZ {
 
 
     Shader::Shader(const Builder &builder) :
-        name(builder.name) {
+        name(std::move(builder.name)) {
 
         BZ_ASSERT_CORE(builder.useBinaryBlob.has_value(), "No shader data was set on the Builder!");
         BZ_ASSERT_CORE(builder.name, "Shader needs a name!");

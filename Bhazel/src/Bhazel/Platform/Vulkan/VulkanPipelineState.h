@@ -10,12 +10,14 @@ namespace BZ {
 
     class VulkanContext;
 
-    class VulkanPipelineState : public PipelineState, public VulkanGpuObject<VkPipeline> {
+    struct VulkanPipelineStateHandles {
+        VkPipeline pipeline;
+        VkPipelineLayout pipelineLayout;
+    };
+
+    class VulkanPipelineState : public PipelineState, public VulkanGpuObject<VulkanPipelineStateHandles> {
     public:
         VulkanPipelineState(PipelineStateData &data);
         virtual ~VulkanPipelineState() override;
-
-    private:
-        VkPipelineLayout pipelineLayoutHandle;
     };
 }
