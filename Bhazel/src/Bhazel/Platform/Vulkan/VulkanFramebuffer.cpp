@@ -8,15 +8,15 @@
 
 namespace BZ {
 
-    VulkanFramebuffer::VulkanFramebuffer(const std::vector<Attachment> &attachments, const glm::ivec3 &dimensions) :
-        Framebuffer(attachments, dimensions) {
+    VulkanFramebuffer::VulkanFramebuffer(const Builder &builder) :
+        Framebuffer(builder) {
 
         //TODO: this will create identical render passes. have a pool?
         initRenderPass();
 
-        std::vector<VkImageView> vkImageViews(attachments.size());
-        for(int i = 0; i < attachments.size(); ++i) {
-            vkImageViews[i] = static_cast<VulkanTextureView&>(*attachments[i].textureView).getNativeHandle();
+        std::vector<VkImageView> vkImageViews(builder.attachments.size());
+        for(int i = 0; i < builder.attachments.size(); ++i) {
+            vkImageViews[i] = static_cast<VulkanTextureView&>(*builder.attachments[i].textureView).getNativeHandle();
         }
 
         VkFramebufferCreateInfo framebufferInfo = {};

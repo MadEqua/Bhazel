@@ -5,19 +5,19 @@
 
 namespace BZ {
 
-    VulkanShader::VulkanShader(const char *name, const std::array<std::string, SHADER_STAGES_COUNT> &codeStrings) : 
-        Shader(name, codeStrings) {
-        BZ_ASSERT_ALWAYS("Not implemented!");
-    }
+    VulkanShader::VulkanShader(const Builder &builder) :
+        Shader(builder) {
 
-    VulkanShader::VulkanShader(const char *name, const std::array<std::vector<char>, SHADER_STAGES_COUNT> &binaryBlobs) :
-        Shader(name, binaryBlobs) {
-
-        for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-            if(stages[i])
-                nativeHandle.modules[i] = createShaderModuleFromBinaryBlob(binaryBlobs[i]);
-            else
-                nativeHandle.modules[i] = VK_NULL_HANDLE;
+        if(builder.useBinaryBlob) {
+            for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
+                if(stages[i])
+                    nativeHandle.modules[i] = createShaderModuleFromBinaryBlob(builder.binaryBlobs[i]);
+                else
+                    nativeHandle.modules[i] = VK_NULL_HANDLE;
+            }
+        }
+        else {
+            BZ_ASSERT_ALWAYS("Not implemented!");
         }
     }
 

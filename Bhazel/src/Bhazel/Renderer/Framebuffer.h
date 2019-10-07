@@ -63,6 +63,9 @@ namespace BZ {
         private:
             std::vector<Attachment> attachments;
             glm::ivec3 dimensions = {1,1,1};
+
+            friend class Framebuffer;
+            friend class VulkanFramebuffer;
         };
 
         virtual ~Framebuffer() = default;
@@ -71,7 +74,7 @@ namespace BZ {
         bool hasDepthStencilAttachment() const { return depthStencilAttachment.has_value(); }
 
     protected:
-        Framebuffer(const std::vector<Attachment> &attachments, const glm::ivec3 &dimensions);
+        Framebuffer(const Builder &builder);
 
         std::vector<Attachment> colorAttachments;
         std::optional<Attachment> depthStencilAttachment;

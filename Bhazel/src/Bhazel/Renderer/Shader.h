@@ -39,6 +39,9 @@ namespace BZ {
             static std::vector<char> readBinaryFile(const char *filePath);
             static std::string readSourceFile(const char *filePath);
             static ShaderStage shaderTypeFromString(const std::string &string);
+
+            friend class Shader;
+            friend class VulkanShader;
         };
 
        const std::string& getName() const { return name; }
@@ -46,8 +49,7 @@ namespace BZ {
        bool isStagePresent(ShaderStage stage) const;
 
     protected:
-        Shader(const char *name, const std::array<std::string, SHADER_STAGES_COUNT> &codeStrings);
-        Shader(const char *name, const std::array<std::vector<char>, SHADER_STAGES_COUNT> &binaryBlobs);
+        Shader(const Builder &builder);
         virtual ~Shader() = default;
 
         std::bitset<SHADER_STAGES_COUNT> stages;

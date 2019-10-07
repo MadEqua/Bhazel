@@ -14,9 +14,7 @@ namespace BZ {
 
     class VulkanShader : public Shader, public VulkanGpuObject<VulkanShaderNativeHandles> {
     public:
-        VulkanShader(const char *name, const std::array<std::string, SHADER_STAGES_COUNT> &codeStrings);
-        VulkanShader(const char *name, const std::array<std::vector<char>, SHADER_STAGES_COUNT> &binaryBlobs);
-
+        VulkanShader(const Builder &builder);
         ~VulkanShader() override;
 
     private:

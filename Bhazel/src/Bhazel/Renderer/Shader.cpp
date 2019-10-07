@@ -55,19 +55,13 @@ namespace BZ {
     }
 
     Ref<Shader> Shader::Builder::build() const {
-        BZ_ASSERT_CORE(useBinaryBlob.has_value(), "No shader data was set on the Builder!");
-        BZ_ASSERT_CORE(name, "Shader needs a name!");
-
         switch(Renderer::api) {
             /*case Renderer::API::OpenGL:
                 return MakeRef<OpenGLTexture2D>(assetsPath + path);
             case Renderer::API::D3D11:
                 return MakeRef<D3D11Texture2D>(assetsPath + path);*/
         case Renderer::API::Vulkan:
-            if(*useBinaryBlob)
-                return MakeRef<VulkanShader>(name, binaryBlobs);
-            else
-                return MakeRef<VulkanShader>(name, codeStrings);
+            return MakeRef<VulkanShader>(*this);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
@@ -150,17 +144,21 @@ namespace BZ {
     }
 
 
-    Shader::Shader(const char *name, const std::array<std::string, SHADER_STAGES_COUNT> &codeStrings) :
-        name(name) {
-        for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-            stages[i] = !codeStrings[i].empty();
-        }
-    }
+    Shader::Shader(const Builder &builder) :
+        name(builder.name) {
 
-    Shader::Shader(const char *name, const std::array<std::vector<char>, SHADER_STAGES_COUNT> &binaryBlobs) :
-        name(name) {
-        for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-            stages[i] = !binaryBlobs[i].empty();
+        BZ_ASSERT_CORE(builder.useBinaryBlob.has_value(), "No shader data was set on the Builder!");
+        BZ_ASSERT_CORE(builder.name, "Shader needs a name!");
+
+        if(builder.useBinaryBlob) {
+            for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
+                stages[i] = !builder.binaryBlobs[i].empty();
+            }
+        }
+        else {
+            for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
+                stages[i] = !builder.codeStrings[i].empty();
+            }
         }
     }
 

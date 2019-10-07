@@ -33,18 +33,18 @@ namespace BZ {
             case Renderer::API::D3D11:
                 return MakeRef<D3D11Texture2D>(assetsPath + path);*/
         case Renderer::API::Vulkan:
-            return MakeRef<VulkanFramebuffer>(attachments, dimensions);
+            return MakeRef<VulkanFramebuffer>(*this);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Framebuffer::Framebuffer(const std::vector<Attachment> &attachments, const glm::ivec3 &dimensions) : 
-        dimensions(dimensions) {
-        BZ_ASSERT_CORE(!attachments.empty(), "Creating a Framebuffer with no attachments!");
+    Framebuffer::Framebuffer(const Builder &builder) :
+        dimensions(builder.dimensions) {
+        BZ_ASSERT_CORE(!builder.attachments.empty(), "Creating a Framebuffer with no attachments!");
 
-        for(const auto &att : attachments) {
+        for(const auto &att : builder.attachments) {
             if(att.textureView->getFormat().isColor()) {
                 colorAttachments.push_back(att);
             }
