@@ -1,7 +1,9 @@
 #include "bzpch.h"
 
 #include "Renderer.h"
-#include "Bhazel/Renderer/RenderCommand.h"
+
+#include "Bhazel/Renderer/RendererApi.h"
+
 #include "Bhazel/Renderer/Camera.h"
 #include "Bhazel/Application.h"
 
@@ -15,52 +17,54 @@ namespace BZ {
 
     Renderer::API Renderer::api = API::Unknown;
 
-    Renderer::FrameData Renderer::frameData;
-    Renderer::InstanceData Renderer::instanceData;
+    Renderer::ConstantBufferData Renderer::constantBufferData;
+    Ref<Buffer> Renderer::constantBuffer;
 
-    Ref<Buffer> Renderer::frameConstantBuffer;
-    Ref<Buffer> Renderer::instanceConstantBuffer;
+    RendererApi * Renderer::rendererApi = nullptr;
 
 
     void Renderer::init() {
-        //frameConstantBuffer = Buffer::createConstantBuffer(sizeof(frameData));
-        //instanceConstantBuffer = Buffer::createConstantBuffer(sizeof(instanceData));
+        rendererApi = &Application::getInstance().getGraphicsContext().getRendererAPI();
 
-        //TODO: set all pipeline defaults here
-        //RenderCommand::setRenderMode(PrimitiveTopology::Triangles);
-        //RenderCommand::setBlendingSettings(BlendingSettings(false));
-        //RenderCommand::setDepthSettings(DepthSettings(false, false));
+        constantBuffer = Buffer::createConstantBuffer(sizeof(constantBufferData));
     }
 
     void Renderer::destroy() {
         //Destroy this 'manually' to avoid the static destruction lottery
-        //frameConstantBuffer.reset();
-        //instanceConstantBuffer.reset();
+        constantBuffer.reset();
     }
 
     void Renderer::onWindowResize(WindowResizedEvent &ev) {
-        BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
+        //BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
     }
 
-    void Renderer::beginScene(Camera &camera, const FrameStats &frameStats) {
-        frameData.viewMatrix = camera.getViewMatrix();
-        frameData.projectionMatrix = camera.getProjectionMatrix();
-        frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();
-        frameData.cameraPosition = camera.getPosition();
-        frameData.timeAndDelta.x = frameStats.runningTime.asSeconds();
-        frameData.timeAndDelta.y = frameStats.lastFrameTime.asSeconds();
-
-        //frameConstantBuffer->setData(&frameData, sizeof(frameData));
-        //frameConstantBuffer->bindToPipeline(0);
+    Ref<CommandBuffer> Renderer::startRecording() {
+        return rendererApi->startRecording();
     }
 
-    void Renderer::endScene() {
+    Ref<CommandBuffer> Renderer::startRecordingForFrame(uint32 frameIndex) {
+        return rendererApi->startRecordingForFrame(frameIndex);
     }
 
-    void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, PrimitiveTopology renderMode, uint32 instances) {
-        instanceData.modelMatrix = modelMatrix;
-        instanceConstantBuffer->setData(&instanceData, sizeof(instanceData));
-        //instanceConstantBuffer->bindToPipeline(1);
+    //void Renderer::beginScene(Camera &camera, const FrameStats &frameStats) {
+    //    frameData.viewMatrix = camera.getViewMatrix();
+    //    frameData.projectionMatrix = camera.getProjectionMatrix();
+    //    frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();
+    //    frameData.cameraPosition = camera.getPosition();
+    //    frameData.timeAndDelta.x = frameStats.runningTime.asSeconds();
+    //    frameData.timeAndDelta.y = frameStats.lastFrameTime.asSeconds();
+    //
+    //    //frameConstantBuffer->setData(&frameData, sizeof(frameData));
+    //    //frameConstantBuffer->bindToPipeline(0);
+    //}
+
+    //void Renderer::endScene() {
+    //}
+
+    //void Renderer::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, PrimitiveTopology renderMode, uint32 instances) {
+    //    instanceData.modelMatrix = modelMatrix;
+    //    instanceConstantBuffer->setData(&instanceData, sizeof(instanceData));
+    //    //instanceConstantBuffer->bindToPipeline(1);
 
         //TODO we should not set this every draw call
         //shader->bindToPipeline();
@@ -74,16 +78,16 @@ namespace BZ {
             auto &vertexBuffer = inputDescription->getVertexBuffers()[0];
             RenderCommand::drawInstanced(vertexBuffer->getSize() / vertexBuffer->getLayout().getSizeBytes(), instances);
         }*/
-    }
+    //}
 
-    void Renderer::submitCompute(const Ref<Shader> &computeShader, uint32 groupsX, uint32 groupsY, uint32 groupsZ, std::initializer_list<Ref<Buffer>> buffers) {
+    //void Renderer::submitCompute(const Ref<Shader> &computeShader, uint32 groupsX, uint32 groupsY, uint32 groupsZ, std::initializer_list<Ref<Buffer>> buffers) {
         //computeShader->bindToPipeline();
 
-        int unit = 0;
+        //int unit = 0;
         /*for(auto &buffer : buffers) {
             buffer->bindToPipelineAsGeneric(unit++);
         }*/
 
-        RenderCommand::submitCompute(groupsX, groupsY, groupsZ);
-    }
+        //RenderCommand::submitCompute(groupsX, groupsY, groupsZ);
+    //}
 }

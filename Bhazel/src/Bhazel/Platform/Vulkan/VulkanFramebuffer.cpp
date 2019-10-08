@@ -11,7 +11,7 @@ namespace BZ {
     VulkanFramebuffer::VulkanFramebuffer(const Builder &builder) :
         Framebuffer(builder) {
 
-        //TODO: this will create identical render passes. have a pool?
+        //TODO: this will create identical render passes. have a table?
         initRenderPass();
 
         std::vector<VkImageView> vkImageViews(builder.attachments.size());

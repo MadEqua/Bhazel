@@ -17,7 +17,7 @@
 #include "Bhazel/Events/MouseEvent.h"
 
 #include "Bhazel/Renderer/Renderer.h"
-#include "Bhazel/Renderer/RenderCommand.h"
+#include "Bhazel/Renderer/CommandBuffer.h"
 #include "Bhazel/Renderer/PipelineState.h"
 #include "Bhazel/Renderer/ParticleSystem.h"
 

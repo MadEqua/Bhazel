@@ -4,7 +4,7 @@
 #include "Bhazel/Renderer/Buffer.h"
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Renderer.h"
-#include "Bhazel/Renderer/RenderCommand.h"
+#include "Bhazel/Renderer/CommandBuffer.h"
 #include "Bhazel/Renderer/Texture.h"
 
 #include <glm/gtc/matrix_transform.hpp>

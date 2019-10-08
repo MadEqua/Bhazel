@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Bhazel/Renderer/RendererAPI.h"
+#include "Bhazel/Renderer/RendererApi.h"
 
 
 namespace BZ {
@@ -22,12 +22,12 @@ namespace BZ {
         virtual void setVSync(bool enabled) { vsync = enabled; };
         bool isVSync() const { return vsync; }
 
-        RendererAPI& getRendererAPI() { return *rendererAPI; }
+        RendererApi& getRendererAPI() { return *rendererApi; }
 
     protected:
         GraphicsContext() = default;
 
         bool vsync = true;
-        std::unique_ptr<RendererAPI> rendererAPI;
+        std::unique_ptr<RendererApi> rendererApi;
     };
 }

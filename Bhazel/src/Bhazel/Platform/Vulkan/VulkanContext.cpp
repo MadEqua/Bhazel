@@ -8,8 +8,9 @@
 #include "Bhazel/Platform/Vulkan/VulkanBuffer.h"
 #include "Bhazel/Platform/Vulkan/VulkanConversions.h"
 #include "Bhazel/Platform/Vulkan/VulkanDescriptorSet.h"
+#include "Bhazel/Platform/Vulkan/VulkanCommandBuffer.h"
 
-#include "Bhazel/Renderer/RenderCommand.h"
+#include "Bhazel/Renderer/CommandBuffer.h"
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Buffer.h"
 
@@ -39,10 +40,14 @@ namespace BZ {
         descriptorSet.reset();
         descriptorSetLayout.reset();
 
-        for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(device, inFlightFences[i], nullptr);
+        for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+            vkDestroySemaphore(device, frameData[i].renderFinishedSemaphore, nullptr);
+            vkDestroySemaphore(device, frameData[i].imageAvailableSemaphore, nullptr);
+            vkDestroyFence(device, frameData[i].inFlightFence, nullptr);
+
+            for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
+                frameData[i].commandPools[fam].reset();
+            }
         }
 
         vkDestroyDevice(device, nullptr);
@@ -68,7 +73,7 @@ namespace BZ {
         BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
 
         createLogicalDevice(requiredDeviceExtensions);
-        createSyncObjects();
+        createFrameData();
 
         createSwapChain();
         createFramebuffers();
@@ -85,8 +90,7 @@ namespace BZ {
         BZ_LOG_CORE_INFO("  VendorId: 0x{:04x}.", physicalDeviceProperties.vendorID);
         BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
 
-        rendererAPI = std::make_unique<VulkanRendererAPI>();
-        RenderCommand::initRendererAPI(rendererAPI.get());
+        rendererApi = std::make_unique<VulkanRendererAPI>(*this);
     }
 
     void VulkanContext::presentBuffer() {
@@ -100,6 +104,11 @@ namespace BZ {
         GraphicsContext::setVSync(enabled);
 
         //TODO
+    }
+
+    VulkanCommandPool& VulkanContext::getCommandPool(RenderQueueFamily family, uint32 frame) {
+        BZ_ASSERT_CORE(frame < MAX_FRAMES_IN_FLIGHT, "Invalid frame: {}!", frame);
+        return *frameData[currentFrame].commandPools[frame];
     }
 
     uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
@@ -178,7 +187,10 @@ namespace BZ {
 
     void VulkanContext::createLogicalDevice(const std::vector<const char*> &requiredDeviceExtensions) {
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        std::set<uint32_t> uniqueQueueFamilies = {queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value()};
+        std::set<uint32_t> uniqueQueueFamilies = {queueFamilyIndices.graphicsFamily.value(), 
+                                                  queueFamilyIndices.presentFamily.value(),
+                                                  queueFamilyIndices.computeFamily.value(),
+                                                  queueFamilyIndices.transferFamily.value() };
         float queuePriority = 1.0f;
         for(uint32_t queueFamily : uniqueQueueFamilies) {
             VkDeviceQueueCreateInfo queueCreateInfo = {};
@@ -203,6 +215,8 @@ namespace BZ {
 
         vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
         vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
+        vkGetDeviceQueue(device, queueFamilyIndices.transferFamily.value(), 0, &transferQueue);
+        vkGetDeviceQueue(device, queueFamilyIndices.computeFamily.value(), 0, &computeQueue);
     }
 
     void VulkanContext::createSwapChain() {
@@ -280,7 +294,7 @@ namespace BZ {
         }
     }
 
-    void VulkanContext::createSyncObjects() {
+    void VulkanContext::createFrameData() {
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -288,10 +302,14 @@ namespace BZ {
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            BZ_ASSERT_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]));
-            BZ_ASSERT_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
-            BZ_ASSERT_VK(vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]));
+        for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+            BZ_ASSERT_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frameData[i].imageAvailableSemaphore));
+            BZ_ASSERT_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frameData[i].renderFinishedSemaphore));
+            BZ_ASSERT_VK(vkCreateFence(device, &fenceInfo, nullptr, &frameData[i].inFlightFence));
+
+            for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
+                frameData[i].commandPools[fam] = VulkanCommandPool::create(static_cast<RenderQueueFamily>(fam));
+            }
         }
     }
 
@@ -392,8 +410,8 @@ namespace BZ {
         return true;
     }
 
-    VulkanContext::QueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device) const {
-        QueueFamilyIndices indices;
+    RenderQueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device) const {
+        RenderQueueFamilyIndices indices;
 
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
@@ -402,8 +420,13 @@ namespace BZ {
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
         int i = 0;
         for(const auto& queueFamily : queueFamilies) {
-            if(queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                indices.graphicsFamily = i;
+            if(queueFamily.queueCount > 0) {
+                if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                    indices.graphicsFamily = i;
+                if(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+                    indices.computeFamily = i;
+                if(queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)
+                    indices.transferFamily = i;
             }
 
             VkBool32 presentSupport = false;
@@ -412,11 +435,9 @@ namespace BZ {
                 indices.presentFamily = i;
             }
 
-            i++;
-
             if(indices.isComplete()) break;
+            i++;
         }
-
         return indices;
     }
 
@@ -529,7 +550,7 @@ namespace BZ {
             BZ_ASSERT_VK(vkBeginCommandBuffer(commandBuffers[i], &beginInfo));
 
             const VulkanFramebuffer &vkFramebuffer = static_cast<const VulkanFramebuffer&>(*swapChainFramebuffers[i]);
-            
+
             //Record a render pass
             VkRenderPassBeginInfo renderPassBeginInfo = {};
             renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -616,11 +637,11 @@ namespace BZ {
     }
 
     void VulkanContext::draw() {
-        BZ_ASSERT_VK(vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX));
+        BZ_ASSERT_VK(vkWaitForFences(device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
 
         //This index will be used to pick the correct command buffer
         uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, frameData[currentFrame].imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
         if(result != VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
             recreateSwapChain();
@@ -632,20 +653,20 @@ namespace BZ {
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+        VkSemaphore waitSemaphores[] = { frameData[currentFrame].imageAvailableSemaphore };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
-        VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+        VkSemaphore signalSemaphores[] = { frameData[currentFrame].renderFinishedSemaphore };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        BZ_ASSERT_VK(vkResetFences(device, 1, &inFlightFences[currentFrame]));
+        BZ_ASSERT_VK(vkResetFences(device, 1, &frameData[currentFrame].inFlightFence));
 
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]));
+        BZ_ASSERT_VK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, frameData[currentFrame].inFlightFence));
 
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

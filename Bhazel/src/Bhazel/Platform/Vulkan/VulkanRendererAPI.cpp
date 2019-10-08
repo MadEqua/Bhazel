@@ -1,43 +1,30 @@
 #include "bzpch.h"
 
-#include "VulkanIncludes.h"
-#include "VulkanRendererAPI.h"
+#include "VulkanRendererApi.h"
 
-#include "Bhazel/Renderer/Renderer.h"
+#include "Bhazel/Platform/Vulkan/VulkanIncludes.h"
+#include "Bhazel/Platform/Vulkan/VulkanContext.h"
+#include "Bhazel/Platform/Vulkan/VulkanCommandBuffer.h"
 
 
 namespace BZ {
 
-    void VulkanRendererAPI::setClearColor(const glm::vec4& color) {
+    VulkanRendererAPI::VulkanRendererAPI(VulkanContext &graphicsContext) :
+        graphicsContext(graphicsContext) {
     }
 
-    void VulkanRendererAPI::clearColorBuffer() {
+    Ref<CommandBuffer> VulkanRendererAPI::startRecording() {
+        return startRecordingForFrame(graphicsContext.getCurrentFrame());
     }
 
-    void VulkanRendererAPI::clearDepthBuffer() {
-    }
+    Ref<CommandBuffer> VulkanRendererAPI::startRecordingForFrame(uint32 frameIndex) {
+        VkCommandBufferBeginInfo beginInfo = {};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0;
+        beginInfo.pInheritanceInfo = nullptr;
 
-    void VulkanRendererAPI::clearStencilBuffer() {
-    }
-
-    void VulkanRendererAPI::clearColorAndDepthStencilBuffers() {
-    }
-
-    void VulkanRendererAPI::setViewport(int left, int top, int width, int height) {
-    }
-
-    void VulkanRendererAPI::draw(uint32 vertexCount) {
-    }
-
-    void VulkanRendererAPI::drawIndexed(uint32 indicesCount) {
-    }
-
-    void VulkanRendererAPI::drawInstanced(uint32 vertexCount, uint32 instanceCount) {
-    }
-
-    void VulkanRendererAPI::drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) {
-    }
-
-    void VulkanRendererAPI::submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) {
+        auto &commandBufferRef = VulkanCommandBuffer::create(RenderQueueFamily::Graphics, frameIndex);
+        BZ_ASSERT_VK(vkBeginCommandBuffer(commandBufferRef->getNativeHandle(), &beginInfo));
+        return commandBufferRef;
     }
 }

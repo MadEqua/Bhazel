@@ -6,6 +6,8 @@
 #include "Bhazel/Renderer/Framebuffer.h"
 #include "Bhazel/Renderer/PipelineState.h"
 #include "Bhazel/Renderer/DescriptorSet.h"
+#include "Bhazel/Renderer/Renderer.h"
+#include "Bhazel/Renderer/CommandBuffer.h"
 
 #include "Bhazel/Core/Timer.h"
 
@@ -13,6 +15,19 @@
 struct GLFWwindow;
 
 namespace BZ {
+
+    struct RenderQueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> computeFamily;
+        std::optional<uint32_t> transferFamily;
+        std::optional<uint32_t> presentFamily;
+
+        bool isComplete() const {
+            return graphicsFamily && computeFamily && transferFamily && presentFamily;
+        }
+    };
+
+    class VulkanCommandPool;
 
     class VulkanContext : public GraphicsContext {
     public:
@@ -28,20 +43,23 @@ namespace BZ {
 
         VkDevice getDevice() const { return device; }
         VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
+        const RenderQueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
+
+        uint32 getCurrentFrame() const { return currentFrame; }
+        VulkanCommandPool& getCommandPool(RenderQueueFamily family, uint32 frame);
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
     private:
-        struct QueueFamilyIndices {
-            std::optional<uint32_t> graphicsFamily;
-            std::optional<uint32_t> presentFamily;
-
-            bool isComplete() const {
-                return graphicsFamily && presentFamily;
-            }
+        struct FrameData {
+            //One command pool per frame makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
+            Ref<VulkanCommandPool> commandPools[static_cast<int>(RenderQueueFamily::Count)];
+            VkSemaphore imageAvailableSemaphore;
+            VkSemaphore renderFinishedSemaphore;
+            VkFence inFlightFence;
         };
-
-        constexpr static int MAX_FRAMES_IN_FLIGHT = 8;
+        FrameData frameData[MAX_FRAMES_IN_FLIGHT];
+        uint32 currentFrame = 0;
 
         GLFWwindow *windowHandle;
 
@@ -49,26 +67,20 @@ namespace BZ {
         VkDevice device;
 
         VkPhysicalDevice physicalDevice;
-        QueueFamilyIndices queueFamilyIndices;
+        RenderQueueFamilyIndices queueFamilyIndices;
 
         VkQueue graphicsQueue;
         VkQueue presentQueue;
+        VkQueue transferQueue;
+        VkQueue computeQueue;
 
         VkSurfaceKHR surface;
         VkSwapchainKHR swapChain = VK_NULL_HANDLE;
-        //std::vector<Ref<Texture>> swapChainTextures;
         VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
-        //std::array<Ref<TextureView>, MAX_FRAMES_IN_FLIGHT> swapChainTextureViews;
         std::vector<Ref<Framebuffer>> swapChainFramebuffers;
 
         Ref<DescriptorPool> descriptorPool;
-
-        std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> imageAvailableSemaphores;
-        std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> renderFinishedSemaphores;
-        std::array<VkFence, MAX_FRAMES_IN_FLIGHT> inFlightFences;
-
-        size_t currentFrame = 0;
 
 #ifndef BZ_DIST
         VkDebugUtilsMessengerEXT debugMessenger;
@@ -79,7 +91,7 @@ namespace BZ {
         void createLogicalDevice(const std::vector<const char*> &requiredDeviceExtensions);
         void createSwapChain();
         void createFramebuffers();
-        void createSyncObjects();
+        void createFrameData();
         void createDescriptorPool();
 
         void recreateSwapChain();
@@ -92,7 +104,7 @@ namespace BZ {
         bool isPhysicalDeviceSuitable(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const;
         bool checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const;
 
-        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
+        RenderQueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
 
         struct SwapChainSupportDetails {
             VkSurfaceCapabilitiesKHR capabilities;

@@ -1,31 +1,20 @@
 #pragma once
 
-#include "Bhazel/Renderer/RendererAPI.h"
+#include "Bhazel/Renderer/RendererApi.h"
 
 
 namespace BZ {
 
-    class VulkanRendererAPI : public RendererAPI
-    {
+    class VulkanContext;
+
+    class VulkanRendererAPI : public RendererApi {
     public:
-        virtual void setClearColor(const glm::vec4& color) override;
-        virtual void clearColorBuffer() override;
-        virtual void clearDepthBuffer() override;
-        virtual void clearStencilBuffer() override;
-        virtual void clearColorAndDepthStencilBuffers() override;
+        VulkanRendererAPI(VulkanContext &graphicsContext);
 
-        //virtual void setBlendingSettings(BlendingSettings &settings) override;
-        //virtual void setDepthSettings(DepthSettings &settings) override;
+        Ref<CommandBuffer> startRecording() override;
+        Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex) override;
 
-        virtual void setViewport(int left, int top, int width, int height) override;
-
-        //virtual void setRenderMode(Renderer::PrimitiveTopology mode) override;
-
-        virtual void draw(uint32 vertexCount) override;
-        virtual void drawIndexed(uint32 indicesCount) override;
-        virtual void drawInstanced(uint32 vertexCount, uint32 instanceCount) override;
-        virtual void drawInstancedIndexed(uint32 indicesCount, uint32 instanceCount) override;
-
-        virtual void submitCompute(uint32 groupsX, uint32 groupsY, uint32 groupsZ) override;
+    private:
+        VulkanContext &graphicsContext;
     };
 }
