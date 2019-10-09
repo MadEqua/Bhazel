@@ -22,8 +22,10 @@
 #include "Bhazel/Renderer/ParticleSystem.h"
 
 #include "Bhazel/Renderer/Buffer.h"
+#include "Bhazel/Renderer/Framebuffer.h"
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Texture.h"
+#include "Bhazel/Renderer/DescriptorSet.h"
 
 #include "Bhazel/Renderer/Camera.h"
 #include "Bhazel/CameraController.h"

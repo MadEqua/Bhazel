@@ -61,4 +61,8 @@ namespace BZ {
     VulkanCommandPool::~VulkanCommandPool() {
         vkDestroyCommandPool(getDevice(), nativeHandle, nullptr);
     }
+
+    void VulkanCommandPool::reset() {
+        BZ_ASSERT_VK(vkResetCommandPool(getDevice(), nativeHandle, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT));
+    }
 }

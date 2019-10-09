@@ -69,12 +69,14 @@ namespace BZ {
 
             if(!window->isMinimized()) {
 
+                Renderer::startFrame();
                 layerStack.onUpdate(frameStats);
 
                 /*imGuiLayer->begin();
                 layerStack.onImGuiRender(frameStats);
                 imGuiLayer->end();*/
 
+                Renderer::endFrame();
                 graphicsContext->presentBuffer();
 
                 auto frameDuration = frameTimer.getCountedTime();

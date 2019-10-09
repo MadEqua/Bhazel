@@ -17,10 +17,13 @@ namespace BZ {
         virtual ~GraphicsContext() = default;
         
         virtual void onWindowResize(WindowResizedEvent& e) {};
+
         virtual void presentBuffer() = 0;
 
         virtual void setVSync(bool enabled) { vsync = enabled; };
         bool isVSync() const { return vsync; }
+
+        virtual Ref<Framebuffer> getCurrentFrameFramebuffer() = 0;
 
         RendererApi& getRendererAPI() { return *rendererApi; }
 

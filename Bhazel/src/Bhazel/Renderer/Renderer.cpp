@@ -4,7 +4,6 @@
 
 #include "Bhazel/Renderer/RendererApi.h"
 
-#include "Bhazel/Renderer/Camera.h"
 #include "Bhazel/Application.h"
 
 #include "Bhazel/Renderer/Buffer.h"
@@ -25,7 +24,6 @@ namespace BZ {
 
     void Renderer::init() {
         rendererApi = &Application::getInstance().getGraphicsContext().getRendererAPI();
-
         constantBuffer = Buffer::createConstantBuffer(sizeof(constantBufferData));
     }
 
@@ -42,9 +40,62 @@ namespace BZ {
         return rendererApi->startRecording();
     }
 
+    Ref<CommandBuffer> Renderer::startRecording(const Ref<Framebuffer> &framebuffer) {
+        return rendererApi->startRecording(framebuffer);
+    }
+
     Ref<CommandBuffer> Renderer::startRecordingForFrame(uint32 frameIndex) {
         return rendererApi->startRecordingForFrame(frameIndex);
     }
+
+    Ref<CommandBuffer> Renderer::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
+        return rendererApi->startRecordingForFrame(frameIndex, framebuffer);
+    }
+
+    void Renderer::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+        rendererApi->bindVertexBuffer(commandBuffer, buffer);
+    }
+
+    void Renderer::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+        rendererApi->bindIndexBuffer(commandBuffer, buffer);
+    }
+
+    void Renderer::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
+        rendererApi->bindPipelineState(commandBuffer, pipelineState);
+    }
+
+    void Renderer::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
+        rendererApi->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+    }
+
+    void Renderer::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
+        rendererApi->draw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
+    void Renderer::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
+        rendererApi->drawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+
+    void Renderer::endRecording(const Ref<CommandBuffer> &commandBuffer) {
+        rendererApi->endRecording(commandBuffer);
+    }
+
+    void Renderer::startFrame() {
+        //TODO
+    }
+
+    void Renderer::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
+        rendererApi->submitCommandBuffer(commandBuffer);
+    }
+
+    void Renderer::endFrame() {
+        rendererApi->endFrame();
+    }
+
+
+
+
+
 
     //void Renderer::beginScene(Camera &camera, const FrameStats &frameStats) {
     //    frameData.viewMatrix = camera.getViewMatrix();

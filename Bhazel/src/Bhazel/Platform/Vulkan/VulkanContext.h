@@ -37,9 +37,12 @@ namespace BZ {
         void init() override;
 
         void onWindowResize(WindowResizedEvent& e) override;
+
         void presentBuffer() override;
 
         void setVSync(bool enabled) override;
+
+        Ref<Framebuffer> getCurrentFrameFramebuffer() override;
 
         VkDevice getDevice() const { return device; }
         VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
@@ -75,10 +78,11 @@ namespace BZ {
         VkQueue computeQueue;
 
         VkSurfaceKHR surface;
-        VkSwapchainKHR swapChain = VK_NULL_HANDLE;
-        VkFormat swapChainImageFormat;
-        VkExtent2D swapChainExtent;
-        std::vector<Ref<Framebuffer>> swapChainFramebuffers;
+        VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+        VkFormat swapchainImageFormat;
+        VkExtent2D swapchainExtent;
+        std::vector<Ref<Framebuffer>> swapchainFramebuffers;
+        uint32 swapchainCurrentImageIndex;
 
         Ref<DescriptorPool> descriptorPool;
 
@@ -119,29 +123,6 @@ namespace BZ {
         
         void assertValidationLayerSupport(const std::vector<const char*> &requiredLayers) const;
 
-
-        //TODO: temporary test stuff
-        void createCommandBuffers();
-
-        void initTestStuff();
-        void draw();
-
-        Timer timer;
-        struct ConstantData {
-            glm::mat4 model = glm::mat4(1.0f);
-            glm::mat4 view = glm::mat4(1.0f);
-            glm::mat4 proj = glm::mat4(1.0f);
-        } constantData;
-
-        Ref<Buffer> vertexBuffer;
-        Ref<Buffer> indexBuffer;
-        Ref<Buffer> constantBuffer;
-        Ref<DescriptorSet> descriptorSet;
-        Ref<DescriptorSetLayout> descriptorSetLayout;
-
-        Ref<PipelineState> pipelineState;
-
-        VkCommandPool commandPool;
-        std::vector<VkCommandBuffer> commandBuffers;
+        friend class VulkanRendererApi;
     };
 }

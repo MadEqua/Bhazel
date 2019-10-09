@@ -5,14 +5,10 @@ namespace BZ {
 
     constexpr static int MAX_FRAMES_IN_FLIGHT = 8;
 
-    class Camera;
-    class InputDescription;
     class Buffer;
-    class Shader;
-    struct FrameStats;
     class WindowResizedEvent;
     class CommandBuffer;
-    class FrameBuffer;
+    class Framebuffer;
     class PipelineState;
     class DescriptorSet;
     class RendererApi;
@@ -32,23 +28,30 @@ namespace BZ {
 
         static void onWindowResize(WindowResizedEvent &ev);
 
-        //Start recording getting a CommandBuffer from the CommandPool reserved to the current frame
+        //Start recording getting a CommandBuffer from the CommandPool reserved to the current frame.
         static Ref<CommandBuffer> startRecording();
+        static Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer);
 
         //Start recording getting a CommandBuffer from the CommandPool reserved to the frame 'frameIndex'
         //Useful to record static buffers only once and reutilize them every frame
         static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex);
+        static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer);
 
-        //static void bindFramebuffer(const Ref<FrameBuffer> &framebuffer);
-        //static void bindPipelineState(const Ref<PipelineState> &pipelineState);
-        //static void bindDescriptorSet(const Ref<DescriptorSet> &descriptorSet);
-        //
-        //static void draw(const Ref<Buffer> &vertexBuffer, uint32 instances = 1, const glm::mat4 &modelMatrix = glm::mat4(1.0f));
-        //static void drawIndexed(const Ref<Buffer> &vertexBuffer, const Ref<Buffer> &indexBuffer, uint32 instances = 1, const glm::mat4 &modelMatrix = glm::mat4(1.0f));
-        //
-        //static Ref<CommandBuffer> endRecording();
-        //
-        //static void submit(const Camera &camera, const FrameStats &frameStats, const Ref<CommandBuffer> &commandBuffer);
+        static void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
+        static void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
+        
+        static void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState);
+        //static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
+        static void bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState);
+
+        static void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
+        static void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);
+
+        static void endRecording(const Ref<CommandBuffer> &commandBuffer);
+
+        static void startFrame();
+        static void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer);
+        static void endFrame();
 
         static API api;
 

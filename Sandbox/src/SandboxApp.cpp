@@ -8,54 +8,66 @@
 
 ExampleLayer::ExampleLayer() :
     Layer("Example") {
-    //particleSystem(PARTICLE_COUNT) {
 }
 
 void ExampleLayer::onAttach() {
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
-    /*auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "shaders/Texture.glsl" : "shaders/Texture.hlsl");
-    texture = BZ::Texture2D::create("textures/test.jpg");
+    //cameraController = BZ::MakeRef<BZ::PerspectiveCameraController>(60.0f, 1280.0f / 800.0f);
+    //cameraController->getCamera().setPosition({0.0f, 0.0f, 1.5f});*/
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f,
+    BZ::Shader::Builder shaderBuilder;
+    shaderBuilder.setName("test");
+    shaderBuilder.fromBinaryFile(BZ::ShaderStage::Vertex, "shaders/bin/vert.spv");
+    shaderBuilder.fromBinaryFile(BZ::ShaderStage::Fragment, "shaders/bin/frag.spv");
+    
+    BZ::PipelineStateData pipelineStateData;
+    pipelineStateData.shader = shaderBuilder.build();
 
-        0.5f, -0.5f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        1.0f, 0.0f,
-
-        0.5f, 0.5f, 0.0f,
-        0.0f, 0.0f, 1.0f,
-        1.0f, 1.0f,
-
-        -0.5f, 0.5f, 0.0f,
-        1.0f, 0.0f, 1.0f,
-        0.0f, 1.0f,
-    };
-
-    BZ::BufferLayout layout = {
-        {BZ::DataType::Float32, BZ::DataElements::Vec3, "POSITION"},
+    BZ::DataLayout dataLayout = {
+        {BZ::DataType::Float32, BZ::DataElements::Vec2, "POSITION"},
         {BZ::DataType::Float32, BZ::DataElements::Vec3, "COLOR"},
-        {BZ::DataType::Float32, BZ::DataElements::Vec2, "TEXCOORD"}
     };
-    vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), layout);
+    float vertices[] = {
+        -0.5f, -0.5f,
+        1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f,
+        0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f,
+        0.0f, 0.0f, 1.0f,
+        -0.5f, 0.5f,
+        1.0f, 1.0f, 1.0f,
+    };
+    uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
-    uint32 indices[] = {0, 1, 2, 0, 2, 3};
+    vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), dataLayout);
     indexBuffer = BZ::Buffer::createIndexBuffer(indices, sizeof(indices));
 
-    inputDescription = BZ::InputDescription::create();
-    inputDescription->addVertexBuffer(vertexBuffer, shader);
-    inputDescription->setIndexBuffer(indexBuffer);
+    constantBuffer = BZ::Buffer::createConstantBuffer(sizeof(ConstantData));
+    constantBuffer->setData(&constantData, sizeof(ConstantData));
 
-    //particleSystem.init();
+    BZ::DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+    descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::Vertex), 1);
+    BZ::Ref<BZ::DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-    BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+    //TODO: We don't want the app worrying about pools
+    BZ::DescriptorPool::Builder builder;
+    builder.addDescriptorTypeCount(BZ::DescriptorType::ConstantBuffer, 1024);
+    descriptorPool = builder.build();
+    descriptorSet = descriptorPool->getDescriptorSet(descriptorSetLayout);
+    descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantData));
 
-    cameraController = BZ::MakeRef<BZ::PerspectiveCameraController>(60.0f, 1280.0f / 800.0f);
-    cameraController->getCamera().setPosition({0.0f, 0.0f, 1.5f});*/
+    auto &windowDims = BZ::Application::getInstance().getWindow().getDimensions();
+
+    pipelineStateData.dataLayout = dataLayout;
+    pipelineStateData.primitiveTopology = BZ::PrimitiveTopology::Triangles;
+    pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y)} };
+    pipelineStateData.blendingState.attachmentBlendingStates = { {} };
+    pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
+    pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
+
+    pipelineState = BZ::PipelineState::create(pipelineStateData);
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
@@ -92,6 +104,19 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     //particleSystem.onUpdate();
 
     //BZ::Renderer::endScene();
+
+    constantData.model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::sin(frameStats.runningTime.asSeconds()), 0.0f, 0.0f));
+    constantBuffer->setData(&constantData, sizeof(ConstantData));
+
+    auto commandBuffer = BZ::Renderer::startRecording();
+    BZ::Renderer::bindVertexBuffer(commandBuffer, vertexBuffer);
+    BZ::Renderer::bindIndexBuffer(commandBuffer, indexBuffer);
+    BZ::Renderer::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+    BZ::Renderer::bindPipelineState(commandBuffer, pipelineState);
+    BZ::Renderer::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+    BZ::Renderer::endRecording(commandBuffer);
+
+    BZ::Renderer::submitCommandBuffer(commandBuffer);
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {

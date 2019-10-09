@@ -29,6 +29,8 @@ namespace BZ {
         VulkanCommandPool(RenderQueueFamily family);
         ~VulkanCommandPool();
 
+        void reset();
+
     private:
         RenderQueueFamily queueFamily;
     };

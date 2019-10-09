@@ -33,13 +33,6 @@ namespace BZ {
 
         cleanupSwapChain();
 
-        vertexBuffer.reset();
-        indexBuffer.reset();
-        constantBuffer.reset();
-        descriptorPool.reset();
-        descriptorSet.reset();
-        descriptorSetLayout.reset();
-
         for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
             vkDestroySemaphore(device, frameData[i].renderFinishedSemaphore, nullptr);
             vkDestroySemaphore(device, frameData[i].imageAvailableSemaphore, nullptr);
@@ -79,8 +72,6 @@ namespace BZ {
         createFramebuffers();
         createDescriptorPool();
 
-        initTestStuff();
-
         VkPhysicalDeviceProperties physicalDeviceProperties;
         vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
         BZ_LOG_CORE_INFO("Vulkan Context:");
@@ -90,25 +81,50 @@ namespace BZ {
         BZ_LOG_CORE_INFO("  VendorId: 0x{:04x}.", physicalDeviceProperties.vendorID);
         BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
 
-        rendererApi = std::make_unique<VulkanRendererAPI>(*this);
+        rendererApi = std::make_unique<VulkanRendererApi>(*this);
     }
 
     void VulkanContext::presentBuffer() {
-        //glfwSwapBuffers(windowHandle);
-        //TODO
+        VkSemaphore waitSemaphore = { frameData[currentFrame].renderFinishedSemaphore };
 
-        draw();
+        VkPresentInfoKHR presentInfo = {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = &waitSemaphore;
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &swapchain;
+        presentInfo.pImageIndices = &swapchainCurrentImageIndex;
+        presentInfo.pResults = nullptr;
+
+        VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        if(result != VK_SUCCESS) {
+            BZ_LOG_CORE_ERROR("VulkanContext failed to present image. Error: {}.", result);
+            recreateSwapChain();
+        }
+
+        for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
+            frameData[currentFrame].commandPools[fam]->reset();
+        }
+        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+        result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, frameData[currentFrame].imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainCurrentImageIndex);
+        if(result != VK_SUCCESS) {
+            BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
+            recreateSwapChain();
+        }
     }
 
     void VulkanContext::setVSync(bool enabled) {
         GraphicsContext::setVSync(enabled);
+    }
 
-        //TODO
+    Ref<Framebuffer> VulkanContext::getCurrentFrameFramebuffer() {
+        return swapchainFramebuffers[currentFrame];
     }
 
     VulkanCommandPool& VulkanContext::getCommandPool(RenderQueueFamily family, uint32 frame) {
         BZ_ASSERT_CORE(frame < MAX_FRAMES_IN_FLIGHT, "Invalid frame: {}!", frame);
-        return *frameData[currentFrame].commandPools[frame];
+        return *frameData[frame].commandPools[static_cast<int>(family)];
     }
 
     uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
@@ -256,24 +272,24 @@ namespace BZ {
         swapChainCreateInfo.presentMode = presentMode;
         swapChainCreateInfo.clipped = VK_TRUE;
         swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
-        BZ_ASSERT_VK(vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapChain));
+        BZ_ASSERT_VK(vkCreateSwapchainKHR(device, &swapChainCreateInfo, nullptr, &swapchain));
 
-        swapChainImageFormat = surfaceFormat.format;
-        swapChainExtent = extent;
+        swapchainImageFormat = surfaceFormat.format;
+        swapchainExtent = extent;
     }
 
     void VulkanContext::createFramebuffers() {
         //Get the images created for the swapchain
         std::vector<VkImage> swapChainImages;
         uint32_t imageCount;
-        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr));
+        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
         swapChainImages.resize(imageCount);
-        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data()));
+        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapChainImages.data()));
 
         //Create Views for the images
-       swapChainFramebuffers.resize(imageCount);
+       swapchainFramebuffers.resize(imageCount);
        for(size_t i = 0; i < swapChainImages.size(); i++) {
-            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], swapChainExtent.width, swapChainExtent.height, swapChainImageFormat);
+            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], swapchainExtent.width, swapchainExtent.height, swapchainImageFormat);
             auto textureViewRef = TextureView::create(textureRef);
 
             AttachmentDescription attachmentDesc;
@@ -288,10 +304,12 @@ namespace BZ {
 
             Framebuffer::Builder builder;
             builder.addColorAttachment(attachmentDesc, textureViewRef);
-            builder.setDimensions(glm::ivec3(swapChainExtent.width, swapChainExtent.height, 1));
+            builder.setDimensions(glm::ivec3(swapchainExtent.width, swapchainExtent.height, 1));
 
-            swapChainFramebuffers[i] = builder.build();
+            swapchainFramebuffers[i] = builder.build();
         }
+
+       BZ_ASSERT_VK(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, frameData[currentFrame].imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainCurrentImageIndex));
     }
 
     void VulkanContext::createFrameData() {
@@ -322,27 +340,17 @@ namespace BZ {
     void VulkanContext::recreateSwapChain() {
         BZ_ASSERT_VK(vkDeviceWaitIdle(device));
 
-        if(swapChain != VK_NULL_HANDLE)
+        if(swapchain != VK_NULL_HANDLE)
             cleanupSwapChain();
 
         createSwapChain();
         createFramebuffers();
-
-        //Render pass depends on the format of the swapchain (it's rare for the format to change, but still...)
-        //Viewport and scissor rectangle size (possible to avoid if we set those to dynamic state)
-        //Framebuffers and command buffers depend on swapchain images
-        initTestStuff();
     }
 
 
     void VulkanContext::cleanupSwapChain() {
-        pipelineState.reset();
-        swapChainFramebuffers.clear();
-
-        vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-        vkDestroyCommandPool(device, commandPool, nullptr);
-
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
+        swapchainFramebuffers.clear();
+        vkDestroySwapchainKHR(device, swapchain, nullptr);
     }
 
     template<typename T>
@@ -517,172 +525,5 @@ namespace BZ {
             if(!layerFound)
                 BZ_ASSERT_ALWAYS_CORE("Requested Validation Layer '{}' but it was not found!", layerName);
         }
-    }
-
-    /////////////////////////////
-    ///TODO : temporary stuff
-    ////////////////////////////
-    void VulkanContext::createCommandBuffers() {
-        //Create command pool
-        VkCommandPoolCreateInfo poolInfo = {};
-        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-        poolInfo.flags = 0; // Optional
-        BZ_ASSERT_VK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
-
-        //Create command buffers
-        commandBuffers.resize(swapChainFramebuffers.size());
-        VkCommandBufferAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = commandPool;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-        BZ_ASSERT_VK(vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()));
-
-        //Start command buffer recording
-        for(size_t i = 0; i < commandBuffers.size(); i++) {
-            VkCommandBufferBeginInfo beginInfo = {};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = 0; // Optional
-            beginInfo.pInheritanceInfo = nullptr; // Optional
-
-            BZ_ASSERT_VK(vkBeginCommandBuffer(commandBuffers[i], &beginInfo));
-
-            const VulkanFramebuffer &vkFramebuffer = static_cast<const VulkanFramebuffer&>(*swapChainFramebuffers[i]);
-
-            //Record a render pass
-            VkRenderPassBeginInfo renderPassBeginInfo = {};
-            renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassBeginInfo.renderPass = vkFramebuffer.getNativeHandle().renderPassHandle;
-            renderPassBeginInfo.framebuffer = vkFramebuffer.getNativeHandle().frameBufferHandle;
-            renderPassBeginInfo.renderArea.offset = { 0, 0 };
-            renderPassBeginInfo.renderArea.extent = swapChainExtent;
-            VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-            renderPassBeginInfo.clearValueCount = 1;
-            renderPassBeginInfo.pClearValues = &clearColor;
-            vkCmdBeginRenderPass(commandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-            const VulkanPipelineState &vkPipeState = static_cast<const VulkanPipelineState &>(*pipelineState);
-            vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.getNativeHandle().pipeline);
-
-            VkBuffer vkBuffers[] = { static_cast<const VulkanBuffer &>(*vertexBuffer).getNativeHandle() };
-            VkDeviceSize offsets[] = { 0 };
-            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vkBuffers, offsets);
-
-            vkCmdBindIndexBuffer(commandBuffers[i], static_cast<const VulkanBuffer &>(*indexBuffer).getNativeHandle(), 0, VK_INDEX_TYPE_UINT16);
-
-            VkDescriptorSet descSets[] = { static_cast<const VulkanDescriptorSet &>(*descriptorSet).getNativeHandle() };
-            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeState.getNativeHandle().pipelineLayout,
-                0, 1, descSets, 0, nullptr);
-
-            vkCmdDrawIndexed(commandBuffers[i], 6, 1, 0, 0, 0);
-
-            vkCmdEndRenderPass(commandBuffers[i]);
-
-            BZ_ASSERT_VK(vkEndCommandBuffer(commandBuffers[i]));
-        }
-    }
-
-    void VulkanContext::initTestStuff() {
-        PipelineStateData pipelineStateData;
-
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("test");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/vert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/frag.spv");
-        pipelineStateData.shader = shaderBuilder.build();
-
-        DataLayout dataLayout = {
-            {DataType::Float32, DataElements::Vec2, "POSITION"},
-            {DataType::Float32, DataElements::Vec3, "COLOR"},
-        };
-        float vertices[] = {
-            -0.5f, -0.5f,
-            1.0f, 0.0f, 0.0f,
-            0.5f, -0.5f,
-            0.0f, 1.0f, 0.0f,
-            0.5f, 0.5f,
-            0.0f, 0.0f, 1.0f,
-            -0.5f, 0.5f,
-            1.0f, 1.0f, 1.0f,
-        };
-        uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
-
-        vertexBuffer = Buffer::createVertexBuffer(vertices, sizeof(vertices), dataLayout);
-        indexBuffer = Buffer::createIndexBuffer(indices, sizeof(indices));
-
-        constantBuffer = Buffer::createConstantBuffer(sizeof(ConstantData));
-        constantBuffer->setData(&constantData, sizeof(ConstantData));
-
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBuffer, flagsToMask(ShaderStageFlags::Vertex), 1);
-        descriptorSetLayout = descriptorSetLayoutBuilder.build();
-
-        descriptorSet = descriptorPool->getDescriptorSet(descriptorSetLayout);
-        descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantData));
-
-        pipelineStateData.dataLayout = dataLayout;
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(swapChainExtent.width), static_cast<float>(swapChainExtent.height)} };
-        pipelineStateData.blendingState.attachmentBlendingStates = { {} };
-        pipelineStateData.framebuffer = swapChainFramebuffers[0]; //All the framebuffers have a similar VkRenderPass
-        pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
-
-        pipelineState = PipelineState::create(pipelineStateData);
-
-        timer.start();
-
-        createCommandBuffers();
-    }
-
-    void VulkanContext::draw() {
-        BZ_ASSERT_VK(vkWaitForFences(device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
-
-        //This index will be used to pick the correct command buffer
-        uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, frameData[currentFrame].imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-        if(result != VK_SUCCESS) {
-            BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
-            recreateSwapChain();
-            return;
-        }
-
-        constantData.model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::sin(timer.getCountedTime().asSeconds()), 0.0f, 0.0f));
-        constantBuffer->setData(&constantData, sizeof(ConstantData));
-
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        VkSemaphore waitSemaphores[] = { frameData[currentFrame].imageAvailableSemaphore };
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = waitSemaphores;
-        submitInfo.pWaitDstStageMask = waitStages;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
-        VkSemaphore signalSemaphores[] = { frameData[currentFrame].renderFinishedSemaphore };
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = signalSemaphores;
-
-        BZ_ASSERT_VK(vkResetFences(device, 1, &frameData[currentFrame].inFlightFence));
-
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, frameData[currentFrame].inFlightFence));
-
-        VkPresentInfoKHR presentInfo = {};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = signalSemaphores;
-        VkSwapchainKHR swapChains[] = { swapChain };
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = swapChains;
-        presentInfo.pImageIndices = &imageIndex;
-        presentInfo.pResults = nullptr; // Optional
-
-        result = vkQueuePresentKHR(presentQueue, &presentInfo);
-        if(result != VK_SUCCESS) {
-            BZ_LOG_CORE_ERROR("VulkanContext failed to present image. Error: {}.", result);
-            recreateSwapChain();
-        }
-        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 }
