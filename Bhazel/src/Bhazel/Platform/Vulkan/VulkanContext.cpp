@@ -43,6 +43,8 @@ namespace BZ {
             }
         }
 
+        descriptorPool.reset();
+
         vkDestroyDevice(device, nullptr);
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -102,15 +104,19 @@ namespace BZ {
             recreateSwapChain();
         }
 
-        for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
-            frameData[currentFrame].commandPools[fam]->reset();
-        }
+        int temp = currentFrame;
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
         result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, frameData[currentFrame].imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainCurrentImageIndex);
         if(result != VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
             recreateSwapChain();
+        }
+
+        //TODO: check correctness
+        BZ_ASSERT_VK(vkWaitForFences(device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
+        for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
+            frameData[currentFrame].commandPools[fam]->reset();
         }
     }
 
@@ -332,7 +338,7 @@ namespace BZ {
     }
 
     void VulkanContext::createDescriptorPool() {
-        DescriptorPool::Builder builder;
+        VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
         descriptorPool = builder.build();
     }

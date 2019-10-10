@@ -68,34 +68,12 @@ namespace BZ {
 
     class DescriptorSet {
     public:
+        static Ref<DescriptorSet> create(const Ref<DescriptorSetLayout> &layout);
+
         virtual void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) = 0;
     protected:
-        DescriptorSet(const Ref<DescriptorSetLayout> &layout);
+        explicit DescriptorSet(const Ref<DescriptorSetLayout> &layout);
 
         Ref<DescriptorSetLayout> layout;
-    };
-
-
-    class DescriptorPool {
-    public:
-        class Builder {
-        public:
-            Builder& addDescriptorTypeCount(DescriptorType type, uint32 count);
-            Ref<DescriptorPool> build() const;
-
-        private:
-            uint32 countPerType[static_cast<int>(DescriptorType::Count)] = {0};
-            uint32 totalCount = 0;
-
-            friend class DescriptorPool;
-            friend class VulkanDescriptorPool;
-        };
-
-        virtual Ref<DescriptorSet> getDescriptorSet(const Ref<DescriptorSetLayout> &layout) const  = 0;
-        //virtual Ref<DescriptorSet> getDescriptorSets(const std::vector <Ref<DescriptorSetLayout>) const  = 0;
-
-    protected:
-        explicit DescriptorPool(const Builder &builder);
-        virtual ~DescriptorPool() = default;
     };
 }

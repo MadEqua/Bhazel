@@ -22,7 +22,8 @@ private:
     BZ::Ref<BZ::Buffer> constantBuffer;
     BZ::Ref<BZ::DescriptorSet> descriptorSet;
     BZ::Ref<BZ::PipelineState> pipelineState;
-    BZ::Ref<BZ::DescriptorPool> descriptorPool; //TODO: doesn't belong to the app
+
+    //BZ::Ref<BZ::CommandBuffer> buffers[BZ::MAX_FRAMES_IN_FLIGHT];
 
     BZ::Ref<BZ::PerspectiveCameraController> cameraController;
 

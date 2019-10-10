@@ -16,19 +16,27 @@ namespace BZ {
 
     class VulkanDescriptorSet : public DescriptorSet, public VulkanGpuObject<VkDescriptorSet> {
     public:
-        static Ref<DescriptorSet> wrap(VkDescriptorSet vkDescriptorSet, const Ref<DescriptorSetLayout> &layout);
-
-        explicit VulkanDescriptorSet(VkDescriptorSet vkDescriptorSet, const Ref<DescriptorSetLayout> &layout);
+        explicit VulkanDescriptorSet(const Ref<DescriptorSetLayout> &layout);
         
         void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) override;
     };
 
 
-    class VulkanDescriptorPool : public DescriptorPool, public VulkanGpuObject<VkDescriptorPool> {
+    class VulkanDescriptorPool : public VulkanGpuObject<VkDescriptorPool> {
     public:
-        explicit VulkanDescriptorPool(const Builder &builder);
-        ~VulkanDescriptorPool() override;
+        class Builder {
+        public:
+            Builder &addDescriptorTypeCount(DescriptorType type, uint32 count);
+            Ref<VulkanDescriptorPool> build() const;
 
-        Ref<DescriptorSet> getDescriptorSet(const Ref<DescriptorSetLayout> &layout) const override;
+        private:
+            uint32 countPerType[static_cast<int>(DescriptorType::Count)] = { 0 };
+            uint32 totalCount = 0;
+
+            friend class VulkanDescriptorPool;
+        };
+
+        explicit VulkanDescriptorPool(const Builder &builder);
+        ~VulkanDescriptorPool();
     };
 }

@@ -51,11 +51,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::Vertex), 1);
     BZ::Ref<BZ::DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-    //TODO: We don't want the app worrying about pools
-    BZ::DescriptorPool::Builder builder;
-    builder.addDescriptorTypeCount(BZ::DescriptorType::ConstantBuffer, 1024);
-    descriptorPool = builder.build();
-    descriptorSet = descriptorPool->getDescriptorSet(descriptorSetLayout);
+    descriptorSet = BZ::DescriptorSet::create(descriptorSetLayout);
     descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantData));
 
     auto &windowDims = BZ::Application::getInstance().getWindow().getDimensions();
@@ -68,6 +64,17 @@ void ExampleLayer::onGraphicsContextCreated() {
     pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
 
     pipelineState = BZ::PipelineState::create(pipelineStateData);
+
+
+    /*for(int i = 0; i < BZ::MAX_FRAMES_IN_FLIGHT; ++i) {
+        buffers[i] = BZ::Renderer::startRecording();
+        BZ::Renderer::bindVertexBuffer(buffers[i], vertexBuffer);
+        BZ::Renderer::bindIndexBuffer(buffers[i], indexBuffer);
+        BZ::Renderer::bindDescriptorSet(buffers[i], descriptorSet, pipelineState);
+        BZ::Renderer::bindPipelineState(buffers[i], pipelineState);
+        BZ::Renderer::drawIndexed(buffers[i], 6, 1, 0, 0, 0);
+        BZ::Renderer::endRecording(buffers[i]);
+    }*/
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
@@ -117,6 +124,10 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Renderer::endRecording(commandBuffer);
 
     BZ::Renderer::submitCommandBuffer(commandBuffer);
+
+    /*static int i = 0;
+    BZ::Renderer::submitCommandBuffer(buffers[i]);
+    i = (i + 1) % BZ::MAX_FRAMES_IN_FLIGHT;*/
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {

@@ -28,6 +28,7 @@ namespace BZ {
     };
 
     class VulkanCommandPool;
+    class VulkanDescriptorPool;
 
     class VulkanContext : public GraphicsContext {
     public:
@@ -50,6 +51,7 @@ namespace BZ {
 
         uint32 getCurrentFrame() const { return currentFrame; }
         VulkanCommandPool& getCommandPool(RenderQueueFamily family, uint32 frame);
+        VulkanDescriptorPool& getDescriptorPool() { return *descriptorPool; }
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
@@ -84,7 +86,7 @@ namespace BZ {
         std::vector<Ref<Framebuffer>> swapchainFramebuffers;
         uint32 swapchainCurrentImageIndex;
 
-        Ref<DescriptorPool> descriptorPool;
+        Ref<VulkanDescriptorPool> descriptorPool;
 
 #ifndef BZ_DIST
         VkDebugUtilsMessengerEXT debugMessenger;

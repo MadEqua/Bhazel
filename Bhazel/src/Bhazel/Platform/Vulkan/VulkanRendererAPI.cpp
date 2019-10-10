@@ -126,9 +126,8 @@ namespace BZ {
         submitInfo.pSignalSemaphores = nullptr;
 
         BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
-        BZ_ASSERT_VK(vkResetFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence));
 
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.graphicsQueue, 1, &submitInfo, frameData[currentFrame].inFlightFence));
+        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
     }
 
     void VulkanRendererApi::endFrame() {

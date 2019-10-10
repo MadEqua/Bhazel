@@ -36,8 +36,18 @@ namespace BZ {
     }
 
 
-    Ref<DescriptorSet> VulkanDescriptorSet::wrap(VkDescriptorSet vkDescriptorSet, const Ref<DescriptorSetLayout> &layout) {
-        return MakeRef<VulkanDescriptorSet>(vkDescriptorSet, layout);
+    VulkanDescriptorSet::VulkanDescriptorSet(const Ref<DescriptorSetLayout> &layout) :
+        DescriptorSet(layout) {
+
+        VkDescriptorSetLayout layouts[] = { static_cast<const VulkanDescriptorSetLayout &>(*layout).getNativeHandle() };
+
+        VkDescriptorSetAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = getGraphicsContext().getDescriptorPool().getNativeHandle();
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = layouts;
+
+        BZ_ASSERT_VK(vkAllocateDescriptorSets(getDevice(), &allocInfo, &nativeHandle));
     }
 
     void VulkanDescriptorSet::setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) {
@@ -60,14 +70,19 @@ namespace BZ {
         vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
     }
 
-    VulkanDescriptorSet::VulkanDescriptorSet(VkDescriptorSet vkDescriptorSet, const Ref<DescriptorSetLayout> &layout) :
-        DescriptorSet(layout) {
-        nativeHandle = vkDescriptorSet;
+
+    VulkanDescriptorPool::Builder& VulkanDescriptorPool::Builder::addDescriptorTypeCount(DescriptorType type, uint32 count) {
+        countPerType[static_cast<int>(type)] += count;
+        totalCount += count;
+        return *this;
     }
 
+    Ref<VulkanDescriptorPool> VulkanDescriptorPool::Builder::build() const {
+        return MakeRef<VulkanDescriptorPool>(*this);
+    }
 
-    VulkanDescriptorPool::VulkanDescriptorPool(const Builder &builder) :
-        DescriptorPool(builder) {
+    VulkanDescriptorPool::VulkanDescriptorPool(const Builder &builder) {
+        BZ_ASSERT_CORE(builder.totalCount > 0, "DescriptorPool is empty!");
 
         const int typeCount = static_cast<int>(DescriptorType::Count);
         VkDescriptorPoolSize poolSizeForType[typeCount];
@@ -95,20 +110,5 @@ namespace BZ {
 
     VulkanDescriptorPool::~VulkanDescriptorPool() {
         vkDestroyDescriptorPool(getDevice(), nativeHandle, nullptr);
-    }
-
-    Ref<DescriptorSet> VulkanDescriptorPool::getDescriptorSet(const Ref<DescriptorSetLayout> &layout) const {
-        VkDescriptorSetLayout layouts[] = { static_cast<const VulkanDescriptorSetLayout &>(*layout).getNativeHandle() };
-
-        VkDescriptorSetAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = nativeHandle;
-        allocInfo.descriptorSetCount = 1;
-        allocInfo.pSetLayouts = layouts;
-
-        VkDescriptorSet descriptorSet;
-        BZ_ASSERT_VK(vkAllocateDescriptorSets(getDevice(), &allocInfo, &descriptorSet));
-
-        return VulkanDescriptorSet::wrap(descriptorSet, layout);
     }
 }

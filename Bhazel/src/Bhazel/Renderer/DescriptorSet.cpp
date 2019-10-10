@@ -32,28 +32,17 @@ namespace BZ {
     }
 
 
-    DescriptorSet::DescriptorSet(const Ref<DescriptorSetLayout> &layout) : 
-        layout(layout) {
-    }
-
-
-    DescriptorPool::Builder& DescriptorPool::Builder::addDescriptorTypeCount(DescriptorType type, uint32 count) {
-        countPerType[static_cast<int>(type)] += count;
-        totalCount += count;
-        return *this;
-    }
-
-    Ref<DescriptorPool> DescriptorPool::Builder::build() const {
+    Ref<DescriptorSet> DescriptorSet::create(const Ref<DescriptorSetLayout> &layout) {
         switch(Renderer::api) {
         case Renderer::API::Vulkan:
-            return MakeRef<VulkanDescriptorPool>(*this);
+            return MakeRef<VulkanDescriptorSet>(layout);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    DescriptorPool::DescriptorPool(const Builder &builder) {
-        BZ_ASSERT_CORE(builder.totalCount > 0, "DescriptorPool is empty!");
+    DescriptorSet::DescriptorSet(const Ref<DescriptorSetLayout> &layout) :
+        layout(layout) {
     }
 }
