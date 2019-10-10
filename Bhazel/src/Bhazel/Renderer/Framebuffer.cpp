@@ -40,6 +40,7 @@ namespace BZ {
         }
     }
 
+
     Framebuffer::Framebuffer(const Builder &builder) :
         dimensions(builder.dimensions) {
         BZ_ASSERT_CORE(!builder.attachments.empty(), "Creating a Framebuffer with no attachments!");
@@ -53,5 +54,16 @@ namespace BZ {
                 depthStencilAttachment.emplace(att);
             }
         }
+    }
+
+    const Framebuffer::Attachment& Framebuffer::getColorAttachment(uint32 index) const {
+        BZ_ASSERT_CORE(index < getColorAttachmentCount(), "Index {} is out of range!", index)
+        return colorAttachments[index];
+    }
+
+    const Framebuffer::Attachment* Framebuffer::getDepthStencilAttachment() const {
+        if(depthStencilAttachment.has_value())
+            return &depthStencilAttachment.value();
+        return nullptr;
     }
 }

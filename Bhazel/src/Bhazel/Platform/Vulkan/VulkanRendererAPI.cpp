@@ -44,15 +44,26 @@ namespace BZ {
         //Record a render pass
         auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
 
+        VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        int i;
+        for(i = 0; i < vulkanFramebuffer.getColorAttachmentCount(); ++i) {
+            auto &attachmentClearValues = vulkanFramebuffer.getColorAttachment(i).description.clearValues;
+            memcpy(clearValues[i].color.float32, &attachmentClearValues, sizeof(float) * 4);
+        }
+        if(vulkanFramebuffer.hasDepthStencilAttachment()) {
+            auto &attachmentClearValues = vulkanFramebuffer.getDepthStencilAttachment()->description.clearValues;
+            clearValues[i].depthStencil.depth = attachmentClearValues.floating.x;
+            clearValues[i].depthStencil.stencil = attachmentClearValues.integer.y;
+        }
+
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassBeginInfo.renderPass = vulkanFramebuffer.getNativeHandle().renderPassHandle;
         renderPassBeginInfo.framebuffer = vulkanFramebuffer.getNativeHandle().frameBufferHandle;
-        renderPassBeginInfo.renderArea.offset = { 0, 0 };
-        renderPassBeginInfo.renderArea.extent = { 1280, 800 }; //TODO
-        VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f }; //TODO
-        renderPassBeginInfo.clearValueCount = 1;
-        renderPassBeginInfo.pClearValues = &clearColor;
+        renderPassBeginInfo.renderArea.offset = {};
+        renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(vulkanFramebuffer.getDimensions().x), static_cast<uint32_t>(vulkanFramebuffer.getDimensions().y) };
+        renderPassBeginInfo.clearValueCount = vulkanFramebuffer.getAttachmentCount();
+        renderPassBeginInfo.pClearValues = clearValues;
         vkCmdBeginRenderPass(commandBufferRef->getNativeHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         return commandBufferRef;

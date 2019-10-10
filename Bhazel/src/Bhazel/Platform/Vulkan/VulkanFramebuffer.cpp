@@ -15,9 +15,14 @@ namespace BZ {
         initRenderPass();
 
         std::vector<VkImageView> vkImageViews(builder.attachments.size());
-        for(int i = 0; i < builder.attachments.size(); ++i) {
+
+        //First color attachments, then depthstencil, if applicable.
+        int i;
+        for(i = 0; i < getColorAttachmentCount(); ++i)
             vkImageViews[i] = static_cast<VulkanTextureView&>(*builder.attachments[i].textureView).getNativeHandle();
-        }
+        
+        if(hasDepthStencilAttachment())
+            vkImageViews[i] = static_cast<VulkanTextureView &>(*builder.attachments[i].textureView).getNativeHandle();
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -38,7 +43,7 @@ namespace BZ {
 
     void VulkanFramebuffer::initRenderPass() {
 
-        std::vector<VkAttachmentDescription> attachmentDescriptions(colorAttachments.size() + (depthStencilAttachment ? 1 : 0));
+        std::vector<VkAttachmentDescription> attachmentDescriptions(getAttachmentCount());
         int i = 0;
         for(const auto &att : colorAttachments) {
             VkAttachmentDescription attachmentDesc = {};
@@ -94,7 +99,7 @@ namespace BZ {
         //Create render pass
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = getColorAttachmentCount() + (depthStencilAttachment ? 1 : 0);
+        renderPassInfo.attachmentCount = getAttachmentCount();
         renderPassInfo.pAttachments = attachmentDescriptions.data();
         renderPassInfo.subpassCount = 1; //Harcoded to 1 subpass
         renderPassInfo.pSubpasses = &subpassDesc;

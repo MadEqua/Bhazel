@@ -32,6 +32,11 @@ namespace BZ {
         SharedPresent
     };
 
+    union ClearValues {
+        glm::vec4 floating;
+        glm::ivec4 integer;
+    };
+
     struct AttachmentDescription {
         TextureFormat format = TextureFormatEnum::R8G8B8;
         uint32 samples = 1;
@@ -41,6 +46,7 @@ namespace BZ {
         StoreOperation storeOperatorStencil = StoreOperation::Store;
         TextureLayout initialLayout = TextureLayout::Undefined;
         TextureLayout finalLayout = TextureLayout::Undefined;
+        ClearValues clearValues = {}; //RGBA or Depth/Stencil.
     };
 
 
@@ -71,7 +77,12 @@ namespace BZ {
         virtual ~Framebuffer() = default;
 
         uint32 getColorAttachmentCount() const { return static_cast<uint32>(colorAttachments.size()); }
+        uint32 getAttachmentCount() const { return static_cast<uint32>(colorAttachments.size()) + (depthStencilAttachment.has_value() ? 1 : 0); }
         bool hasDepthStencilAttachment() const { return depthStencilAttachment.has_value(); }
+        const glm::ivec3& getDimensions() const { return dimensions; }
+
+        const Attachment& getColorAttachment(uint32 index) const;
+        const Attachment* getDepthStencilAttachment() const;
 
     protected:
         explicit Framebuffer(const Builder &builder);

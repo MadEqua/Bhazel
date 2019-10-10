@@ -4,6 +4,7 @@
 namespace BZ {
 
     constexpr static int MAX_FRAMES_IN_FLIGHT = 8;
+    constexpr static int MAX_FRAMEBUFFER_ATTACHEMENTS = 8;
 
     class Buffer;
     class WindowResizedEvent;
