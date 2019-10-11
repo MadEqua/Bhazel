@@ -17,7 +17,7 @@ namespace BZ {
         std::vector<VkImageView> vkImageViews(builder.attachments.size());
 
         //First color attachments, then depthstencil, if applicable.
-        int i;
+        uint32 i;
         for(i = 0; i < getColorAttachmentCount(); ++i)
             vkImageViews[i] = static_cast<VulkanTextureView&>(*builder.attachments[i].textureView).getNativeHandle();
         

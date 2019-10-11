@@ -38,12 +38,13 @@ namespace BZ {
         beginInfo.flags = 0;
         beginInfo.pInheritanceInfo = nullptr;
 
-        auto &commandBufferRef = VulkanCommandBuffer::create(RenderQueueFamily::Graphics, frameIndex);
+        auto &commandBufferRef = VulkanCommandBuffer::create(QueueProperty::Graphics, frameIndex);
         BZ_ASSERT_VK(vkBeginCommandBuffer(commandBufferRef->getNativeHandle(), &beginInfo));
 
         //Record a render pass
         auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
 
+        //We know that the color attachments will be first and then the depthstencil
         VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
         int i;
         for(i = 0; i < vulkanFramebuffer.getColorAttachmentCount(); ++i) {
@@ -138,7 +139,7 @@ namespace BZ {
 
         BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
 
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.queueContainer.graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
 
     void VulkanRendererApi::endFrame() {
@@ -160,6 +161,6 @@ namespace BZ {
         BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
         BZ_ASSERT_VK(vkResetFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence));
 
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.graphicsQueue, 1, &submitInfo, frameData[currentFrame].inFlightFence));
+        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.queueContainer.graphics.getNativeHandle(), 1, &submitInfo, frameData[currentFrame].inFlightFence));
     }
 }

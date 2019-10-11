@@ -36,6 +36,8 @@ namespace BZ {
             friend class VulkanDescriptorPool;
         };
 
+        void reset();
+
         explicit VulkanDescriptorPool(const Builder &builder);
         ~VulkanDescriptorPool();
     };

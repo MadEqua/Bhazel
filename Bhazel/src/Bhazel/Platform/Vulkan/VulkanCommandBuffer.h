@@ -10,28 +10,27 @@ namespace BZ {
     class VulkanCommandBuffer : public CommandBuffer, public VulkanGpuObject<VkCommandBuffer> {
     public:
         //Allocates a CommandBuffer from the current frame pool.
-        static Ref<VulkanCommandBuffer> create(RenderQueueFamily family);
+        static Ref<VulkanCommandBuffer> create(QueueProperty property, bool exclusiveQueue = false);
 
         //FramePool is the index of the Pool to allocate the CommandBuffer from.
         //There is a Pool per each frame in flight (0 to MAX_FRAMES_IN_FLIGHT).
-        static Ref<VulkanCommandBuffer> create(RenderQueueFamily family, uint32 framePool);
+        static Ref<VulkanCommandBuffer> create(QueueProperty property, uint32 framePool, bool exclusiveQueue = false);
 
-        VulkanCommandBuffer(RenderQueueFamily family);
-        VulkanCommandBuffer(RenderQueueFamily family, uint32 framePool);
+        VulkanCommandBuffer(QueueProperty property, uint32 framePool, bool exclusiveQueue);
     };
 
 
-    //Allocates CommandBuffers
+    //Allocates CommandBuffers from a certain family.
     class VulkanCommandPool : public VulkanGpuObject<VkCommandPool > {
     public:
-        static Ref<VulkanCommandPool> create(RenderQueueFamily family);
+        static Ref<VulkanCommandPool> create(QueueFamily family);
 
-        VulkanCommandPool(RenderQueueFamily family);
+        explicit VulkanCommandPool(QueueFamily family);
         ~VulkanCommandPool();
 
         void reset();
 
     private:
-        RenderQueueFamily queueFamily;
+        QueueFamily family;
     };
 }

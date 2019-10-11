@@ -100,7 +100,7 @@ namespace BZ {
 
         VkDescriptorPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        poolInfo.flags = 0;
         poolInfo.poolSizeCount = usedSlots;
         poolInfo.pPoolSizes = poolSizeForType;
         poolInfo.maxSets = builder.totalCount;
@@ -110,5 +110,9 @@ namespace BZ {
 
     VulkanDescriptorPool::~VulkanDescriptorPool() {
         vkDestroyDescriptorPool(getDevice(), nativeHandle, nullptr);
+    }
+
+    void VulkanDescriptorPool::reset() {
+        BZ_ASSERT_VK(vkResetDescriptorPool(getDevice(), nativeHandle, 0));
     }
 }

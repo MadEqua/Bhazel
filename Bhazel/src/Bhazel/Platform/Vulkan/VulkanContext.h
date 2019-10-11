@@ -3,29 +3,17 @@
 #include "Bhazel/Renderer/GraphicsContext.h"
 
 #include "Bhazel/Platform/Vulkan/VulkanIncludes.h"
+#include "Bhazel/Platform/Vulkan/VulkanQueue.h"
 #include "Bhazel/Renderer/Framebuffer.h"
 #include "Bhazel/Renderer/PipelineState.h"
 #include "Bhazel/Renderer/DescriptorSet.h"
 #include "Bhazel/Renderer/Renderer.h"
 #include "Bhazel/Renderer/CommandBuffer.h"
 
-#include "Bhazel/Core/Timer.h"
-
 
 struct GLFWwindow;
 
 namespace BZ {
-
-    struct RenderQueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily;
-        std::optional<uint32_t> computeFamily;
-        std::optional<uint32_t> transferFamily;
-        std::optional<uint32_t> presentFamily;
-
-        bool isComplete() const {
-            return graphicsFamily && computeFamily && transferFamily && presentFamily;
-        }
-    };
 
     class VulkanCommandPool;
     class VulkanDescriptorPool;
@@ -36,9 +24,7 @@ namespace BZ {
         ~VulkanContext() override;
 
         void init() override;
-
-        void onWindowResize(WindowResizedEvent& e) override;
-
+        void onWindowResize(WindowResizedEvent &e) override;
         void presentBuffer() override;
 
         void setVSync(bool enabled) override;
@@ -47,10 +33,9 @@ namespace BZ {
 
         VkDevice getDevice() const { return device; }
         VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
-        const RenderQueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
 
         uint32 getCurrentFrame() const { return currentFrame; }
-        VulkanCommandPool& getCommandPool(RenderQueueFamily family, uint32 frame);
+        VulkanCommandPool& getCommandPool(QueueProperty property, uint32 frame, bool exclusive);
         VulkanDescriptorPool& getDescriptorPool() { return *descriptorPool; }
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
@@ -58,7 +43,7 @@ namespace BZ {
     private:
         struct FrameData {
             //One command pool per frame makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
-            Ref<VulkanCommandPool> commandPools[static_cast<int>(RenderQueueFamily::Count)];
+            std::unordered_map<uint32, Ref<VulkanCommandPool>> commandPoolsByFamily;
             VkSemaphore imageAvailableSemaphore;
             VkSemaphore renderFinishedSemaphore;
             VkFence inFlightFence;
@@ -72,12 +57,22 @@ namespace BZ {
         VkDevice device;
 
         VkPhysicalDevice physicalDevice;
-        RenderQueueFamilyIndices queueFamilyIndices;
 
-        VkQueue graphicsQueue;
-        VkQueue presentQueue;
-        VkQueue transferQueue;
-        VkQueue computeQueue;
+        ///Contains the families of the queues of the selected Device.
+        QueueFamilyContainer queueFamilyContainer;
+
+        //The handles may point to the same queues with no restrictions.
+        struct QueueContainer {
+            VulkanQueue graphics;
+            VulkanQueue compute;
+            VulkanQueue transfer;
+            VulkanQueue present;
+        };
+        QueueContainer queueContainer;
+
+        //Queues with a single property, if existent (eg: transfer queue).
+        //If not existent the handles will refer non-exclusive queues.
+        QueueContainer queueContainerExclusive;
 
         VkSurfaceKHR surface;
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
@@ -102,6 +97,8 @@ namespace BZ {
 
         void recreateSwapChain();
         void cleanupSwapChain();
+        void cleanupFramebuffers();
+        void cleanupFrameData();
 
         template<typename T>
         static T getExtensionFunction(VkInstance instance, const char *name);
@@ -110,7 +107,7 @@ namespace BZ {
         bool isPhysicalDeviceSuitable(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const;
         bool checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const;
 
-        RenderQueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
+        QueueFamilyContainer getQueueFamilies(VkPhysicalDevice device) const;
 
         struct SwapChainSupportDetails {
             VkSurfaceCapabilitiesKHR capabilities;

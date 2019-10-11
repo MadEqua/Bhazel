@@ -91,7 +91,8 @@ namespace BZ {
     }
 
     void Application::onEvent(Event &e) {
-        BZ_LOG_CORE_TRACE(e);
+        if(!e.isInCategory(EventCategory::EventCategoryMouse))
+            BZ_LOG_CORE_TRACE(e);
 
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(Application::onWindowResized));

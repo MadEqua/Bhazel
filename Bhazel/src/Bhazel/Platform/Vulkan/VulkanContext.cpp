@@ -14,11 +14,7 @@
 #include "Bhazel/Renderer/Shader.h"
 #include "Bhazel/Renderer/Buffer.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-
 #include <GLFW/glfw3.h>
-
-#include <fstream>
 
 
 namespace BZ {
@@ -26,27 +22,16 @@ namespace BZ {
     VulkanContext::VulkanContext(void *windowHandle) :
         windowHandle(static_cast<GLFWwindow*>(windowHandle)) {
         BZ_ASSERT_CORE(windowHandle, "Window handle is null!");
-     }
+    }
 
     VulkanContext::~VulkanContext() {
         BZ_ASSERT_VK(vkDeviceWaitIdle(device));
 
         cleanupSwapChain();
-
-        for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            vkDestroySemaphore(device, frameData[i].renderFinishedSemaphore, nullptr);
-            vkDestroySemaphore(device, frameData[i].imageAvailableSemaphore, nullptr);
-            vkDestroyFence(device, frameData[i].inFlightFence, nullptr);
-
-            for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
-                frameData[i].commandPools[fam].reset();
-            }
-        }
-
+        cleanupFrameData();
         descriptorPool.reset();
 
         vkDestroyDevice(device, nullptr);
-
         vkDestroySurfaceKHR(instance, surface, nullptr);
 
 #ifndef BZ_DIST
@@ -62,7 +47,6 @@ namespace BZ {
 
         const std::vector<const char *> requiredDeviceExtensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_MAINTENANCE1_EXTENSION_NAME,
         };
         physicalDevice = pickPhysicalDevice(requiredDeviceExtensions);
         BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
@@ -98,13 +82,12 @@ namespace BZ {
         presentInfo.pImageIndices = &swapchainCurrentImageIndex;
         presentInfo.pResults = nullptr;
 
-        VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        VkResult result = vkQueuePresentKHR(queueContainer.present.getNativeHandle(), &presentInfo);
         if(result != VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to present image. Error: {}.", result);
             recreateSwapChain();
         }
 
-        int temp = currentFrame;
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
         result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, frameData[currentFrame].imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainCurrentImageIndex);
@@ -115,22 +98,35 @@ namespace BZ {
 
         //TODO: check correctness
         BZ_ASSERT_VK(vkWaitForFences(device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
-        for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
-            frameData[currentFrame].commandPools[fam]->reset();
+        for(const auto &pair : frameData[currentFrame].commandPoolsByFamily) {
+            pair.second->reset();
         }
     }
 
     void VulkanContext::setVSync(bool enabled) {
         GraphicsContext::setVSync(enabled);
+        BZ_LOG_CORE_ERROR("Vulkan vsync not implemented!");
     }
 
     Ref<Framebuffer> VulkanContext::getCurrentFrameFramebuffer() {
         return swapchainFramebuffers[currentFrame];
     }
 
-    VulkanCommandPool& VulkanContext::getCommandPool(RenderQueueFamily family, uint32 frame) {
+    VulkanCommandPool& VulkanContext::getCommandPool(QueueProperty property, uint32 frame, bool exclusive) {
         BZ_ASSERT_CORE(frame < MAX_FRAMES_IN_FLIGHT, "Invalid frame: {}!", frame);
-        return *frameData[frame].commandPools[static_cast<int>(family)];
+
+        std::vector<const QueueFamily *> families;
+        if(exclusive) {
+            families = queueFamilyContainer.getFamiliesThatContainExclusively(property);
+            if(families.empty()) {
+                BZ_LOG_WARN("Requested a CommandPool for property {} and exclusive but there is none. Returning a non-exclusive one.", static_cast<int>(property));
+                families = queueFamilyContainer.getFamiliesThatContain(property);
+            }
+        }
+        else {
+            families = queueFamilyContainer.getFamiliesThatContain(property);
+        }
+        return *frameData[frame].commandPoolsByFamily[families[0]->getIndex()];
     }
 
     uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
@@ -207,14 +203,48 @@ namespace BZ {
         BZ_ASSERT_VK(glfwCreateWindowSurface(instance, windowHandle, nullptr, &surface));
     }
 
-    void VulkanContext::createLogicalDevice(const std::vector<const char*> &requiredDeviceExtensions) {
+    void VulkanContext::createLogicalDevice(const std::vector<const char *> &requiredDeviceExtensions) {
+        auto processFamilies = [this](QueueProperty property, const QueueFamily **family, const QueueFamily **familyExclusive) {
+            auto families = queueFamilyContainer.getFamiliesThatContain(property);
+            for(const QueueFamily *fam : families) {
+                if(!*family)
+                    *family = fam;
+                if(!*familyExclusive && fam->hasExclusiveProperty())
+                    *familyExclusive = fam;
+            }
+        };
+
+        const QueueFamily *graphicsFamily = nullptr;
+        const QueueFamily *graphicsFamilyExclusive = nullptr;
+        processFamilies(QueueProperty::Graphics, &graphicsFamily, &graphicsFamilyExclusive);
+
+        const QueueFamily *computeFamily = nullptr;
+        const QueueFamily *computeFamilyExclusive = nullptr;
+        processFamilies(QueueProperty::Compute, &computeFamily, &computeFamilyExclusive);
+
+        const QueueFamily *transferFamily = nullptr;
+        const QueueFamily *transferFamilyExclusive = nullptr;
+        processFamilies(QueueProperty::Transfer, &transferFamily, &transferFamilyExclusive);
+
+        const QueueFamily *presentFamily = nullptr;
+        const QueueFamily *presentFamilyExclusive = nullptr;
+        processFamilies(QueueProperty::Present, &presentFamily, &presentFamilyExclusive);
+
+
+        //We know at this point that at least one of each family exists, so this is safe.
+        std::set<uint32_t> uniqueQueueFamiliesIndices = { graphicsFamily->getIndex(),
+                                                          computeFamily->getIndex(),
+                                                          transferFamily->getIndex(),
+                                                          presentFamily->getIndex() };
+
+        if(graphicsFamilyExclusive) uniqueQueueFamiliesIndices.insert(graphicsFamilyExclusive->getIndex());
+        if(computeFamilyExclusive) uniqueQueueFamiliesIndices.insert(computeFamilyExclusive->getIndex());
+        if(transferFamilyExclusive) uniqueQueueFamiliesIndices.insert(transferFamilyExclusive->getIndex());
+        if(presentFamilyExclusive) uniqueQueueFamiliesIndices.insert(presentFamilyExclusive->getIndex());
+
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        std::set<uint32_t> uniqueQueueFamilies = {queueFamilyIndices.graphicsFamily.value(), 
-                                                  queueFamilyIndices.presentFamily.value(),
-                                                  queueFamilyIndices.computeFamily.value(),
-                                                  queueFamilyIndices.transferFamily.value() };
         float queuePriority = 1.0f;
-        for(uint32_t queueFamily : uniqueQueueFamilies) {
+        for(uint32_t queueFamily : uniqueQueueFamiliesIndices) {
             VkDeviceQueueCreateInfo queueCreateInfo = {};
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             queueCreateInfo.queueFamilyIndex = queueFamily;
@@ -235,10 +265,21 @@ namespace BZ {
         deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
         BZ_ASSERT_VK(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device));
 
-        vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
-        vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
-        vkGetDeviceQueue(device, queueFamilyIndices.transferFamily.value(), 0, &transferQueue);
-        vkGetDeviceQueue(device, queueFamilyIndices.computeFamily.value(), 0, &computeQueue);
+        auto fillQueues = [this](const QueueFamily &family, const QueueFamily *familyExclusive, VulkanQueue &dstVulkanQueue, VulkanQueue &dstVulkanQueueExclusive) {
+            VkQueue vkQueue;
+            vkGetDeviceQueue(device, family.getIndex(), 0, &vkQueue);
+            dstVulkanQueue = VulkanQueue(vkQueue, family);
+
+            //If there is no exclusive queue, then fill with the same data as the non-exclusive queue.
+            VkQueue vkQueueExclusive;
+            vkGetDeviceQueue(device, familyExclusive ? familyExclusive->getIndex() : family.getIndex(), 0, &vkQueueExclusive);
+            dstVulkanQueueExclusive = VulkanQueue(vkQueueExclusive, familyExclusive ? *familyExclusive : family);
+        };
+
+        fillQueues(*graphicsFamily, graphicsFamilyExclusive, queueContainer.graphics, queueContainerExclusive.graphics);
+        fillQueues(*computeFamily, computeFamilyExclusive, queueContainer.compute, queueContainerExclusive.compute);
+        fillQueues(*transferFamily, transferFamilyExclusive, queueContainer.transfer, queueContainerExclusive.transfer);
+        fillQueues(*presentFamily, presentFamilyExclusive, queueContainer.present, queueContainerExclusive.present);
     }
 
     void VulkanContext::createSwapChain() {
@@ -247,7 +288,7 @@ namespace BZ {
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
         VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
-        uint32_t imageCount = MAX_FRAMES_IN_FLIGHT;//swapChainSupport.capabilities.minImageCount + 1; TODO
+        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
         if(swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
             imageCount = swapChainSupport.capabilities.maxImageCount;
         }
@@ -262,16 +303,16 @@ namespace BZ {
         swapChainCreateInfo.imageArrayLayers = 1;
         swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        uint32_t queueFamilyIndicesArr[] = {queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value()};
-        if(queueFamilyIndices.graphicsFamily != queueFamilyIndices.presentFamily) {
+        if(queueContainer.graphics.getFamily().getIndex() != queueContainer.present.getFamily().getIndex()) {
+            uint32_t queueFamilyIndicesArr[] = { queueContainer.graphics.getFamily().getIndex(), queueContainer.present.getFamily().getIndex() };
             swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             swapChainCreateInfo.queueFamilyIndexCount = 2;
             swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndicesArr;
         }
         else {
             swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            swapChainCreateInfo.queueFamilyIndexCount = 0; // Optional
-            swapChainCreateInfo.pQueueFamilyIndices = nullptr; // Optional
+            swapChainCreateInfo.queueFamilyIndexCount = 0;
+            swapChainCreateInfo.pQueueFamilyIndices = nullptr; 
         }
         swapChainCreateInfo.preTransform = swapChainSupport.capabilities.currentTransform;
         swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
@@ -331,8 +372,9 @@ namespace BZ {
             BZ_ASSERT_VK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &frameData[i].renderFinishedSemaphore));
             BZ_ASSERT_VK(vkCreateFence(device, &fenceInfo, nullptr, &frameData[i].inFlightFence));
 
-            for(int fam = 0; fam < static_cast<int>(RenderQueueFamily::Count); ++fam) {
-                frameData[i].commandPools[fam] = VulkanCommandPool::create(static_cast<RenderQueueFamily>(fam));
+            for(const auto &fam : queueFamilyContainer) {
+                if(fam.isInUse())
+                    frameData[i].commandPoolsByFamily[fam.getIndex()] = VulkanCommandPool::create(fam);
             }
         }
     }
@@ -346,17 +388,34 @@ namespace BZ {
     void VulkanContext::recreateSwapChain() {
         BZ_ASSERT_VK(vkDeviceWaitIdle(device));
 
-        if(swapchain != VK_NULL_HANDLE)
+        if(swapchain != VK_NULL_HANDLE) {
+            cleanupFramebuffers();
             cleanupSwapChain();
+            cleanupFrameData();
+        }
 
+        createFrameData();
         createSwapChain();
         createFramebuffers();
+
+        currentFrame = 0;
     }
 
-
     void VulkanContext::cleanupSwapChain() {
-        swapchainFramebuffers.clear();
         vkDestroySwapchainKHR(device, swapchain, nullptr);
+    }
+
+    void VulkanContext::cleanupFramebuffers() {
+        swapchainFramebuffers.clear();
+    }
+
+    void VulkanContext::cleanupFrameData() {
+        for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+            vkDestroySemaphore(device, frameData[i].imageAvailableSemaphore, nullptr);
+            vkDestroySemaphore(device, frameData[i].renderFinishedSemaphore, nullptr);
+            vkDestroyFence(device, frameData[i].inFlightFence, nullptr);
+            frameData[i].commandPoolsByFamily.clear();
+        }
     }
 
     template<typename T>
@@ -374,7 +433,7 @@ namespace BZ {
         std::vector<VkPhysicalDevice> devices(deviceCount);
         BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
         for(const auto& device : devices) {
-            queueFamilyIndices = findQueueFamilies(device);
+            queueFamilyContainer = getQueueFamilies(device);
 
             if(isPhysicalDeviceSuitable(device, requiredDeviceExtensions)) {
                 physicalDevice = device;
@@ -399,7 +458,9 @@ namespace BZ {
             isSwapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty(); //TODO: have some requirements
         }
 
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && queueFamilyIndices.isComplete() && hasRequiredExtensions && isSwapChainAdequate;
+        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+            queueFamilyContainer.hasAllProperties() && 
+            hasRequiredExtensions && isSwapChainAdequate;
     }
 
     bool VulkanContext::checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*> &requiredExtensions) const {
@@ -424,35 +485,37 @@ namespace BZ {
         return true;
     }
 
-    RenderQueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device) const {
-        RenderQueueFamilyIndices indices;
+    QueueFamilyContainer VulkanContext::getQueueFamilies(VkPhysicalDevice device) const {
+        QueueFamilyContainer queueFamilyContainer;
 
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-        int i = 0;
-        for(const auto& queueFamily : queueFamilies) {
-            if(queueFamily.queueCount > 0) {
-                if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-                    indices.graphicsFamily = i;
-                if(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
-                    indices.computeFamily = i;
-                if(queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT)
-                    indices.transferFamily = i;
-            }
+        int idx = 0, propsIdx = 0;
+        for(const auto& vkQueueFamilyProps : queueFamilies) {
+            std::vector<QueueProperty> properties;
 
-            VkBool32 presentSupport = false;
-            BZ_ASSERT_VK(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport));
-            if(queueFamily.queueCount > 0 && presentSupport) {
-                indices.presentFamily = i;
-            }
+            if(vkQueueFamilyProps.queueCount > 0) {
+                if(vkQueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                    properties.push_back(QueueProperty::Graphics);
+                if(vkQueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT)
+                    properties.push_back(QueueProperty::Compute);
+                if(vkQueueFamilyProps.queueFlags & VK_QUEUE_TRANSFER_BIT)
+                    properties.push_back(QueueProperty::Transfer);
 
-            if(indices.isComplete()) break;
-            i++;
+                VkBool32 presentSupport = false;
+                BZ_ASSERT_VK(vkGetPhysicalDeviceSurfaceSupportKHR(device, idx, surface, &presentSupport));
+                if(presentSupport)
+                    properties.push_back(QueueProperty::Present);
+
+                queueFamilyContainer.addFamily(QueueFamily(idx, vkQueueFamilyProps.queueCount, properties));
+            }
+            idx++;
         }
-        return indices;
+
+        return queueFamilyContainer;
     }
 
     VulkanContext::SwapChainSupportDetails VulkanContext::querySwapChainSupport(VkPhysicalDevice device) const {
@@ -492,7 +555,6 @@ namespace BZ {
                 return availablePresentMode;
             }
         }
-
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 

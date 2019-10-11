@@ -5,20 +5,16 @@
 
 namespace BZ {
 
-    Ref<VulkanCommandBuffer> VulkanCommandBuffer::create(RenderQueueFamily family) {
-        return MakeRef<VulkanCommandBuffer>(family);
+    Ref<VulkanCommandBuffer> VulkanCommandBuffer::create(QueueProperty property, bool exclusiveQueue) {
+        return MakeRef<VulkanCommandBuffer>(property, getGraphicsContext().getCurrentFrame(), exclusiveQueue);
     }
 
-    Ref<VulkanCommandBuffer> VulkanCommandBuffer::create(RenderQueueFamily family, uint32 framePool) {
-        return MakeRef<VulkanCommandBuffer>(family, framePool);
+    Ref<VulkanCommandBuffer> VulkanCommandBuffer::create(QueueProperty property, uint32 framePool, bool exclusiveQueue) {
+        return MakeRef<VulkanCommandBuffer>(property, framePool, exclusiveQueue);
     }
 
-    VulkanCommandBuffer::VulkanCommandBuffer(RenderQueueFamily family) :
-        VulkanCommandBuffer(family, getGraphicsContext().getCurrentFrame()) {
-    }
-
-    VulkanCommandBuffer::VulkanCommandBuffer(RenderQueueFamily family, uint32 framePool) {
-        const auto &pool = getGraphicsContext().getCommandPool(family, framePool);
+    VulkanCommandBuffer::VulkanCommandBuffer(QueueProperty property, uint32 framePool, bool exclusiveQueue) {
+        const auto &pool = getGraphicsContext().getCommandPool(property, framePool, exclusiveQueue);
 
         VkCommandBufferAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -30,29 +26,16 @@ namespace BZ {
     }
 
 
-    Ref<VulkanCommandPool> VulkanCommandPool::create(RenderQueueFamily family) {
+    Ref<VulkanCommandPool> VulkanCommandPool::create(QueueFamily family) {
         return MakeRef<VulkanCommandPool>(family);
     }
 
-    VulkanCommandPool::VulkanCommandPool(RenderQueueFamily family) :
-        queueFamily(family) {
-
-        const auto &queueFamilyIndices = getGraphicsContext().getQueueFamilyIndices();
-        uint32_t index = -1;
-        if(family == RenderQueueFamily::Graphics) 
-            index = queueFamilyIndices.graphicsFamily.value();
-        else if(family == RenderQueueFamily::Compute) 
-            index = queueFamilyIndices.computeFamily.value();
-        else if(family == RenderQueueFamily::Transfer)
-            index = queueFamilyIndices.transferFamily.value();
-        else if(family == RenderQueueFamily::Present)
-            index = queueFamilyIndices.presentFamily.value();
-
-        BZ_ASSERT_CORE(index >= 0, "Invalid queue family index!");
+    VulkanCommandPool::VulkanCommandPool(QueueFamily family) :
+        family(family) {
 
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = index;
+        poolInfo.queueFamilyIndex = family.getIndex();
         poolInfo.flags = 0;
 
         BZ_ASSERT_VK(vkCreateCommandPool(getDevice(), &poolInfo, nullptr, &nativeHandle));
