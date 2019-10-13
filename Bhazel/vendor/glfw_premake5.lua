@@ -1,8 +1,7 @@
 project "GLFW"
     kind "StaticLib"
     language "C"
-    staticruntime "on"
-    
+
     targetdir ("bin/" .. outputDir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
 
@@ -18,10 +17,19 @@ project "GLFW"
         "%{prj.name}/src/vulkan.c",
         "%{prj.name}/src/window.c"
     }
-    
+
+    removeplatforms
+    { 
+        "D3D11"
+    }
+
+    ------------------------------------------------
+    -- Windows
+    ------------------------------------------------
     filter "system:windows"
         systemversion "latest"
-        
+        toolset "msc"
+
         files
         {
             "%{prj.name}/src/win32_init.c",
@@ -41,12 +49,23 @@ project "GLFW"
             "_CRT_SECURE_NO_WARNINGS"
         }
         
+    ------------------------------------------------
+    -- Configurations
+    ------------------------------------------------
     filter "configurations:Debug"
+        defines "BZ_DEBUG"
         runtime "Debug"
-        optimize "off"
         symbols "on"
+        optimize "off"
 
     filter "configurations:Release"
+        defines "BZ_RELEASE"
         runtime "Release"
-        optimize "on"
         symbols "on"
+        optimize "on"
+
+    filter "configurations:Dist"
+        defines "BZ_DIST"
+        runtime "Release"
+        symbols "off"
+        optimize "on"

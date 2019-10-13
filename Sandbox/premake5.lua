@@ -1,23 +1,29 @@
-project "ImGui"
-    kind "StaticLib"
+project "Sandbox"
+    kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
-    
-    targetdir ("bin/" .. outputDir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
+
+    targetdir("../bin/" .. outputDir .. "/%{prj.name}")
+    objdir("../bin-int/" .. outputDir .. "/%{prj.name}")
+    debugdir("../bin/" .. outputDir .. "/%{prj.name}")
 
     files
     {
-        "%{prj.name}/imconfig.h",
-        "%{prj.name}/imgui.h",
-        "%{prj.name}/imgui.cpp",
-        "%{prj.name}/imgui_draw.cpp",
-        "%{prj.name}/imgui_internal.h",
-        "%{prj.name}/imgui_widgets.cpp",
-        "%{prj.name}/imstb_rectpack.h",
-        "%{prj.name}/imstb_textedit.h",
-        "%{prj.name}/imstb_truetype.h",
-        "%{prj.name}/imgui_demo.cpp"
+        "src/**.h",
+        "src/**.cpp"
+    }
+
+    includedirs
+    {
+        "../Bhazel/src",
+        "../Bhazel/vendor/spdlog/include",
+        "../Bhazel/vendor/glm",
+        "../Bhazel/vendor/ImGui"
+    }
+
+    links
+    {
+        "Bhazel"
     }
 
     ------------------------------------------------
@@ -26,6 +32,11 @@ project "ImGui"
     filter "system:windows"
         systemversion "latest"
         toolset "msc"
+
+        defines
+        {
+            "BZ_PLATFORM_WINDOWS"
+        }
 
     ------------------------------------------------
     -- Configurations
