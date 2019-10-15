@@ -16,7 +16,7 @@
 
 #include <glm/glm.hpp>
 
-#include "Bhazel/Core/Singleton.h"
-#include "Bhazel/Core/Types.h"
-#include "Bhazel/Core/Log.h"
-#include "Bhazel/Core/Core.h"
+#include "Core/Singleton.h"
+#include "Core/Types.h"
+#include "Core/Log.h"
+#include "Core/Core.h"

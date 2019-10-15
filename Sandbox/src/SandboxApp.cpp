@@ -67,13 +67,13 @@ void ExampleLayer::onGraphicsContextCreated() {
 
 
     /*for(int i = 0; i < BZ::MAX_FRAMES_IN_FLIGHT; ++i) {
-        buffers[i] = BZ::Renderer::startRecording();
-        BZ::Renderer::bindVertexBuffer(buffers[i], vertexBuffer);
-        BZ::Renderer::bindIndexBuffer(buffers[i], indexBuffer);
-        BZ::Renderer::bindDescriptorSet(buffers[i], descriptorSet, pipelineState);
-        BZ::Renderer::bindPipelineState(buffers[i], pipelineState);
-        BZ::Renderer::drawIndexed(buffers[i], 6, 1, 0, 0, 0);
-        BZ::Renderer::endRecording(buffers[i]);
+        buffers[i] = BZ::Graphics::startRecording();
+        BZ::Graphics::bindVertexBuffer(buffers[i], vertexBuffer);
+        BZ::Graphics::bindIndexBuffer(buffers[i], indexBuffer);
+        BZ::Graphics::bindDescriptorSet(buffers[i], descriptorSet, pipelineState);
+        BZ::Graphics::bindPipelineState(buffers[i], pipelineState);
+        BZ::Graphics::drawIndexed(buffers[i], 6, 1, 0, 0, 0);
+        BZ::Graphics::endRecording(buffers[i]);
     }*/
 }
 
@@ -90,43 +90,43 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     //BZ::RenderCommand::clearColorAndDepthStencilBuffers();
 
-    //BZ::Renderer::beginScene(cameraController->getCamera(), frameStats);
+    //BZ::Graphics::beginScene(cameraController->getCamera(), frameStats);
 
     //texture->bindToPipeline(0);
 
     //auto textureShader = shaderLibrary.get("Texture");
 
     //glm::mat4 modelMatrix(1.0);
-    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);
 
     //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);
 
     //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
+    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);
 
     //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    //BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);*/
+    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);*/
 
     //particleSystem.onUpdate();
 
-    //BZ::Renderer::endScene();
+    //BZ::Graphics::endScene();
 
     constantData.model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::sin(frameStats.runningTime.asSeconds()), 0.0f, 0.0f));
     constantBuffer->setData(&constantData, sizeof(ConstantData));
 
-    auto commandBuffer = BZ::Renderer::startRecording();
-    BZ::Renderer::bindVertexBuffer(commandBuffer, vertexBuffer);
-    BZ::Renderer::bindIndexBuffer(commandBuffer, indexBuffer);
-    BZ::Renderer::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
-    BZ::Renderer::bindPipelineState(commandBuffer, pipelineState);
-    BZ::Renderer::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-    BZ::Renderer::endRecording(commandBuffer);
+    auto commandBuffer = BZ::Graphics::startRecording();
+    BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
+    BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
+    BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+    BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
+    BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+    BZ::Graphics::endRecording(commandBuffer);
 
-    BZ::Renderer::submitCommandBuffer(commandBuffer);
+    BZ::Graphics::submitCommandBuffer(commandBuffer);
 
     /*static int i = 0;
-    BZ::Renderer::submitCommandBuffer(buffers[i]);
+    BZ::Graphics::submitCommandBuffer(buffers[i]);
     i = (i + 1) % BZ::MAX_FRAMES_IN_FLIGHT;*/
 }
 
@@ -187,4 +187,4 @@ BZ::Application* BZ::createApplication() {
     return new Sandbox();
 }
 
-#include <Bhazel/EntryPoint.h>
+#include <EntryPoint.h>
