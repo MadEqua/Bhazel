@@ -122,6 +122,6 @@ namespace BZ {
         
         void assertValidationLayerSupport(const std::vector<const char*> &requiredLayers) const;
 
-        friend class VulkanRendererApi;
+        friend class VulkanGraphicsApi;
     };
 }

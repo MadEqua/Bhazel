@@ -1,6 +1,6 @@
 #include "bzpch.h"
 
-#include "VulkanRendererApi.h"
+#include "VulkanGraphicsApi.h"
 
 #include "Platform/Vulkan/VulkanIncludes.h"
 #include "Platform/Vulkan/VulkanContext.h"
@@ -14,23 +14,23 @@
 
 namespace BZ {
 
-    VulkanRendererApi::VulkanRendererApi(VulkanContext &graphicsContext) :
+    VulkanGraphicsApi::VulkanGraphicsApi(VulkanContext &graphicsContext) :
         graphicsContext(graphicsContext) {
     }
 
-    Ref<CommandBuffer> VulkanRendererApi::startRecording() {
+    Ref<CommandBuffer> VulkanGraphicsApi::startRecording() {
         return startRecordingForFrame(graphicsContext.currentFrame, graphicsContext.swapchainFramebuffers[graphicsContext.currentFrame]);
     }
 
-    Ref<CommandBuffer> VulkanRendererApi::startRecording(const Ref<Framebuffer> &framebuffer) {
+    Ref<CommandBuffer> VulkanGraphicsApi::startRecording(const Ref<Framebuffer> &framebuffer) {
         return startRecordingForFrame(graphicsContext.currentFrame, framebuffer);
     }
 
-    Ref<CommandBuffer> VulkanRendererApi::startRecordingForFrame(uint32 frameIndex) {
+    Ref<CommandBuffer> VulkanGraphicsApi::startRecordingForFrame(uint32 frameIndex) {
         return startRecordingForFrame(frameIndex, graphicsContext.swapchainFramebuffers[frameIndex]);
     }
 
-    Ref<CommandBuffer> VulkanRendererApi::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
+    Ref<CommandBuffer> VulkanGraphicsApi::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
 
         //Begin a command buffer
         VkCommandBufferBeginInfo beginInfo = {};
@@ -70,7 +70,7 @@ namespace BZ {
         return commandBufferRef;
     }
 
-    void VulkanRendererApi::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+    void VulkanGraphicsApi::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
         VkBuffer vkBuffers[] = { static_cast<const VulkanBuffer &>(*buffer).getNativeHandle() };
@@ -78,21 +78,21 @@ namespace BZ {
         vkCmdBindVertexBuffers(vulkanCommandBuffer.getNativeHandle(), 0, 1, vkBuffers, offsets);
     }
 
-    void VulkanRendererApi::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+    void VulkanGraphicsApi::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
         auto &vulkanBuffer = static_cast<const VulkanBuffer &>(*buffer);
         vkCmdBindIndexBuffer(vulkanCommandBuffer.getNativeHandle(), vulkanBuffer.getNativeHandle(), 0, VK_INDEX_TYPE_UINT16); //TODO index size
     }
 
-    void VulkanRendererApi::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
+    void VulkanGraphicsApi::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
         auto &vulkanPipelineState = static_cast<const VulkanPipelineState &>(*pipelineState);
         vkCmdBindPipeline(vulkanCommandBuffer.getNativeHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipelineState.getNativeHandle().pipeline);
     }
 
-    void VulkanRendererApi::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
+    void VulkanGraphicsApi::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
         auto &vulkanPipelineState = static_cast<const VulkanPipelineState &>(*pipelineState);
@@ -101,23 +101,23 @@ namespace BZ {
             vulkanPipelineState.getNativeHandle().pipelineLayout, 0, 1, descSets, 0, nullptr);
     }
 
-    void VulkanRendererApi::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
+    void VulkanGraphicsApi::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
         vkCmdDraw(vulkanCommandBuffer.getNativeHandle(), vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
-    void VulkanRendererApi::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
+    void VulkanGraphicsApi::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
         vkCmdDrawIndexed(vulkanCommandBuffer.getNativeHandle(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
     }
 
-    void VulkanRendererApi::endRecording(const Ref<CommandBuffer> &commandBuffer) {
+    void VulkanGraphicsApi::endRecording(const Ref<CommandBuffer> &commandBuffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
         vkCmdEndRenderPass(vulkanCommandBuffer.getNativeHandle());
         BZ_ASSERT_VK(vkEndCommandBuffer(vulkanCommandBuffer.getNativeHandle()));
     }
 
-    void VulkanRendererApi::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
+    void VulkanGraphicsApi::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
         const VulkanContext::FrameData *frameData = graphicsContext.frameData;
@@ -142,7 +142,7 @@ namespace BZ {
         BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.queueContainer.graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
 
-    void VulkanRendererApi::endFrame() {
+    void VulkanGraphicsApi::endFrame() {
         const VulkanContext::FrameData *frameData = graphicsContext.frameData;
         uint32 currentFrame = graphicsContext.currentFrame;
 

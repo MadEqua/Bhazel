@@ -8,6 +8,7 @@
 
 #include "Graphics/Buffer.h"
 #include "Graphics/Shader.h"
+#include "Graphics/DescriptorSet.h"
 
 #include "Events/WindowEvent.h"
 
@@ -18,18 +19,29 @@ namespace BZ {
 
     Graphics::ConstantBufferData Graphics::constantBufferData;
     Ref<Buffer> Graphics::constantBuffer;
+    Ref<DescriptorSet> Graphics::descriptorSet;
+    Ref<DescriptorSetLayout> Graphics::descriptorSetLayout;
 
     GraphicsApi * Graphics::graphicsApi = nullptr;
 
 
     void Graphics::init() {
-        graphicsApi = &Application::getInstance().getGraphicsContext().getRendererAPI();
+        graphicsApi = &Application::getInstance().getGraphicsContext().getGraphicsAPI();
         constantBuffer = Buffer::createConstantBuffer(sizeof(constantBufferData));
+
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+        descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);
+        descriptorSetLayout = descriptorSetLayoutBuilder.build();
+
+        descriptorSet = DescriptorSet::create(descriptorSetLayout);
+        descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantBufferData));
     }
 
     void Graphics::destroy() {
         //Destroy this 'manually' to avoid the static destruction lottery
         constantBuffer.reset();
+        descriptorSet.reset();
+        descriptorSetLayout.reset();
     }
 
     void Graphics::onWindowResize(WindowResizedEvent &ev) {
@@ -52,6 +64,13 @@ namespace BZ {
         return graphicsApi->startRecordingForFrame(frameIndex, framebuffer);
     }
 
+    void Graphics::startObject(const glm::mat4 &modelMatrix) {
+        constantBufferData.modelMatrix = modelMatrix;
+        //uint32 objectOffset = static_cast<void*>(&constantBufferData.modelMatrix) - static_cast<void*>(&constantBufferData);
+
+        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), 0); //TODO: set only the object part of the buffer
+    }
+
     void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
         graphicsApi->bindVertexBuffer(commandBuffer, buffer);
     }
@@ -61,8 +80,13 @@ namespace BZ {
     }
 
     void Graphics::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
+        graphicsApi->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState); //Always bind the engine descriptor set. TODO: can this be done only once?
         graphicsApi->bindPipelineState(commandBuffer, pipelineState);
     }
+
+    /*static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
+        graphicsApi->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+    }*/
 
     void Graphics::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
         graphicsApi->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
@@ -80,8 +104,12 @@ namespace BZ {
         graphicsApi->endRecording(commandBuffer);
     }
 
-    void Graphics::startFrame() {
-        //TODO
+    void Graphics::startFrame(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+        constantBufferData.viewMatrix = viewMatrix;
+        constantBufferData.projectionMatrix = projectionMatrix;
+        constantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
+
+        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), 0); //TODO: set only the frame part of the buffer
     }
 
     void Graphics::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {

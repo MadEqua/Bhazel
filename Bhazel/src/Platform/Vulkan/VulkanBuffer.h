@@ -17,7 +17,7 @@ namespace BZ {
         VulkanBuffer(BufferType type, uint32 size, const void *data, const DataLayout&layout);
         virtual ~VulkanBuffer() override;
 
-        virtual void setData(const void *data, uint32 size) override;
+        virtual void setData(const void *data, uint32 size, uint32 offset = 0) override;
 
     private:
         VkDeviceMemory memoryHandle;

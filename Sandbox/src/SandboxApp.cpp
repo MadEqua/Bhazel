@@ -44,15 +44,15 @@ void ExampleLayer::onGraphicsContextCreated() {
     vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), dataLayout);
     indexBuffer = BZ::Buffer::createIndexBuffer(indices, sizeof(indices));
 
-    constantBuffer = BZ::Buffer::createConstantBuffer(sizeof(ConstantData));
-    constantBuffer->setData(&constantData, sizeof(ConstantData));
+    //constantBuffer = BZ::Buffer::createConstantBuffer(sizeof(ConstantData));
+    //constantBuffer->setData(&constantData, sizeof(ConstantData));
 
-    BZ::DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-    descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::Vertex), 1);
-    BZ::Ref<BZ::DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
+    //BZ::DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+    //descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::Vertex), 1);
+    //BZ::Ref<BZ::DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-    descriptorSet = BZ::DescriptorSet::create(descriptorSetLayout);
-    descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantData));
+    //descriptorSet = BZ::DescriptorSet::create(descriptorSetLayout);
+    //descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantData));
 
     auto &windowDims = BZ::Application::getInstance().getWindow().getDimensions();
 
@@ -61,8 +61,6 @@ void ExampleLayer::onGraphicsContextCreated() {
     pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y)} };
     pipelineStateData.blendingState.attachmentBlendingStates = { {} };
     pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
-    pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
-
     pipelineState = BZ::PipelineState::create(pipelineStateData);
 
 
@@ -112,17 +110,20 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     //BZ::Graphics::endScene();
 
-    constantData.model = glm::translate(glm::mat4(1.0f), glm::vec3(glm::sin(frameStats.runningTime.asSeconds()), 0.0f, 0.0f));
-    constantBuffer->setData(&constantData, sizeof(ConstantData));
-
     auto commandBuffer = BZ::Graphics::startRecording();
-    BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
-    BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
-    BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
-    BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
-    BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-    BZ::Graphics::endRecording(commandBuffer);
+    for(int i = 0; i < 1; ++i) {
 
+        auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)), glm::vec3(glm::sin(frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.0f, 0.0f));
+        BZ::Graphics::startObject(model);
+
+        BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
+        BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
+        //BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+        BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
+        BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+    }
+
+    BZ::Graphics::endRecording(commandBuffer);
     BZ::Graphics::submitCommandBuffer(commandBuffer);
 
     /*static int i = 0;

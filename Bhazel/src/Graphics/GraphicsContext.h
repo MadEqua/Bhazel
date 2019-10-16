@@ -24,7 +24,7 @@ namespace BZ {
 
         virtual Ref<Framebuffer> getCurrentFrameFramebuffer() = 0;
 
-        GraphicsApi& getRendererAPI() { return *graphicsApi; }
+        GraphicsApi& getGraphicsAPI() { return *graphicsApi; }
 
     protected:
         GraphicsContext() = default;

@@ -8,9 +8,9 @@ namespace BZ {
     class VulkanContext;
 
 
-    class VulkanRendererApi : public GraphicsApi {
+    class VulkanGraphicsApi : public GraphicsApi {
     public:
-        VulkanRendererApi(VulkanContext &graphicsContext);
+        VulkanGraphicsApi(VulkanContext &graphicsContext);
 
         Ref<CommandBuffer> startRecording() override;
         Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) override;

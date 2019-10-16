@@ -80,7 +80,7 @@ namespace BZ {
         static Ref<Buffer> create(BufferType type, uint32 size, const void *data);
         static Ref<Buffer> create(BufferType type, uint32 size, const void *data, const DataLayout& layout);
 
-        virtual void setData(const void *data, uint32 size) = 0;
+        virtual void setData(const void *data, uint32 size, uint32 offset = 0) = 0;
 
         uint32 getSize() const { return size; }
         BufferType getType() const { return type; }

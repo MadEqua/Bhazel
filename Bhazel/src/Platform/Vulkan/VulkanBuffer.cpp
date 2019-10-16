@@ -47,12 +47,12 @@ namespace BZ {
         vkFreeMemory(getDevice(), memoryHandle, nullptr);
     }
 
-    void VulkanBuffer::setData(const void *data, uint32 size) {
+    void VulkanBuffer::setData(const void *data, uint32 size, uint32 offset) {
         BZ_ASSERT_CORE(data, "Data is null!")
         BZ_ASSERT_CORE(data > 0, "Data size is not valid!")
 
         void *ptr;
-        BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, 0, size, 0, &ptr));
+        BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, offset, size, 0, &ptr));
         memcpy(ptr, data, size);
         vkUnmapMemory(getDevice(), memoryHandle);
     }

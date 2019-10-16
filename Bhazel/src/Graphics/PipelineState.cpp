@@ -25,12 +25,15 @@ namespace BZ {
         }
     }
 
-    PipelineState::PipelineState(const PipelineStateData &data) :
+    PipelineState::PipelineState(PipelineStateData &data) :
         data(data) {
         BZ_ASSERT_CORE(data.shader, "PipelineState needs a shader!");
         BZ_ASSERT_CORE(!data.viewports.empty(), "PipelineState needs at least one viewport!");
         BZ_ASSERT_CORE(data.framebuffer, "PipelineState needs a Framebuffer (to get the RenderPass)!");
         BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(), 
             "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
+
+        //Always add the main descriptor set layout for the engine.
+        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDescriptorSetLayout());
     }
 }

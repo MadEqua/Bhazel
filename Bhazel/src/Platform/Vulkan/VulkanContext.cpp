@@ -1,7 +1,7 @@
 #include "bzpch.h"
 
 #include "Platform/Vulkan/VulkanContext.h"
-#include "Platform/Vulkan/VulkanRendererAPI.h"
+#include "Platform/Vulkan/VulkanGraphicsAPI.h"
 #include "Platform/Vulkan/VulkanTexture.h"
 #include "Platform/Vulkan/VulkanPipelineState.h"
 #include "Platform/Vulkan/VulkanFramebuffer.h"
@@ -67,7 +67,7 @@ namespace BZ {
         BZ_LOG_CORE_INFO("  VendorId: 0x{:04x}.", physicalDeviceProperties.vendorID);
         BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
 
-        graphicsApi = std::make_unique<VulkanRendererApi>(*this);
+        graphicsApi = std::make_unique<VulkanGraphicsApi>(*this);
     }
 
     void VulkanContext::presentBuffer() {

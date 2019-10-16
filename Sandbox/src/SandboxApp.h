@@ -19,19 +19,13 @@ private:
     BZ::Ref<BZ::Framebuffer> framebuffer;
     BZ::Ref<BZ::Buffer> vertexBuffer;
     BZ::Ref<BZ::Buffer> indexBuffer;
-    BZ::Ref<BZ::Buffer> constantBuffer;
-    BZ::Ref<BZ::DescriptorSet> descriptorSet;
+    //BZ::Ref<BZ::Buffer> constantBuffer;
+    //BZ::Ref<BZ::DescriptorSet> descriptorSet;
     BZ::Ref<BZ::PipelineState> pipelineState;
 
     //BZ::Ref<BZ::CommandBuffer> buffers[BZ::MAX_FRAMES_IN_FLIGHT];
 
     BZ::Ref<BZ::PerspectiveCameraController> cameraController;
-
-    struct ConstantData {
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 proj = glm::mat4(1.0f);
-    } constantData;
 };
 
 

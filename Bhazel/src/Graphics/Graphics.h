@@ -12,8 +12,13 @@ namespace BZ {
     class Framebuffer;
     class PipelineState;
     class DescriptorSet;
+    class DescriptorSetLayout;
     class GraphicsApi;
 
+
+    /*
+    * Low level Graphics API. Static wrapper to a GraphicsAPI coming from a GraphicsContext.
+    */
     class Graphics {
     public:
 
@@ -38,6 +43,8 @@ namespace BZ {
         static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex);
         static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer);
 
+        static void startObject(const glm::mat4 &modelMatrix);
+
         static void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
         static void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
         
@@ -50,9 +57,11 @@ namespace BZ {
 
         static void endRecording(const Ref<CommandBuffer> &commandBuffer);
 
-        static void startFrame();
+        static void startFrame(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
         static void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer);
         static void endFrame();
+
+        static Ref<DescriptorSetLayout> getDescriptorSetLayout() { return descriptorSetLayout; }
 
         static API api;
 
@@ -63,13 +72,15 @@ namespace BZ {
             glm::mat4 projectionMatrix;
             glm::mat4 viewProjectionMatrix;
             alignas(16) glm::vec3 cameraPosition;
-            alignas(16) glm::vec2 timeAndDelta;
+            alignas(8) glm::vec2 timeAndDelta;
 
-            //Per instance
-            glm::mat4 modelMatrix;
+            //Per object
+            alignas(16) glm::mat4 modelMatrix;
         };
         static ConstantBufferData constantBufferData;
         static Ref<Buffer> constantBuffer;
+        static Ref<DescriptorSet> descriptorSet;
+        static Ref<DescriptorSetLayout> descriptorSetLayout;
 
         static GraphicsApi *graphicsApi;
     };
