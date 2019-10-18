@@ -76,4 +76,12 @@ namespace BZ {
         VkQueue queue;
         QueueFamily family;
     };
+
+    //The handles may point to the same queues with no restrictions.
+    struct QueueContainer {
+        VulkanQueue graphics;
+        VulkanQueue compute;
+        VulkanQueue transfer;
+        VulkanQueue presentImage;
+    };
 }

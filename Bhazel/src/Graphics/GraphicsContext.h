@@ -23,6 +23,7 @@ namespace BZ {
         bool isVSync() const { return vsync; }
 
         virtual Ref<Framebuffer> getCurrentFrameFramebuffer() = 0;
+        virtual Ref<Framebuffer> getFramebuffer(uint32 frameIdx) = 0;
 
         GraphicsApi& getGraphicsAPI() { return *graphicsApi; }
 

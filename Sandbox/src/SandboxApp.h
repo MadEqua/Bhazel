@@ -16,7 +16,7 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    BZ::Ref<BZ::Framebuffer> framebuffer;
+    //BZ::Ref<BZ::Framebuffer> framebuffer;
     BZ::Ref<BZ::Buffer> vertexBuffer;
     BZ::Ref<BZ::Buffer> indexBuffer;
     //BZ::Ref<BZ::Buffer> constantBuffer;

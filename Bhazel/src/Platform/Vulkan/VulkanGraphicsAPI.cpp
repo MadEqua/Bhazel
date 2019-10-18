@@ -19,7 +19,7 @@ namespace BZ {
     }
 
     Ref<CommandBuffer> VulkanGraphicsApi::startRecording() {
-        return startRecordingForFrame(graphicsContext.currentFrame, graphicsContext.swapchainFramebuffers[graphicsContext.currentFrame]);
+        return startRecordingForFrame(graphicsContext.currentFrame, graphicsContext.getCurrentFrameFramebuffer());
     }
 
     Ref<CommandBuffer> VulkanGraphicsApi::startRecording(const Ref<Framebuffer> &framebuffer) {
@@ -27,7 +27,7 @@ namespace BZ {
     }
 
     Ref<CommandBuffer> VulkanGraphicsApi::startRecordingForFrame(uint32 frameIndex) {
-        return startRecordingForFrame(frameIndex, graphicsContext.swapchainFramebuffers[frameIndex]);
+        return startRecordingForFrame(frameIndex, graphicsContext.getFramebuffer(frameIndex));
     }
 
     Ref<CommandBuffer> VulkanGraphicsApi::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
@@ -137,9 +137,9 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 0;
         submitInfo.pSignalSemaphores = nullptr;
 
-        BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
+        BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device.getNativeHandle(), 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
 
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.queueContainer.graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
+        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
 
     void VulkanGraphicsApi::endFrame() {
@@ -158,9 +158,9 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
-        BZ_ASSERT_VK(vkResetFences(graphicsContext.device, 1, &frameData[currentFrame].inFlightFence));
+        BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device.getNativeHandle(), 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
+        BZ_ASSERT_VK(vkResetFences(graphicsContext.device.getNativeHandle(), 1, &frameData[currentFrame].inFlightFence));
 
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.queueContainer.graphics.getNativeHandle(), 1, &submitInfo, frameData[currentFrame].inFlightFence));
+        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameData[currentFrame].inFlightFence));
     }
 }
