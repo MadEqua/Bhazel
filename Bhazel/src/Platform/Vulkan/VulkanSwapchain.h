@@ -17,8 +17,10 @@ namespace BZ {
     class VulkanSwapchain {
     public:
         VulkanSwapchain() = default;
-        VulkanSwapchain(const VulkanDevice &device, VkSurfaceKHR surface);
+        //VulkanSwapchain(const VulkanDevice &device, VkSurfaceKHR surface);
         ~VulkanSwapchain();
+
+        void init(const VulkanDevice &device, VkSurfaceKHR surface);
 
         void recreate();
 
@@ -36,8 +38,8 @@ namespace BZ {
         VkSwapchainKHR swapchain;
         std::vector<Ref<Framebuffer>> framebuffers;
 
-        VkFormat swapchainImageFormat;
-        VkExtent2D swapchainExtent;
+        VkFormat imageFormat;
+        VkExtent2D extent;
         uint32 currentImageIndex = 0;
 
         void init();

@@ -12,7 +12,9 @@ namespace BZ {
     class VulkanPhysicalDevice {
     public:
         VulkanPhysicalDevice() = default;
-        VulkanPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions);
+        //VulkanPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &requiredDeviceExtensions);
+
+        void init(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &requiredDeviceExtensions);
 
         const QueueFamilyContainer& getQueueFamilyContainer() const { return queueFamilyContainer; }
         const SwapChainSupportDetails & getSwapChainSupportDetails() const { return swapChainSupportDetails; }
@@ -38,7 +40,9 @@ namespace BZ {
     class VulkanDevice {
     public:
         VulkanDevice() = default;
-        VulkanDevice(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions);
+        //VulkanDevice(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions);
+
+        void init(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions);
 
         VkDevice getNativeHandle() const { return device; }
 

@@ -161,12 +161,12 @@ namespace BZ {
         const std::vector<const char *> requiredDeviceExtensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         };
-        physicalDevice = VulkanPhysicalDevice(instance, surface, requiredDeviceExtensions);
-        device = VulkanDevice(physicalDevice, surface, requiredDeviceExtensions); 
+        physicalDevice.init(instance, surface, requiredDeviceExtensions);
+        device.init(physicalDevice, surface, requiredDeviceExtensions); 
     }
 
     void VulkanContext::createSwapchain() {
-        swapchain = VulkanSwapchain(device, surface);
+        swapchain.init(device, surface);
         swapchain.aquireImage(frameData[currentFrame].imageAvailableSemaphore);
     }
 

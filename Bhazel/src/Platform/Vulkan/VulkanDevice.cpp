@@ -5,7 +5,10 @@
 
 namespace BZ {
 
-    VulkanPhysicalDevice::VulkanPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char*> requiredDeviceExtensions) {
+   /* VulkanPhysicalDevice::VulkanPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char*> &requiredDeviceExtensions) {
+    }*/
+
+    void VulkanPhysicalDevice::init(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &requiredDeviceExtensions) {
         uint32_t deviceCount = 0;
         BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
 
@@ -142,8 +145,13 @@ namespace BZ {
     }
 
 
-    VulkanDevice::VulkanDevice(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions) :
+    /*VulkanDevice::VulkanDevice(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions) :
         physicalDevice(&physicalDevice) {
+
+    }*/
+
+    void VulkanDevice::init(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions) {
+        this->physicalDevice = &physicalDevice;
 
         auto processFamilies = [this, &physicalDevice](QueueProperty property, const QueueFamily **family, const QueueFamily **familyExclusive) {
             auto families = physicalDevice.getQueueFamilyContainer().getFamiliesThatContain(property);

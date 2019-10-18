@@ -8,13 +8,19 @@
 
 namespace BZ {
 
-    VulkanSwapchain::VulkanSwapchain(const VulkanDevice &device, VkSurfaceKHR surface) :
+    /*VulkanSwapchain::VulkanSwapchain(const VulkanDevice &device, VkSurfaceKHR surface) :
         device(&device), surface(surface) {
         init();
-    }
+    }*/
 
     VulkanSwapchain::~VulkanSwapchain() {
         clean();
+    }
+
+    void VulkanSwapchain::init(const VulkanDevice &device, VkSurfaceKHR surface) {
+        this->device = &device;
+        this->surface = surface;
+        init();
     }
 
     void VulkanSwapchain::recreate() {
@@ -55,7 +61,7 @@ namespace BZ {
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapchainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapchainSupport.presentModes);
-        VkExtent2D extent = chooseSwapExtent(swapchainSupport.capabilities);
+        extent = chooseSwapExtent(swapchainSupport.capabilities);
         uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
         if(swapchainSupport.capabilities.maxImageCount > 0 && imageCount > swapchainSupport.capabilities.maxImageCount) {
             imageCount = swapchainSupport.capabilities.maxImageCount;
@@ -90,8 +96,7 @@ namespace BZ {
         swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
         BZ_ASSERT_VK(vkCreateSwapchainKHR(device->getNativeHandle(), &swapChainCreateInfo, nullptr, &swapchain));
 
-        swapchainImageFormat = surfaceFormat.format;
-        swapchainExtent = extent;
+        imageFormat = surfaceFormat.format;
 
         createFramebuffers();
     }
@@ -107,7 +112,7 @@ namespace BZ {
         //Create Views for the images
         framebuffers.resize(imageCount);
         for(size_t i = 0; i < swapChainImages.size(); i++) {
-            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], swapchainExtent.width, swapchainExtent.height, swapchainImageFormat);
+            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
             auto textureViewRef = TextureView::create(textureRef);
 
             AttachmentDescription attachmentDesc;
@@ -122,7 +127,7 @@ namespace BZ {
 
             Framebuffer::Builder builder;
             builder.addColorAttachment(attachmentDesc, textureViewRef);
-            builder.setDimensions(glm::ivec3(swapchainExtent.width, swapchainExtent.height, 1));
+            builder.setDimensions(glm::ivec3(extent.width, extent.height, 1));
 
             framebuffers[i] = builder.build();
         }
