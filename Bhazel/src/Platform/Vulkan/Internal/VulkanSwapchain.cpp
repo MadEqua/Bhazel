@@ -1,43 +1,51 @@
 #include "bzpch.h"
 
 #include "VulkanSwapchain.h"
-#include "Platform/Vulkan/VulkanDevice.h"
+#include "Platform/Vulkan/Internal/VulkanDevice.h"
 #include "Platform/Vulkan/VulkanTexture.h"
 #include "Platform/Vulkan/VulkanFramebuffer.h"
+#include "Platform/Vulkan/Internal/VulkanSurface.h"
+#include "Platform/Vulkan/Internal/VulkanSync.h"
 
 
 namespace BZ {
 
-    /*VulkanSwapchain::VulkanSwapchain(const VulkanDevice &device, VkSurfaceKHR surface) :
-        device(&device), surface(surface) {
-        init();
-    }*/
-
-    VulkanSwapchain::~VulkanSwapchain() {
-        clean();
+    /*VulkanSwapchain::VulkanSwapchain(const VulkanDevice &device, const VulkanSurface &surface) {
+        init(device, surface);
     }
 
-    void VulkanSwapchain::init(const VulkanDevice &device, VkSurfaceKHR surface) {
+    VulkanSwapchain::~VulkanSwapchain() {
+        destroy();
+    }*/
+
+    void VulkanSwapchain::init(const VulkanDevice &device, const VulkanSurface &surface) {
         this->device = &device;
-        this->surface = surface;
-        init();
+        this->surface = &surface;
+        internalInit();
+    }
+
+    void VulkanSwapchain::destroy() {
+        framebuffers.clear();
+        vkDestroySwapchainKHR(device->getNativeHandle(), swapchain, nullptr);
+        currentImageIndex = 0;
+        swapchain = VK_NULL_HANDLE;
     }
 
     void VulkanSwapchain::recreate() {
-        clean();
-        init();
+        destroy();
+        internalInit();
     }
 
-    void VulkanSwapchain::aquireImage(VkSemaphore imageAvailableSemaphore) {
-        VkResult result = vkAcquireNextImageKHR(device->getNativeHandle(), swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &currentImageIndex);
+    void VulkanSwapchain::aquireImage(const VulkanSemaphore &imageAvailableSemaphore) {
+        VkResult result = vkAcquireNextImageKHR(device->getNativeHandle(), swapchain, UINT64_MAX, imageAvailableSemaphore.getNativeHandle(), VK_NULL_HANDLE, &currentImageIndex);
         if(result != VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
             recreate();
         }
     }
 
-    void VulkanSwapchain::presentImage(VkSemaphore renderFinishedSemaphore) {
-        VkSemaphore waitSemaphore[] = { renderFinishedSemaphore };
+    void VulkanSwapchain::presentImage(const VulkanSemaphore &renderFinishedSemaphore) {
+        VkSemaphore waitSemaphore[] = { renderFinishedSemaphore.getNativeHandle() };
         VkSwapchainKHR swapchains[] = { swapchain };
 
         VkPresentInfoKHR presentInfo = {};
@@ -49,14 +57,14 @@ namespace BZ {
         presentInfo.pImageIndices = &currentImageIndex;
         presentInfo.pResults = nullptr;
 
-        VkResult result = vkQueuePresentKHR(device->getQueueContainer().presentImage.getNativeHandle(), &presentInfo);
+        VkResult result = vkQueuePresentKHR(device->getQueueContainer().present.getNativeHandle(), &presentInfo);
         if(result != VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to present image. Error: {}.", result);
             recreate();
         }
     }
 
-    void VulkanSwapchain::init() {
+    void VulkanSwapchain::internalInit() {
         const SwapChainSupportDetails &swapchainSupport = device->getPhysicalDevice().getSwapChainSupportDetails();
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapchainSupport.formats);
@@ -69,7 +77,7 @@ namespace BZ {
 
         VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
         swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        swapChainCreateInfo.surface = surface;
+        swapChainCreateInfo.surface = surface->getNativeHandle();
         swapChainCreateInfo.minImageCount = imageCount;
         swapChainCreateInfo.imageFormat = surfaceFormat.format;
         swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -78,8 +86,8 @@ namespace BZ {
         swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         const QueueContainer &queueContainer = device->getQueueContainer();
-        if(queueContainer.graphics.getFamily().getIndex() != queueContainer.presentImage.getFamily().getIndex()) {
-            uint32_t queueFamilyIndicesArr[] = { queueContainer.graphics.getFamily().getIndex(), queueContainer.presentImage.getFamily().getIndex() };
+        if(queueContainer.graphics.getFamily().getIndex() != queueContainer.present.getFamily().getIndex()) {
+            uint32_t queueFamilyIndicesArr[] = { queueContainer.graphics.getFamily().getIndex(), queueContainer.present.getFamily().getIndex() };
             swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             swapChainCreateInfo.queueFamilyIndexCount = 2;
             swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndicesArr;
@@ -131,12 +139,6 @@ namespace BZ {
 
             framebuffers[i] = builder.build();
         }
-    }
-
-    void VulkanSwapchain::clean() {
-        framebuffers.clear();
-        vkDestroySwapchainKHR(device->getNativeHandle() , swapchain, nullptr);
-        currentImageIndex = 0;
     }
 
     VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {

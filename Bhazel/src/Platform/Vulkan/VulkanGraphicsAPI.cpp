@@ -2,7 +2,7 @@
 
 #include "VulkanGraphicsApi.h"
 
-#include "Platform/Vulkan/VulkanIncludes.h"
+#include "Platform/Vulkan/Internal/VulkanIncludes.h"
 #include "Platform/Vulkan/VulkanContext.h"
 
 #include "Platform/Vulkan/VulkanCommandBuffer.h"
@@ -123,7 +123,7 @@ namespace BZ {
         const VulkanContext::FrameData *frameData = graphicsContext.frameData;
         uint32 currentFrame = graphicsContext.currentFrame;
 
-        VkSemaphore waitSemaphores[] = { graphicsContext.frameData[graphicsContext.currentFrame].imageAvailableSemaphore };
+        VkSemaphore waitSemaphores[] = { graphicsContext.frameData[graphicsContext.currentFrame].imageAvailableSemaphore.getNativeHandle() };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
         VkCommandBuffer vkCommandBuffers[] = { vulkanCommandBuffer.getNativeHandle() };
 
@@ -137,7 +137,7 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 0;
         submitInfo.pSignalSemaphores = nullptr;
 
-        BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device.getNativeHandle(), 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
+        frameData[currentFrame].inFlightFence.waitFor();
 
         BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
@@ -146,7 +146,7 @@ namespace BZ {
         const VulkanContext::FrameData *frameData = graphicsContext.frameData;
         uint32 currentFrame = graphicsContext.currentFrame;
 
-        VkSemaphore signalSemaphores[] = { frameData[currentFrame].renderFinishedSemaphore };
+        VkSemaphore signalSemaphores[] = { frameData[currentFrame].renderFinishedSemaphore.getNativeHandle() };
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -158,9 +158,13 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        BZ_ASSERT_VK(vkWaitForFences(graphicsContext.device.getNativeHandle(), 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
-        BZ_ASSERT_VK(vkResetFences(graphicsContext.device.getNativeHandle(), 1, &frameData[currentFrame].inFlightFence));
+        frameData[currentFrame].inFlightFence.waitFor();
+        frameData[currentFrame].inFlightFence.reset();
 
-        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameData[currentFrame].inFlightFence));
+        BZ_ASSERT_VK(vkQueueSubmit(graphicsContext.device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameData[currentFrame].inFlightFence.getNativeHandle()));
+    }
+
+    void VulkanGraphicsApi::waitForDevice() {
+        BZ_ASSERT_VK(vkDeviceWaitIdle(graphicsContext.device.getNativeHandle()));
     }
 }

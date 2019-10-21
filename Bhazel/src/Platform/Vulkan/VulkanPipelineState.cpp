@@ -5,7 +5,7 @@
 #include "Platform/Vulkan/VulkanShader.h"
 #include "Platform/Vulkan/VulkanFramebuffer.h"
 #include "Platform/Vulkan/VulkanDescriptorSet.h"
-#include "Platform/Vulkan/VulkanConversions.h"
+#include "Platform/Vulkan/Internal/VulkanConversions.h"
 
 
 namespace BZ {

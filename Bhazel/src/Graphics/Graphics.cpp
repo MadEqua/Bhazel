@@ -120,6 +120,10 @@ namespace BZ {
         graphicsApi->endFrame();
     }
 
+    void Graphics::waitForDevice() {
+        graphicsApi->waitForDevice();
+    }
+
 
 
 

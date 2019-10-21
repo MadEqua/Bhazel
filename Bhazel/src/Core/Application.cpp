@@ -87,6 +87,7 @@ namespace BZ {
             frameTimer.reset();
         }
 
+        Graphics::waitForDevice();
         Graphics::destroy();
     }
 

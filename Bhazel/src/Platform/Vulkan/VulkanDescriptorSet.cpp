@@ -1,7 +1,7 @@
 #include "bzpch.h"
 
 #include "VulkanDescriptorSet.h"
-#include "Platform/Vulkan/VulkanConversions.h"
+#include "Platform/Vulkan/Internal/VulkanConversions.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 
 

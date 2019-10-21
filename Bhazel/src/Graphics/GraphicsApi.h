@@ -36,6 +36,8 @@ namespace BZ {
         virtual void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) = 0;
         virtual void endFrame() = 0;
 
+        virtual void waitForDevice() = 0;
+
 
 
         //virtual void setClearColor(const glm::vec4 &color) = 0;

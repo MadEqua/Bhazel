@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Platform/Vulkan/VulkanIncludes.h"
+#include "Platform/Vulkan/Internal/VulkanIncludes.h"
 
 #include "Graphics/Buffer.h"
 #include "Graphics/Texture.h"

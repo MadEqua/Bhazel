@@ -1,6 +1,7 @@
 #include "bzpch.h"
 
 #include "VulkanQueue.h"
+#include "Platform/Vulkan/Internal/VulkanDevice.h"
 
 
 namespace BZ {
@@ -39,8 +40,16 @@ namespace BZ {
     }
 
 
-    VulkanQueue::VulkanQueue(VkQueue queue, const QueueFamily &family) :
-        family(family), queue(queue) {
+    /*VulkanQueue::VulkanQueue(const VulkanDevice &device, const QueueFamily &family) {
+        init(device, family);
+    }*/
+
+    void VulkanQueue::init(const VulkanDevice &device, const QueueFamily &family) {
+        BZ_ASSERT_CORE(queue == VK_NULL_HANDLE, "Queue is already inited!");
+
+        this->family = family;
         family.setInUse();
+
+        vkGetDeviceQueue(device.getNativeHandle(), family.getIndex(), 0, &queue);
     }
 }

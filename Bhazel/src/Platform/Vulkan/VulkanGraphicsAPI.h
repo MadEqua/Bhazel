@@ -33,6 +33,8 @@ namespace BZ {
         void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) override;
         void endFrame() override;
 
+        void waitForDevice() override;
+
     private:
         VulkanContext &graphicsContext;
     };

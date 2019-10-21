@@ -1,22 +1,26 @@
 #include "bzpch.h"
 
 #include "VulkanDevice.h"
+#include "Platform/Vulkan/Internal/VulkanSurface.h"
 
 
 namespace BZ {
 
-   /* VulkanPhysicalDevice::VulkanPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char*> &requiredDeviceExtensions) {
-    }*/
+    /*VulkanPhysicalDevice::VulkanPhysicalDevice(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions) {
+        init(instance, surface, requiredDeviceExtensions);
+   }*/
 
-    void VulkanPhysicalDevice::init(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &requiredDeviceExtensions) {
+    void VulkanPhysicalDevice::init(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions) {
+        BZ_ASSERT_CORE(physicalDevice == VK_NULL_HANDLE, "PhysicalDevice is already inited!");
+
         uint32_t deviceCount = 0;
         BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
 
         std::vector<VkPhysicalDevice> devices(deviceCount);
         BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
         for(const auto &device : devices) {
-            queueFamilyContainer = getQueueFamilies(device, surface);
-            swapChainSupportDetails = querySwapChainSupport(device, surface);
+            queueFamilyContainer = getQueueFamilies(device, surface.getNativeHandle());
+            swapChainSupportDetails = querySwapChainSupport(device, surface.getNativeHandle());
 
             if(isPhysicalDeviceSuitable(device, swapChainSupportDetails, queueFamilyContainer, requiredDeviceExtensions)) {
                 physicalDevice = device;
@@ -145,12 +149,17 @@ namespace BZ {
     }
 
 
-    /*VulkanDevice::VulkanDevice(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions) :
-        physicalDevice(&physicalDevice) {
+    /*VulkanDevice::VulkanDevice(const VulkanPhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions) {
+        init(physicalDevice, requiredDeviceExtensions);
+    }
 
+    VulkanDevice::~VulkanDevice() {
+        destroy();
     }*/
 
-    void VulkanDevice::init(const VulkanPhysicalDevice &physicalDevice, VkSurfaceKHR surface, const std::vector<const char *> requiredDeviceExtensions) {
+    void VulkanDevice::init(const VulkanPhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions) {
+        BZ_ASSERT_CORE(device == VK_NULL_HANDLE, "Device is already inited!");
+
         this->physicalDevice = &physicalDevice;
 
         auto processFamilies = [this, &physicalDevice](QueueProperty property, const QueueFamily **family, const QueueFamily **familyExclusive) {
@@ -214,20 +223,20 @@ namespace BZ {
         deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
         BZ_ASSERT_VK(vkCreateDevice(physicalDevice.getNativeHandle(), &deviceCreateInfo, nullptr, &device));
 
-        auto fillQueues = [this](const QueueFamily &family, const QueueFamily *familyExclusive, VulkanQueue &dstVulkanQueue, VulkanQueue &dstVulkanQueueExclusive) {
-            VkQueue vkQueue;
-            vkGetDeviceQueue(device, family.getIndex(), 0, &vkQueue);
-            dstVulkanQueue = VulkanQueue(vkQueue, family);
+        queueContainer.graphics.init(*this, *graphicsFamily);
+        queueContainer.compute.init(*this, *computeFamily);
+        queueContainer.transfer.init(*this, *transferFamily);
+        queueContainer.present.init(*this, *presentFamily);
 
-            //If there is no exclusive queue, then fill with the same data as the non-exclusive queue.
-            VkQueue vkQueueExclusive;
-            vkGetDeviceQueue(device, familyExclusive ? familyExclusive->getIndex() : family.getIndex(), 0, &vkQueueExclusive);
-            dstVulkanQueueExclusive = VulkanQueue(vkQueueExclusive, familyExclusive ? *familyExclusive : family);
-        };
+        //If there is no exclusive queue, then fill with the same data as the non-exclusive queue.
+        queueContainerExclusive.graphics.init(*this, graphicsFamilyExclusive ? *graphicsFamilyExclusive : *graphicsFamily);
+        queueContainerExclusive.compute.init(*this, computeFamilyExclusive ? *computeFamilyExclusive : *computeFamily);
+        queueContainerExclusive.transfer.init(*this, transferFamilyExclusive ? *transferFamilyExclusive : *transferFamily);
+        queueContainerExclusive.present.init(*this, presentFamilyExclusive ? *presentFamilyExclusive : *presentFamily);
+    }
 
-        fillQueues(*graphicsFamily, graphicsFamilyExclusive, queueContainer.graphics, queueContainerExclusive.graphics);
-        fillQueues(*computeFamily, computeFamilyExclusive, queueContainer.compute, queueContainerExclusive.compute);
-        fillQueues(*transferFamily, transferFamilyExclusive, queueContainer.transfer, queueContainerExclusive.transfer);
-        fillQueues(*presentFamily, presentFamilyExclusive, queueContainer.presentImage, queueContainerExclusive.presentImage);
+    void VulkanDevice::destroy() {
+        vkDestroyDevice(device, nullptr);
+        device = VK_NULL_HANDLE;
     }
 }

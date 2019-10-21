@@ -2,14 +2,16 @@
 
 #include "Graphics/GraphicsContext.h"
 
-#include "Platform/Vulkan/VulkanIncludes.h"
-#include "Platform/Vulkan/VulkanDevice.h"
-#include "Platform/Vulkan/VulkanSwapchain.h"
+#include "Platform/Vulkan/Internal/VulkanIncludes.h"
+#include "Platform/Vulkan/Internal/VulkanDevice.h"
+#include "Platform/Vulkan/Internal/VulkanSwapchain.h"
+#include "Platform/Vulkan/Internal/VulkanSurface.h"
+#include "Platform/Vulkan/Internal/VulkanSync.h"
 
 #include "Graphics/Graphics.h"
 
-
 struct GLFWwindow;
+
 
 namespace BZ {
 
@@ -41,24 +43,23 @@ namespace BZ {
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
     private:
-        struct FrameData {
-            //One command pool per frame makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
-            std::unordered_map<uint32, Ref<VulkanCommandPool>> commandPoolsByFamily;
-            VkSemaphore imageAvailableSemaphore;
-            VkSemaphore renderFinishedSemaphore;
-            VkFence inFlightFence;
-        };
-        FrameData frameData[MAX_FRAMES_IN_FLIGHT];
-        uint32 currentFrame = 0;
-
-        GLFWwindow *windowHandle;
-
         VkInstance instance;
-        VkSurfaceKHR surface;
+        GLFWwindow *windowHandle;
 
         VulkanPhysicalDevice physicalDevice;
         VulkanDevice device;
+        VulkanSurface surface;
         VulkanSwapchain swapchain;
+
+        struct FrameData {
+            //One command pool per frame makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
+            std::unordered_map<uint32, Ref<VulkanCommandPool>> commandPoolsByFamily;
+            VulkanSemaphore imageAvailableSemaphore;
+            VulkanSemaphore renderFinishedSemaphore;
+            VulkanFence inFlightFence;
+        };
+        FrameData frameData[MAX_FRAMES_IN_FLIGHT];
+        uint32 currentFrame = 0;
 
         Ref<VulkanDescriptorPool> descriptorPool;
 
@@ -67,12 +68,8 @@ namespace BZ {
 #endif
 
         void createInstance();
-        void createSurface();
-        void createDevice();
-        void createSwapchain();
-        void createFrameData();
-        void createDescriptorPool();
 
+        void createFrameData();
         void cleanupFrameData();
 
         template<typename T>

@@ -3,7 +3,7 @@
 #include "VulkanFramebuffer.h"
 
 #include "Platform/Vulkan/VulkanTexture.h"
-#include "Platform/Vulkan/VulkanConversions.h"
+#include "Platform/Vulkan/Internal/VulkanConversions.h"
 
 
 namespace BZ {

@@ -61,6 +61,8 @@ namespace BZ {
         static void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer);
         static void endFrame();
 
+        static void waitForDevice();
+
         static Ref<DescriptorSetLayout> getDescriptorSetLayout() { return descriptorSetLayout; }
 
         static API api;

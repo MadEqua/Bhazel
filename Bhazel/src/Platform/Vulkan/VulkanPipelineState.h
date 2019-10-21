@@ -2,8 +2,8 @@
 
 #include "Graphics/PipelineState.h"
 
-#include "Platform/Vulkan/VulkanIncludes.h"
-#include "Platform/Vulkan/VulkanGpuObject.h"
+#include "Platform/Vulkan/Internal/VulkanIncludes.h"
+#include "Platform/Vulkan/Internal/VulkanGpuObject.h"
 
 
 namespace BZ {

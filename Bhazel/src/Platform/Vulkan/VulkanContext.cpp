@@ -16,28 +16,39 @@ namespace BZ {
     }
 
     VulkanContext::~VulkanContext() {
-        BZ_ASSERT_VK(vkDeviceWaitIdle(device.getNativeHandle()));
-
-        cleanupFrameData();
         descriptorPool.reset();
-
-        vkDestroyDevice(device.getNativeHandle(), nullptr);
-        vkDestroySurfaceKHR(instance, surface, nullptr);
+        cleanupFrameData();
+        swapchain.destroy();
+        surface.destroy();
+        device.destroy();
 
 #ifndef BZ_DIST
         auto func = getExtensionFunction<PFN_vkDestroyDebugUtilsMessengerEXT>(instance, "vkDestroyDebugUtilsMessengerEXT");
         func(instance, debugMessenger, nullptr);
 #endif
+
         vkDestroyInstance(instance, nullptr);
     }
 
     void VulkanContext::init() {
         createInstance();
-        createSurface();
-        createDevice();
+
+        surface.init(instance, *windowHandle);
+
+        const std::vector<const char *> requiredDeviceExtensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        };
+        physicalDevice.init(instance, surface, requiredDeviceExtensions);
+        device.init(physicalDevice, requiredDeviceExtensions);
+
         createFrameData();
-        createSwapchain();
-        createDescriptorPool();
+
+        swapchain.init(device, surface);
+        swapchain.aquireImage(frameData[currentFrame].imageAvailableSemaphore);
+
+        VulkanDescriptorPool::Builder builder;
+        builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
+        descriptorPool = builder.build();
 
         graphicsApi = std::make_unique<VulkanGraphicsApi>(*this);
     }
@@ -49,7 +60,7 @@ namespace BZ {
         swapchain.aquireImage(frameData[currentFrame].imageAvailableSemaphore);
 
         //TODO: check correctness
-        BZ_ASSERT_VK(vkWaitForFences(device.getNativeHandle(), 1, &frameData[currentFrame].inFlightFence, VK_TRUE, UINT64_MAX));
+        frameData[currentFrame].inFlightFence.waitFor();
         for(const auto &pair : frameData[currentFrame].commandPoolsByFamily) {
             pair.second->reset();
         }
@@ -153,35 +164,11 @@ namespace BZ {
 #endif
     }
 
-    void VulkanContext::createSurface() {
-        BZ_ASSERT_VK(glfwCreateWindowSurface(instance, windowHandle, nullptr, &surface));
-    }
-
-    void VulkanContext::createDevice() {
-        const std::vector<const char *> requiredDeviceExtensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        };
-        physicalDevice.init(instance, surface, requiredDeviceExtensions);
-        device.init(physicalDevice, surface, requiredDeviceExtensions); 
-    }
-
-    void VulkanContext::createSwapchain() {
-        swapchain.init(device, surface);
-        swapchain.aquireImage(frameData[currentFrame].imageAvailableSemaphore);
-    }
-
     void VulkanContext::createFrameData() {
-        VkSemaphoreCreateInfo semaphoreInfo = {};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-        VkFenceCreateInfo fenceInfo = {};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
         for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            BZ_ASSERT_VK(vkCreateSemaphore(device.getNativeHandle(), &semaphoreInfo, nullptr, &frameData[i].imageAvailableSemaphore));
-            BZ_ASSERT_VK(vkCreateSemaphore(device.getNativeHandle(), &semaphoreInfo, nullptr, &frameData[i].renderFinishedSemaphore));
-            BZ_ASSERT_VK(vkCreateFence(device.getNativeHandle(), &fenceInfo, nullptr, &frameData[i].inFlightFence));
+            frameData[i].imageAvailableSemaphore.init(device);
+            frameData[i].renderFinishedSemaphore.init(device);
+            frameData[i].inFlightFence.init(device, true);
 
             for(const auto &fam : physicalDevice.getQueueFamilyContainer()) {
                 if(fam.isInUse())
@@ -190,17 +177,12 @@ namespace BZ {
         }
     }
 
-    void VulkanContext::createDescriptorPool() {
-        VulkanDescriptorPool::Builder builder;
-        builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
-        descriptorPool = builder.build();
-    }
-
     void VulkanContext::cleanupFrameData() {
         for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            vkDestroySemaphore(device.getNativeHandle(), frameData[i].imageAvailableSemaphore, nullptr);
-            vkDestroySemaphore(device.getNativeHandle(), frameData[i].renderFinishedSemaphore, nullptr);
-            vkDestroyFence(device.getNativeHandle(), frameData[i].inFlightFence, nullptr);
+            frameData[i].imageAvailableSemaphore.destroy();
+            frameData[i].renderFinishedSemaphore.destroy();
+            frameData[i].inFlightFence.destroy();
+
             frameData[i].commandPoolsByFamily.clear();
         }
     }

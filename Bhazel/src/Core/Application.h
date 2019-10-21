@@ -22,8 +22,7 @@ namespace BZ {
     };
 
 
-    class Application
-    {
+    class Application {
     public:
         Application();
         virtual ~Application() = default;
@@ -45,19 +44,17 @@ namespace BZ {
         static Application& getInstance() { return *instance; }
 
     private:
+        bool onWindowResized(WindowResizedEvent &e);
+
         std::unique_ptr<Window> window;
         std::unique_ptr<GraphicsContext> graphicsContext;
         std::unique_ptr<Input> input;
 
-        bool onWindowResized(WindowResizedEvent &e);
-
-        ImGuiLayer* imGuiLayer;
-
         LayerStack layerStack;
         IniParser iniParser;
-
         FrameStats frameStats;
 
+        ImGuiLayer* imGuiLayer;
         std::string assetsPath;
 
         static Application *instance;

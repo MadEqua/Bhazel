@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Platform/Vulkan/VulkanIncludes.h"
-//#include "Platform/Vulkan/VulkanGpuObject.h"
+#include "Platform/Vulkan/Internal/VulkanIncludes.h"
+//#include "Platform/Vulkan/Internal/VulkanGpuObject.h"
 
 
 namespace BZ {
@@ -63,17 +63,20 @@ namespace BZ {
         std::bitset<static_cast<uint32>(QueueProperty::Count)> cummulativeProperties;
     };
 
+    class VulkanDevice;
 
     class VulkanQueue {
     public:
         VulkanQueue() = default;
-        VulkanQueue(VkQueue queue, const QueueFamily &family);
+        //VulkanQueue(const VulkanDevice &device, const QueueFamily &family);
+
+        void init(const VulkanDevice &device, const QueueFamily &family);
 
         const QueueFamily& getFamily() const { return family; }
         VkQueue getNativeHandle() const { return queue; }
 
     private:
-        VkQueue queue;
+        VkQueue queue = VK_NULL_HANDLE;
         QueueFamily family;
     };
 
@@ -82,6 +85,6 @@ namespace BZ {
         VulkanQueue graphics;
         VulkanQueue compute;
         VulkanQueue transfer;
-        VulkanQueue presentImage;
+        VulkanQueue present;
     };
 }
