@@ -2,8 +2,6 @@
 
 #include "Platform/Vulkan/VulkanContext.h"
 #include "Platform/Vulkan/VulkanGraphicsAPI.h"
-#include "Platform/Vulkan/VulkanDescriptorSet.h"
-#include "Platform/Vulkan/VulkanCommandBuffer.h"
 
 #include <GLFW/glfw3.h>
 
@@ -16,7 +14,7 @@ namespace BZ {
     }
 
     VulkanContext::~VulkanContext() {
-        descriptorPool.reset();
+        descriptorPool.destroy();
         cleanupFrameData();
         swapchain.destroy();
         surface.destroy();
@@ -48,7 +46,7 @@ namespace BZ {
 
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
-        descriptorPool = builder.build();
+        descriptorPool.init(device, builder);
 
         graphicsApi = std::make_unique<VulkanGraphicsApi>(*this);
     }
@@ -61,8 +59,8 @@ namespace BZ {
 
         //TODO: check correctness
         frameData[currentFrame].inFlightFence.waitFor();
-        for(const auto &pair : frameData[currentFrame].commandPoolsByFamily) {
-            pair.second->reset();
+        for(auto &pair : frameData[currentFrame].commandPoolsByFamily) {
+            pair.second.reset();
         }
     }
 
@@ -93,7 +91,7 @@ namespace BZ {
         else {
             families = physicalDevice.getQueueFamilyContainer().getFamiliesThatContain(property);
         }
-        return *frameData[frame].commandPoolsByFamily[families[0]->getIndex()];
+        return frameData[frame].commandPoolsByFamily[families[0]->getIndex()];
     }
 
     uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
@@ -172,7 +170,7 @@ namespace BZ {
 
             for(const auto &fam : physicalDevice.getQueueFamilyContainer()) {
                 if(fam.isInUse())
-                    frameData[i].commandPoolsByFamily[fam.getIndex()] = VulkanCommandPool::create(fam);
+                    frameData[i].commandPoolsByFamily[fam.getIndex()].init(device, fam);
             }
         }
     }
@@ -183,7 +181,9 @@ namespace BZ {
             frameData[i].renderFinishedSemaphore.destroy();
             frameData[i].inFlightFence.destroy();
 
-            frameData[i].commandPoolsByFamily.clear();
+            for(auto &pair : frameData[i].commandPoolsByFamily) {
+                pair.second.destroy();
+            }
         }
     }
 

@@ -20,25 +20,4 @@ namespace BZ {
         
         void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) override;
     };
-
-
-    class VulkanDescriptorPool : public VulkanGpuObject<VkDescriptorPool> {
-    public:
-        class Builder {
-        public:
-            Builder &addDescriptorTypeCount(DescriptorType type, uint32 count);
-            Ref<VulkanDescriptorPool> build() const;
-
-        private:
-            uint32 countPerType[static_cast<int>(DescriptorType::Count)] = { 0 };
-            uint32 totalCount = 0;
-
-            friend class VulkanDescriptorPool;
-        };
-
-        void reset();
-
-        explicit VulkanDescriptorPool(const Builder &builder);
-        ~VulkanDescriptorPool();
-    };
 }

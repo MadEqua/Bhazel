@@ -18,19 +18,4 @@ namespace BZ {
 
         VulkanCommandBuffer(QueueProperty property, uint32 framePool, bool exclusiveQueue);
     };
-
-
-    //Allocates CommandBuffers from a certain family.
-    class VulkanCommandPool : public VulkanGpuObject<VkCommandPool > {
-    public:
-        static Ref<VulkanCommandPool> create(QueueFamily family);
-
-        explicit VulkanCommandPool(QueueFamily family);
-        ~VulkanCommandPool();
-
-        void reset();
-
-    private:
-        QueueFamily family;
-    };
 }

@@ -7,6 +7,8 @@
 #include "Platform/Vulkan/Internal/VulkanSwapchain.h"
 #include "Platform/Vulkan/Internal/VulkanSurface.h"
 #include "Platform/Vulkan/Internal/VulkanSync.h"
+#include "Platform/Vulkan/Internal/VulkanCommandPool.h"
+#include "Platform/Vulkan/Internal/VulkanDescriptorPool.h"
 
 #include "Graphics/Graphics.h"
 
@@ -15,8 +17,6 @@ struct GLFWwindow;
 
 namespace BZ {
 
-    class VulkanCommandPool;
-    class VulkanDescriptorPool;
     class Framebuffer;
 
     class VulkanContext : public GraphicsContext {
@@ -38,7 +38,7 @@ namespace BZ {
 
         uint32 getCurrentFrame() const { return currentFrame; }
         VulkanCommandPool& getCommandPool(QueueProperty property, uint32 frame, bool exclusive);
-        VulkanDescriptorPool& getDescriptorPool() { return *descriptorPool; }
+        VulkanDescriptorPool& getDescriptorPool() { return descriptorPool; }
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
@@ -53,7 +53,7 @@ namespace BZ {
 
         struct FrameData {
             //One command pool per frame makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
-            std::unordered_map<uint32, Ref<VulkanCommandPool>> commandPoolsByFamily;
+            std::unordered_map<uint32, VulkanCommandPool> commandPoolsByFamily;
             VulkanSemaphore imageAvailableSemaphore;
             VulkanSemaphore renderFinishedSemaphore;
             VulkanFence inFlightFence;
@@ -61,7 +61,7 @@ namespace BZ {
         FrameData frameData[MAX_FRAMES_IN_FLIGHT];
         uint32 currentFrame = 0;
 
-        Ref<VulkanDescriptorPool> descriptorPool;
+        VulkanDescriptorPool descriptorPool;
 
 #ifndef BZ_DIST
         VkDebugUtilsMessengerEXT debugMessenger;
