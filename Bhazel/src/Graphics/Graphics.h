@@ -13,11 +13,11 @@ namespace BZ {
     class PipelineState;
     class DescriptorSet;
     class DescriptorSetLayout;
-    class GraphicsApi;
-
+    class GraphicsContext;
 
     /*
-    * Low level Graphics API. Static wrapper to a GraphicsAPI coming from a GraphicsContext.
+    * Low level Graphics API. Static wrapper to the GraphicsContext API.
+    * Also manages data related to engine ConstantBuffers.
     */
     class Graphics {
     public:
@@ -84,6 +84,6 @@ namespace BZ {
         static Ref<DescriptorSet> descriptorSet;
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
-        static GraphicsApi *graphicsApi;
+        static GraphicsContext *graphicsContext;
     };
 }

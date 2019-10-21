@@ -30,9 +30,6 @@ namespace BZ {
 
         void setVSync(bool enabled) override;
 
-        Ref<Framebuffer> getCurrentFrameFramebuffer() override;
-        Ref<Framebuffer> getFramebuffer(uint32 frameIdx) override;
-
         VkDevice getDevice() const { return device.getNativeHandle(); }
         //VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
 
@@ -41,6 +38,32 @@ namespace BZ {
         VulkanDescriptorPool& getDescriptorPool() { return descriptorPool; }
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+
+        /////////////////////////////////////////////////////////
+        // API
+        /////////////////////////////////////////////////////////
+        Ref<CommandBuffer> startRecording() override;
+        Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) override;
+
+        Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex) override;
+        Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) override;
+
+        void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) override;
+        void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) override;
+
+        void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) override;
+        //void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet) override;
+        void bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) override;
+
+        void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) override;
+        void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) override;
+
+        void endRecording(const Ref<CommandBuffer> &commandBuffer) override;
+
+        void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) override;
+        void endFrame() override;
+
+        void waitForDevice() override;
 
     private:
         VkInstance instance;
@@ -76,7 +99,5 @@ namespace BZ {
         static T getExtensionFunction(VkInstance instance, const char *name);
 
         void assertValidationLayerSupport(const std::vector<const char*> &requiredLayers) const;
-
-        friend class VulkanGraphicsApi;
     };
 }

@@ -2,15 +2,11 @@
 
 #include "Graphics.h"
 
-#include "Graphics/GraphicsApi.h"
-
 #include "Core/Application.h"
 
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/Buffer.h"
-#include "Graphics/Shader.h"
 #include "Graphics/DescriptorSet.h"
-
-#include "Events/WindowEvent.h"
 
 
 namespace BZ {
@@ -22,11 +18,11 @@ namespace BZ {
     Ref<DescriptorSet> Graphics::descriptorSet;
     Ref<DescriptorSetLayout> Graphics::descriptorSetLayout;
 
-    GraphicsApi * Graphics::graphicsApi = nullptr;
+    GraphicsContext * Graphics::graphicsContext = nullptr;
 
 
     void Graphics::init() {
-        graphicsApi = &Application::getInstance().getGraphicsContext().getGraphicsAPI();
+        graphicsContext = &Application::getInstance().getGraphicsContext();
         constantBuffer = Buffer::createConstantBuffer(sizeof(constantBufferData));
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
@@ -49,19 +45,19 @@ namespace BZ {
     }
 
     Ref<CommandBuffer> Graphics::startRecording() {
-        return graphicsApi->startRecording();
+        return graphicsContext->startRecording();
     }
 
     Ref<CommandBuffer> Graphics::startRecording(const Ref<Framebuffer> &framebuffer) {
-        return graphicsApi->startRecording(framebuffer);
+        return graphicsContext->startRecording(framebuffer);
     }
 
     Ref<CommandBuffer> Graphics::startRecordingForFrame(uint32 frameIndex) {
-        return graphicsApi->startRecordingForFrame(frameIndex);
+        return graphicsContext->startRecordingForFrame(frameIndex);
     }
 
     Ref<CommandBuffer> Graphics::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
-        return graphicsApi->startRecordingForFrame(frameIndex, framebuffer);
+        return graphicsContext->startRecordingForFrame(frameIndex, framebuffer);
     }
 
     void Graphics::startObject(const glm::mat4 &modelMatrix) {
@@ -72,36 +68,36 @@ namespace BZ {
     }
 
     void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
-        graphicsApi->bindVertexBuffer(commandBuffer, buffer);
+        graphicsContext->bindVertexBuffer(commandBuffer, buffer);
     }
 
     void Graphics::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
-        graphicsApi->bindIndexBuffer(commandBuffer, buffer);
+        graphicsContext->bindIndexBuffer(commandBuffer, buffer);
     }
 
     void Graphics::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
-        graphicsApi->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState); //Always bind the engine descriptor set. TODO: can this be done only once?
-        graphicsApi->bindPipelineState(commandBuffer, pipelineState);
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState); //Always bind the engine descriptor set. TODO: can this be done only once?
+        graphicsContext->bindPipelineState(commandBuffer, pipelineState);
     }
 
     /*static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
-        graphicsApi->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
     }*/
 
     void Graphics::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
-        graphicsApi->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
     }
 
     void Graphics::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
-        graphicsApi->draw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+        graphicsContext->draw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
     void Graphics::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
-        graphicsApi->drawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+        graphicsContext->drawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
     }
 
     void Graphics::endRecording(const Ref<CommandBuffer> &commandBuffer) {
-        graphicsApi->endRecording(commandBuffer);
+        graphicsContext->endRecording(commandBuffer);
     }
 
     void Graphics::startFrame(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
@@ -113,64 +109,14 @@ namespace BZ {
     }
 
     void Graphics::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
-        graphicsApi->submitCommandBuffer(commandBuffer);
+        graphicsContext->submitCommandBuffer(commandBuffer);
     }
 
     void Graphics::endFrame() {
-        graphicsApi->endFrame();
+        graphicsContext->endFrame();
     }
 
     void Graphics::waitForDevice() {
-        graphicsApi->waitForDevice();
+        graphicsContext->waitForDevice();
     }
-
-
-
-
-
-
-    //void Graphics::beginScene(Camera &camera, const FrameStats &frameStats) {
-    //    frameData.viewMatrix = camera.getViewMatrix();
-    //    frameData.projectionMatrix = camera.getProjectionMatrix();
-    //    frameData.viewProjectionMatrix = camera.getViewProjectionMatrix();
-    //    frameData.cameraPosition = camera.getPosition();
-    //    frameData.timeAndDelta.x = frameStats.runningTime.asSeconds();
-    //    frameData.timeAndDelta.y = frameStats.lastFrameTime.asSeconds();
-    //
-    //    //frameConstantBuffer->setData(&frameData, sizeof(frameData));
-    //    //frameConstantBuffer->bindToPipeline(0);
-    //}
-
-    //void Graphics::endScene() {
-    //}
-
-    //void Graphics::submit(const Ref<Shader> &shader, const Ref<InputDescription> &inputDescription, const glm::mat4 &modelMatrix, PrimitiveTopology renderMode, uint32 instances) {
-    //    instanceData.modelMatrix = modelMatrix;
-    //    instanceConstantBuffer->setData(&instanceData, sizeof(instanceData));
-    //    //instanceConstantBuffer->bindToPipeline(1);
-
-        //TODO we should not set this every draw call
-        //shader->bindToPipeline();
-        //inputDescription->bindToPipeline();
-        //RenderCommand::setRenderMode(renderMode);
-
-        //TODO: this is bad. branching and divisions
-        /*if(inputDescription->hasIndexBuffer())
-            RenderCommand::drawInstancedIndexed(inputDescription->getIndexBuffer()->getSize() / sizeof(uint32), instances);
-        else {
-            auto &vertexBuffer = inputDescription->getVertexBuffers()[0];
-            RenderCommand::drawInstanced(vertexBuffer->getSize() / vertexBuffer->getLayout().getSizeBytes(), instances);
-        }*/
-    //}
-
-    //void Graphics::submitCompute(const Ref<Shader> &computeShader, uint32 groupsX, uint32 groupsY, uint32 groupsZ, std::initializer_list<Ref<Buffer>> buffers) {
-        //computeShader->bindToPipeline();
-
-        //int unit = 0;
-        /*for(auto &buffer : buffers) {
-            buffer->bindToPipelineAsGeneric(unit++);
-        }*/
-
-        //RenderCommand::submitCompute(groupsX, groupsY, groupsZ);
-    //}
 }

@@ -1,7 +1,11 @@
 #include "bzpch.h"
 
 #include "Platform/Vulkan/VulkanContext.h"
-#include "Platform/Vulkan/VulkanGraphicsAPI.h"
+#include "Platform/Vulkan/VulkanCommandBuffer.h"
+#include "Platform/Vulkan/VulkanFramebuffer.h"
+#include "Platform/Vulkan/VulkanBuffer.h"
+#include "Platform/Vulkan/VulkanPipelineState.h"
+#include "Platform/Vulkan/VulkanDescriptorSet.h"
 
 #include <GLFW/glfw3.h>
 
@@ -47,8 +51,6 @@ namespace BZ {
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
         descriptorPool.init(device, builder);
-
-        graphicsApi = std::make_unique<VulkanGraphicsApi>(*this);
     }
 
     void VulkanContext::presentBuffer() {
@@ -67,14 +69,6 @@ namespace BZ {
     void VulkanContext::setVSync(bool enabled) {
         GraphicsContext::setVSync(enabled);
         BZ_LOG_CORE_ERROR("Vulkan vsync not implemented!");
-    }
-
-    Ref<Framebuffer> VulkanContext::getCurrentFrameFramebuffer() {
-        return swapchain.getFramebuffer(currentFrame);
-    }
-
-    Ref<Framebuffer> VulkanContext::getFramebuffer(uint32 frameIdx) {
-        return swapchain.getFramebuffer(frameIdx);
     }
 
     VulkanCommandPool& VulkanContext::getCommandPool(QueueProperty property, uint32 frame, bool exclusive) {
@@ -213,5 +207,152 @@ namespace BZ {
             if(!layerFound)
                 BZ_ASSERT_ALWAYS_CORE("Requested Validation Layer '{}' but it was not found!", layerName);
         }
+    }
+
+    /////////////////////////////////////////////////////////
+    // API
+    /////////////////////////////////////////////////////////
+    Ref<CommandBuffer> VulkanContext::startRecording() {
+        return startRecordingForFrame(currentFrame, swapchain.getFramebuffer(currentFrame));
+    }
+
+    Ref<CommandBuffer> VulkanContext::startRecording(const Ref<Framebuffer> &framebuffer) {
+        return startRecordingForFrame(currentFrame, framebuffer);
+    }
+
+    Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex) {
+        return startRecordingForFrame(frameIndex, swapchain.getFramebuffer(frameIndex));
+    }
+
+    Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
+
+        //Begin a command buffer
+        VkCommandBufferBeginInfo beginInfo = {};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0;
+        beginInfo.pInheritanceInfo = nullptr;
+
+        auto &commandBufferRef = VulkanCommandBuffer::create(QueueProperty::Graphics, frameIndex);
+        BZ_ASSERT_VK(vkBeginCommandBuffer(commandBufferRef->getNativeHandle(), &beginInfo));
+
+        //Record a render pass
+        auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
+
+        //We know that the color attachments will be first and then the depthstencil
+        VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        int i;
+        for(i = 0; i < vulkanFramebuffer.getColorAttachmentCount(); ++i) {
+            auto &attachmentClearValues = vulkanFramebuffer.getColorAttachment(i).description.clearValues;
+            memcpy(clearValues[i].color.float32, &attachmentClearValues, sizeof(float) * 4);
+        }
+        if(vulkanFramebuffer.hasDepthStencilAttachment()) {
+            auto &attachmentClearValues = vulkanFramebuffer.getDepthStencilAttachment()->description.clearValues;
+            clearValues[i].depthStencil.depth = attachmentClearValues.floating.x;
+            clearValues[i].depthStencil.stencil = attachmentClearValues.integer.y;
+        }
+
+        VkRenderPassBeginInfo renderPassBeginInfo = {};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass = vulkanFramebuffer.getNativeHandle().renderPassHandle;
+        renderPassBeginInfo.framebuffer = vulkanFramebuffer.getNativeHandle().frameBufferHandle;
+        renderPassBeginInfo.renderArea.offset = {};
+        renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(vulkanFramebuffer.getDimensions().x), static_cast<uint32_t>(vulkanFramebuffer.getDimensions().y) };
+        renderPassBeginInfo.clearValueCount = vulkanFramebuffer.getAttachmentCount();
+        renderPassBeginInfo.pClearValues = clearValues;
+        vkCmdBeginRenderPass(commandBufferRef->getNativeHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        return commandBufferRef;
+    }
+
+    void VulkanContext::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+
+        VkBuffer vkBuffers[] = { static_cast<const VulkanBuffer &>(*buffer).getNativeHandle() };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(vulkanCommandBuffer.getNativeHandle(), 0, 1, vkBuffers, offsets);
+    }
+
+    void VulkanContext::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+
+        auto &vulkanBuffer = static_cast<const VulkanBuffer &>(*buffer);
+        vkCmdBindIndexBuffer(vulkanCommandBuffer.getNativeHandle(), vulkanBuffer.getNativeHandle(), 0, VK_INDEX_TYPE_UINT16); //TODO index size
+    }
+
+    void VulkanContext::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+
+        auto &vulkanPipelineState = static_cast<const VulkanPipelineState &>(*pipelineState);
+        vkCmdBindPipeline(vulkanCommandBuffer.getNativeHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipelineState.getNativeHandle().pipeline);
+    }
+
+    void VulkanContext::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+
+        auto &vulkanPipelineState = static_cast<const VulkanPipelineState &>(*pipelineState);
+        VkDescriptorSet descSets[] = { static_cast<const VulkanDescriptorSet &>(*descriptorSet).getNativeHandle() };
+        vkCmdBindDescriptorSets(vulkanCommandBuffer.getNativeHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vulkanPipelineState.getNativeHandle().pipelineLayout, 0, 1, descSets, 0, nullptr);
+    }
+
+    void VulkanContext::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+        vkCmdDraw(vulkanCommandBuffer.getNativeHandle(), vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
+    void VulkanContext::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+        vkCmdDrawIndexed(vulkanCommandBuffer.getNativeHandle(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+
+    void VulkanContext::endRecording(const Ref<CommandBuffer> &commandBuffer) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+        vkCmdEndRenderPass(vulkanCommandBuffer.getNativeHandle());
+        BZ_ASSERT_VK(vkEndCommandBuffer(vulkanCommandBuffer.getNativeHandle()));
+    }
+
+    void VulkanContext::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+
+        VkSemaphore waitSemaphores[] = { frameData[currentFrame].imageAvailableSemaphore.getNativeHandle() };
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
+        VkCommandBuffer vkCommandBuffers[] = { vulkanCommandBuffer.getNativeHandle() };
+
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = vkCommandBuffers;
+        submitInfo.signalSemaphoreCount = 0;
+        submitInfo.pSignalSemaphores = nullptr;
+
+        frameData[currentFrame].inFlightFence.waitFor();
+
+        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
+    }
+
+    void VulkanContext::endFrame() {
+        VkSemaphore signalSemaphores[] = { frameData[currentFrame].renderFinishedSemaphore.getNativeHandle() };
+
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.waitSemaphoreCount = 0;
+        submitInfo.pWaitSemaphores = nullptr;
+        submitInfo.pWaitDstStageMask = nullptr;
+        submitInfo.commandBufferCount = 0;
+        submitInfo.pCommandBuffers = nullptr;
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        frameData[currentFrame].inFlightFence.waitFor();
+        frameData[currentFrame].inFlightFence.reset();
+
+        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameData[currentFrame].inFlightFence.getNativeHandle()));
+    }
+
+    void VulkanContext::waitForDevice() {
+        BZ_ASSERT_VK(vkDeviceWaitIdle(device.getNativeHandle()));
     }
 }
