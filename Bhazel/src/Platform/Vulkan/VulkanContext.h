@@ -30,11 +30,14 @@ namespace BZ {
 
         void setVSync(bool enabled) override;
 
+        Ref<Framebuffer> getCurrentFrameFramebuffer() override { return swapchain.getFramebuffer(currentFrame); }
+        //Ref<Framebuffer> getFramebuffer(uint32 frameIdx) override { return swapchain.getFramebuffer(frameIdx); };
+
         VkDevice getDevice() const { return device.getNativeHandle(); }
         //VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
 
-        uint32 getCurrentFrame() const { return currentFrame; }
-        VulkanCommandPool& getCommandPool(QueueProperty property, uint32 frame, bool exclusive);
+        //uint32 getCurrentFrame() const { return currentFrame; }
+        VulkanCommandPool& getCurrentFrameCommandPool(QueueProperty property, bool exclusive);
         VulkanDescriptorPool& getDescriptorPool() { return descriptorPool; }
 
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
@@ -45,8 +48,8 @@ namespace BZ {
         Ref<CommandBuffer> startRecording() override;
         Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) override;
 
-        Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex) override;
-        Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) override;
+        //Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex) override;
+        //Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) override;
 
         void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) override;
         void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) override;
@@ -79,9 +82,9 @@ namespace BZ {
             std::unordered_map<uint32, VulkanCommandPool> commandPoolsByFamily;
             VulkanSemaphore imageAvailableSemaphore;
             VulkanSemaphore renderFinishedSemaphore;
-            VulkanFence inFlightFence;
+            VulkanFence renderFinishedFence;
         };
-        FrameData frameData[MAX_FRAMES_IN_FLIGHT];
+        FrameData frameDatas[MAX_FRAMES_IN_FLIGHT];
         uint32 currentFrame = 0;
 
         VulkanDescriptorPool descriptorPool;

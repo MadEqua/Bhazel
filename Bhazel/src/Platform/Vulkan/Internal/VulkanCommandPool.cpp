@@ -13,7 +13,7 @@ namespace BZ {
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = family.getIndex();
-        poolInfo.flags = 0;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 
         BZ_ASSERT_VK(vkCreateCommandPool(this->device, &poolInfo, nullptr, &commandPool));
     }

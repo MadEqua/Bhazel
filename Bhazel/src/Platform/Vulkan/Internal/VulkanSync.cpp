@@ -33,6 +33,11 @@ namespace BZ {
         BZ_ASSERT_VK(vkWaitForFences(device->getNativeHandle(), 1, &fence, VK_TRUE, timeout));
     }
 
+    bool VulkanFence::isSignaled() const {
+        VkResult res = vkGetFenceStatus(device->getNativeHandle(), fence);
+        return res == VK_SUCCESS;
+    }
+
     void VulkanFence::reset() const {
         BZ_ASSERT_VK(vkResetFences(device->getNativeHandle(), 1, &fence));
     }

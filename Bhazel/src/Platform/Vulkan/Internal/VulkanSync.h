@@ -17,6 +17,7 @@ namespace BZ {
         void destroy();
 
         void waitFor(uint64 timeout = 0xffffffffffffffffui64) const;
+        bool isSignaled() const;
         void reset() const;
 
         VkFence getNativeHandle() const { return fence; }

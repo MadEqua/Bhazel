@@ -7,15 +7,15 @@
 namespace BZ {
 
     Ref<VulkanCommandBuffer> VulkanCommandBuffer::create(QueueProperty property, bool exclusiveQueue) {
-        return MakeRef<VulkanCommandBuffer>(property, getGraphicsContext().getCurrentFrame(), exclusiveQueue);
+        return MakeRef<VulkanCommandBuffer>(property, exclusiveQueue);
     }
 
-    Ref<VulkanCommandBuffer> VulkanCommandBuffer::create(QueueProperty property, uint32 framePool, bool exclusiveQueue) {
+    /*Ref<VulkanCommandBuffer> VulkanCommandBuffer::create(QueueProperty property, uint32 framePool, bool exclusiveQueue) {
         return MakeRef<VulkanCommandBuffer>(property, framePool, exclusiveQueue);
-    }
+    }*/
 
-    VulkanCommandBuffer::VulkanCommandBuffer(QueueProperty property, uint32 framePool, bool exclusiveQueue) {
-        const auto &pool = getGraphicsContext().getCommandPool(property, framePool, exclusiveQueue);
+    VulkanCommandBuffer::VulkanCommandBuffer(QueueProperty property, bool exclusiveQueue) {
+        const auto &pool = getGraphicsContext().getCurrentFrameCommandPool(property, exclusiveQueue);
 
         VkCommandBufferAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

@@ -38,7 +38,7 @@ namespace BZ {
         GraphicsContext& getGraphicsContext() { return *graphicsContext; }
         Input& getInput() { return *input; }
 
-        const FrameStats &getFrameStats() const { return frameStats; }
+        const FrameStats& getFrameStats() const { return frameStats; }
         const std::string& getAssetsPath() const { return assetsPath; }
         
         static Application& getInstance() { return *instance; }

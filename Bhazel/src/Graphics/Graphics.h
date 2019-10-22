@@ -40,8 +40,8 @@ namespace BZ {
 
         //Start recording getting a CommandBuffer from the CommandPool reserved to the frame 'frameIndex'
         //Useful to record static buffers only once and reutilize them every frame
-        static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex);
-        static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer);
+        //static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex);
+        //static Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer);
 
         static void startObject(const glm::mat4 &modelMatrix);
 

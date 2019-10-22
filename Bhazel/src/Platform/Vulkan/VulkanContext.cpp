@@ -46,7 +46,7 @@ namespace BZ {
         createFrameData();
 
         swapchain.init(device, surface);
-        swapchain.aquireImage(frameData[currentFrame].imageAvailableSemaphore);
+        swapchain.aquireImage(frameDatas[currentFrame].imageAvailableSemaphore);
 
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
@@ -54,15 +54,17 @@ namespace BZ {
     }
 
     void VulkanContext::presentBuffer() {
-        swapchain.presentImage(frameData[currentFrame].renderFinishedSemaphore);
+        swapchain.presentImage(frameDatas[currentFrame].renderFinishedSemaphore);
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-        swapchain.aquireImage(frameData[currentFrame].imageAvailableSemaphore);
+        swapchain.aquireImage(frameDatas[currentFrame].imageAvailableSemaphore);
 
-        //TODO: check correctness
-        frameData[currentFrame].inFlightFence.waitFor();
-        for(auto &pair : frameData[currentFrame].commandPoolsByFamily) {
-            pair.second.reset();
+        FrameData &frameData = frameDatas[currentFrame];
+        for(auto &familyAndPool : frameData.commandPoolsByFamily) {
+            if(frameData.renderFinishedFence.isSignaled()) //TODO: is we are gpu bound and the fence is never signaled here, then the pool will never be reset
+                familyAndPool.second.reset();
+            else
+                BZ_LOG_DEBUG("fence is not signaled!");
         }
     }
 
@@ -71,9 +73,7 @@ namespace BZ {
         BZ_LOG_CORE_ERROR("Vulkan vsync not implemented!");
     }
 
-    VulkanCommandPool& VulkanContext::getCommandPool(QueueProperty property, uint32 frame, bool exclusive) {
-        BZ_ASSERT_CORE(frame < MAX_FRAMES_IN_FLIGHT, "Invalid frame: {}!", frame);
-
+    VulkanCommandPool& VulkanContext::getCurrentFrameCommandPool(QueueProperty property, bool exclusive) {
         std::vector<const QueueFamily *> families;
         if(exclusive) {
             families = physicalDevice.getQueueFamilyContainer().getFamiliesThatContainExclusively(property);
@@ -85,7 +85,7 @@ namespace BZ {
         else {
             families = physicalDevice.getQueueFamilyContainer().getFamiliesThatContain(property);
         }
-        return frameData[frame].commandPoolsByFamily[families[0]->getIndex()];
+        return frameDatas[currentFrame].commandPoolsByFamily[families[0]->getIndex()];
     }
 
     uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
@@ -158,24 +158,24 @@ namespace BZ {
 
     void VulkanContext::createFrameData() {
         for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            frameData[i].imageAvailableSemaphore.init(device);
-            frameData[i].renderFinishedSemaphore.init(device);
-            frameData[i].inFlightFence.init(device, true);
+            frameDatas[i].imageAvailableSemaphore.init(device);
+            frameDatas[i].renderFinishedSemaphore.init(device);
+            frameDatas[i].renderFinishedFence.init(device, true);
 
             for(const auto &fam : physicalDevice.getQueueFamilyContainer()) {
                 if(fam.isInUse())
-                    frameData[i].commandPoolsByFamily[fam.getIndex()].init(device, fam);
+                    frameDatas[i].commandPoolsByFamily[fam.getIndex()].init(device, fam);
             }
         }
     }
 
     void VulkanContext::cleanupFrameData() {
         for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            frameData[i].imageAvailableSemaphore.destroy();
-            frameData[i].renderFinishedSemaphore.destroy();
-            frameData[i].inFlightFence.destroy();
+            frameDatas[i].imageAvailableSemaphore.destroy();
+            frameDatas[i].renderFinishedSemaphore.destroy();
+            frameDatas[i].renderFinishedFence.destroy();
 
-            for(auto &pair : frameData[i].commandPoolsByFamily) {
+            for(auto &pair : frameDatas[i].commandPoolsByFamily) {
                 pair.second.destroy();
             }
         }
@@ -213,26 +213,17 @@ namespace BZ {
     // API
     /////////////////////////////////////////////////////////
     Ref<CommandBuffer> VulkanContext::startRecording() {
-        return startRecordingForFrame(currentFrame, swapchain.getFramebuffer(currentFrame));
+        return startRecording(swapchain.getFramebuffer(currentFrame));
     }
 
     Ref<CommandBuffer> VulkanContext::startRecording(const Ref<Framebuffer> &framebuffer) {
-        return startRecordingForFrame(currentFrame, framebuffer);
-    }
-
-    Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex) {
-        return startRecordingForFrame(frameIndex, swapchain.getFramebuffer(frameIndex));
-    }
-
-    Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
-
         //Begin a command buffer
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = 0;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; //Disallowing command buffer reusage
         beginInfo.pInheritanceInfo = nullptr;
 
-        auto &commandBufferRef = VulkanCommandBuffer::create(QueueProperty::Graphics, frameIndex);
+        auto &commandBufferRef = VulkanCommandBuffer::create(QueueProperty::Graphics, currentFrame);
         BZ_ASSERT_VK(vkBeginCommandBuffer(commandBufferRef->getNativeHandle(), &beginInfo));
 
         //Record a render pass
@@ -263,6 +254,13 @@ namespace BZ {
 
         return commandBufferRef;
     }
+
+    /*Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex) {
+        return startRecordingForFrame(frameIndex, swapchain.getFramebuffer(frameIndex));
+    }
+
+    Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
+    }*/
 
     void VulkanContext::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
@@ -314,7 +312,7 @@ namespace BZ {
     void VulkanContext::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
-        VkSemaphore waitSemaphores[] = { frameData[currentFrame].imageAvailableSemaphore.getNativeHandle() };
+        VkSemaphore waitSemaphores[] = { frameDatas[currentFrame].imageAvailableSemaphore.getNativeHandle() };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
         VkCommandBuffer vkCommandBuffers[] = { vulkanCommandBuffer.getNativeHandle() };
 
@@ -328,13 +326,13 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 0;
         submitInfo.pSignalSemaphores = nullptr;
 
-        frameData[currentFrame].inFlightFence.waitFor();
+        frameDatas[currentFrame].renderFinishedFence.waitFor();
 
         BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
 
     void VulkanContext::endFrame() {
-        VkSemaphore signalSemaphores[] = { frameData[currentFrame].renderFinishedSemaphore.getNativeHandle() };
+        VkSemaphore signalSemaphores[] = { frameDatas[currentFrame].renderFinishedSemaphore.getNativeHandle() };
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -346,10 +344,10 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        frameData[currentFrame].inFlightFence.waitFor();
-        frameData[currentFrame].inFlightFence.reset();
+        frameDatas[currentFrame].renderFinishedFence.waitFor();
+        frameDatas[currentFrame].renderFinishedFence.reset();
 
-        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameData[currentFrame].inFlightFence.getNativeHandle()));
+        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameDatas[currentFrame].renderFinishedFence.getNativeHandle()));
     }
 
     void VulkanContext::waitForDevice() {
