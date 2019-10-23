@@ -52,6 +52,14 @@ namespace BZ {
         return graphicsContext->startRecording(framebuffer);
     }
 
+    void Graphics::startScene(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+        constantBufferData.viewMatrix = viewMatrix;
+        constantBufferData.projectionMatrix = projectionMatrix;
+        constantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
+
+        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), 0); //TODO: set only the frame part of the buffer
+    }
+
     void Graphics::startObject(const glm::mat4 &modelMatrix) {
         constantBufferData.modelMatrix = modelMatrix;
         //uint32 objectOffset = static_cast<void*>(&constantBufferData.modelMatrix) - static_cast<void*>(&constantBufferData);
@@ -90,14 +98,6 @@ namespace BZ {
 
     void Graphics::endRecording(const Ref<CommandBuffer> &commandBuffer) {
         graphicsContext->endRecording(commandBuffer);
-    }
-
-    void Graphics::startFrame(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
-        constantBufferData.viewMatrix = viewMatrix;
-        constantBufferData.projectionMatrix = projectionMatrix;
-        constantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
-
-        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), 0); //TODO: set only the frame part of the buffer
     }
 
     void Graphics::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {

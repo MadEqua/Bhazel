@@ -26,12 +26,10 @@ namespace BZ {
 
         void init() override;
         void onWindowResize(WindowResizedEvent &e) override;
-        void presentBuffer() override;
 
         void setVSync(bool enabled) override;
 
         Ref<Framebuffer> getCurrentFrameFramebuffer() override { return swapchain.getFramebuffer(currentFrame); }
-        //Ref<Framebuffer> getFramebuffer(uint32 frameIdx) override { return swapchain.getFramebuffer(frameIdx); };
 
         VkDevice getDevice() const { return device.getNativeHandle(); }
         //VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }

@@ -38,6 +38,7 @@ namespace BZ {
         static Ref<CommandBuffer> startRecording();
         static Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer);
 
+        static void startScene(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
         static void startObject(const glm::mat4 &modelMatrix);
 
         static void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
@@ -52,7 +53,6 @@ namespace BZ {
 
         static void endRecording(const Ref<CommandBuffer> &commandBuffer);
 
-        static void startFrame(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
         static void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer);
         static void endFrame();
 

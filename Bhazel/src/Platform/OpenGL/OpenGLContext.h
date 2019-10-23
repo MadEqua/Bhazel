@@ -10,7 +10,6 @@ namespace BZ {
     public:
         explicit OpenGLContext(void *windowHandle);
 
-        void presentBuffer() override;
         void setVSync(bool enabled) override;
 
     private:

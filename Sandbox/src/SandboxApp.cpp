@@ -110,6 +110,8 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     //BZ::Graphics::endScene();
 
+    BZ::Graphics::startScene(glm::mat4(1.0f), glm::mat4(1.0f));
+
     auto commandBuffer = BZ::Graphics::startRecording();
     for(int i = 0; i < 1; ++i) {
 

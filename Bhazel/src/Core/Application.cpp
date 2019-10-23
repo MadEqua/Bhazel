@@ -69,7 +69,6 @@ namespace BZ {
 
             if(!window->isMinimized()) {
 
-                Graphics::startFrame(glm::mat4(1.0f), glm::mat4(1.0f)); //TODO: this data doesn't belong here
                 layerStack.onUpdate(frameStats);
 
                 /*imGuiLayer->begin();
@@ -77,7 +76,6 @@ namespace BZ {
                 imGuiLayer->end();*/
 
                 Graphics::endFrame();
-                graphicsContext->presentBuffer();
 
                 auto frameDuration = frameTimer.getCountedTime();
                 frameStats.lastFrameTime = frameDuration;

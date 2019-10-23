@@ -53,21 +53,6 @@ namespace BZ {
         descriptorPool.init(device, builder);
     }
 
-    void VulkanContext::presentBuffer() {
-        swapchain.presentImage(frameDatas[currentFrame].renderFinishedSemaphore);
-        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-        swapchain.aquireImage(frameDatas[currentFrame].imageAvailableSemaphore);
-
-        FrameData &frameData = frameDatas[currentFrame];
-        for(auto &familyAndPool : frameData.commandPoolsByFamily) {
-            if(frameData.renderFinishedFence.isSignaled()) //TODO: is we are gpu bound and the fence is never signaled here, then the pool will never be reset
-                familyAndPool.second.reset();
-            else
-                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled!", currentFrame);
-        }
-    }
-
     void VulkanContext::setVSync(bool enabled) {
         GraphicsContext::setVSync(enabled);
         BZ_LOG_CORE_ERROR("Vulkan vsync not implemented!");
@@ -223,8 +208,7 @@ namespace BZ {
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; //Disallowing command buffer reusage
         beginInfo.pInheritanceInfo = nullptr;
 
-        auto &commandPool = getCurrentFrameCommandPool(QueueProperty::Graphics, false);
-        auto &commandBufferRef = commandPool.getCommandBuffer();
+        auto &commandBufferRef = getCurrentFrameCommandPool(QueueProperty::Graphics, false).getCommandBuffer();
 
         BZ_ASSERT_VK(vkBeginCommandBuffer(commandBufferRef->getNativeHandle(), &beginInfo));
 
@@ -343,6 +327,20 @@ namespace BZ {
         frameDatas[currentFrame].renderFinishedFence.reset();
 
         BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameDatas[currentFrame].renderFinishedFence.getNativeHandle()));
+
+        //Present image, aquire next and clear command pools.
+        swapchain.presentImage(frameDatas[currentFrame].renderFinishedSemaphore);
+        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+        swapchain.aquireImage(frameDatas[currentFrame].imageAvailableSemaphore);
+
+        FrameData &frameData = frameDatas[currentFrame];
+        for(auto &familyAndPool : frameData.commandPoolsByFamily) {
+            if(frameData.renderFinishedFence.isSignaled()) //TODO: is we are gpu bound and the fence is never signaled here, then the pool will never be reset
+                familyAndPool.second.reset();
+            else
+                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled!", currentFrame);
+        }
     }
 
     void VulkanContext::waitForDevice() {
