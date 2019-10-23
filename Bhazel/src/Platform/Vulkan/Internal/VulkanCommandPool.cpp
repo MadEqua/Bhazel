@@ -3,6 +3,8 @@
 #include "VulkanCommandPool.h"
 #include "Platform/Vulkan/Internal/VulkanDevice.h"
 
+#include "Platform/Vulkan/VulkanCommandBuffer.h"
+
 
 namespace BZ {
 
@@ -22,7 +24,34 @@ namespace BZ {
         vkDestroyCommandPool(device, commandPool, nullptr);
     }
 
+    Ref<VulkanCommandBuffer> VulkanCommandPool::getCommandBuffer() {
+        if(buffersFree.empty()) {
+            VkCommandBufferAllocateInfo allocInfo = {};
+            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocInfo.commandPool = commandPool;
+            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            allocInfo.commandBufferCount = 1;
+
+            VkCommandBuffer commandBuffer;
+            BZ_ASSERT_VK(vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer));
+
+            auto &ret = VulkanCommandBuffer::wrap(commandBuffer);
+            buffersInUse.push_back(ret);
+            return ret;
+        }
+        else {
+            auto &freeBuffer = buffersFree.back();
+            buffersInUse.push_back(freeBuffer);
+
+            buffersFree.pop_back();
+            return freeBuffer;
+        }
+    }
+
     void VulkanCommandPool::reset() {
+        std::move(buffersInUse.begin(), buffersInUse.end(), std::back_inserter(buffersFree));
+        buffersInUse.clear();
+
         BZ_ASSERT_VK(vkResetCommandPool(device, commandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT));
     }
 }

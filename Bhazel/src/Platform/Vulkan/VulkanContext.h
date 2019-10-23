@@ -48,9 +48,6 @@ namespace BZ {
         Ref<CommandBuffer> startRecording() override;
         Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) override;
 
-        //Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex) override;
-        //Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) override;
-
         void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) override;
         void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) override;
 

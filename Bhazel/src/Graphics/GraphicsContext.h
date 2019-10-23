@@ -35,9 +35,6 @@ namespace BZ {
         virtual Ref<CommandBuffer> startRecording() = 0;
         virtual Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) = 0;
 
-        //virtual Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex) = 0;
-        //virtual Ref<CommandBuffer> startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) = 0;
-
         virtual void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) = 0;
         virtual void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) = 0;
 

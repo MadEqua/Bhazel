@@ -64,7 +64,7 @@ namespace BZ {
             if(frameData.renderFinishedFence.isSignaled()) //TODO: is we are gpu bound and the fence is never signaled here, then the pool will never be reset
                 familyAndPool.second.reset();
             else
-                BZ_LOG_DEBUG("fence is not signaled!");
+                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled!", currentFrame);
         }
     }
 
@@ -223,7 +223,9 @@ namespace BZ {
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; //Disallowing command buffer reusage
         beginInfo.pInheritanceInfo = nullptr;
 
-        auto &commandBufferRef = VulkanCommandBuffer::create(QueueProperty::Graphics, currentFrame);
+        auto &commandPool = getCurrentFrameCommandPool(QueueProperty::Graphics, false);
+        auto &commandBufferRef = commandPool.getCommandBuffer();
+
         BZ_ASSERT_VK(vkBeginCommandBuffer(commandBufferRef->getNativeHandle(), &beginInfo));
 
         //Record a render pass
@@ -254,13 +256,6 @@ namespace BZ {
 
         return commandBufferRef;
     }
-
-    /*Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex) {
-        return startRecordingForFrame(frameIndex, swapchain.getFramebuffer(frameIndex));
-    }
-
-    Ref<CommandBuffer> VulkanContext::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
-    }*/
 
     void VulkanContext::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);

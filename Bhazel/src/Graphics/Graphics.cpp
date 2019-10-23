@@ -52,14 +52,6 @@ namespace BZ {
         return graphicsContext->startRecording(framebuffer);
     }
 
-    /*Ref<CommandBuffer> Graphics::startRecordingForFrame(uint32 frameIndex) {
-        return graphicsContext->startRecordingForFrame(frameIndex);
-    }
-
-    Ref<CommandBuffer> Graphics::startRecordingForFrame(uint32 frameIndex, const Ref<Framebuffer> &framebuffer) {
-        return graphicsContext->startRecordingForFrame(frameIndex, framebuffer);
-    }*/
-
     void Graphics::startObject(const glm::mat4 &modelMatrix) {
         constantBufferData.modelMatrix = modelMatrix;
         //uint32 objectOffset = static_cast<void*>(&constantBufferData.modelMatrix) - static_cast<void*>(&constantBufferData);
