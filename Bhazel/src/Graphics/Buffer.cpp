@@ -7,6 +7,7 @@
 //#include "Platform/D3D11/D3D11Buffer.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 
+
 namespace BZ {
 
     DataElement::DataElement(DataType dataType, DataElements dataElements, const char *name, bool normalized) :
@@ -70,57 +71,54 @@ namespace BZ {
         }
     }
 
-    Ref<Buffer> Buffer::createVertexBuffer(const void *data, uint32 size, const DataLayout &layout) { 
-        return create(BufferType::Vertex, size, data, layout); 
+    Ref<Buffer> Buffer::createVertexBuffer(const void *data, uint32 size, const DataLayout &layout, bool dynamic) {
+        return create(BufferType::Vertex, size, data, layout, dynamic); 
     }
 
-    Ref<Buffer> Buffer::createIndexBuffer(const void *data, uint32 size) { 
-        return create(BufferType::Index, size, data);
+    Ref<Buffer> Buffer::createIndexBuffer(const void *data, uint32 size, bool dynamic) {
+        return create(BufferType::Index, size, data,  dynamic);
     }
 
-    Ref<Buffer> Buffer::createConstantBuffer(uint32 size) { 
-        return create(BufferType::Constant, size);
+    Ref<Buffer> Buffer::createConstantBuffer(uint32 size, bool dynamic) {
+        return create(BufferType::Constant, size, nullptr, dynamic);
     }
 
-    Ref<Buffer> Buffer::create(BufferType type, uint32 size) {
+    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, bool dynamic) {
         switch(Graphics::api) {
         /*case Graphics::API::OpenGL:
             return MakeRef<OpenGLBuffer>(type, size);
         case Graphics::API::D3D11:
             return MakeRef<D3D11Buffer>(type, size);*/
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanBuffer>(type, size);
+            return MakeRef<VulkanBuffer>(type, size, data, dynamic);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data) {
-        switch(Graphics::api) {
-        /*case Graphics::API::OpenGL:
-            return MakeRef<OpenGLBuffer>(type, size, data);
-        case Graphics::API::D3D11:
-            return MakeRef<D3D11Buffer>(type, size, data);*/
-        case Graphics::API::Vulkan:
-            return MakeRef<VulkanBuffer>(type, size, data);
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return nullptr;
-        }
-    }
-
-    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, const DataLayout&layout) {
+    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, const DataLayout&layout, bool dynamic) {
         switch(Graphics::api) {
         /*case Graphics::API::OpenGL:
             return MakeRef<OpenGLBuffer>(type, size, data, layout);
         case Graphics::API::D3D11:
             return MakeRef<D3D11Buffer>(type, size, data, layout);*/
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanBuffer>(type, size, data, layout);
+            return MakeRef<VulkanBuffer>(type, size, data, layout, dynamic);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
+    }
+
+    Buffer::Buffer(BufferType type, uint32 size, bool dynamic) :
+        type(type), 
+        size(size),
+        dynamic(dynamic) {
+    }
+
+    Buffer::Buffer(BufferType type, uint32 size, const DataLayout &layout, bool dynamic) : 
+        type(type),
+        layout(layout), dynamic(dynamic) {
     }
 }

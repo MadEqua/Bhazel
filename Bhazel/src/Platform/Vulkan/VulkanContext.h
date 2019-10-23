@@ -10,7 +10,7 @@
 #include "Platform/Vulkan/Internal/VulkanCommandPool.h"
 #include "Platform/Vulkan/Internal/VulkanDescriptorPool.h"
 
-#include "Graphics/Graphics.h"
+#include "Constants.h"
 
 struct GLFWwindow;
 
@@ -29,12 +29,12 @@ namespace BZ {
 
         void setVSync(bool enabled) override;
 
-        Ref<Framebuffer> getCurrentFrameFramebuffer() override { return swapchain.getFramebuffer(currentFrame); }
+        uint32 getCurrentFrameIndex() const override { return currentFrameIndex; }
+        Ref<Framebuffer> getCurrentFrameFramebuffer() override { return swapchain.getFramebuffer(currentFrameIndex); }
 
         VkDevice getDevice() const { return device.getNativeHandle(); }
         //VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
 
-        //uint32 getCurrentFrame() const { return currentFrame; }
         VulkanCommandPool& getCurrentFrameCommandPool(QueueProperty property, bool exclusive);
         VulkanDescriptorPool& getDescriptorPool() { return descriptorPool; }
 
@@ -80,7 +80,7 @@ namespace BZ {
             VulkanFence renderFinishedFence;
         };
         FrameData frameDatas[MAX_FRAMES_IN_FLIGHT];
-        uint32 currentFrame = 0;
+        uint32 currentFrameIndex = 0;
 
         VulkanDescriptorPool descriptorPool;
 

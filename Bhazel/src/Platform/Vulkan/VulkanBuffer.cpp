@@ -6,16 +6,12 @@
 
 namespace BZ {
 
-    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size) :
-        VulkanBuffer(type, size, nullptr, DataLayout()) {
+    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void *data, bool dynamic) :
+        VulkanBuffer(type, size, data, DataLayout(), dynamic) {
     }
 
-    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void *data) :
-        VulkanBuffer(type, size, data, DataLayout()) {
-    }
-
-    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void* data, const DataLayout& layout) :
-        Buffer(type, size, layout) {
+    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void* data, const DataLayout &layout, bool dynamic) :
+        Buffer(type, size, layout, dynamic) {
 
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

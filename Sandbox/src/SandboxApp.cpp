@@ -41,8 +41,8 @@ void ExampleLayer::onGraphicsContextCreated() {
     };
     uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
-    vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), dataLayout);
-    indexBuffer = BZ::Buffer::createIndexBuffer(indices, sizeof(indices));
+    vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), dataLayout, false);
+    indexBuffer = BZ::Buffer::createIndexBuffer(indices, sizeof(indices), false);
 
     //constantBuffer = BZ::Buffer::createConstantBuffer(sizeof(ConstantData));
     //constantBuffer->setData(&constantData, sizeof(ConstantData));
@@ -115,7 +115,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     auto commandBuffer = BZ::Graphics::startRecording();
     for(int i = 0; i < 1; ++i) {
 
-        auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.2f)), glm::vec3(glm::sin(frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.0f, 0.0f));
+        auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(5.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.0f, 0.0f));
         BZ::Graphics::startObject(model);
 
         BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);

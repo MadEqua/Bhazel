@@ -15,7 +15,7 @@ namespace BZ {
 
     Graphics::ConstantBufferData Graphics::constantBufferData;
     Ref<Buffer> Graphics::constantBuffer;
-    Ref<DescriptorSet> Graphics::descriptorSet;
+    Ref<DescriptorSet> Graphics::descriptorSet[];
     Ref<DescriptorSetLayout> Graphics::descriptorSetLayout;
 
     GraphicsContext * Graphics::graphicsContext = nullptr;
@@ -23,20 +23,23 @@ namespace BZ {
 
     void Graphics::init() {
         graphicsContext = &Application::getInstance().getGraphicsContext();
-        constantBuffer = Buffer::createConstantBuffer(sizeof(constantBufferData));
+        constantBuffer = Buffer::createConstantBuffer(sizeof(ConstantBufferData) * MAX_FRAMES_IN_FLIGHT, true);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);
         descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-        descriptorSet = DescriptorSet::create(descriptorSetLayout);
-        descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantBufferData));
+        for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+            descriptorSet[i] = DescriptorSet::create(descriptorSetLayout);
+            descriptorSet[i]->setConstantBuffer(constantBuffer, 0, sizeof(ConstantBufferData) * i, sizeof(ConstantBufferData));
+        }
     }
 
     void Graphics::destroy() {
         //Destroy this 'manually' to avoid the static destruction lottery
         constantBuffer.reset();
-        descriptorSet.reset();
+        for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+            descriptorSet[i].reset();
         descriptorSetLayout.reset();
     }
 
@@ -57,14 +60,18 @@ namespace BZ {
         constantBufferData.projectionMatrix = projectionMatrix;
         constantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
 
-        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), 0); //TODO: set only the frame part of the buffer
+        //TODO: set only the frame part of the buffer
+        uint32 frameOffset = sizeof(ConstantBufferData) * graphicsContext->getCurrentFrameIndex();
+        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), frameOffset);
     }
 
     void Graphics::startObject(const glm::mat4 &modelMatrix) {
         constantBufferData.modelMatrix = modelMatrix;
         //uint32 objectOffset = static_cast<void*>(&constantBufferData.modelMatrix) - static_cast<void*>(&constantBufferData);
 
-        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), 0); //TODO: set only the object part of the buffer
+        //TODO: set only the object part of the buffer
+        uint32 frameOffset = sizeof(ConstantBufferData) * graphicsContext->getCurrentFrameIndex();
+        constantBuffer->setData(&constantBufferData, sizeof(ConstantBufferData), frameOffset); 
     }
 
     void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
@@ -76,7 +83,7 @@ namespace BZ {
     }
 
     void Graphics::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
-        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState); //Always bind the engine descriptor set. TODO: can this be done only once?
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet[graphicsContext->getCurrentFrameIndex()], pipelineState); //Always bind the engine descriptor set. TODO: can this be done only once?
         graphicsContext->bindPipelineState(commandBuffer, pipelineState);
     }
 

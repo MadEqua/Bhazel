@@ -12,9 +12,8 @@ namespace BZ {
 
     class VulkanBuffer : public Buffer, public VulkanGpuObject<VkBuffer> {
     public:
-        VulkanBuffer(BufferType type, uint32 size);
-        VulkanBuffer(BufferType type, uint32 size, const void *data);
-        VulkanBuffer(BufferType type, uint32 size, const void *data, const DataLayout&layout);
+        VulkanBuffer(BufferType type, uint32 size, const void *data, bool dynamic);
+        VulkanBuffer(BufferType type, uint32 size, const void *data, const DataLayout &layout, bool dynamic);
         virtual ~VulkanBuffer() override;
 
         virtual void setData(const void *data, uint32 size, uint32 offset = 0) override;

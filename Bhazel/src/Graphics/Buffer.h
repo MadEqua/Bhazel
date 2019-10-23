@@ -3,10 +3,6 @@
 
 namespace BZ {
 
-    enum class BufferType {
-        Vertex, Index, Constant
-    };
-
     enum class DataType {
         Float32, Float16,
         Int32, Int16, Int8,
@@ -67,18 +63,22 @@ namespace BZ {
         void calculateOffsetsAndStride();
     };
 
+
+    enum class BufferType {
+        Vertex, Index, Constant
+    };
+
     class Buffer {
     public:
         virtual ~Buffer() = default;
 
         //Utility create functions
-        static Ref<Buffer> createVertexBuffer(const void *data, uint32 size, const DataLayout& layout);
-        static Ref<Buffer> createIndexBuffer(const void *data, uint32 size);
-        static Ref<Buffer> createConstantBuffer(uint32 size);
+        static Ref<Buffer> createVertexBuffer(const void *data, uint32 size, const DataLayout& layout, bool dynamic);
+        static Ref<Buffer> createIndexBuffer(const void *data, uint32 size, bool dynamic);
+        static Ref<Buffer> createConstantBuffer(uint32 size, bool dynamic);
 
-        static Ref<Buffer> create(BufferType type, uint32 size);
-        static Ref<Buffer> create(BufferType type, uint32 size, const void *data);
-        static Ref<Buffer> create(BufferType type, uint32 size, const void *data, const DataLayout& layout);
+        static Ref<Buffer> create(BufferType type, uint32 size, const void *data, bool dynamic);
+        static Ref<Buffer> create(BufferType type, uint32 size, const void *data, const DataLayout& layout, bool dynamic);
 
         virtual void setData(const void *data, uint32 size, uint32 offset = 0) = 0;
 
@@ -90,8 +90,9 @@ namespace BZ {
         uint32 size;
         BufferType type;
         DataLayout layout;
+        bool dynamic;
 
-        Buffer(BufferType type, uint32 size) : type(type), size(size) {}
-        Buffer(BufferType type, uint32 size, const DataLayout&layout) : type(type), size(size), layout(layout) {}
+        Buffer(BufferType type, uint32 size, bool dynamic);
+        Buffer(BufferType type, uint32 size, const DataLayout &layout, bool dynamic);
     };
 }

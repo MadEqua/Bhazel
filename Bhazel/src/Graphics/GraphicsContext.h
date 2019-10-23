@@ -24,8 +24,8 @@ namespace BZ {
         virtual void setVSync(bool enabled) { vsync = enabled; };
         bool isVSync() const { return vsync; }
 
+        virtual uint32 getCurrentFrameIndex() const = 0;
         virtual Ref<Framebuffer> getCurrentFrameFramebuffer() = 0;
-        //virtual Ref<Framebuffer> getFramebuffer(uint32 frameIdx) = 0;
 
         /////////////////////////////////////////////////////////
         // API

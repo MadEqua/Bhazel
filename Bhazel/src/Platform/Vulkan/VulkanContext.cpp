@@ -46,7 +46,7 @@ namespace BZ {
         createFrameData();
 
         swapchain.init(device, surface);
-        swapchain.aquireImage(frameDatas[currentFrame].imageAvailableSemaphore);
+        swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
 
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
@@ -70,7 +70,7 @@ namespace BZ {
         else {
             families = physicalDevice.getQueueFamilyContainer().getFamiliesThatContain(property);
         }
-        return frameDatas[currentFrame].commandPoolsByFamily[families[0]->getIndex()];
+        return frameDatas[currentFrameIndex].commandPoolsByFamily[families[0]->getIndex()];
     }
 
     uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
@@ -84,7 +84,7 @@ namespace BZ {
         cleanupFrameData();
         createFrameData();
 
-        currentFrame = 0;
+        currentFrameIndex = 0;
     }
 
     void VulkanContext::createInstance() {
@@ -198,7 +198,7 @@ namespace BZ {
     // API
     /////////////////////////////////////////////////////////
     Ref<CommandBuffer> VulkanContext::startRecording() {
-        return startRecording(swapchain.getFramebuffer(currentFrame));
+        return startRecording(swapchain.getFramebuffer(currentFrameIndex));
     }
 
     Ref<CommandBuffer> VulkanContext::startRecording(const Ref<Framebuffer> &framebuffer) {
@@ -291,7 +291,7 @@ namespace BZ {
     void VulkanContext::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
-        VkSemaphore waitSemaphores[] = { frameDatas[currentFrame].imageAvailableSemaphore.getNativeHandle() };
+        VkSemaphore waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore.getNativeHandle() };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
         VkCommandBuffer vkCommandBuffers[] = { vulkanCommandBuffer.getNativeHandle() };
 
@@ -305,13 +305,13 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 0;
         submitInfo.pSignalSemaphores = nullptr;
 
-        frameDatas[currentFrame].renderFinishedFence.waitFor();
+        frameDatas[currentFrameIndex].renderFinishedFence.waitFor();
 
         BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
 
     void VulkanContext::endFrame() {
-        VkSemaphore signalSemaphores[] = { frameDatas[currentFrame].renderFinishedSemaphore.getNativeHandle() };
+        VkSemaphore signalSemaphores[] = { frameDatas[currentFrameIndex].renderFinishedSemaphore.getNativeHandle() };
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -323,23 +323,23 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        frameDatas[currentFrame].renderFinishedFence.waitFor();
-        frameDatas[currentFrame].renderFinishedFence.reset();
+        frameDatas[currentFrameIndex].renderFinishedFence.waitFor();
+        frameDatas[currentFrameIndex].renderFinishedFence.reset();
 
-        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameDatas[currentFrame].renderFinishedFence.getNativeHandle()));
+        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameDatas[currentFrameIndex].renderFinishedFence.getNativeHandle()));
 
         //Present image, aquire next and clear command pools.
-        swapchain.presentImage(frameDatas[currentFrame].renderFinishedSemaphore);
-        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+        swapchain.presentImage(frameDatas[currentFrameIndex].renderFinishedSemaphore);
+        currentFrameIndex = (currentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 
-        swapchain.aquireImage(frameDatas[currentFrame].imageAvailableSemaphore);
+        swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
 
-        FrameData &frameData = frameDatas[currentFrame];
+        FrameData &frameData = frameDatas[currentFrameIndex];
         for(auto &familyAndPool : frameData.commandPoolsByFamily) {
             if(frameData.renderFinishedFence.isSignaled()) //TODO: is we are gpu bound and the fence is never signaled here, then the pool will never be reset
                 familyAndPool.second.reset();
             else
-                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled!", currentFrame);
+                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled!", currentFrameIndex);
         }
     }
 

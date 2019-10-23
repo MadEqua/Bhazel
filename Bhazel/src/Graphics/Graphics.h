@@ -1,10 +1,9 @@
 #pragma once
 
+#include "Constants.h"
+
 
 namespace BZ {
-
-    constexpr static int MAX_FRAMES_IN_FLIGHT = 3;
-    constexpr static int MAX_FRAMEBUFFER_ATTACHEMENTS = 8;
 
     class Buffer;
     class WindowResizedEvent;
@@ -63,7 +62,7 @@ namespace BZ {
         static API api;
 
     private:
-        struct ConstantBufferData {
+        struct alignas(256) ConstantBufferData {
             //Per frame
             glm::mat4 viewMatrix;
             glm::mat4 projectionMatrix;
@@ -76,7 +75,7 @@ namespace BZ {
         };
         static ConstantBufferData constantBufferData;
         static Ref<Buffer> constantBuffer;
-        static Ref<DescriptorSet> descriptorSet;
+        static Ref<DescriptorSet> descriptorSet[MAX_FRAMES_IN_FLIGHT];
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
         static GraphicsContext *graphicsContext;
