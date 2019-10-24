@@ -57,6 +57,7 @@ namespace BZ {
         };
 
         const std::vector<DescriptorDesc>& getDescriptorDescs() const { return descriptorDescs; }
+        bool hasDescriptorOfType(DescriptorType type) const;
 
     protected:
         explicit DescriptorSetLayout(const Builder &builder);
@@ -65,7 +66,9 @@ namespace BZ {
         std::vector<DescriptorDesc> descriptorDescs;
     };
 
-
+    /*
+    * When the DescriptorSet contains a Buffer marked as dynamic, it will manage internally N descriptor sets, one for each offset/replica of the buffer.
+    */
     class DescriptorSet {
     public:
         static Ref<DescriptorSet> create(const Ref<DescriptorSetLayout> &layout);

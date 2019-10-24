@@ -2,10 +2,14 @@
 
 #include "Buffer.h"
 #include "Graphics/Graphics.h"
+#include "Constants.h"
 
 //#include "Platform/OpenGL/OpenGLBuffer.h"
 //#include "Platform/D3D11/D3D11Buffer.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
+
+#include "Core/Application.h"
+#include "Graphics/GraphicsContext.h"
 
 
 namespace BZ {
@@ -79,46 +83,81 @@ namespace BZ {
         return create(BufferType::Index, size, data,  dynamic);
     }
 
+    Ref<Buffer> Buffer::createConstantBuffer(const void *data, uint32 size, bool dynamic) {
+        return create(BufferType::Constant, size, data, dynamic);
+    }
+
     Ref<Buffer> Buffer::createConstantBuffer(uint32 size, bool dynamic) {
         return create(BufferType::Constant, size, nullptr, dynamic);
     }
 
     Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, bool dynamic) {
         switch(Graphics::api) {
-        /*case Graphics::API::OpenGL:
-            return MakeRef<OpenGLBuffer>(type, size);
-        case Graphics::API::D3D11:
-            return MakeRef<D3D11Buffer>(type, size);*/
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanBuffer>(type, size, data, dynamic);
+            return MakeRef<VulkanBuffer>(type, size, data, nullptr, dynamic);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, const DataLayout&layout, bool dynamic) {
+    Ref<Buffer> Buffer::create(BufferType type, uint32 size, const void *data, const DataLayout &layout, bool dynamic) {
         switch(Graphics::api) {
-        /*case Graphics::API::OpenGL:
-            return MakeRef<OpenGLBuffer>(type, size, data, layout);
-        case Graphics::API::D3D11:
-            return MakeRef<D3D11Buffer>(type, size, data, layout);*/
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanBuffer>(type, size, data, layout, dynamic);
+            return MakeRef<VulkanBuffer>(type, size, data, &layout, dynamic);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Buffer::Buffer(BufferType type, uint32 size, bool dynamic) :
-        type(type), 
-        size(size),
-        dynamic(dynamic) {
+    Buffer::Buffer(BufferType type, uint32 size, const DataLayout *layout, bool dynamic) :
+        type(type), dynamic(dynamic), size(size) {
+
+        if(dynamic)
+            realSize = size * MAX_FRAMES_IN_FLIGHT;
+        else
+            realSize = size;
+
+        if(layout)
+            this->layout = *layout;
     }
 
-    Buffer::Buffer(BufferType type, uint32 size, const DataLayout &layout, bool dynamic) : 
-        type(type),
-        layout(layout), dynamic(dynamic) {
+    void Buffer::initBufferData(const void *data) {
+        if(data) {
+            if(dynamic)
+                for(uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+                    uint32 baseOfReplica = i * size;
+                    internalSetData(data, baseOfReplica, size);
+                }
+            else
+                internalSetData(data, 0, size);
+        }
+    }
+
+    void Buffer::setData(const void *data, uint32 offset, uint32 size) {
+        BZ_ASSERT_CORE(data, "Data is null!");
+        BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
+        BZ_ASSERT_CORE(size > 0, "Size is not valid!");
+
+        uint32 baseOfReplica = dynamic ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * size : 0;
+        internalSetData(data, baseOfReplica + offset, size);
+    }
+
+    void* Buffer::map(uint32 offset, uint32 size) {
+        BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
+        BZ_ASSERT_CORE(size > 0, "Size is not valid!");
+        BZ_ASSERT_CORE(!isMapped, "Buffer already mapped!");
+
+        isMapped = true;
+        uint32 baseOfReplica = dynamic ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * size : 0;
+        return internalMap(baseOfReplica + offset, size);
+    }
+
+    void Buffer::unmap() {
+        BZ_ASSERT_CORE(isMapped, "Buffer not mapped!");
+
+        isMapped = false;
+        internalUnmap();
     }
 }

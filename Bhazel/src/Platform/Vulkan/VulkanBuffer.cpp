@@ -6,16 +6,12 @@
 
 namespace BZ {
 
-    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void *data, bool dynamic) :
-        VulkanBuffer(type, size, data, DataLayout(), dynamic) {
-    }
-
-    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void* data, const DataLayout &layout, bool dynamic) :
+    VulkanBuffer::VulkanBuffer(BufferType type, uint32 size, const void* data, const DataLayout *layout, bool dynamic) :
         Buffer(type, size, layout, dynamic) {
 
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = size;
+        bufferInfo.size = realSize;
         bufferInfo.usage = bufferTypeToVK(type);
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; //TODO
 
@@ -34,8 +30,7 @@ namespace BZ {
         BZ_ASSERT_VK(vkAllocateMemory(getDevice(), &allocInfo, nullptr, &memoryHandle));
         BZ_ASSERT_VK(vkBindBufferMemory(getDevice(), nativeHandle, memoryHandle, 0));
 
-        if(data)
-            setData(data, size);
+        initBufferData(data);
     }
 
     VulkanBuffer::~VulkanBuffer() {
@@ -43,13 +38,20 @@ namespace BZ {
         vkFreeMemory(getDevice(), memoryHandle, nullptr);
     }
 
-    void VulkanBuffer::setData(const void *data, uint32 size, uint32 offset) {
-        BZ_ASSERT_CORE(data, "Data is null!")
-        BZ_ASSERT_CORE(data > 0, "Data size is not valid!")
-
+    void VulkanBuffer::internalSetData(const void *data, uint32 offset, uint32 size) {
         void *ptr;
         BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, offset, size, 0, &ptr));
         memcpy(ptr, data, size);
+        vkUnmapMemory(getDevice(), memoryHandle);
+    }
+
+    void* VulkanBuffer::internalMap(uint32 offset, uint32 size) {
+        void *ptr;
+        BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, offset, size, 0, &ptr));
+        return ptr;
+    }
+
+    void VulkanBuffer::internalUnmap() {
         vkUnmapMemory(getDevice(), memoryHandle);
     }
 }

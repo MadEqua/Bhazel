@@ -75,7 +75,7 @@ namespace BZ {
         };
         static ConstantBufferData constantBufferData;
         static Ref<Buffer> constantBuffer;
-        static Ref<DescriptorSet> descriptorSet[MAX_FRAMES_IN_FLIGHT];
+        static Ref<DescriptorSet> descriptorSet;
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
         static GraphicsContext *graphicsContext;

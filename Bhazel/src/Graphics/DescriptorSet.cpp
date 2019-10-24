@@ -26,6 +26,13 @@ namespace BZ {
         }
     }
 
+    bool DescriptorSetLayout::hasDescriptorOfType(DescriptorType type) const {
+        for(auto &desc : descriptorDescs) {
+            if(desc.type == type) return true;
+        }
+        return false;
+    }
+
     DescriptorSetLayout::DescriptorSetLayout(const Builder &builder) :
         descriptorDescs(std::move(builder.descriptorDescs)) {
         BZ_ASSERT_CORE(!builder.descriptorDescs.empty(), "No Descriptor descriptions added!");

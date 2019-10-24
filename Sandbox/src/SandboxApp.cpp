@@ -116,6 +116,14 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     for(int i = 0; i < 1; ++i) {
 
         auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(5.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.0f, 0.0f));
+
+        /*if(BZ::Application::getInstance().getGraphicsContext().getCurrentFrameIndex() == 0)
+            model[3].x = -1;
+        if(BZ::Application::getInstance().getGraphicsContext().getCurrentFrameIndex() == 1)
+            model[3].x = 0;
+        if(BZ::Application::getInstance().getGraphicsContext().getCurrentFrameIndex() == 2)
+            model[3].x = 1;*/
+
         BZ::Graphics::startObject(model);
 
         BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
