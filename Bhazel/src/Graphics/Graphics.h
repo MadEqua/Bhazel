@@ -45,7 +45,8 @@ namespace BZ {
         
         static void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState);
         //static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
-        static void bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState);
+        static void bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
+                                      const Ref<PipelineState> &pipelineState, uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
 
         static void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
         static void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);
@@ -62,7 +63,7 @@ namespace BZ {
         static API api;
 
     private:
-        struct alignas(256) ConstantBufferData {
+        struct alignas(256) ConstantBufferData { //TODO: check this align value
             //Per frame
             glm::mat4 viewMatrix;
             glm::mat4 projectionMatrix;
@@ -79,5 +80,7 @@ namespace BZ {
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
         static GraphicsContext *graphicsContext;
+
+        //static uint32 currentObjectIndex;
     };
 }

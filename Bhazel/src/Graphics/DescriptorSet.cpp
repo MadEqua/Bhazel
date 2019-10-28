@@ -9,7 +9,7 @@
 
 namespace BZ {
 
-    DescriptorSetLayout::Builder& DescriptorSetLayout::Builder::addDescriptorDesc(DescriptorType type, uint8 shaderStageVisibilityMask, uint32 arrayCount) {
+    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::addDescriptorDesc(DescriptorType type, uint8 shaderStageVisibilityMask, uint32 arrayCount) {
         BZ_ASSERT_CORE(arrayCount > 0, "Array count must be > 0!");
 
         descriptorDescs.push_back({ type, shaderStageVisibilityMask, arrayCount });
@@ -24,13 +24,6 @@ namespace BZ {
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
-    }
-
-    bool DescriptorSetLayout::hasDescriptorOfType(DescriptorType type) const {
-        for(auto &desc : descriptorDescs) {
-            if(desc.type == type) return true;
-        }
-        return false;
     }
 
     DescriptorSetLayout::DescriptorSetLayout(const Builder &builder) :

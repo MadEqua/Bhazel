@@ -263,13 +263,14 @@ namespace BZ {
         vkCmdBindPipeline(vulkanCommandBuffer.getNativeHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipelineState.getNativeHandle().pipeline);
     }
 
-    void VulkanContext::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
+    void VulkanContext::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
+                                          const Ref<PipelineState> &pipelineState, uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-
+        
         auto &vulkanPipelineState = static_cast<const VulkanPipelineState &>(*pipelineState);
         VkDescriptorSet descSets[] = { static_cast<const VulkanDescriptorSet &>(*descriptorSet).getNativeHandle() };
         vkCmdBindDescriptorSets(vulkanCommandBuffer.getNativeHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS,
-            vulkanPipelineState.getNativeHandle().pipelineLayout, 0, 1, descSets, 0, nullptr);
+            vulkanPipelineState.getNativeHandle().pipelineLayout, 0, 1, descSets, dynamicBufferCount, dynamicBufferOffsets);
     }
 
     void VulkanContext::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {

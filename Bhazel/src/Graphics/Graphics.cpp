@@ -26,7 +26,7 @@ namespace BZ {
         constantBuffer = Buffer::createConstantBuffer(sizeof(ConstantBufferData), true);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBufferDynamic, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);
         descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         descriptorSet = DescriptorSet::create(descriptorSetLayout);
@@ -78,7 +78,11 @@ namespace BZ {
     }
 
     void Graphics::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
-        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState); //Always bind the engine descriptor set. TODO: can this be done only once?
+        //Always bind the engine descriptor set, it's per frame dynamic.
+        //TODO: this should only be bound once per frame, not here.
+        uint32 currentFrameBase = sizeof(ConstantBufferData) * graphicsContext->getCurrentFrameIndex();
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, &currentFrameBase, 1);
+
         graphicsContext->bindPipelineState(commandBuffer, pipelineState);
     }
 
@@ -86,8 +90,9 @@ namespace BZ {
         graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
     }*/
 
-    void Graphics::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, const Ref<PipelineState> &pipelineState) {
-        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+    void Graphics::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
+                                     const Ref<PipelineState> &pipelineState, uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, dynamicBufferOffsets, dynamicBufferCount);
     }
 
     void Graphics::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
