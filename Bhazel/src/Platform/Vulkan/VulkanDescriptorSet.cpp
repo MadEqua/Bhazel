@@ -67,7 +67,7 @@ namespace BZ {
         write.dstBinding = binding;
         write.dstArrayElement = 0;
         write.descriptorCount = 1;
-        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        write.descriptorType = descriptorTypeToVk(layout->getDescriptorDescs()[binding].type);
         write.pBufferInfo = &bufferInfo;
         vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
     }

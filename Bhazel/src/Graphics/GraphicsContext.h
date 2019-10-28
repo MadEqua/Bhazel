@@ -39,7 +39,8 @@ namespace BZ {
         virtual void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) = 0;
         //virtual void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet) = 0;
         virtual void bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet,
-                                       const Ref<PipelineState> &pipelineState, uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) = 0;
+                                       const Ref<PipelineState> &pipelineState, uint32 setIndex,
+                                       uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) = 0;
 
         virtual void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) = 0;
         virtual void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) = 0;

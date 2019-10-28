@@ -33,7 +33,8 @@ namespace BZ {
         BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(), 
             "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
 
-        //Always add the main descriptor set layout for the engine.
+        //Always add the main descriptor set layouts for the engine.
+        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDescriptorSetLayout());
         data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDescriptorSetLayout());
     }
 }

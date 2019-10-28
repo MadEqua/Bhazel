@@ -28,11 +28,6 @@ namespace BZ {
             Vulkan
         };
 
-        static void init();
-        static void destroy();
-
-        static void onWindowResize(WindowResizedEvent &ev);
-
         //Start recording getting a CommandBuffer from the CommandPool reserved to the current frame.
         static Ref<CommandBuffer> startRecording();
         static Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer);
@@ -46,15 +41,18 @@ namespace BZ {
         static void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState);
         //static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
         static void bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
-                                      const Ref<PipelineState> &pipelineState, uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
+                                      const Ref<PipelineState> &pipelineState, uint32 setIndex,
+                                      uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
 
         static void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
         static void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);
 
+        static void endObject();
+        static void endScene();
+
         static void endRecording(const Ref<CommandBuffer> &commandBuffer);
 
         static void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer);
-        static void endFrame();
 
         static void waitForDevice();
 
@@ -63,24 +61,39 @@ namespace BZ {
         static API api;
 
     private:
-        struct alignas(256) ConstantBufferData { //TODO: check this align value
-            //Per frame
+        friend class Application;
+        static void onWindowResize(WindowResizedEvent &ev);
+
+        static void init();
+        static void destroy();
+        static void endFrame();
+
+        struct alignas(256) FrameConstantBufferData { //TODO: check this align value
             glm::mat4 viewMatrix;
             glm::mat4 projectionMatrix;
             glm::mat4 viewProjectionMatrix;
             alignas(16) glm::vec3 cameraPosition;
             alignas(8) glm::vec2 timeAndDelta;
-
-            //Per object
-            alignas(16) glm::mat4 modelMatrix;
         };
-        static ConstantBufferData constantBufferData;
-        static Ref<Buffer> constantBuffer;
-        static Ref<DescriptorSet> descriptorSet;
+
+        struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
+            glm::mat4 modelMatrix;
+        };
+
+
+        static FrameConstantBufferData frameConstantBufferData;
+        static ObjectConstantBufferData objectConstantBufferData;
+
+        static Ref<Buffer> frameConstantBuffer;
+        static Ref<Buffer> objectConstantBuffer;
+
+        static Ref<DescriptorSet> frameDescriptorSet;
+        static Ref<DescriptorSet> objectDescriptorSet;
+
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
         static GraphicsContext *graphicsContext;
 
-        //static uint32 currentObjectIndex;
+        static uint32 currentObjectIndex;
     };
 }

@@ -140,7 +140,7 @@ namespace BZ {
         BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
         BZ_ASSERT_CORE(size > 0, "Size is not valid!");
 
-        uint32 baseOfReplica = dynamic ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * size : 0;
+        uint32 baseOfReplica = dynamic ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * this->size : 0;
         internalSetData(data, baseOfReplica + offset, size);
     }
 
@@ -150,7 +150,7 @@ namespace BZ {
         BZ_ASSERT_CORE(!isMapped, "Buffer already mapped!");
 
         isMapped = true;
-        uint32 baseOfReplica = dynamic ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * size : 0;
+        uint32 baseOfReplica = dynamic ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * this->size : 0;
         return internalMap(baseOfReplica + offset, size);
     }
 

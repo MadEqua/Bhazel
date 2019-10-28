@@ -113,9 +113,9 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Graphics::startScene(glm::mat4(1.0f), glm::mat4(1.0f));
 
     auto commandBuffer = BZ::Graphics::startRecording();
-    for(int i = 0; i < 1; ++i) {
+    for(int i = 0; i < 20; ++i) {
 
-        auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(5.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.0f, 0.0f));
+        auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
 
         /*if(BZ::Application::getInstance().getGraphicsContext().getCurrentFrameIndex() == 0)
             model[3].x = -1;
@@ -131,6 +131,8 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
         //BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
         BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
         BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+
+        BZ::Graphics::endObject();
     }
 
     BZ::Graphics::endRecording(commandBuffer);
