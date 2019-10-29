@@ -8,6 +8,7 @@
 #include "Graphics/Buffer.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/PipelineState.h"
+#include "Graphics/Shader.h"
 
 
 namespace BZ {
@@ -24,10 +25,13 @@ namespace BZ {
     Ref<DescriptorSet> Graphics::objectDescriptorSet;
 
     Ref<DescriptorSetLayout> Graphics::descriptorSetLayout;
+    
+    Ref<PipelineState> Graphics::dummyPipelineState;
 
     GraphicsContext* Graphics::graphicsContext = nullptr;
 
     uint32 Graphics::currentObjectIndex = 0;
+    bool Graphics::shouldBindFrameDescriptorSet = false;
 
 
     void Graphics::init() {
@@ -45,6 +49,20 @@ namespace BZ {
 
         objectDescriptorSet = DescriptorSet::create(descriptorSetLayout);
         objectDescriptorSet->setConstantBuffer(objectConstantBuffer, 0, 0, sizeof(ObjectConstantBufferData));
+
+        PipelineStateData pipelineStateData;
+        pipelineStateData.primitiveTopology = BZ::PrimitiveTopology::Triangles;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, 1.0f, 1.0f} };
+        pipelineStateData.blendingState.attachmentBlendingStates = { {} };
+        pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
+        pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
+        Shader::Builder shaderBuilder;
+        shaderBuilder.setName("dummy");
+        shaderBuilder.fromBinaryFile(BZ::ShaderStage::Vertex, "shaders/bin/dummyVert.spv");
+        shaderBuilder.fromBinaryFile(BZ::ShaderStage::Fragment, "shaders/bin/dummyFrag.spv");
+        pipelineStateData.shader = shaderBuilder.build();
+
+        dummyPipelineState = PipelineState::create(pipelineStateData);
     }
 
     void Graphics::destroy() {
@@ -54,10 +72,7 @@ namespace BZ {
         frameDescriptorSet.reset();
         objectDescriptorSet.reset();
         descriptorSetLayout.reset();
-    }
-
-    void Graphics::onWindowResize(WindowResizedEvent &ev) {
-        //BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
+        dummyPipelineState.reset();
     }
 
     Ref<CommandBuffer> Graphics::startRecording() {
@@ -68,7 +83,7 @@ namespace BZ {
         return graphicsContext->startRecording(framebuffer);
     }
 
-    void Graphics::startScene(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+    void Graphics::startScene(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
         FrameConstantBufferData frameConstantBufferData;
         frameConstantBufferData.viewMatrix = viewMatrix;
         frameConstantBufferData.projectionMatrix = projectionMatrix;
@@ -77,9 +92,16 @@ namespace BZ {
         frameConstantBuffer->setData(&frameConstantBufferData, 0, sizeof(FrameConstantBufferData));
 
         currentObjectIndex = 0;
+
+        //The first scene of the frame will bind frame DescriptorSets.
+        if(shouldBindFrameDescriptorSet) {
+            uint32 currentFrameBase = sizeof(FrameConstantBufferData) * graphicsContext->getCurrentFrameIndex();
+            graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, dummyPipelineState, 0, &currentFrameBase, 1);
+            shouldBindFrameDescriptorSet = false;
+        }
     }
 
-    void Graphics::startObject(const glm::mat4 &modelMatrix) {
+    void Graphics::startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix) {
         BZ_ASSERT_CORE(currentObjectIndex < MAX_OBJECTS_PER_FRAME, "currentObjectIndex exceeded MAX_OBJECTS_PER_FRAME!");
 
         ObjectConstantBufferData objectConstantBufferData;
@@ -87,6 +109,10 @@ namespace BZ {
 
         uint32 objectOffset = currentObjectIndex * sizeof(ObjectConstantBufferData);
         objectConstantBuffer->setData(&objectConstantBufferData, objectOffset, sizeof(ObjectConstantBufferData));
+
+        uint32 currentFrameBase = MAX_OBJECTS_PER_FRAME * sizeof(ObjectConstantBufferData) * graphicsContext->getCurrentFrameIndex();
+        uint32 totalOffset = currentFrameBase + currentObjectIndex * sizeof(ObjectConstantBufferData);
+        graphicsContext->bindDescriptorSet(commandBuffer, objectDescriptorSet, dummyPipelineState, 1, &totalOffset, 1);
     }
 
     void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
@@ -98,17 +124,6 @@ namespace BZ {
     }
 
     void Graphics::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
-
-        //Always bind the engine descriptor set, it's per frame dynamic.
-        //TODO: this should only be bound once per frame, not here.
-        uint32 currentFrameBase = sizeof(FrameConstantBufferData) * graphicsContext->getCurrentFrameIndex();
-        graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, pipelineState, 0, &currentFrameBase, 1);
-
-        //TODO: this does not belong here. The "problem" to move it is pipelineState.
-        currentFrameBase = MAX_OBJECTS_PER_FRAME * sizeof(ObjectConstantBufferData) * graphicsContext->getCurrentFrameIndex();
-        uint32 totalOffset = currentFrameBase + currentObjectIndex * sizeof(ObjectConstantBufferData);
-        graphicsContext->bindDescriptorSet(commandBuffer, objectDescriptorSet, pipelineState, 1, &totalOffset, 1);
-
         graphicsContext->bindPipelineState(commandBuffer, pipelineState);
     }
 
@@ -145,11 +160,19 @@ namespace BZ {
         graphicsContext->submitCommandBuffer(commandBuffer);
     }
 
+    void Graphics::waitForDevice() {
+        graphicsContext->waitForDevice();
+    }
+
+    void Graphics::startFrame() {
+        shouldBindFrameDescriptorSet = true;
+    }
+
     void Graphics::endFrame() {
         graphicsContext->endFrame();
     }
 
-    void Graphics::waitForDevice() {
-        graphicsContext->waitForDevice();
+    void Graphics::onWindowResize(WindowResizedEvent &ev) {
+        //BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
     }
 }

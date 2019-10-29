@@ -69,6 +69,8 @@ namespace BZ {
 
             if(!window->isMinimized()) {
 
+                Graphics::startFrame();
+
                 layerStack.onUpdate(frameStats);
 
                 /*imGuiLayer->begin();

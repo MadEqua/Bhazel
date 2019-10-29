@@ -32,8 +32,8 @@ namespace BZ {
         static Ref<CommandBuffer> startRecording();
         static Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer);
 
-        static void startScene(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
-        static void startObject(const glm::mat4 &modelMatrix);
+        static void startScene(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
+        static void startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix);
 
         static void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
         static void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
@@ -66,6 +66,8 @@ namespace BZ {
 
         static void init();
         static void destroy();
+
+        static void startFrame();
         static void endFrame();
 
         struct alignas(256) FrameConstantBufferData { //TODO: check this align value
@@ -81,9 +83,6 @@ namespace BZ {
         };
 
 
-        //static FrameConstantBufferData frameConstantBufferData;
-        //static ObjectConstantBufferData objectConstantBufferData;
-
         static Ref<Buffer> frameConstantBuffer;
         static Ref<Buffer> objectConstantBuffer;
 
@@ -93,8 +92,13 @@ namespace BZ {
         //Same layout for both DescriptorSets.
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
+        //Dummy data, except for the DescriptorSetLayout list, which contains the above descriptorSetLayout.
+        //Used to bind engine DescriptorSets at any place.
+        static Ref<PipelineState> dummyPipelineState;
+
         static GraphicsContext *graphicsContext;
 
         static uint32 currentObjectIndex;
+        static bool shouldBindFrameDescriptorSet;
     };
 }
