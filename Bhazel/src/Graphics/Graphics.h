@@ -86,6 +86,9 @@ namespace BZ {
         static Ref<Buffer> frameConstantBuffer;
         static Ref<Buffer> objectConstantBuffer;
 
+        static byte *frameConstantBufferPtr;
+        static byte *objectConstantBufferPtr;
+
         static Ref<DescriptorSet> frameDescriptorSet;
         static Ref<DescriptorSet> objectDescriptorSet;
 
@@ -93,7 +96,7 @@ namespace BZ {
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
         //Dummy data, except for the DescriptorSetLayout list, which contains the above descriptorSetLayout.
-        //Used to bind engine DescriptorSets at any place.
+        //Used to bind engine DescriptorSets at any code place.
         static Ref<PipelineState> dummyPipelineState;
 
         static GraphicsContext *graphicsContext;

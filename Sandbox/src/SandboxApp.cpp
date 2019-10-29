@@ -116,6 +116,10 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     
     BZ::Graphics::startScene(commandBuffer, glm::mat4(1.0f), glm::mat4(1.0f));
 
+    BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
+    BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
+    BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
+
     for(int i = 0; i < 20; ++i) {
 
         auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
@@ -128,11 +132,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
             model[3].x = 1;*/
 
         BZ::Graphics::startObject(commandBuffer, model);
-
-        BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
-        BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
         //BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
-        BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
         BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 
         BZ::Graphics::endObject();

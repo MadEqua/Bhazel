@@ -86,7 +86,7 @@ namespace BZ {
         static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType, const DataLayout &layout);
 
         void setData(const void *data, uint32 offset, uint32 size);
-        void* map(uint32 offset, uint32 size);
+        byte* map(uint32 offset, uint32 size);
         void unmap();
 
         uint32 getSize() const { return size; }
@@ -94,6 +94,8 @@ namespace BZ {
 
         bool isDynamic() const { return memoryType != MemoryType::Static; }
         const DataLayout& getLayout() const { return layout; }
+
+        uint32 getBaseOfReplicaOffset() const;
 
     protected:
         BufferType type;
@@ -111,7 +113,7 @@ namespace BZ {
         //void initBufferData(const void *data);
 
         virtual void internalSetData(const void *data, uint32 offset, uint32 size) = 0;
-        virtual void* internalMap(uint32 offset, uint32 size) = 0;
+        virtual byte* internalMap(uint32 offset, uint32 size) = 0;
         virtual void internalUnmap() = 0;
     };
 }

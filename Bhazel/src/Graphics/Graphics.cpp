@@ -21,6 +21,9 @@ namespace BZ {
     Ref<Buffer> Graphics::frameConstantBuffer;
     Ref<Buffer> Graphics::objectConstantBuffer;
 
+    byte* Graphics::frameConstantBufferPtr = nullptr;
+    byte* Graphics::objectConstantBufferPtr  = nullptr;
+
     Ref<DescriptorSet> Graphics::frameDescriptorSet;
     Ref<DescriptorSet> Graphics::objectDescriptorSet;
 
@@ -39,6 +42,10 @@ namespace BZ {
 
         frameConstantBuffer = Buffer::create(BufferType::Constant, sizeof(FrameConstantBufferData), MemoryType::Write);
         objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::Write);
+
+        //Keep the full buffers mapped. This puts the responsability of computing offsets on this class.
+        frameConstantBufferPtr = frameConstantBuffer->map(0, frameConstantBuffer->getRealSize());
+        objectConstantBufferPtr = objectConstantBuffer->map(0, objectConstantBuffer->getRealSize());
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBufferDynamic, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);
@@ -66,6 +73,9 @@ namespace BZ {
     }
 
     void Graphics::destroy() {
+        frameConstantBuffer->unmap();
+        objectConstantBuffer->unmap();
+
         //Destroy this 'manually' to avoid the static destruction lottery
         frameConstantBuffer.reset();
         objectConstantBuffer.reset();
@@ -89,7 +99,7 @@ namespace BZ {
         frameConstantBufferData.projectionMatrix = projectionMatrix;
         frameConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
 
-        frameConstantBuffer->setData(&frameConstantBufferData, 0, sizeof(FrameConstantBufferData));
+        memcpy(frameConstantBufferPtr + frameConstantBuffer->getBaseOfReplicaOffset(), &frameConstantBufferData, sizeof(FrameConstantBufferData));
 
         currentObjectIndex = 0;
 
@@ -108,7 +118,7 @@ namespace BZ {
         objectConstantBufferData.modelMatrix = modelMatrix;
 
         uint32 objectOffset = currentObjectIndex * sizeof(ObjectConstantBufferData);
-        objectConstantBuffer->setData(&objectConstantBufferData, objectOffset, sizeof(ObjectConstantBufferData));
+        memcpy(objectConstantBufferPtr + objectConstantBuffer->getBaseOfReplicaOffset() + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));
 
         uint32 currentFrameBase = MAX_OBJECTS_PER_FRAME * sizeof(ObjectConstantBufferData) * graphicsContext->getCurrentFrameIndex();
         uint32 totalOffset = currentFrameBase + currentObjectIndex * sizeof(ObjectConstantBufferData);

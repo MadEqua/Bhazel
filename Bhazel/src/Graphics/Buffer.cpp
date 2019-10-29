@@ -120,20 +120,19 @@ namespace BZ {
         BZ_ASSERT_CORE(data, "Data is null!");
         BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
         BZ_ASSERT_CORE(size > 0, "Size is not valid!");
+        BZ_ASSERT_CORE(!isMapped, "Buffer is being mapped!");
 
-        uint32 baseOfReplica = isDynamic() ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * this->size : 0;
-        internalSetData(data, baseOfReplica + offset, size);
+        internalSetData(data, getBaseOfReplicaOffset() + offset, size);
     }
 
-    void* Buffer::map(uint32 offset, uint32 size) {
+    byte* Buffer::map(uint32 offset, uint32 size) {
         BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
         BZ_ASSERT_CORE(size > 0, "Size is not valid!");
         BZ_ASSERT_CORE(!isMapped, "Buffer already mapped!");
         BZ_ASSERT_CORE(memoryType != MemoryType::Static, "Can't map buffer with Static MemoryType");
 
         isMapped = true;
-        uint32 baseOfReplica = isDynamic() ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * this->size : 0;
-        return internalMap(baseOfReplica + offset, size);
+        return internalMap(getBaseOfReplicaOffset() + offset, size);
     }
 
     void Buffer::unmap() {
@@ -141,5 +140,9 @@ namespace BZ {
 
         isMapped = false;
         internalUnmap();
+    }
+
+    uint32 Buffer::getBaseOfReplicaOffset() const {
+        return isDynamic() ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * this->size : 0;
     }
 }

@@ -51,6 +51,7 @@ namespace BZ {
         memcpy(ptr, data, size);
         vkUnmapMemory(getDevice(), memoryHandle);
 
+        //Transfer from staging buffer to device local buffer.
         if(memoryType == MemoryType::Static) {
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -88,10 +89,10 @@ namespace BZ {
         }
     }
 
-    void* VulkanBuffer::internalMap(uint32 offset, uint32 size) {
+    byte* VulkanBuffer::internalMap(uint32 offset, uint32 size) {
         void *ptr;
         BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, offset, size, 0, &ptr));
-        return ptr;
+        return static_cast<byte*>(ptr);
     }
 
     void VulkanBuffer::internalUnmap() {
