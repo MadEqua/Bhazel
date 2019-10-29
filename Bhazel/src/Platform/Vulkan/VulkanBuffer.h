@@ -5,6 +5,8 @@
 #include "Platform/Vulkan/Internal/VulkanIncludes.h"
 #include "Platform/Vulkan/Internal/VulkanGpuObject.h"
 
+#include <vk_mem_alloc.h>
+
 
 namespace BZ {
 
@@ -20,10 +22,10 @@ namespace BZ {
         void internalUnmap() override;
 
     private:
-        VkDeviceMemory memoryHandle;
+        VmaAllocation allocationHandle;
 
         VkBuffer stagingBufferHandle;
-        VkDeviceMemory stagingBufferMemoryHandle;
+        VmaAllocation stagingBufferAllocationHandle;
 
         void initStagingBuffer(uint32 size);
         void destroyStagingBuffer();

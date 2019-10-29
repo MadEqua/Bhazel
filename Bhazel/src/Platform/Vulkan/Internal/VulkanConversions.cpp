@@ -577,17 +577,31 @@ namespace BZ {
         }
     }
 
-    VkMemoryPropertyFlags memoryTypeToVk(MemoryType memoryType) {
+    VkMemoryPropertyFlags memoryTypeToRequiredFlagsVk(MemoryType memoryType) {
         switch(memoryType) {
-        case MemoryType::Static:
+        case MemoryType::GpuOnly:
             return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-        case MemoryType::Write:
+        case MemoryType::CpuToGpu:
             return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        case MemoryType::ReadAndWrite:
-            return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        case MemoryType::GpuToCpu:
+            return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown MemoryType!");
-            return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            return 0;
+        }
+    }
+
+    VkMemoryPropertyFlags memoryTypeToPreferredFlagsVk(MemoryType memoryType) {
+        switch(memoryType) {
+        case MemoryType::GpuOnly:
+            return 0;
+        case MemoryType::CpuToGpu:
+            return 0;
+        case MemoryType::GpuToCpu:
+            return VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown MemoryType!");
+            return 0;
         }
     }
 }

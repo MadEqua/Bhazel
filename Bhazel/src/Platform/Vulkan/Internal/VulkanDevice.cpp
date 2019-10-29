@@ -41,19 +41,6 @@ namespace BZ {
         BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
     }
 
-    uint32_t VulkanPhysicalDevice::findMemoryType(uint32_t typeFilter, MemoryType memoryType) const {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-        for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            VkMemoryPropertyFlags memPropertyFlags = memoryTypeToVk(memoryType);
-            if(typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & memPropertyFlags) == memPropertyFlags) {
-                return i;
-            }
-        }
-        BZ_ASSERT_ALWAYS_CORE("Can't find a suitable memory type!");
-        return 0;
-    }
-
     QueueFamilyContainer VulkanPhysicalDevice::getQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
         QueueFamilyContainer queueFamilyContainer;
 

@@ -14,45 +14,35 @@ namespace BZ {
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.size = realSize;
-        bufferInfo.usage = bufferTypeToVK(type) | (memoryType == MemoryType::Static ? VK_BUFFER_USAGE_TRANSFER_DST_BIT : 0);
+        bufferInfo.usage = bufferTypeToVK(type) | (memoryType == MemoryType::GpuOnly ? VK_BUFFER_USAGE_TRANSFER_DST_BIT : 0);
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; //TODO
 
-        BZ_ASSERT_VK(vkCreateBuffer(getDevice(), &bufferInfo, nullptr, &nativeHandle));
-
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(getDevice(), nativeHandle, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
-
-        allocInfo.memoryTypeIndex = getGraphicsContext().findMemoryType(memRequirements.memoryTypeBits, memoryType);
-
-        BZ_ASSERT_VK(vkAllocateMemory(getDevice(), &allocInfo, nullptr, &memoryHandle));
-        BZ_ASSERT_VK(vkBindBufferMemory(getDevice(), nativeHandle, memoryHandle, 0));
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.requiredFlags = memoryTypeToRequiredFlagsVk(memoryType);
+        allocInfo.preferredFlags = memoryTypeToPreferredFlagsVk(memoryType);
+        BZ_ASSERT_VK(vmaCreateBuffer(getGraphicsContext().getMemoryAllocator(), &bufferInfo, &allocInfo, &nativeHandle, &allocationHandle, nullptr));
     }
 
     VulkanBuffer::~VulkanBuffer() {
-        vkDestroyBuffer(getDevice(), nativeHandle, nullptr);
-        vkFreeMemory(getDevice(), memoryHandle, nullptr);
+        vmaDestroyBuffer(getGraphicsContext().getMemoryAllocator(), nativeHandle, allocationHandle);
     }
 
     void VulkanBuffer::internalSetData(const void *data, uint32 offset, uint32 size) {
-        VkDeviceMemory memoryHandle;
-        if(memoryType == MemoryType::Static) {
+        VmaAllocation allocationHandle;
+        if(memoryType == MemoryType::GpuOnly) {
             initStagingBuffer(size);
-            memoryHandle = stagingBufferMemoryHandle;
+            allocationHandle = stagingBufferAllocationHandle;
         }
         else
-            memoryHandle = this->memoryHandle;
+            allocationHandle = this->allocationHandle;
 
         void *ptr;
-        BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, offset, size, 0, &ptr));
+        BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle, &ptr));
         memcpy(ptr, data, size);
-        vkUnmapMemory(getDevice(), memoryHandle);
+        vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle);
 
         //Transfer from staging buffer to device local buffer.
-        if(memoryType == MemoryType::Static) {
+        if(memoryType == MemoryType::GpuOnly) {
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -91,12 +81,12 @@ namespace BZ {
 
     byte* VulkanBuffer::internalMap(uint32 offset, uint32 size) {
         void *ptr;
-        BZ_ASSERT_VK(vkMapMemory(getDevice(), memoryHandle, offset, size, 0, &ptr));
+        BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle, &ptr));
         return static_cast<byte*>(ptr);
     }
 
     void VulkanBuffer::internalUnmap() {
-        vkUnmapMemory(getDevice(), memoryHandle);
+        vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle);
     }
 
     void VulkanBuffer::initStagingBuffer(uint32 size) {
@@ -106,23 +96,13 @@ namespace BZ {
         bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        BZ_ASSERT_VK(vkCreateBuffer(getDevice(), &bufferInfo, nullptr, &stagingBufferHandle));
-
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(getDevice(), nativeHandle, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
-
-        allocInfo.memoryTypeIndex = getGraphicsContext().findMemoryType(memRequirements.memoryTypeBits, MemoryType::Write);
-
-        BZ_ASSERT_VK(vkAllocateMemory(getDevice(), &allocInfo, nullptr, &stagingBufferMemoryHandle));
-        BZ_ASSERT_VK(vkBindBufferMemory(getDevice(), stagingBufferHandle, stagingBufferMemoryHandle, 0));
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.requiredFlags = memoryTypeToRequiredFlagsVk(MemoryType::CpuToGpu);
+        allocInfo.preferredFlags = memoryTypeToPreferredFlagsVk(MemoryType::CpuToGpu);
+        BZ_ASSERT_VK(vmaCreateBuffer(getGraphicsContext().getMemoryAllocator(), &bufferInfo, &allocInfo, &stagingBufferHandle, &stagingBufferAllocationHandle, nullptr));
     }
 
     void VulkanBuffer::destroyStagingBuffer() {
-        vkDestroyBuffer(getDevice(), stagingBufferHandle, nullptr);
-        vkFreeMemory(getDevice(), stagingBufferMemoryHandle, nullptr);
+        vmaDestroyBuffer(getGraphicsContext().getMemoryAllocator(), stagingBufferHandle, stagingBufferAllocationHandle);
     }
 }

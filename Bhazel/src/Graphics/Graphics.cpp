@@ -40,8 +40,8 @@ namespace BZ {
     void Graphics::init() {
         graphicsContext = &Application::getInstance().getGraphicsContext();
 
-        frameConstantBuffer = Buffer::create(BufferType::Constant, sizeof(FrameConstantBufferData), MemoryType::Write);
-        objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::Write);
+        frameConstantBuffer = Buffer::create(BufferType::Constant, sizeof(FrameConstantBufferData), MemoryType::CpuToGpu);
+        objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::CpuToGpu);
 
         //Keep the full buffers mapped. This puts the responsability of computing offsets on this class.
         frameConstantBufferPtr = frameConstantBuffer->map(0, frameConstantBuffer->getRealSize());

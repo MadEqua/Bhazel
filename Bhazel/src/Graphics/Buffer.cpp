@@ -129,7 +129,7 @@ namespace BZ {
         BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
         BZ_ASSERT_CORE(size > 0, "Size is not valid!");
         BZ_ASSERT_CORE(!isMapped, "Buffer already mapped!");
-        BZ_ASSERT_CORE(memoryType != MemoryType::Static, "Can't map buffer with Static MemoryType");
+        BZ_ASSERT_CORE(memoryType != MemoryType::GpuOnly, "Can't map buffer with GpuOnly MemoryType");
 
         isMapped = true;
         return internalMap(getBaseOfReplicaOffset() + offset, size);

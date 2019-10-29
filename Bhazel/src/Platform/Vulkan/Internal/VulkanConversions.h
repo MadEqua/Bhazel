@@ -31,5 +31,6 @@ namespace BZ {
    VkShaderStageFlagBits shaderStageToVk(ShaderStage stage);
    VkShaderStageFlags shaderStageMaskToVk(uint8 mask);
    VkDescriptorType descriptorTypeToVk(DescriptorType type);
-   VkMemoryPropertyFlags memoryTypeToVk(MemoryType memoryType);
+   VkMemoryPropertyFlags memoryTypeToRequiredFlagsVk(MemoryType memoryType);
+   VkMemoryPropertyFlags memoryTypeToPreferredFlagsVk(MemoryType memoryType);
 }

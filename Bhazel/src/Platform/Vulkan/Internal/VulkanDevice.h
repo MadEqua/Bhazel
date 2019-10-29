@@ -24,8 +24,6 @@ namespace BZ {
         const SwapChainSupportDetails& getSwapChainSupportDetails() const { return swapChainSupportDetails; }
         VkPhysicalDevice getNativeHandle() const { return physicalDevice; }
 
-        uint32_t findMemoryType(uint32_t typeFilter, MemoryType memoryType) const;
-
     private:
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         QueueFamilyContainer queueFamilyContainer;

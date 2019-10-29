@@ -68,9 +68,9 @@ namespace BZ {
     };
 
     enum class MemoryType {
-        Static, //Device local
-        Write, //Host visible and coherent
-        ReadAndWrite //Host visible, coherent and host cached
+        GpuOnly,
+        CpuToGpu,
+        GpuToCpu
     };
 
 
@@ -92,7 +92,7 @@ namespace BZ {
         uint32 getSize() const { return size; }
         uint32 getRealSize() const { return realSize; }
 
-        bool isDynamic() const { return memoryType != MemoryType::Static; }
+        bool isDynamic() const { return memoryType != MemoryType::GpuOnly; }
         const DataLayout& getLayout() const { return layout; }
 
         uint32 getBaseOfReplicaOffset() const;

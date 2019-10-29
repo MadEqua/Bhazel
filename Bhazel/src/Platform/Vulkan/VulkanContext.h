@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vk_mem_alloc.h>
+
 #include "Graphics/GraphicsContext.h"
 
 #include "Platform/Vulkan/Internal/VulkanIncludes.h"
@@ -37,8 +39,8 @@ namespace BZ {
 
         VulkanCommandPool& getCurrentFrameCommandPool(QueueProperty property, bool exclusive);
         VulkanDescriptorPool& getDescriptorPool() { return descriptorPool; }
+        VmaAllocator getMemoryAllocator() const { return memoryAllocator; }
 
-        uint32_t findMemoryType(uint32_t typeFilter, MemoryType memoryType) const;
 
         /////////////////////////////////////////////////////////
         // API
@@ -89,6 +91,8 @@ namespace BZ {
 #ifndef BZ_DIST
         VkDebugUtilsMessengerEXT debugMessenger;
 #endif
+
+        VmaAllocator memoryAllocator;
 
         void createInstance();
 

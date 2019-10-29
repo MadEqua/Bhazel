@@ -24,6 +24,7 @@ project "Bhazel"
         "vendor/ImGui",
         "vendor/glm",
         "vendor/stb_image",
+        "vendor/VulkanMemoryAllocator",
         "%{VULKAN_SDK_DIR}/Include"
     }
 

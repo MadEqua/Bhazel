@@ -1,5 +1,8 @@
 #include "bzpch.h"
 
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
 #include "Platform/Vulkan/VulkanContext.h"
 #include "Platform/Vulkan/VulkanCommandBuffer.h"
 #include "Platform/Vulkan/VulkanFramebuffer.h"
@@ -22,6 +25,7 @@ namespace BZ {
         cleanupFrameData();
         swapchain.destroy();
         surface.destroy();
+        vmaDestroyAllocator(memoryAllocator);
         device.destroy();
 
 #ifndef BZ_DIST
@@ -51,6 +55,12 @@ namespace BZ {
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
         descriptorPool.init(device, builder);
+
+        //Init VulkanMemoryAllocator lib.
+        VmaAllocatorCreateInfo allocatorInfo = {};
+        allocatorInfo.physicalDevice = physicalDevice.getNativeHandle();
+        allocatorInfo.device = device.getNativeHandle();
+        vmaCreateAllocator(&allocatorInfo, &memoryAllocator);
     }
 
     void VulkanContext::setVSync(bool enabled) {
@@ -71,10 +81,6 @@ namespace BZ {
             families = physicalDevice.getQueueFamilyContainer().getFamiliesThatContain(property);
         }
         return frameDatas[currentFrameIndex].commandPoolsByFamily[families[0]->getIndex()];
-    }
-
-    uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, MemoryType memoryType) const {
-        return physicalDevice.findMemoryType(typeFilter, memoryType);
     }
 
     void VulkanContext::onWindowResize(WindowResizedEvent& e) {
