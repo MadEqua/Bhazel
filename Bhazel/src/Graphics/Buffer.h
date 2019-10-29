@@ -63,27 +63,27 @@ namespace BZ {
         void calculateOffsetsAndStride();
     };
 
-
     enum class BufferType {
         Vertex, Index, Constant
     };
 
+    enum class MemoryType {
+        Static, //Device local
+        Write, //Host visible and coherent
+        ReadAndWrite //Host visible, coherent and host cached
+    };
+
+
     /*
-    * Generic buffer of data. Will replicate data if marked as dynamic (one replica per frame in-flight) to avoid race conditions.
-    * The dynamic flag makes the buffer behaviour assume that the data will change *every* frame, so the buffer client must set new data every frame.
+    * Generic buffer of data. Will replicate data if considered dynamic (one replica per frame in-flight) to avoid race conditions.
+    * Dynamic buffers assume that the data will change *every* frame, so the buffer client must set new data every frame.
     */
     class Buffer {
     public:
         virtual ~Buffer() = default;
 
-        //Utility create functions
-        static Ref<Buffer> createVertexBuffer(const void *data, uint32 size, const DataLayout &layout, bool dynamic);
-        static Ref<Buffer> createIndexBuffer(const void *data, uint32 size, bool dynamic);
-        static Ref<Buffer> createConstantBuffer(const void *data, uint32 size, bool dynamic);
-        static Ref<Buffer> createConstantBuffer(uint32 size, bool dynamic);
-
-        static Ref<Buffer> create(BufferType type, uint32 size, const void *data, bool dynamic);
-        static Ref<Buffer> create(BufferType type, uint32 size, const void *data, const DataLayout &layout, bool dynamic);
+        static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType);
+        static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType, const DataLayout &layout);
 
         void setData(const void *data, uint32 offset, uint32 size);
         void* map(uint32 offset, uint32 size);
@@ -92,24 +92,23 @@ namespace BZ {
         uint32 getSize() const { return size; }
         uint32 getRealSize() const { return realSize; }
 
-        BufferType getType() const { return type; }
-        bool isDynamic() const { return dynamic; }
+        bool isDynamic() const { return memoryType != MemoryType::Static; }
         const DataLayout& getLayout() const { return layout; }
 
     protected:
         BufferType type;
-        bool dynamic;
 
         uint32 size;
         uint32 realSize;
 
         DataLayout layout;
+        MemoryType memoryType;
 
         bool isMapped = false;
 
-        Buffer(BufferType type, uint32 size, const DataLayout *layout, bool dynamic);
+        Buffer(BufferType type, uint32 size, MemoryType memoryType, const DataLayout *layout);
 
-        void initBufferData(const void *data);
+        //void initBufferData(const void *data);
 
         virtual void internalSetData(const void *data, uint32 offset, uint32 size) = 0;
         virtual void* internalMap(uint32 offset, uint32 size) = 0;

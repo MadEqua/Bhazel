@@ -9,6 +9,7 @@
 namespace BZ {
     
     class VulkanSurface;
+    enum class MemoryType;
 
 
     //Will pick and store an appropriate physical device to use, if available.
@@ -23,7 +24,7 @@ namespace BZ {
         const SwapChainSupportDetails& getSwapChainSupportDetails() const { return swapChainSupportDetails; }
         VkPhysicalDevice getNativeHandle() const { return physicalDevice; }
 
-        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+        uint32_t findMemoryType(uint32_t typeFilter, MemoryType memoryType) const;
 
     private:
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;

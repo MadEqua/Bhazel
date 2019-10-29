@@ -18,7 +18,7 @@ namespace BZ {
         }
 
         static VkDevice getDevice() {
-            return static_cast<VulkanContext &>(Application::getInstance().getGraphicsContext()).getDevice();
+            return static_cast<VulkanContext &>(Application::getInstance().getGraphicsContext()).getDevice().getNativeHandle();
         }
 
     protected:

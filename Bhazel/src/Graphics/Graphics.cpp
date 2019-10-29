@@ -37,8 +37,8 @@ namespace BZ {
     void Graphics::init() {
         graphicsContext = &Application::getInstance().getGraphicsContext();
 
-        frameConstantBuffer = Buffer::createConstantBuffer(sizeof(FrameConstantBufferData), true);
-        objectConstantBuffer = Buffer::createConstantBuffer(sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, true);
+        frameConstantBuffer = Buffer::create(BufferType::Constant, sizeof(FrameConstantBufferData), MemoryType::Write);
+        objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::Write);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBufferDynamic, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);

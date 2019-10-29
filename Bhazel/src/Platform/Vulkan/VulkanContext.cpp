@@ -73,8 +73,8 @@ namespace BZ {
         return frameDatas[currentFrameIndex].commandPoolsByFamily[families[0]->getIndex()];
     }
 
-    uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
-        return physicalDevice.findMemoryType(typeFilter, properties);
+    uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, MemoryType memoryType) const {
+        return physicalDevice.findMemoryType(typeFilter, memoryType);
     }
 
     void VulkanContext::onWindowResize(WindowResizedEvent& e) {

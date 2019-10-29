@@ -576,4 +576,18 @@ namespace BZ {
             return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         }
     }
+
+    VkMemoryPropertyFlags memoryTypeToVk(MemoryType memoryType) {
+        switch(memoryType) {
+        case MemoryType::Static:
+            return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        case MemoryType::Write:
+            return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        case MemoryType::ReadAndWrite:
+            return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown MemoryType!");
+            return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        }
+    }
 }

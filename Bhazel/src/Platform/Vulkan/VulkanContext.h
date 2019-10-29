@@ -32,13 +32,13 @@ namespace BZ {
         uint32 getCurrentFrameIndex() const override { return currentFrameIndex; }
         Ref<Framebuffer> getCurrentFrameFramebuffer() override { return swapchain.getFramebuffer(currentFrameIndex); }
 
-        VkDevice getDevice() const { return device.getNativeHandle(); }
+        VulkanDevice& getDevice() { return device; }
         //VkPhysicalDevice getPhysicalDevice() const { return physicalDevice; }
 
         VulkanCommandPool& getCurrentFrameCommandPool(QueueProperty property, bool exclusive);
         VulkanDescriptorPool& getDescriptorPool() { return descriptorPool; }
 
-        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+        uint32_t findMemoryType(uint32_t typeFilter, MemoryType memoryType) const;
 
         /////////////////////////////////////////////////////////
         // API

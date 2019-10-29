@@ -2,6 +2,7 @@
 
 #include "VulkanDevice.h"
 #include "Platform/Vulkan/Internal/VulkanSurface.h"
+#include "Platform/Vulkan/Internal/VulkanConversions.h"
 
 
 namespace BZ {
@@ -40,11 +41,12 @@ namespace BZ {
         BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
     }
 
-    uint32_t VulkanPhysicalDevice::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
+    uint32_t VulkanPhysicalDevice::findMemoryType(uint32_t typeFilter, MemoryType memoryType) const {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
         for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if(typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            VkMemoryPropertyFlags memPropertyFlags = memoryTypeToVk(memoryType);
+            if(typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & memPropertyFlags) == memPropertyFlags) {
                 return i;
             }
         }
