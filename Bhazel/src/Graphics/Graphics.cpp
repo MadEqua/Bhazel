@@ -7,14 +7,15 @@
 #include "Graphics/GraphicsContext.h"
 #include "Graphics/Buffer.h"
 #include "Graphics/DescriptorSet.h"
+#include "Graphics/PipelineState.h"
 
 
 namespace BZ {
 
     Graphics::API Graphics::api = API::Unknown;
 
-    Graphics::FrameConstantBufferData Graphics::frameConstantBufferData;
-    Graphics::ObjectConstantBufferData Graphics::objectConstantBufferData;
+    //Graphics::FrameConstantBufferData Graphics::frameConstantBufferData;
+    //Graphics::ObjectConstantBufferData Graphics::objectConstantBufferData;
 
     Ref<Buffer> Graphics::frameConstantBuffer;
     Ref<Buffer> Graphics::objectConstantBuffer;
@@ -24,7 +25,7 @@ namespace BZ {
 
     Ref<DescriptorSetLayout> Graphics::descriptorSetLayout;
 
-    GraphicsContext * Graphics::graphicsContext = nullptr;
+    GraphicsContext* Graphics::graphicsContext = nullptr;
 
     uint32 Graphics::currentObjectIndex = 0;
 
@@ -68,6 +69,7 @@ namespace BZ {
     }
 
     void Graphics::startScene(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+        FrameConstantBufferData frameConstantBufferData;
         frameConstantBufferData.viewMatrix = viewMatrix;
         frameConstantBufferData.projectionMatrix = projectionMatrix;
         frameConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
@@ -80,6 +82,7 @@ namespace BZ {
     void Graphics::startObject(const glm::mat4 &modelMatrix) {
         BZ_ASSERT_CORE(currentObjectIndex < MAX_OBJECTS_PER_FRAME, "currentObjectIndex exceeded MAX_OBJECTS_PER_FRAME!");
 
+        ObjectConstantBufferData objectConstantBufferData;
         objectConstantBufferData.modelMatrix = modelMatrix;
 
         uint32 objectOffset = currentObjectIndex * sizeof(ObjectConstantBufferData);

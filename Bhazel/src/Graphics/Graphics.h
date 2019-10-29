@@ -81,8 +81,8 @@ namespace BZ {
         };
 
 
-        static FrameConstantBufferData frameConstantBufferData;
-        static ObjectConstantBufferData objectConstantBufferData;
+        //static FrameConstantBufferData frameConstantBufferData;
+        //static ObjectConstantBufferData objectConstantBufferData;
 
         static Ref<Buffer> frameConstantBuffer;
         static Ref<Buffer> objectConstantBuffer;
@@ -90,6 +90,7 @@ namespace BZ {
         static Ref<DescriptorSet> frameDescriptorSet;
         static Ref<DescriptorSet> objectDescriptorSet;
 
+        //Same layout for both DescriptorSets.
         static Ref<DescriptorSetLayout> descriptorSetLayout;
 
         static GraphicsContext *graphicsContext;
