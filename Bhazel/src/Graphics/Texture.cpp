@@ -2,7 +2,6 @@
 
 #include "Texture.h"
 
-#include "Core/Application.h"
 #include "Graphics/Graphics.h"
 
 //#include "Platform/D3D11/D3D11Texture.h"
@@ -70,10 +69,15 @@ namespace BZ {
     }
 
     const byte* Texture::loadFile(const char* path, bool flip, int &widthOut, int &heightOut) {
+        stbi_set_flip_vertically_on_load(flip);
         int channels;
         stbi_uc* data = stbi_load(path, &widthOut, &heightOut, &channels, 4);
         BZ_ASSERT_CORE(data, "Failed to load image '{}'.", path);
         return static_cast<byte*>(data);
+    }
+
+    void Texture::freeData(const byte *data) {
+        stbi_image_free((void*)data);
     }
 
 
@@ -114,5 +118,16 @@ namespace BZ {
     TextureView::TextureView(const Ref<Texture> &texture) :
         texture(texture) {
         BZ_ASSERT_CORE(texture, "Invalid Texture!");
+    }
+
+
+    Ref<Sampler> Sampler::create() {
+        switch(Graphics::api) {
+        case Graphics::API::Vulkan:
+            return MakeRef<VulkanSampler>();
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return nullptr;
+        }
     }
 }

@@ -4,6 +4,8 @@
 namespace BZ {
 
     class Buffer;
+    class TextureView;
+    class Sampler;
 
     enum class ShaderStageFlags {
         Vertex = 1,
@@ -20,7 +22,7 @@ namespace BZ {
 
     enum class DescriptorType {
         Sampler,
-        CombinedTextureSampler,
+        CombinedTextureSampler, //Texture + Sampler
         SampledTexture,
         StorageTexture,
         ConstantTexelBuffer,
@@ -71,6 +73,8 @@ namespace BZ {
         static Ref<DescriptorSet> create(const Ref<DescriptorSetLayout> &layout);
 
         virtual void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) = 0;
+        virtual void setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) = 0;
+
     protected:
         explicit DescriptorSet(const Ref<DescriptorSetLayout> &layout);
 

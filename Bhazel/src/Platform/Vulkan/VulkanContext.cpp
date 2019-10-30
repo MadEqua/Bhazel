@@ -54,6 +54,7 @@ namespace BZ {
 
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
+        builder.addDescriptorTypeCount(DescriptorType::CombinedTextureSampler, 1024);
         descriptorPool.init(device, builder);
 
         //Init VulkanMemoryAllocator lib.

@@ -19,5 +19,6 @@ namespace BZ {
         explicit VulkanDescriptorSet(const Ref<DescriptorSetLayout> &layout);
 
         void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) override;
+        void setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) override;
     };
 }

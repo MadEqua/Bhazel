@@ -27,16 +27,24 @@ void ExampleLayer::onGraphicsContextCreated() {
 
     BZ::DataLayout dataLayout = {
         {BZ::DataType::Float32, BZ::DataElements::Vec2, "POSITION"},
+        {BZ::DataType::Float32, BZ::DataElements::Vec2, "TEXCOORD"},
         {BZ::DataType::Float32, BZ::DataElements::Vec3, "COLOR"},
     };
     float vertices[] = {
         -0.5f, -0.5f,
+        0.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
+
         0.5f, -0.5f,
+        1.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
+
         0.5f, 0.5f,
+        1.0f, 1.0f,
         0.0f, 0.0f, 1.0f,
+
         -0.5f, 0.5f,
+        0.0f, 1.0f,
         1.0f, 1.0f, 1.0f,
     };
     uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
@@ -49,18 +57,23 @@ void ExampleLayer::onGraphicsContextCreated() {
     //constantBuffer = BZ::Buffer::createConstantBuffer(sizeof(ConstantData));
     //constantBuffer->setData(&constantData, sizeof(ConstantData));
 
-    //BZ::DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-    //descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBuffer, BZ::flagsToMask(BZ::ShaderStageFlags::Vertex), 1);
-    //BZ::Ref<BZ::DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
+    texture = BZ::Texture2D::create("textures/test.jpg", BZ::TextureFormatEnum::R8G8B8A8_sRGB);
+    textureView = BZ::TextureView::create(texture);
+    sampler = BZ::Sampler::create();
 
-    //descriptorSet = BZ::DescriptorSet::create(descriptorSetLayout);
-    //descriptorSet->setConstantBuffer(constantBuffer, 0, 0, sizeof(constantData));
+    BZ::DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+    descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::CombinedTextureSampler, BZ::flagsToMask(BZ::ShaderStageFlags::Fragment), 1);
+    BZ::Ref<BZ::DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
+
+    descriptorSet = BZ::DescriptorSet::create(descriptorSetLayout);
+    descriptorSet->setCombinedTextureSampler(textureView, sampler, 0);
 
     auto &windowDims = BZ::Application::getInstance().getWindow().getDimensions();
 
     pipelineStateData.dataLayout = dataLayout;
     pipelineStateData.primitiveTopology = BZ::PrimitiveTopology::Triangles;
     pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y)} };
+    pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
     pipelineStateData.blendingState.attachmentBlendingStates = { {} };
     pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
     pipelineState = BZ::PipelineState::create(pipelineStateData);
@@ -119,8 +132,9 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
     BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
     BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
+    BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
-    for(int i = 0; i < 20; ++i) {
+    for(int i = 0; i < 1; ++i) {
 
         auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
 
@@ -132,7 +146,6 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
             model[3].x = 1;*/
 
         BZ::Graphics::startObject(commandBuffer, model);
-        //BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
         BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 
         BZ::Graphics::endObject();

@@ -24,6 +24,7 @@ namespace BZ {
         bool isDepthStencil() const;
     };
 
+
     class Texture {
     public:
         virtual ~Texture() = default;
@@ -35,9 +36,10 @@ namespace BZ {
         uint32 getDepth() const { return dimensions.z; }
 
     protected:
-        Texture(TextureFormat format);
+        explicit Texture(TextureFormat format);
 
-        const byte* loadFile(const char* path, bool flip, int &widthOut, int &heightOut);
+        static const byte* loadFile(const char* path, bool flip, int &widthOut, int &heightOut);
+        static void freeData(const byte *data);
 
         TextureFormat format;
         glm::ivec3 dimensions = {1,1,1};
@@ -49,21 +51,30 @@ namespace BZ {
         static Ref<Texture2D> create(const std::string &path, TextureFormat format);
 
     protected:
-        Texture2D(TextureFormat format);
+        explicit Texture2D(TextureFormat format);
     };
 
 
     class TextureView {
     public:
         static Ref<TextureView> create(const Ref<Texture> &texture);
+
         virtual ~TextureView() = default;
 
         TextureFormat getFormat() const { return texture->getFormat(); } //TODO: have its own format?
         Ref<Texture> getTexture() const { return texture; }
 
     protected:
-        TextureView(const Ref<Texture> &texture);
+        explicit TextureView(const Ref<Texture> &texture);
 
         Ref<Texture> texture;
+    };
+
+
+    class Sampler {
+    public:
+        static Ref<Sampler> create();
+
+        virtual ~Sampler() = default;
     };
 }

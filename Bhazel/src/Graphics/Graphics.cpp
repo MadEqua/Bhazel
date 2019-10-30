@@ -44,6 +44,7 @@ namespace BZ {
         objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::CpuToGpu);
 
         //Keep the full buffers mapped. This puts the responsability of computing offsets on this class.
+        //TODO: This works because this function is called on frame 0, so the replica offset returned is 0. Not OK.
         frameConstantBufferPtr = frameConstantBuffer->map(0);
         objectConstantBufferPtr = objectConstantBuffer->map(0);
 
@@ -106,7 +107,7 @@ namespace BZ {
         //The first scene of the frame will bind frame DescriptorSets.
         if(shouldBindFrameDescriptorSet) {
             uint32 currentFrameBase = sizeof(FrameConstantBufferData) * graphicsContext->getCurrentFrameIndex();
-            graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, dummyPipelineState, 0, &currentFrameBase, 1);
+            graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, dummyPipelineState, BHAZEL_FRAME_DESCRIPTOR_SET_IDX, &currentFrameBase, 1);
             shouldBindFrameDescriptorSet = false;
         }
     }
@@ -122,7 +123,7 @@ namespace BZ {
 
         uint32 currentFrameBase = MAX_OBJECTS_PER_FRAME * sizeof(ObjectConstantBufferData) * graphicsContext->getCurrentFrameIndex();
         uint32 totalOffset = currentFrameBase + currentObjectIndex * sizeof(ObjectConstantBufferData);
-        graphicsContext->bindDescriptorSet(commandBuffer, objectDescriptorSet, dummyPipelineState, 1, &totalOffset, 1);
+        graphicsContext->bindDescriptorSet(commandBuffer, objectDescriptorSet, dummyPipelineState, BHAZEL_OBJECT_DESCRIPTOR_SET_IDX, &totalOffset, 1);
     }
 
     void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {

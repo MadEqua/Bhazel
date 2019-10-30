@@ -143,19 +143,23 @@ namespace BZ {
 
     VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
         for(const auto &availableFormat : availableFormats) {
-            if(availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            if(availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                BZ_LOG_CORE_INFO("Found SRGB Surface format for Swapchain.");
                 return availableFormat;
             }
         }
+        BZ_LOG_CORE_WARN("Could not find SRGB Surface format for Swapchain.");
         return availableFormats[0];
     }
 
     VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
         for(const auto &availablePresentMode : availablePresentModes) {
             if(availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                BZ_LOG_CORE_INFO("Found Mailbox present mode for Swapchain.");
                 return availablePresentMode;
             }
         }
+        BZ_LOG_CORE_WARN("Could not find Mailbox present mode for Swapchain. Using FIFO.");
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 

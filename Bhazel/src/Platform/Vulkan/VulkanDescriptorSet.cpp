@@ -3,6 +3,7 @@
 #include "VulkanDescriptorSet.h"
 #include "Platform/Vulkan/Internal/VulkanConversions.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
+#include "Platform/Vulkan/VulkanTexture.h"
 
 
 namespace BZ {
@@ -69,6 +70,26 @@ namespace BZ {
         write.descriptorCount = 1;
         write.descriptorType = descriptorTypeToVk(layout->getDescriptorDescs()[binding].type);
         write.pBufferInfo = &bufferInfo;
+        vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
+    }
+
+    void VulkanDescriptorSet::setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) {
+        BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].type == DescriptorType::CombinedTextureSampler, "Binding {} is not of type CombinedTextureSampler!", binding);
+        BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
+
+        VkDescriptorImageInfo imageInfo = {};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = static_cast<const VulkanTextureView &>(*textureView).getNativeHandle();
+        imageInfo.sampler = static_cast<const VulkanSampler &>(*sampler).getNativeHandle();
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = nativeHandle;
+        write.dstBinding = binding;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = descriptorTypeToVk(layout->getDescriptorDescs()[binding].type);
+        write.pImageInfo = &imageInfo;
         vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
     }
 }

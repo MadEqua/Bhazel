@@ -20,8 +20,12 @@ private:
     BZ::Ref<BZ::Buffer> vertexBuffer;
     BZ::Ref<BZ::Buffer> indexBuffer;
     //BZ::Ref<BZ::Buffer> constantBuffer;
-    //BZ::Ref<BZ::DescriptorSet> descriptorSet;
+    BZ::Ref<BZ::DescriptorSet> descriptorSet;
     BZ::Ref<BZ::PipelineState> pipelineState;
+
+    BZ::Ref<BZ::Texture2D> texture;
+    BZ::Ref<BZ::TextureView> textureView;
+    BZ::Ref<BZ::Sampler> sampler;
 
     //BZ::Ref<BZ::CommandBuffer> buffers[BZ::MAX_FRAMES_IN_FLIGHT];
 

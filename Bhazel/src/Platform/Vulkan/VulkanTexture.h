@@ -21,12 +21,32 @@ namespace BZ {
 
     private:
         bool isWrapping;
+
+        VmaAllocation allocationHandle;
+
+        VkBuffer stagingBufferHandle;
+        VmaAllocation stagingBufferAllocationHandle;
+
+        void initStagingBuffer(uint32 size);
+        void destroyStagingBuffer();
+
+        VkCommandBuffer beginSingleTimeCommands();
+        void copyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage destImage, uint32 width, uint32 height);
+        void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+        void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     };
 
 
     class VulkanTextureView : public TextureView, public VulkanGpuObject<VkImageView> {
     public:
-        explicit VulkanTextureView(const Ref<Texture>& texture);
+        explicit VulkanTextureView(const Ref<Texture> &texture);
         ~VulkanTextureView() override;
+    };
+
+
+    class VulkanSampler : public Sampler, public VulkanGpuObject<VkSampler> {
+    public:
+        VulkanSampler();
+        ~VulkanSampler() override;
     };
 }
