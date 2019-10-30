@@ -44,8 +44,8 @@ namespace BZ {
         objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::CpuToGpu);
 
         //Keep the full buffers mapped. This puts the responsability of computing offsets on this class.
-        frameConstantBufferPtr = frameConstantBuffer->map(0, frameConstantBuffer->getRealSize());
-        objectConstantBufferPtr = objectConstantBuffer->map(0, objectConstantBuffer->getRealSize());
+        frameConstantBufferPtr = frameConstantBuffer->map(0);
+        objectConstantBufferPtr = objectConstantBuffer->map(0);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBufferDynamic, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);

@@ -42,9 +42,9 @@ void ExampleLayer::onGraphicsContextCreated() {
     uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
     vertexBuffer = BZ::Buffer::create(BZ::BufferType::Vertex, sizeof(vertices), BZ::MemoryType::GpuOnly, dataLayout);
-    vertexBuffer->setData(vertices, 0, sizeof(vertices));
+    vertexBuffer->setData(vertices, sizeof(vertices), 0);
     indexBuffer = BZ::Buffer::create(BZ::BufferType::Index, sizeof(indices), BZ::MemoryType::GpuOnly);
-    indexBuffer->setData(indices, 0, sizeof(indices));
+    indexBuffer->setData(indices, sizeof(indices), 0);
 
     //constantBuffer = BZ::Buffer::createConstantBuffer(sizeof(ConstantData));
     //constantBuffer->setData(&constantData, sizeof(ConstantData));

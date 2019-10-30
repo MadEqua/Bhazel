@@ -27,22 +27,16 @@ namespace BZ {
         vmaDestroyBuffer(getGraphicsContext().getMemoryAllocator(), nativeHandle, allocationHandle);
     }
 
-    void VulkanBuffer::internalSetData(const void *data, uint32 offset, uint32 size) {
-        VmaAllocation allocationHandle;
+    void VulkanBuffer::internalSetData(const void *data, uint32 dataSize, uint32 offset) {
         if(memoryType == MemoryType::GpuOnly) {
-            initStagingBuffer(size);
-            allocationHandle = stagingBufferAllocationHandle;
-        }
-        else
-            allocationHandle = this->allocationHandle;
+            initStagingBuffer(dataSize);
 
-        void *ptr;
-        BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle, &ptr));
-        memcpy(ptr, data, size);
-        vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle);
+            void *ptr;
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), stagingBufferAllocationHandle, &ptr));
+            memcpy(ptr, data, dataSize);
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), stagingBufferAllocationHandle);
 
-        //Transfer from staging buffer to device local buffer.
-        if(memoryType == MemoryType::GpuOnly) {
+            //Transfer from staging buffer to device local buffer.
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -59,8 +53,8 @@ namespace BZ {
             vkBeginCommandBuffer(commandBuffer, &beginInfo);
             VkBufferCopy copyRegion = {};
             copyRegion.srcOffset = 0;
-            copyRegion.dstOffset = 0;
-            copyRegion.size = size;
+            copyRegion.dstOffset = offset;
+            copyRegion.size = dataSize;
             vkCmdCopyBuffer(commandBuffer, stagingBufferHandle, this->nativeHandle, 1, &copyRegion);
             vkEndCommandBuffer(commandBuffer);
 
@@ -77,12 +71,18 @@ namespace BZ {
 
             destroyStagingBuffer();
         }
+        else {
+            void *ptr;
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle, &ptr));
+            memcpy(static_cast<byte*>(ptr) + offset, data, dataSize);
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle);
+        }
     }
 
-    byte* VulkanBuffer::internalMap(uint32 offset, uint32 size) {
+    byte* VulkanBuffer::internalMap(uint32 offset) {
         void *ptr;
         BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle, &ptr));
-        return static_cast<byte*>(ptr);
+        return static_cast<byte*>(ptr) + offset;
     }
 
     void VulkanBuffer::internalUnmap() {

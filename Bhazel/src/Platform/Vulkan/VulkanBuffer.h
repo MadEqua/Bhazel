@@ -17,8 +17,8 @@ namespace BZ {
         VulkanBuffer(BufferType type, uint32 size, MemoryType memoryType, const DataLayout *layout);
         virtual ~VulkanBuffer() override;
 
-        void internalSetData(const void *data, uint32 offset, uint32 size) override;
-        byte* internalMap(uint32 offset, uint32 size) override;
+        void internalSetData(const void *data, uint32 dataSize, uint32 offset) override;
+        byte* internalMap(uint32 offset) override;
         void internalUnmap() override;
 
     private:

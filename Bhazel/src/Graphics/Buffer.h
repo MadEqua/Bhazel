@@ -85,8 +85,8 @@ namespace BZ {
         static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType);
         static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType, const DataLayout &layout);
 
-        void setData(const void *data, uint32 offset, uint32 size);
-        byte* map(uint32 offset, uint32 size);
+        void setData(const void *data, uint32 dataSize, uint32 offset);
+        byte* map(uint32 offset);
         void unmap();
 
         uint32 getSize() const { return size; }
@@ -112,8 +112,8 @@ namespace BZ {
 
         //void initBufferData(const void *data);
 
-        virtual void internalSetData(const void *data, uint32 offset, uint32 size) = 0;
-        virtual byte* internalMap(uint32 offset, uint32 size) = 0;
+        virtual void internalSetData(const void *data, uint32 dataSize, uint32 offset) = 0;
+        virtual byte* internalMap(uint32 offset) = 0;
         virtual void internalUnmap() = 0;
     };
 }

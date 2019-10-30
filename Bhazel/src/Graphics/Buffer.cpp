@@ -116,23 +116,22 @@ namespace BZ {
         }
     }*/
 
-    void Buffer::setData(const void *data, uint32 offset, uint32 size) {
+    void Buffer::setData(const void *data, uint32 dataSize, uint32 offset) {
         BZ_ASSERT_CORE(data, "Data is null!");
-        BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
-        BZ_ASSERT_CORE(size > 0, "Size is not valid!");
+        BZ_ASSERT_CORE(offset >= 0 && offset + dataSize <= this->size, "Offset is not valid!");
+        BZ_ASSERT_CORE(dataSize > 0, "Size is not valid!");
         BZ_ASSERT_CORE(!isMapped, "Buffer is being mapped!");
 
-        internalSetData(data, getBaseOfReplicaOffset() + offset, size);
+        internalSetData(data, dataSize, getBaseOfReplicaOffset() + offset);
     }
 
-    byte* Buffer::map(uint32 offset, uint32 size) {
+    byte* Buffer::map(uint32 offset) {
         BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
-        BZ_ASSERT_CORE(size > 0, "Size is not valid!");
         BZ_ASSERT_CORE(!isMapped, "Buffer already mapped!");
         BZ_ASSERT_CORE(memoryType != MemoryType::GpuOnly, "Can't map buffer with GpuOnly MemoryType");
 
         isMapped = true;
-        return internalMap(getBaseOfReplicaOffset() + offset, size);
+        return internalMap(getBaseOfReplicaOffset() + offset);
     }
 
     void Buffer::unmap() {
