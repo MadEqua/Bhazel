@@ -80,8 +80,6 @@ namespace BZ {
     */
     class Buffer {
     public:
-        virtual ~Buffer() = default;
-
         static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType);
         static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType, const DataLayout &layout);
 
@@ -109,6 +107,7 @@ namespace BZ {
         bool isMapped = false;
 
         Buffer(BufferType type, uint32 size, MemoryType memoryType, const DataLayout *layout);
+        virtual ~Buffer() = default;
 
         //void initBufferData(const void *data);
 

@@ -10,13 +10,13 @@
 namespace BZ {
 
     Framebuffer::Builder& Framebuffer::Builder::addColorAttachment(const AttachmentDescription &desc, const Ref<TextureView> &textureView) {
-        BZ_ASSERT_CORE(textureView->getFormat().isColor(), "TextureView needs to have a color format!");
+        BZ_ASSERT_CORE(textureView->getTextureFormat().isColor(), "TextureView needs to have a color format!");
         attachments.push_back({ desc, textureView });
         return *this;
     }
 
     Framebuffer::Builder& Framebuffer::Builder::addDepthStencilAttachment(const AttachmentDescription &desc, const Ref<TextureView> &textureView) {
-        BZ_ASSERT_CORE(textureView->getFormat().isColor(), "TextureView needs to have a DepthStencil format!");
+        BZ_ASSERT_CORE(textureView->getTextureFormat().isColor(), "TextureView needs to have a DepthStencil format!");
         attachments.push_back({ desc, textureView });
         return *this;
     }
@@ -46,10 +46,10 @@ namespace BZ {
         BZ_ASSERT_CORE(!builder.attachments.empty(), "Creating a Framebuffer with no attachments!");
 
         for(const auto &att : builder.attachments) {
-            if(att.textureView->getFormat().isColor()) {
+            if(att.textureView->getTextureFormat().isColor()) {
                 colorAttachments.push_back(att);
             }
-            else if(att.textureView->getFormat().isDepthStencil()) {
+            else if(att.textureView->getTextureFormat().isDepthStencil()) {
                 BZ_ASSERT_CORE(!depthStencilAttachment, "Adding more than one DepthStencilAttachment!");
                 depthStencilAttachment.emplace(att);
             }

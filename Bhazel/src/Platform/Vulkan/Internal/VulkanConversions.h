@@ -33,4 +33,6 @@ namespace BZ {
    VkDescriptorType descriptorTypeToVk(DescriptorType type);
    VkMemoryPropertyFlags memoryTypeToRequiredFlagsVk(MemoryType memoryType);
    VkMemoryPropertyFlags memoryTypeToPreferredFlagsVk(MemoryType memoryType);
+   VkFilter filterModeToVk(FilterMode mode);
+   VkSamplerAddressMode addressModeToVk(AddressMode mode);
 }

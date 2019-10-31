@@ -74,8 +74,6 @@ namespace BZ {
             friend class VulkanFramebuffer;
         };
 
-        virtual ~Framebuffer() = default;
-
         uint32 getColorAttachmentCount() const { return static_cast<uint32>(colorAttachments.size()); }
         uint32 getAttachmentCount() const { return static_cast<uint32>(colorAttachments.size()) + (depthStencilAttachment.has_value() ? 1 : 0); }
         bool hasDepthStencilAttachment() const { return depthStencilAttachment.has_value(); }
@@ -86,6 +84,7 @@ namespace BZ {
 
     protected:
         explicit Framebuffer(const Builder &builder);
+        virtual ~Framebuffer() = default;
 
         std::vector<Attachment> colorAttachments;
         std::optional<Attachment> depthStencilAttachment;

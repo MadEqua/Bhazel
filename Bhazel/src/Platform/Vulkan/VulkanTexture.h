@@ -46,7 +46,7 @@ namespace BZ {
 
     class VulkanSampler : public Sampler, public VulkanGpuObject<VkSampler> {
     public:
-        VulkanSampler();
+        VulkanSampler(const Builder &builder);
         ~VulkanSampler() override;
     };
 }

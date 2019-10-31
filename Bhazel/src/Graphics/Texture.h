@@ -24,6 +24,18 @@ namespace BZ {
         bool isDepthStencil() const;
     };
 
+    enum class FilterMode {
+        Nearest, Linear
+    };
+
+    enum class AddressMode {
+        Repeat, 
+        MirroredRepeat,
+        ClampToEdge,
+        ClampToBorder,
+        MirrorClampToEdge
+    };
+
 
     class Texture {
     public:
@@ -35,6 +47,7 @@ namespace BZ {
         uint32 getHeight() const { return dimensions.y; }
         uint32 getDepth() const { return dimensions.z; }
 
+ 
     protected:
         explicit Texture(TextureFormat format);
 
@@ -59,13 +72,13 @@ namespace BZ {
     public:
         static Ref<TextureView> create(const Ref<Texture> &texture);
 
-        virtual ~TextureView() = default;
-
-        TextureFormat getFormat() const { return texture->getFormat(); } //TODO: have its own format?
+        //TextureFormat getFormat() const { return texture->getFormat(); } TODO: TextureView own format
+        TextureFormat getTextureFormat() const { return texture->getFormat(); }
         Ref<Texture> getTexture() const { return texture; }
 
     protected:
         explicit TextureView(const Ref<Texture> &texture);
+        virtual ~TextureView() = default;
 
         Ref<Texture> texture;
     };
@@ -73,8 +86,33 @@ namespace BZ {
 
     class Sampler {
     public:
-        static Ref<Sampler> create();
+        class Builder {
+            void setMinFilterMode(FilterMode filterMode) { minFilter = filterMode; }
+            void setMagFilterMode(FilterMode filterMode) { magFilter = filterMode; }
+            void setMipmapFilterMode(FilterMode filterMode) { mipmapFilter = filterMode; }
 
+            void setAddressModeAll(AddressMode addressMode) { addressModeU = addressMode; addressModeV = addressMode; addressModeW = addressMode; }
+            void setAddressModeU(AddressMode addressMode) { addressModeU = addressMode; }
+            void setAddressModeV(AddressMode addressMode) { addressModeV = addressMode; }
+            void setAddressModeW(AddressMode addressMode) { addressModeW = addressMode; }
+
+            void setUnnormalizedCoordinates(bool enable) { unnormalizedCoordinate = enable; }
+
+        private:
+            FilterMode minFilter = FilterMode::Linear;
+            FilterMode magFilter = FilterMode::Linear;
+            FilterMode mipmapFilter = FilterMode::Linear;
+            AddressMode addressModeU  = AddressMode::Repeat;
+            AddressMode addressModeV = AddressMode::Repeat;
+            AddressMode addressModeW = AddressMode::Repeat;
+            bool unnormalizedCoordinate = false;
+
+            friend class VulkanSampler;
+        };
+
+        static Ref<Sampler> create(const Builder &builder);
+
+    protected:
         virtual ~Sampler() = default;
     };
 }

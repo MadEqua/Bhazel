@@ -59,7 +59,9 @@ void ExampleLayer::onGraphicsContextCreated() {
 
     texture = BZ::Texture2D::create("textures/test.jpg", BZ::TextureFormatEnum::R8G8B8A8_sRGB);
     textureView = BZ::TextureView::create(texture);
-    sampler = BZ::Sampler::create();
+
+    BZ::Sampler::Builder samplerBuilder;
+    sampler = BZ::Sampler::create(samplerBuilder);
 
     BZ::DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
     descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::CombinedTextureSampler, BZ::flagsToMask(BZ::ShaderStageFlags::Fragment), 1);
@@ -134,7 +136,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
     BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
-    for(int i = 0; i < 1; ++i) {
+    for(int i = 0; i < 3; ++i) {
 
         auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
 

@@ -220,20 +220,20 @@ namespace BZ {
     }
 
 
-    VulkanSampler::VulkanSampler() {
+    VulkanSampler::VulkanSampler(const Builder &builder) {
 
-        //TODO
+        //TODO: some fields
         VkSamplerCreateInfo samplerInfo = {};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerInfo.magFilter = VK_FILTER_LINEAR;
-        samplerInfo.minFilter = VK_FILTER_LINEAR;
-        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.anisotropyEnable = 0; //TODO
+        samplerInfo.minFilter = filterModeToVk(builder.minFilter);
+        samplerInfo.magFilter = filterModeToVk(builder.magFilter);
+        samplerInfo.addressModeU = addressModeToVk(builder.addressModeU);
+        samplerInfo.addressModeV = addressModeToVk(builder.addressModeV);
+        samplerInfo.addressModeW = addressModeToVk(builder.addressModeW);
+        samplerInfo.anisotropyEnable = 0; 
         samplerInfo.maxAnisotropy = 16;
         samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-        samplerInfo.unnormalizedCoordinates = VK_FALSE;
+        samplerInfo.unnormalizedCoordinates = builder.unnormalizedCoordinate ? VK_TRUE : VK_FALSE;
         samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
         samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         samplerInfo.mipLodBias = 0.0f;

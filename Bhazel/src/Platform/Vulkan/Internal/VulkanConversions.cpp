@@ -604,4 +604,34 @@ namespace BZ {
             return 0;
         }
     }
+
+    VkFilter filterModeToVk(FilterMode mode) {
+        switch(mode) {
+        case FilterMode::Nearest:
+            return VK_FILTER_NEAREST;
+        case FilterMode::Linear:
+            return VK_FILTER_LINEAR;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown FilterMode!");
+            return VK_FILTER_NEAREST;
+        }
+    }
+
+    VkSamplerAddressMode addressModeToVk(AddressMode mode) {
+        switch(mode) {
+        case AddressMode::Repeat:
+            return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case AddressMode::MirroredRepeat:
+            return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        case AddressMode::ClampToEdge:
+            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case AddressMode::ClampToBorder:
+            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case AddressMode::MirrorClampToEdge:
+            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown AddressMode!");
+            return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        }
+    }
 }

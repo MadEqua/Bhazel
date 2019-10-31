@@ -121,10 +121,10 @@ namespace BZ {
     }
 
 
-    Ref<Sampler> Sampler::create() {
+    Ref<Sampler> Sampler::create(const Builder &builder) {
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanSampler>();
+            return MakeRef<VulkanSampler>(builder);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
