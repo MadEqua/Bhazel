@@ -188,35 +188,35 @@ namespace BZ {
     }
 
     VkFormat textureFormatToVk(TextureFormat format) {
-        switch(format.format) {
-        case TextureFormatEnum::R8:
+        switch(format) {
+        case TextureFormat::R8:
             return VK_FORMAT_R8_UNORM;
-        case TextureFormatEnum::R8_sRGB:
+        case TextureFormat::R8_sRGB:
             return VK_FORMAT_R8_SRGB;
-        case TextureFormatEnum::R8G8:
+        case TextureFormat::R8G8:
             return VK_FORMAT_R8G8_UNORM;
-        case TextureFormatEnum::R8G8_sRGB:
+        case TextureFormat::R8G8_sRGB:
             return VK_FORMAT_R8G8_SRGB;
-        case TextureFormatEnum::R8G8B8:
+        case TextureFormat::R8G8B8:
             return VK_FORMAT_R8G8B8_UNORM;
-        case TextureFormatEnum::R8G8B8_sRGB:
+        case TextureFormat::R8G8B8_sRGB:
             return VK_FORMAT_R8G8B8_SRGB;
-        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormat::R8G8B8A8:
             return VK_FORMAT_R8G8B8A8_UNORM;
-        case TextureFormatEnum::R8G8B8A8_sRGB:
+        case TextureFormat::R8G8B8A8_sRGB:
             return VK_FORMAT_R8G8B8A8_SRGB;
-        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormat::B8G8R8A8:
             return VK_FORMAT_B8G8R8A8_UNORM;
-        case TextureFormatEnum::B8G8R8A8_sRGB:
+        case TextureFormat::B8G8R8A8_sRGB:
             return VK_FORMAT_B8G8R8A8_SRGB;
-        case TextureFormatEnum::D16S8:
+        case TextureFormat::D16S8:
             return VK_FORMAT_D16_UNORM_S8_UINT;
-        case TextureFormatEnum::D24S8:
+        case TextureFormat::D24S8:
             return VK_FORMAT_D24_UNORM_S8_UINT;
-        case TextureFormatEnum::Undefined:
+        case TextureFormat::Undefined:
             return VK_FORMAT_UNDEFINED;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
             return VK_FORMAT_UNDEFINED;
         };
     }
@@ -224,34 +224,34 @@ namespace BZ {
     TextureFormat vkFormatToTextureFormat(VkFormat format) {
         switch(format) {
         case VK_FORMAT_R8_UNORM:
-            return TextureFormatEnum::R8;
+            return TextureFormat::R8;
         case VK_FORMAT_R8_SRGB:
-            return TextureFormatEnum::R8_sRGB;
+            return TextureFormat::R8_sRGB;
         case VK_FORMAT_R8G8_UNORM:
-            return TextureFormatEnum::R8G8;
+            return TextureFormat::R8G8;
         case VK_FORMAT_R8G8_SRGB:
-            return TextureFormatEnum::R8G8_sRGB;
+            return TextureFormat::R8G8_sRGB;
         case VK_FORMAT_R8G8B8_UNORM:
-            return TextureFormatEnum::R8G8B8;
+            return TextureFormat::R8G8B8;
         case VK_FORMAT_R8G8B8_SRGB:
-            return TextureFormatEnum::R8G8B8_sRGB;
+            return TextureFormat::R8G8B8_sRGB;
         case VK_FORMAT_R8G8B8A8_UNORM:
-            return  TextureFormatEnum::R8G8B8A8;
+            return  TextureFormat::R8G8B8A8;
         case VK_FORMAT_R8G8B8A8_SRGB:
-            return TextureFormatEnum::R8G8B8A8_sRGB;
+            return TextureFormat::R8G8B8A8_sRGB;
         case VK_FORMAT_B8G8R8A8_UNORM:
-            return TextureFormatEnum::B8G8R8A8;
+            return TextureFormat::B8G8R8A8;
         case VK_FORMAT_B8G8R8A8_SRGB:
-            return TextureFormatEnum::B8G8R8A8_sRGB;
+            return TextureFormat::B8G8R8A8_sRGB;
         case VK_FORMAT_D16_UNORM_S8_UINT:
-            return TextureFormatEnum::D16S8;
+            return TextureFormat::D16S8;
         case VK_FORMAT_D24_UNORM_S8_UINT:
-            return TextureFormatEnum::D24S8;
+            return TextureFormat::D24S8;
         case VK_FORMAT_UNDEFINED:
-            return TextureFormatEnum::Undefined;
+            return TextureFormat::Undefined;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown VkFormat!");
-            return TextureFormatEnum::Undefined;
+            return TextureFormat::Undefined;
         };
     }
 

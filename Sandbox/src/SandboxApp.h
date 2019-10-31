@@ -19,7 +19,6 @@ private:
     //BZ::Ref<BZ::Framebuffer> framebuffer;
     BZ::Ref<BZ::Buffer> vertexBuffer;
     BZ::Ref<BZ::Buffer> indexBuffer;
-    //BZ::Ref<BZ::Buffer> constantBuffer;
     BZ::Ref<BZ::DescriptorSet> descriptorSet;
     BZ::Ref<BZ::PipelineState> pipelineState;
 
@@ -27,9 +26,7 @@ private:
     BZ::Ref<BZ::TextureView> textureView;
     BZ::Ref<BZ::Sampler> sampler;
 
-    //BZ::Ref<BZ::CommandBuffer> buffers[BZ::MAX_FRAMES_IN_FLIGHT];
-
-    BZ::Ref<BZ::PerspectiveCameraController> cameraController;
+    //BZ::Ref<BZ::PerspectiveCameraController> cameraController;
 };
 
 

@@ -3,7 +3,7 @@
 
 namespace BZ {
 
-    enum class TextureFormatEnum {
+    enum class TextureFormat {
         Undefined,
         R8, R8_sRGB,
         R8G8, R8G8_sRGB,
@@ -14,12 +14,12 @@ namespace BZ {
         D24S8,
     };
 
-    struct TextureFormat {
-        TextureFormat(TextureFormatEnum format);
+    struct TextureFormatWrapper {
+        TextureFormatWrapper(TextureFormat format);
 
-        TextureFormatEnum format;
+        TextureFormat format;
 
-        TextureFormatEnum operator()() { return format; }
+        //TextureFormat operator()() { return format; }
         bool isColor() const;
         bool isDepthStencil() const;
     };
@@ -41,7 +41,7 @@ namespace BZ {
     public:
         virtual ~Texture() = default;
 
-        const TextureFormat& getFormat() const { return format; }
+        const TextureFormatWrapper& getFormat() const { return format; }
 
         uint32 getWidth() const { return dimensions.x; }
         uint32 getHeight() const { return dimensions.y; }
@@ -54,7 +54,7 @@ namespace BZ {
         static const byte* loadFile(const char* path, bool flip, int &widthOut, int &heightOut);
         static void freeData(const byte *data);
 
-        TextureFormat format;
+        TextureFormatWrapper format;
         glm::ivec3 dimensions = {1,1,1};
     };
 
@@ -73,7 +73,7 @@ namespace BZ {
         static Ref<TextureView> create(const Ref<Texture> &texture);
 
         //TextureFormat getFormat() const { return texture->getFormat(); } TODO: TextureView own format
-        TextureFormat getTextureFormat() const { return texture->getFormat(); }
+        const TextureFormatWrapper& getTextureFormat() const { return texture->getFormat(); }
         Ref<Texture> getTexture() const { return texture; }
 
     protected:

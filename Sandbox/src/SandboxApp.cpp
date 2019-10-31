@@ -54,10 +54,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     indexBuffer = BZ::Buffer::create(BZ::BufferType::Index, sizeof(indices), BZ::MemoryType::GpuOnly);
     indexBuffer->setData(indices, sizeof(indices), 0);
 
-    //constantBuffer = BZ::Buffer::createConstantBuffer(sizeof(ConstantData));
-    //constantBuffer->setData(&constantData, sizeof(ConstantData));
-
-    texture = BZ::Texture2D::create("textures/test.jpg", BZ::TextureFormatEnum::R8G8B8A8_sRGB);
+    texture = BZ::Texture2D::create("textures/test.jpg", BZ::TextureFormat::R8G8B8A8_sRGB);
     textureView = BZ::TextureView::create(texture);
 
     BZ::Sampler::Builder samplerBuilder;
@@ -79,53 +76,10 @@ void ExampleLayer::onGraphicsContextCreated() {
     pipelineStateData.blendingState.attachmentBlendingStates = { {} };
     pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
     pipelineState = BZ::PipelineState::create(pipelineStateData);
-
-
-    /*for(int i = 0; i < BZ::MAX_FRAMES_IN_FLIGHT; ++i) {
-        buffers[i] = BZ::Graphics::startRecording();
-        BZ::Graphics::bindVertexBuffer(buffers[i], vertexBuffer);
-        BZ::Graphics::bindIndexBuffer(buffers[i], indexBuffer);
-        BZ::Graphics::bindDescriptorSet(buffers[i], descriptorSet, pipelineState);
-        BZ::Graphics::bindPipelineState(buffers[i], pipelineState);
-        BZ::Graphics::drawIndexed(buffers[i], 6, 1, 0, 0, 0);
-        BZ::Graphics::endRecording(buffers[i]);
-    }*/
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     //cameraController->onUpdate(frameStats);
-
-    //const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
-
-    ////TODO: coordinate conversion
-    ///**if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_1)) {
-    //    particleSystemPosition.x = BZ::Input::getMouseX();
-    //    particleSystemPosition.y = BZ::Input::getMouseY();
-    //}*/
-
-    //BZ::RenderCommand::clearColorAndDepthStencilBuffers();
-
-    //BZ::Graphics::beginScene(cameraController->getCamera(), frameStats);
-
-    //texture->bindToPipeline(0);
-
-    //auto textureShader = shaderLibrary.get("Texture");
-
-    //glm::mat4 modelMatrix(1.0);
-    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);
-
-    //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);
-
-    //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);
-
-    //modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    //BZ::Graphics::submit(textureShader, inputDescription, modelMatrix);*/
-
-    //particleSystem.onUpdate();
-
-    //BZ::Graphics::endScene();
 
     auto commandBuffer = BZ::Graphics::startRecording();
     
@@ -137,28 +91,14 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
     for(int i = 0; i < 3; ++i) {
-
-        auto &model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
-
-        /*if(BZ::Application::getInstance().getGraphicsContext().getCurrentFrameIndex() == 0)
-            model[3].x = -1;
-        if(BZ::Application::getInstance().getGraphicsContext().getCurrentFrameIndex() == 1)
-            model[3].x = 0;
-        if(BZ::Application::getInstance().getGraphicsContext().getCurrentFrameIndex() == 2)
-            model[3].x = 1;*/
-
+        auto model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
         BZ::Graphics::startObject(commandBuffer, model);
         BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-
         BZ::Graphics::endObject();
     }
 
     BZ::Graphics::endRecording(commandBuffer);
     BZ::Graphics::submitCommandBuffer(commandBuffer);
-
-    /*static int i = 0;
-    BZ::Graphics::submitCommandBuffer(buffers[i]);
-    i = (i + 1) % BZ::MAX_FRAMES_IN_FLIGHT;*/
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {

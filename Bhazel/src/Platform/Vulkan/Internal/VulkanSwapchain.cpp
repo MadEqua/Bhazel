@@ -124,7 +124,7 @@ namespace BZ {
             auto textureViewRef = TextureView::create(textureRef);
 
             AttachmentDescription attachmentDesc;
-            attachmentDesc.format = textureRef->getFormat();
+            attachmentDesc.format = textureRef->getFormat().format;
             attachmentDesc.samples = 1;
             attachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
             attachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
