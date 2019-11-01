@@ -10,7 +10,6 @@
 #include "Core/KeyCodes.h"
 
 #include <imgui.h>
-#include <glm/gtc/matrix_transform.hpp>
 
 
 namespace BZ {
@@ -47,7 +46,7 @@ namespace BZ {
 
     void ImGuiLayer::onEvent(Event &event) {
         EventDispatcher dispatcher(event);
-        dispatcher.dispatch<KeyPressedEvent>([] (KeyPressedEvent &event) -> bool {
+        dispatcher.dispatch<KeyPressedEvent>([](KeyPressedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
 
             int keyCode = event.getKeyCode();
@@ -63,7 +62,7 @@ namespace BZ {
                 io.KeySuper = true;
 
             return false;
-        });
+            });
 
         dispatcher.dispatch<KeyReleasedEvent>([](KeyReleasedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
@@ -81,13 +80,13 @@ namespace BZ {
                 io.KeySuper = false;
 
             return false;
-        });
+            });
 
         dispatcher.dispatch<KeyTypedEvent>([](KeyTypedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.AddInputCharacter(event.getKeyCode());
             return false;
-        });
+            });
 
         dispatcher.dispatch<MouseMovedEvent>([](MouseMovedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
@@ -95,19 +94,25 @@ namespace BZ {
             io.MousePos = ImVec2(static_cast<float>(event.getX()), static_cast<float>(event.getY()));
             BZ_LOG_TRACE(event);
             return false;
-        });
+            });
 
         dispatcher.dispatch<MouseButtonPressedEvent>([](MouseButtonPressedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseDown[event.getMouseButton()] = true;
             return false;
-        });
+            });
 
         dispatcher.dispatch<MouseButtonReleasedEvent>([](MouseButtonReleasedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseDown[event.getMouseButton()] = false;
             return false;
-        });
+            });
+
+        dispatcher.dispatch<MouseScrolledEvent>([](MouseScrolledEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+            io.MouseWheel = event.getYOffset();
+            return false;
+            });
     }
 
     void ImGuiLayer::begin() {
@@ -122,72 +127,73 @@ namespace BZ {
         ImGui::Render();
 
         ImDrawData *imDrawData = ImGui::GetDrawData();
-        if(imDrawData->CmdListsCount > 0) {
 
-            uint32 vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
-            uint32 indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
+        uint32 vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
+        uint32 indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 
-            byte *vtxDst = vertexBufferPtr;
-            byte *idxDst = indexBufferPtr;
-            for(int n = 0; n < imDrawData->CmdListsCount; n++) {
-                const ImDrawList *drawList = imDrawData->CmdLists[n];
-                memcpy(vtxDst, drawList->VtxBuffer.Data, drawList->VtxBuffer.Size * sizeof(ImDrawVert));
-                memcpy(idxDst, drawList->IdxBuffer.Data, drawList->IdxBuffer.Size * sizeof(ImDrawIdx));
-                vtxDst += drawList->VtxBuffer.Size * sizeof(ImDrawVert);
-                idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
-            }
-
-            auto commandBuffer = BZ::Graphics::startRecording();
-
-            ImGuiIO &io = ImGui::GetIO();
-            //glm::mat4 projMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f / io.DisplaySize.x, -2.0f / io.DisplaySize.y, 1.0f));
-            //projMatrix = glm::translate(projMatrix, glm::vec3(-1.0f, -1.0f, 0.0f));
-
-            //glm::mat4 projMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, -1.0f, 0.0f));
-            //projMatrix = glm::scale(projMatrix, glm::vec3(2.0f / io.DisplaySize.x, -2.0f / io.DisplaySize.y, 1.0f));
-
-            glm::mat4 projMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, -1.0f, 0.0f)) *
-                glm::scale(glm::mat4(1.0f), glm::vec3(2.0f / io.DisplaySize.x, -2.0f / io.DisplaySize.y, 1.0f));
-
-            //glm::mat4 projMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f / io.DisplaySize.x, -2.0f / io.DisplaySize.y, 1.0f)) *
-            //    glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 1.0f, 0.0f));
-
-            Graphics::startScene(commandBuffer, glm::mat4(1.0f), projMatrix);
-
-            Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
-            Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
-            Graphics::bindPipelineState(commandBuffer, pipelineState);
-            Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
-
-            int vertexOffset = 0;
-            int indexOffset = 0;
-
-            for(int i = 0; i < imDrawData->CmdListsCount; i++) {
-                const ImDrawList *cmdList = imDrawData->CmdLists[i];
-                for(int j = 0; j < cmdList->CmdBuffer.Size; j++) {
-                    const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
-                    //TODO
-                    /*VkRect2D scissorRect;
-                    scissorRect.offset.x = std::max((int32_t)(pcmd->ClipRect.x), 0);
-                    scissorRect.offset.y = std::max((int32_t)(pcmd->ClipRect.y), 0);
-                    scissorRect.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
-                    scissorRect.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y);
-                    vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect*/
-
-                    //Graphics::startObject(commandBuffer, model);
-                    Graphics::drawIndexed(commandBuffer, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
-                    //Graphics::endObject();
-
-                    indexOffset += pcmd->ElemCount;
-                }
-                vertexOffset += cmdList->VtxBuffer.Size;
-            }
-
-            Graphics::endRecording(commandBuffer);
-            Graphics::submitCommandBuffer(commandBuffer);
+        if((vertexBufferSize == 0) || (indexBufferSize == 0)) {
+            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Bailing out.",  vertexBufferSize, indexBufferSize);
+            return;
         }
-        else
-            BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Bailing out.");
+
+        byte *vtxDst = vertexBufferPtr;
+        byte *idxDst = indexBufferPtr;
+        for(int n = 0; n < imDrawData->CmdListsCount; n++) {
+            const ImDrawList *drawList = imDrawData->CmdLists[n];
+            memcpy(vtxDst, drawList->VtxBuffer.Data, drawList->VtxBuffer.Size * sizeof(ImDrawVert));
+            memcpy(idxDst, drawList->IdxBuffer.Data, drawList->IdxBuffer.Size * sizeof(ImDrawIdx));
+            vtxDst += drawList->VtxBuffer.Size * sizeof(ImDrawVert);
+            idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
+        }
+
+
+        if(imDrawData->CmdListsCount <= 0) {
+            BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Command List count: {}. Bailing out.", imDrawData->CmdListsCount);
+            return;
+        }
+
+        auto commandBuffer = BZ::Graphics::startRecording();
+
+        ImGuiIO &io = ImGui::GetIO();
+        glm::mat4 projMatrix(1.0f);
+        projMatrix[0][0] = 2.0f / io.DisplaySize.x;
+        projMatrix[1][1] = -2.0f / io.DisplaySize.y;
+        projMatrix[3][0] = -1.0f;
+        projMatrix[3][1] = 1.0f;
+
+        Graphics::startScene(commandBuffer, glm::mat4(1.0f), projMatrix);
+
+        Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
+        Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
+        Graphics::bindPipelineState(commandBuffer, pipelineState);
+        Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+
+        int vertexOffset = 0;
+        int indexOffset = 0;
+
+        for(int i = 0; i < imDrawData->CmdListsCount; i++) {
+            const ImDrawList *cmdList = imDrawData->CmdLists[i];
+            for(int j = 0; j < cmdList->CmdBuffer.Size; j++) {
+                const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
+                //TODO
+                /*VkRect2D scissorRect;
+                scissorRect.offset.x = std::max((int32_t)(pcmd->ClipRect.x), 0);
+                scissorRect.offset.y = std::max((int32_t)(pcmd->ClipRect.y), 0);
+                scissorRect.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
+                scissorRect.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y);
+                vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect*/
+
+                //Graphics::startObject(commandBuffer, model);
+                Graphics::drawIndexed(commandBuffer, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
+                //Graphics::endObject();
+
+                indexOffset += pcmd->ElemCount;
+            }
+            vertexOffset += cmdList->VtxBuffer.Size;
+        }
+
+        Graphics::endRecording(commandBuffer);
+        Graphics::submitCommandBuffer(commandBuffer);
     }
 
     void ImGuiLayer::initInput() {
@@ -259,8 +265,9 @@ namespace BZ {
         fontTextureSampler = Sampler::create(Sampler::Builder());
 
         //Buffers
-        vertexBuffer = Buffer::create(BufferType::Vertex, 4 * 1024 * 1024, MemoryType::CpuToGpu); //TODO: size checking or dynamic?
-        indexBuffer = Buffer::create(BufferType::Index, 1 * 1024 * 1024, MemoryType::CpuToGpu);
+        const uint32 maxIndices = 1 << sizeof(ImDrawIdx) * 8;
+        vertexBuffer = Buffer::create(BufferType::Vertex, maxIndices * sizeof(ImDrawVert), MemoryType::CpuToGpu);
+        indexBuffer = Buffer::create(BufferType::Index, maxIndices * sizeof(ImDrawIdx), MemoryType::CpuToGpu);
         vertexBufferPtr = vertexBuffer->map(0);
         indexBufferPtr = indexBuffer->map(0);
 

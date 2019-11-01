@@ -17,8 +17,8 @@ namespace BZ {
         const Application &application;
         FrameStats visibleFrameStats;
 
-        uint32 refreshPeriodMs;
-        uint32 timeAcumMs;
+        uint64 refreshPeriodNs;
+        uint64 timeAcumNs;
 
         constexpr static int FRAME_HISTORY_SIZE = 100;
         float frameTimeHistory[FRAME_HISTORY_SIZE] = {};

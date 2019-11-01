@@ -11,15 +11,15 @@ namespace BZ {
     FrameStatsLayer::FrameStatsLayer(const Application &application) :
         Layer("FrameStatsLayer"),
         application(application),
-        timeAcumMs(0),
-        refreshPeriodMs(250),
+        timeAcumNs(0),
+        refreshPeriodNs(250000000),
         frameTimeHistoryIdx(0) {
     }
 
     void FrameStatsLayer::onImGuiRender(const FrameStats &frameStats) {
-        timeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
-        if(timeAcumMs >= refreshPeriodMs) {
-            timeAcumMs = 0;
+        timeAcumNs += frameStats.lastFrameTime.asNanoseconds();
+        if(timeAcumNs >= refreshPeriodNs) {
+            timeAcumNs = 0;
             visibleFrameStats = application.getFrameStats();
 
             frameTimeHistory[frameTimeHistoryIdx] = application.getFrameStats().lastFrameTime.asMillisecondsFloat();
@@ -38,7 +38,7 @@ namespace BZ {
             ImGui::Separator();
             ImGui::NewLine();
             ImGui::PlotLines("Frame Times", frameTimeHistory, FRAME_HISTORY_SIZE, frameTimeHistoryIdx, "ms", 0.0f, 50.0f, ImVec2(0, 80));
-            ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&refreshPeriodMs), 0, 1000);
+            ImGui::SliderInt("Refresh period ns", reinterpret_cast<int*>(&refreshPeriodNs), 0, 1000000000);
         }
         ImGui::End();
     }
