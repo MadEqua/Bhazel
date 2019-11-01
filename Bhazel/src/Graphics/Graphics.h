@@ -2,16 +2,17 @@
 
 #include "Constants.h"
 
+#include "Graphics/Buffer.h"
+#include "Graphics/CommandBuffer.h"
+#include "Graphics/Framebuffer.h"
+#include "Graphics/PipelineState.h"
+#include "Graphics/DescriptorSet.h"
+#include "Graphics/Shader.h"
+
 
 namespace BZ {
 
-    class Buffer;
     class WindowResizedEvent;
-    class CommandBuffer;
-    class Framebuffer;
-    class PipelineState;
-    class DescriptorSet;
-    class DescriptorSetLayout;
     class GraphicsContext;
 
     /*

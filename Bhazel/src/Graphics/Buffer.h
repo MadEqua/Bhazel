@@ -107,7 +107,7 @@ namespace BZ {
         bool isMapped = false;
 
         Buffer(BufferType type, uint32 size, MemoryType memoryType, const DataLayout *layout);
-        virtual ~Buffer() = default;
+        virtual ~Buffer();
 
         //void initBufferData(const void *data);
 

@@ -62,6 +62,7 @@ namespace BZ {
     class Texture2D : public Texture {
     public:
         static Ref<Texture2D> create(const std::string &path, TextureFormat format);
+        static Ref<Texture2D> create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format);
 
     protected:
         explicit Texture2D(TextureFormat format);

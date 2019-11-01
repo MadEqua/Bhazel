@@ -3,12 +3,7 @@
 #include "Graphics.h"
 
 #include "Core/Application.h"
-
 #include "Graphics/GraphicsContext.h"
-#include "Graphics/Buffer.h"
-#include "Graphics/DescriptorSet.h"
-#include "Graphics/PipelineState.h"
-#include "Graphics/Shader.h"
 
 
 namespace BZ {
@@ -105,11 +100,11 @@ namespace BZ {
         currentObjectIndex = 0;
 
         //The first scene of the frame will bind frame DescriptorSets.
-        if(shouldBindFrameDescriptorSet) {
+        //if(shouldBindFrameDescriptorSet) { //TODO: check this logic
             uint32 currentFrameBase = sizeof(FrameConstantBufferData) * graphicsContext->getCurrentFrameIndex();
             graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, dummyPipelineState, BHAZEL_FRAME_DESCRIPTOR_SET_IDX, &currentFrameBase, 1);
             shouldBindFrameDescriptorSet = false;
-        }
+        //}
     }
 
     void Graphics::startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix) {

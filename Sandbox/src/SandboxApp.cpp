@@ -81,24 +81,24 @@ void ExampleLayer::onGraphicsContextCreated() {
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     //cameraController->onUpdate(frameStats);
 
-    auto commandBuffer = BZ::Graphics::startRecording();
-    
-    BZ::Graphics::startScene(commandBuffer, glm::mat4(1.0f), glm::mat4(1.0f));
-
-    BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
-    BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
-    BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
-    BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
-
-    for(int i = 0; i < 3; ++i) {
-        auto model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
-        BZ::Graphics::startObject(commandBuffer, model);
-        BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-        BZ::Graphics::endObject();
-    }
-
-    BZ::Graphics::endRecording(commandBuffer);
-    BZ::Graphics::submitCommandBuffer(commandBuffer);
+    //auto commandBuffer = BZ::Graphics::startRecording();
+    //
+    //BZ::Graphics::startScene(commandBuffer, glm::mat4(1.0f), glm::mat4(1.0f));
+    //
+    //BZ::Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
+    //BZ::Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
+    //BZ::Graphics::bindPipelineState(commandBuffer, pipelineState);
+    //BZ::Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+    //
+    //for(int i = 0; i < 3; ++i) {
+    //    auto model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
+    //    BZ::Graphics::startObject(commandBuffer, model);
+    //    BZ::Graphics::drawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+    //    BZ::Graphics::endObject();
+    //}
+    //
+    //BZ::Graphics::endRecording(commandBuffer);
+    //BZ::Graphics::submitCommandBuffer(commandBuffer);
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {

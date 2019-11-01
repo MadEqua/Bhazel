@@ -19,11 +19,35 @@ namespace BZ {
         const byte *data = loadFile(path.c_str(), true, width, height);
         BZ_ASSERT_CORE(data, "Failed to load image '{}'.", path);
 
+        init(data, width * height * 4, width, height);
+        freeData(data);
+    }
+
+    VulkanTexture2D::VulkanTexture2D(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format) :
+        Texture2D(format), isWrapping(false) {
+        init(data, dataSize, width, height);
+    }
+
+    VulkanTexture2D::VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) :
+        Texture2D(vkFormatToTextureFormat(vkFormat)), isWrapping(true) {
+
+        BZ_ASSERT_CORE(vkImage != VK_NULL_HANDLE, "Invalid VkImage!");
+        nativeHandle = vkImage;
+
+        dimensions.x = width;
+        dimensions.y = height;
+    }
+
+    VulkanTexture2D::~VulkanTexture2D() {
+        if(!isWrapping)
+            vmaDestroyImage(getGraphicsContext().getMemoryAllocator(), nativeHandle, allocationHandle);
+    }
+
+    void VulkanTexture2D::init(const byte *data, uint32 dataSize, uint32 width, uint32 height) {
         dimensions.x = width;
         dimensions.y = height;
 
-        uint32 dataSize = width * height * 4;
-        VkFormat vkFormat = textureFormatToVk(format);
+        VkFormat vkFormat = textureFormatToVk(format.format);
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -60,23 +84,7 @@ namespace BZ {
         transitionImageLayout(commBuffer, nativeHandle, vkFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         endSingleTimeCommands(commBuffer);
 
-        freeData(data);
         destroyStagingBuffer();
-    }
-
-    VulkanTexture2D::VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) :
-        Texture2D(vkFormatToTextureFormat(vkFormat)), isWrapping(true) {
-
-        BZ_ASSERT_CORE(vkImage != VK_NULL_HANDLE, "Invalid VkImage!");
-        nativeHandle = vkImage;
-
-        dimensions.x = width;
-        dimensions.y = height;
-    }
-
-    VulkanTexture2D::~VulkanTexture2D() {
-        if(!isWrapping)
-            vmaDestroyImage(getGraphicsContext().getMemoryAllocator(), nativeHandle, allocationHandle);
     }
 
     void VulkanTexture2D::initStagingBuffer(uint32 size) {

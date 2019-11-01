@@ -1,6 +1,8 @@
 #include "bzpch.h"
 
 #include "PipelineState.h"
+#include "Core/Application.h"
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/Framebuffer.h"
 
@@ -29,8 +31,11 @@ namespace BZ {
         data(data) {
         BZ_ASSERT_CORE(data.shader, "PipelineState needs a shader!");
         BZ_ASSERT_CORE(!data.viewports.empty(), "PipelineState needs at least one viewport!");
-        BZ_ASSERT_CORE(data.framebuffer, "PipelineState needs a Framebuffer (to get the RenderPass)!");
-        BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(), 
+
+        if(!data.framebuffer)
+            data.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
+
+        BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(),
             "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
 
         //Always add the main descriptor set layouts for the engine.

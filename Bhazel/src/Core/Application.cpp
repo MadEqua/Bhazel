@@ -3,11 +3,10 @@
 #include "Core/Application.h"
 
 #include "Window.h"
-#include "Core/Input.h"
 #include "Layers/Layer.h"
 #include "Events/WindowEvent.h"
 #include "Graphics/Graphics.h"
-#include "ImGui/ImGuiLayer.h"
+#include "Layers/ImGuiLayer.h"
 #include "Layers/FrameStatsLayer.h"
 
 
@@ -36,8 +35,8 @@ namespace BZ {
 
         assetsPath = settings.getFieldAsString("assetsPath", "");
 
-        //imGuiLayer = new ImGuiLayer();
-        //pushOverlay(imGuiLayer);
+        imGuiLayer = new ImGuiLayer();
+        pushOverlay(imGuiLayer);
 
         pushOverlay(new FrameStatsLayer(*this));
     }
@@ -73,9 +72,9 @@ namespace BZ {
 
                 layerStack.onUpdate(frameStats);
 
-                /*imGuiLayer->begin();
+                imGuiLayer->begin();
                 layerStack.onImGuiRender(frameStats);
-                imGuiLayer->end();*/
+                imGuiLayer->end();
 
                 Graphics::endFrame();
 

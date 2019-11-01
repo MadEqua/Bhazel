@@ -12,7 +12,7 @@ namespace BZ {
     };
 
     enum EventCategory {
-        EventCategoryNone = 0,
+        EventCategoryNone =          0,
         EventCategoryApplication =   BIT(0),
         EventCategoryWindow =        BIT(1),
         EventCategoryInput =         BIT(2),

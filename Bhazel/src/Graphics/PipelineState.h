@@ -164,16 +164,22 @@ namespace BZ {
     class DescriptorSetLayout;
 
     struct PipelineStateData {
+
+        //Supporting a single vertex buffer.
+        DataLayout dataLayout;
+
         Ref<Shader> shader;
-        std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
-        DataLayout dataLayout; //Supporting a single vertex buffer
         PrimitiveTopology primitiveTopology;
+        std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
         std::vector<Viewport> viewports;
         RasterizerState rasterizerState;
         MultisampleState multiSampleState;
         DepthStencilState depthStencilState;
         BlendingState blendingState;
-        Ref<Framebuffer> framebuffer; //Used on Vulkan to get the RenderPass
+
+        //Used on Vulkan only to get the RenderPass. 
+        //If absent, it's assumed to be a swapchain framebuffer (the current frame one), which is fine becaues all of them have a similar RenderPass.
+        Ref<Framebuffer> framebuffer;
     };
 
     class PipelineState {
