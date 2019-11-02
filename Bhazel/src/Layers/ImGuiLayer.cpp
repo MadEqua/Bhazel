@@ -28,6 +28,7 @@ namespace BZ {
         //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
         //io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
         //io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
+        io.MouseDrawCursor = true;                                  // Enable software cursor
 
         initInput();
         initGraphics();
@@ -92,7 +93,6 @@ namespace BZ {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseHoveredViewport = 0;
             io.MousePos = ImVec2(static_cast<float>(event.getX()), static_cast<float>(event.getY()));
-            BZ_LOG_TRACE(event);
             return false;
             });
 
@@ -175,13 +175,12 @@ namespace BZ {
             const ImDrawList *cmdList = imDrawData->CmdLists[i];
             for(int j = 0; j < cmdList->CmdBuffer.Size; j++) {
                 const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
-                //TODO
-                /*VkRect2D scissorRect;
-                scissorRect.offset.x = std::max((int32_t)(pcmd->ClipRect.x), 0);
-                scissorRect.offset.y = std::max((int32_t)(pcmd->ClipRect.y), 0);
-                scissorRect.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
-                scissorRect.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y);
-                vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect*/
+                ScissorRect scissorRect;
+                scissorRect.rect.left = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);
+                scissorRect.rect.top = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
+                scissorRect.rect.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
+                scissorRect.rect.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
+                Graphics::setScissorRects(commandBuffer, 0, &scissorRect, 1);
 
                 //Graphics::startObject(commandBuffer, model);
                 Graphics::drawIndexed(commandBuffer, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
@@ -313,6 +312,7 @@ namespace BZ {
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
         pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight())} };
         pipelineStateData.blendingState = blendingState;
+        pipelineStateData.dynamicStates = { DynamicState::Scissor };
         pipelineState = PipelineState::create(pipelineStateData);
     }
 }

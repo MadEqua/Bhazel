@@ -30,13 +30,21 @@ namespace BZ {
     PipelineState::PipelineState(PipelineStateData &data) :
         data(data) {
         BZ_ASSERT_CORE(data.shader, "PipelineState needs a shader!");
-        BZ_ASSERT_CORE(!data.viewports.empty(), "PipelineState needs at least one viewport!");
+        BZ_ASSERT_CORE(std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Viewport) != data.dynamicStates.end() ||
+                       !data.viewports.empty(),
+                       "PipelineState with no dynamic Viewport, needs at least one Viewport!");
+
+        BZ_ASSERT_CORE(std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Scissor) != data.dynamicStates.end() ||
+                       std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Viewport) != data.dynamicStates.end() ||
+                       data.scissorRects.size() == data.viewports.size(),
+                       "With non-dynamic Scissor and Viewports the number of Viewports must match the number of ScissorsRects!");
 
         if(!data.framebuffer)
             data.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
 
         BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(),
-            "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
+                       "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
+
 
         //Always add the main descriptor set layouts for the engine.
         data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDescriptorSetLayout());

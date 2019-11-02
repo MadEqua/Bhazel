@@ -10,6 +10,8 @@ namespace BZ {
     class PipelineState;
     class DescriptorSet;
     class DescriptorSetLayout;
+    struct Viewport;
+    struct ScissorRect;
 
     class GraphicsContext {
     public:
@@ -44,6 +46,10 @@ namespace BZ {
 
         virtual void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) = 0;
         virtual void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) = 0;
+
+        //Pipeline dynamic state changes
+        virtual void setViewports(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) = 0;
+        virtual void setScissorRects(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) = 0;
 
         virtual void endRecording(const Ref<CommandBuffer> &commandBuffer) = 0;
 

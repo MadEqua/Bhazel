@@ -72,6 +72,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     pipelineStateData.dataLayout = dataLayout;
     pipelineStateData.primitiveTopology = BZ::PrimitiveTopology::Triangles;
     pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y)} };
+    pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(windowDims.x), static_cast<uint32>(windowDims.y)} };
     pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
     pipelineStateData.blendingState.attachmentBlendingStates = { {} };
     pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();

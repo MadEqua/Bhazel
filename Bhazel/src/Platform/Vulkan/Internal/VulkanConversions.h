@@ -35,4 +35,5 @@ namespace BZ {
    VkMemoryPropertyFlags memoryTypeToPreferredFlagsVk(MemoryType memoryType);
    VkFilter filterModeToVk(FilterMode mode);
    VkSamplerAddressMode addressModeToVk(AddressMode mode);
+   VkDynamicState dynamicStateToVk(DynamicState dynamicState);
 }

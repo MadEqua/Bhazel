@@ -56,6 +56,7 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.primitiveTopology = BZ::PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, 1.0f, 1.0f} };
+        pipelineStateData.scissorRects = { { 0u, 0u, 1u, 1u} };
         pipelineStateData.blendingState.attachmentBlendingStates = { {} };
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
         pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
@@ -149,6 +150,14 @@ namespace BZ {
 
     void Graphics::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
         graphicsContext->drawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+
+    void Graphics::setViewports(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
+        graphicsContext->setViewports(commandBuffer, firstIndex, viewports, viewportCount);
+    }
+
+    void Graphics::setScissorRects(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) {
+        graphicsContext->setScissorRects(commandBuffer, firstIndex, rects, rectCount);
     }
 
     void Graphics::endObject() {

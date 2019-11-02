@@ -634,4 +634,28 @@ namespace BZ {
             return VK_SAMPLER_ADDRESS_MODE_REPEAT;
         }
     }
+
+    VkDynamicState dynamicStateToVk(DynamicState dynamicState) {
+        switch(dynamicState) {
+        case DynamicState::Scissor:
+            return VK_DYNAMIC_STATE_SCISSOR;
+        case DynamicState::LineWidth:
+            return VK_DYNAMIC_STATE_LINE_WIDTH;
+        case DynamicState::DepthBias:
+            return VK_DYNAMIC_STATE_DEPTH_BIAS;
+        case DynamicState::BlendConstants:
+            return VK_DYNAMIC_STATE_BLEND_CONSTANTS;
+        case DynamicState::DepthBounds:
+            return VK_DYNAMIC_STATE_DEPTH_BOUNDS;
+        case DynamicState::StencilCompareMask:
+            return VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK;
+        case DynamicState::StencilWriteMask:
+            return VK_DYNAMIC_STATE_STENCIL_WRITE_MASK;
+        case DynamicState::StencilReference:
+            return VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown DynamicState!");
+            return VK_DYNAMIC_STATE_SCISSOR;
+        }
+    }
 }

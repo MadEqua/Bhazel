@@ -20,13 +20,19 @@ namespace BZ {
         TriangleStrip
     };
 
+    template<typename T>
+    struct Rect {
+        T left, top, width, height;
+    };
+
     struct Viewport {
-        float left = 0.0f;
-        float top = 0.0f;
-        float width = 800.0f;
-        float height = 600.0f;
+        Rect<float> rect = { 0, 0, 800, 600 };
         float minDepth = 0.0f;
         float maxDepth = 1.0f;
+    };
+
+    struct ScissorRect {
+        Rect<uint32> rect = { 0 };
     };
 
     enum class PolygonMode {
@@ -159,6 +165,18 @@ namespace BZ {
         glm::vec4 blendingConstants = {};
     };
 
+    enum class DynamicState {
+        Viewport,
+        Scissor,
+        LineWidth,
+        DepthBias,
+        BlendConstants,
+        DepthBounds,
+        StencilCompareMask,
+        StencilWriteMask,
+        StencilReference
+    };
+
     class Shader;
     class Framebuffer;
     class DescriptorSetLayout;
@@ -172,10 +190,12 @@ namespace BZ {
         PrimitiveTopology primitiveTopology;
         std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
         std::vector<Viewport> viewports;
+        std::vector<ScissorRect> scissorRects;
         RasterizerState rasterizerState;
         MultisampleState multiSampleState;
         DepthStencilState depthStencilState;
         BlendingState blendingState;
+        std::vector<DynamicState> dynamicStates;
 
         //Used on Vulkan only to get the RenderPass. 
         //If absent, it's assumed to be a swapchain framebuffer (the current frame one), which is fine becaues all of them have a similar RenderPass.
@@ -186,7 +206,7 @@ namespace BZ {
     public:
         static Ref<PipelineState> create(PipelineStateData& data);
 
-        const PipelineStateData &getData() const { return data; }
+        const PipelineStateData& getData() const { return data; }
 
     protected:
         explicit PipelineState(PipelineStateData &data);

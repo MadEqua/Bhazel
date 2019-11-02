@@ -60,6 +60,9 @@ namespace BZ {
         void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) override;
         void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) override;
 
+        void setViewports(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) override;
+        void setScissorRects(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) override;
+
         void endRecording(const Ref<CommandBuffer> &commandBuffer) override;
 
         void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) override;

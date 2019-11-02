@@ -291,6 +291,32 @@ namespace BZ {
         vkCmdDrawIndexed(vulkanCommandBuffer.getNativeHandle(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
     }
 
+    void VulkanContext::setViewports(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+        VkViewport vkViewports[MAX_VIEWPORTS];
+        for(int i = 0; i < viewportCount; ++i) {
+            vkViewports[i].x = viewports[i].rect.left;
+            vkViewports[i].y = viewports[i].rect.top;
+            vkViewports[i].width = viewports[i].rect.width;
+            vkViewports[i].height = viewports[i].rect.height;
+            vkViewports[i].minDepth = viewports[i].minDepth;
+            vkViewports[i].maxDepth = viewports[i].maxDepth;
+        }
+        vkCmdSetViewport(vulkanCommandBuffer.getNativeHandle(), firstIndex, viewportCount, vkViewports);
+    }
+
+    void VulkanContext::setScissorRects(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+        VkRect2D vkRects[MAX_VIEWPORTS];
+        for(int i = 0; i < rectCount; ++i) {
+            vkRects[i].offset.x = rects[i].rect.left;
+            vkRects[i].offset.y = rects[i].rect.top;
+            vkRects[i].extent.width = rects[i].rect.width;
+            vkRects[i].extent.height = rects[i].rect.height;
+        }
+        vkCmdSetScissor(vulkanCommandBuffer.getNativeHandle(), firstIndex, rectCount, vkRects);
+    }
+
     void VulkanContext::endRecording(const Ref<CommandBuffer> &commandBuffer) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
         vkCmdEndRenderPass(vulkanCommandBuffer.getNativeHandle());
@@ -348,7 +374,7 @@ namespace BZ {
             if(frameData.renderFinishedFence.isSignaled()) //TODO: is we are gpu bound and the fence is never signaled here, then the pool will never be reset
                 familyAndPool.second.reset();
             else
-                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled!", currentFrameIndex);
+                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled, will not clean CommandPool! App is GPU bound", currentFrameIndex);
         }
     }
 

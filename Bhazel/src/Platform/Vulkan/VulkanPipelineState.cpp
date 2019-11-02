@@ -52,25 +52,27 @@ namespace BZ {
 
         //Viewport and scissor setup. This is ignored if the viewport (or scissor) is declared dynamic.
         std::vector<VkViewport> viewports(data.viewports.size());
-        std::vector<VkRect2D> scissors(data.viewports.size());
         uint32 idx = 0;
-        for(const auto& vp : data.viewports) {
+        for(const auto &vp : data.viewports) {
             VkViewport viewport = {};
-            viewport.x = vp.left;
-            viewport.y = vp.height; //Inverting the space (+y -> up)
-            viewport.width = vp.width;
-            viewport.height = -vp.height; //Inverting the space (+y -> up) 
+            viewport.x = vp.rect.left;
+            viewport.y = vp.rect.height; //Inverting the space (+y -> up)
+            viewport.width = vp.rect.width;
+            viewport.height = -vp.rect.height; //Inverting the space (+y -> up) 
             viewport.minDepth = vp.minDepth;
             viewport.maxDepth = vp.maxDepth;
+            viewports[idx++] = viewport;
+        }
 
-            //TODO: support scissor
+        std::vector<VkRect2D> scissors(data.scissorRects.size());
+        idx = 0;
+        for(const auto &scissorRect : data.scissorRects) {
             VkRect2D scissor = {};
-            scissor.offset = { 0, 0 };
-            scissor.extent = { static_cast<uint32_t>(vp.width), static_cast<uint32_t>(vp.height) };
-
-            viewports[idx] = viewport;
-            scissors[idx] = scissor;
-            idx++;
+            scissor.offset.x = scissorRect.rect.left;
+            scissor.offset.y = scissorRect.rect.top;
+            scissor.extent.width = scissorRect.rect.width;
+            scissor.extent.height = scissorRect.rect.height;
+            scissors[idx++] = scissor;
         }
 
         VkPipelineViewportStateCreateInfo viewportState = {};
@@ -181,7 +183,7 @@ namespace BZ {
         //Shader setup
         std::array<VkPipelineShaderStageCreateInfo, Shader::SHADER_STAGES_COUNT> shaderStagesCreateInfos;
 
-        idx = 0;
+        uint32 stageCount = 0;
         for(int i = 0; i < Shader::SHADER_STAGES_COUNT; ++i) {
             ShaderStage shaderStage = static_cast<ShaderStage>(i);
             if(data.shader->isStagePresent(shaderStage)) {
@@ -191,14 +193,26 @@ namespace BZ {
                 shaderCreateInfo.stage = shaderStageToVk(shaderStage);
                 shaderCreateInfo.module = vulkanShader.getNativeHandle().modules[i];
                 shaderCreateInfo.pName = "main";
-                shaderStagesCreateInfos[idx++] = shaderCreateInfo;
+                shaderStagesCreateInfos[stageCount++] = shaderCreateInfo;
             }
         }
+
+        //Dynamic State
+        std::vector<VkDynamicState> vkDynamicStates(data.dynamicStates.size());
+        idx = 0;
+        for(auto dynState : data.dynamicStates) {
+            vkDynamicStates[idx++] = dynamicStateToVk(dynState);
+        }
+
+        VkPipelineDynamicStateCreateInfo dynamicState = {};
+        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(data.dynamicStates.size());
+        dynamicState.pDynamicStates = vkDynamicStates.data();
 
         //Create the graphics pipeline
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = idx;
+        pipelineInfo.stageCount = stageCount;
         pipelineInfo.pStages = shaderStagesCreateInfos.data();
         pipelineInfo.pVertexInputState = &vertexInputInfoState;
         pipelineInfo.pInputAssemblyState = &inputAssemblyState;
@@ -207,7 +221,7 @@ namespace BZ {
         pipelineInfo.pMultisampleState = &multisamplingState;
         pipelineInfo.pDepthStencilState = &depthStencilState;
         pipelineInfo.pColorBlendState = &colorBlendingState;
-        pipelineInfo.pDynamicState = nullptr; // TODO
+        pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = nativeHandle.pipelineLayout;
         pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).getNativeHandle().renderPassHandle;
         pipelineInfo.subpass = 0;
