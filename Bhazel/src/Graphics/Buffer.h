@@ -19,6 +19,7 @@ namespace BZ {
         PerVertex, PerInstance
     };
 
+
     class DataElement {
     public:
         DataType dataType;
@@ -39,6 +40,7 @@ namespace BZ {
 
         friend class DataLayout;
     };
+
 
     class DataLayout {
     public:
@@ -64,7 +66,9 @@ namespace BZ {
     };
 
     enum class BufferType {
-        Vertex, Index, Constant
+        Vertex,
+        Index,
+        Constant
     };
 
     enum class MemoryType {
@@ -72,6 +76,32 @@ namespace BZ {
         CpuToGpu,
         GpuToCpu
     };
+
+
+    class Buffer;
+
+    /*
+    * This will wrap pointers to mapped buffer memory.
+    * It will hide from the client the existence of different replicas for dynamic buffers.
+    */
+    class BufferPtr {
+    public:
+        BufferPtr() = default;
+        BufferPtr(Buffer &buffer, byte* const basePtr) : buffer(&buffer), basePtr(basePtr) {}
+
+        operator void*() const;
+        operator byte*() const;
+
+    private:
+        Buffer *buffer;
+        byte* basePtr;
+
+        friend BufferPtr operator+(const BufferPtr &lhs, uint32 offset);
+        friend BufferPtr operator-(const BufferPtr &lhs, uint32 offset);
+    };
+
+    BufferPtr operator+(const BufferPtr &lhs, uint32 offset);
+    BufferPtr operator-(const BufferPtr &lhs, uint32 offset);
 
 
     /*
@@ -84,7 +114,7 @@ namespace BZ {
         static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType, const DataLayout &layout);
 
         void setData(const void *data, uint32 dataSize, uint32 offset);
-        byte* map(uint32 offset);
+        BufferPtr map(uint32 offset);
         void unmap();
 
         uint32 getSize() const { return size; }
@@ -93,7 +123,7 @@ namespace BZ {
         bool isDynamic() const { return memoryType != MemoryType::GpuOnly; }
         const DataLayout& getLayout() const { return layout; }
 
-        uint32 getBaseOfReplicaOffset() const;
+        uint32 getCurrentBaseOfReplicaOffset() const;
 
     protected:
         BufferType type;
@@ -112,7 +142,7 @@ namespace BZ {
         //void initBufferData(const void *data);
 
         virtual void internalSetData(const void *data, uint32 dataSize, uint32 offset) = 0;
-        virtual byte* internalMap(uint32 offset) = 0;
+        virtual BufferPtr internalMap(uint32 offset) = 0;
         virtual void internalUnmap() = 0;
     };
 }

@@ -35,8 +35,8 @@ namespace BZ {
         virtual Ref<CommandBuffer> startRecording() = 0;
         virtual Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) = 0;
 
-        virtual void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) = 0;
-        virtual void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) = 0;
+        virtual void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) = 0;
+        virtual void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) = 0;
 
         virtual void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) = 0;
         //virtual void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet) = 0;

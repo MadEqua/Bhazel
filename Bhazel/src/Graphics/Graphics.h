@@ -36,8 +36,8 @@ namespace BZ {
         static void startScene(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
         static void startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix);
 
-        static void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
-        static void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer);
+        static void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset);
+        static void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset);
         
         static void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState);
         //static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
@@ -91,8 +91,8 @@ namespace BZ {
         static Ref<Buffer> frameConstantBuffer;
         static Ref<Buffer> objectConstantBuffer;
 
-        static byte *frameConstantBufferPtr;
-        static byte *objectConstantBufferPtr;
+        static BufferPtr frameConstantBufferPtr;
+        static BufferPtr objectConstantBufferPtr;
 
         static Ref<DescriptorSet> frameDescriptorSet;
         static Ref<DescriptorSet> objectDescriptorSet;

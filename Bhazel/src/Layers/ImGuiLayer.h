@@ -22,8 +22,8 @@ namespace BZ {
     private:
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
-        byte *vertexBufferPtr = nullptr;
-        byte *indexBufferPtr = nullptr;
+        BufferPtr vertexBufferPtr;
+        BufferPtr indexBufferPtr;
 
         //Ref<Shader> vertexShader;
         //Ref<Shader> fragmentShader;

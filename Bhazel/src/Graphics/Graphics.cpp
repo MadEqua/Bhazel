@@ -16,8 +16,8 @@ namespace BZ {
     Ref<Buffer> Graphics::frameConstantBuffer;
     Ref<Buffer> Graphics::objectConstantBuffer;
 
-    byte* Graphics::frameConstantBufferPtr = nullptr;
-    byte* Graphics::objectConstantBufferPtr  = nullptr;
+    BufferPtr Graphics::frameConstantBufferPtr;
+    BufferPtr Graphics::objectConstantBufferPtr;
 
     Ref<DescriptorSet> Graphics::frameDescriptorSet;
     Ref<DescriptorSet> Graphics::objectDescriptorSet;
@@ -38,13 +38,11 @@ namespace BZ {
         frameConstantBuffer = Buffer::create(BufferType::Constant, sizeof(FrameConstantBufferData), MemoryType::CpuToGpu);
         objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::CpuToGpu);
 
-        //Keep the full buffers mapped. This puts the responsability of computing offsets on this class.
-        //TODO: This works because this function is called on frame 0, so the replica offset returned is 0. Not OK.
         frameConstantBufferPtr = frameConstantBuffer->map(0);
         objectConstantBufferPtr = objectConstantBuffer->map(0);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::ConstantBufferDynamic, BZ::flagsToMask(BZ::ShaderStageFlags::All), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
         descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         frameDescriptorSet = DescriptorSet::create(descriptorSetLayout);
@@ -54,16 +52,15 @@ namespace BZ {
         objectDescriptorSet->setConstantBuffer(objectConstantBuffer, 0, 0, sizeof(ObjectConstantBufferData));
 
         PipelineStateData pipelineStateData;
-        pipelineStateData.primitiveTopology = BZ::PrimitiveTopology::Triangles;
+        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, 1.0f, 1.0f} };
         pipelineStateData.scissorRects = { { 0u, 0u, 1u, 1u} };
         pipelineStateData.blendingState.attachmentBlendingStates = { {} };
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
-        pipelineStateData.framebuffer = BZ::Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("dummy");
-        shaderBuilder.fromBinaryFile(BZ::ShaderStage::Vertex, "shaders/bin/dummyVert.spv");
-        shaderBuilder.fromBinaryFile(BZ::ShaderStage::Fragment, "shaders/bin/dummyFrag.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/dummyVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/dummyFrag.spv");
         pipelineStateData.shader = shaderBuilder.build();
 
         dummyPipelineState = PipelineState::create(pipelineStateData);
@@ -96,13 +93,13 @@ namespace BZ {
         frameConstantBufferData.projectionMatrix = projectionMatrix;
         frameConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
 
-        memcpy(frameConstantBufferPtr + frameConstantBuffer->getBaseOfReplicaOffset(), &frameConstantBufferData, sizeof(FrameConstantBufferData));
+        memcpy(frameConstantBufferPtr, &frameConstantBufferData, sizeof(FrameConstantBufferData));
 
         currentObjectIndex = 0;
 
         //The first scene of the frame will bind frame DescriptorSets.
         //if(shouldBindFrameDescriptorSet) { //TODO: check this logic
-            uint32 currentFrameBase = sizeof(FrameConstantBufferData) * graphicsContext->getCurrentFrameIndex();
+            uint32 currentFrameBase = frameConstantBuffer->getCurrentBaseOfReplicaOffset();
             graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, dummyPipelineState, BHAZEL_FRAME_DESCRIPTOR_SET_IDX, &currentFrameBase, 1);
             shouldBindFrameDescriptorSet = false;
         //}
@@ -115,19 +112,18 @@ namespace BZ {
         objectConstantBufferData.modelMatrix = modelMatrix;
 
         uint32 objectOffset = currentObjectIndex * sizeof(ObjectConstantBufferData);
-        memcpy(objectConstantBufferPtr + objectConstantBuffer->getBaseOfReplicaOffset() + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));
+        memcpy(objectConstantBufferPtr + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));
 
-        uint32 currentFrameBase = MAX_OBJECTS_PER_FRAME * sizeof(ObjectConstantBufferData) * graphicsContext->getCurrentFrameIndex();
-        uint32 totalOffset = currentFrameBase + currentObjectIndex * sizeof(ObjectConstantBufferData);
+        uint32 totalOffset = objectConstantBuffer->getCurrentBaseOfReplicaOffset() + currentObjectIndex * sizeof(ObjectConstantBufferData);
         graphicsContext->bindDescriptorSet(commandBuffer, objectDescriptorSet, dummyPipelineState, BHAZEL_OBJECT_DESCRIPTOR_SET_IDX, &totalOffset, 1);
     }
 
-    void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
-        graphicsContext->bindVertexBuffer(commandBuffer, buffer);
+    void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
+        graphicsContext->bindVertexBuffer(commandBuffer, buffer, buffer->getCurrentBaseOfReplicaOffset() + offset);
     }
 
-    void Graphics::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
-        graphicsContext->bindIndexBuffer(commandBuffer, buffer);
+    void Graphics::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
+        graphicsContext->bindIndexBuffer(commandBuffer, buffer, buffer->getCurrentBaseOfReplicaOffset() + offset);
     }
 
     void Graphics::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
@@ -141,7 +137,26 @@ namespace BZ {
     void Graphics::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
                                      const Ref<PipelineState> &pipelineState, uint32 setIndex,
                                      uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
-        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, setIndex, dynamicBufferOffsets, dynamicBufferCount);
+
+        //Mix correctly the dynamicBufferOffsets coming from the user with the ones that the engine needs to send behind the scenes for dynamic buffers.
+        uint32 finalDynamicBufferOffsets[32];
+        uint32 dynIndex = 0;
+        uint32 userDynIndex = 0;
+        uint32 binding = 0;
+        for(const auto &desc : descriptorSet->getLayout()->getDescriptorDescs()) {
+            if(desc.type == DescriptorType::ConstantBufferDynamic || desc.type == DescriptorType::StorageBufferDynamic) {
+                const auto *dynBufferData = descriptorSet->getDynamicBufferDataByBinding(binding);
+                BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
+                finalDynamicBufferOffsets[dynIndex] = dynBufferData->buffer->getCurrentBaseOfReplicaOffset();
+                if(!dynBufferData->isAutoAddedByEngine) {
+                    finalDynamicBufferOffsets[dynIndex] += dynamicBufferOffsets[userDynIndex++];
+                }
+                dynIndex++;
+            }
+            binding++;
+        }
+
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, setIndex, finalDynamicBufferOffsets, dynIndex);
     }
 
     void Graphics::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {

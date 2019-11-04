@@ -146,7 +146,6 @@ namespace BZ {
             idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
         }
 
-
         if(imDrawData->CmdListsCount <= 0) {
             BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Command List count: {}. Bailing out.", imDrawData->CmdListsCount);
             return;
@@ -163,17 +162,18 @@ namespace BZ {
 
         Graphics::startScene(commandBuffer, glm::mat4(1.0f), projMatrix);
 
-        Graphics::bindVertexBuffer(commandBuffer, vertexBuffer);
-        Graphics::bindIndexBuffer(commandBuffer, indexBuffer);
         Graphics::bindPipelineState(commandBuffer, pipelineState);
         Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
         int vertexOffset = 0;
         int indexOffset = 0;
 
-        for(int i = 0; i < imDrawData->CmdListsCount; i++) {
+        Graphics::bindVertexBuffer(commandBuffer, vertexBuffer, 0);
+        Graphics::bindIndexBuffer(commandBuffer, indexBuffer, 0);
+
+        for(int i = 0; i < imDrawData->CmdListsCount; ++i) {
             const ImDrawList *cmdList = imDrawData->CmdLists[i];
-            for(int j = 0; j < cmdList->CmdBuffer.Size; j++) {
+            for(int j = 0; j < cmdList->CmdBuffer.Size; ++j) {
                 const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
                 ScissorRect scissorRect;
                 scissorRect.rect.left = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);

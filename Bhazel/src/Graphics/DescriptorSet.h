@@ -38,17 +38,16 @@ namespace BZ {
 
 
     class DescriptorSetLayout {
-    protected:
+    public:
         struct DescriptorDesc {
             DescriptorType type;
             uint8 shaderStageVisibililtyMask;
             uint32 arrayCount;
         };
 
-    public:
         class Builder {
         public:
-            Builder &addDescriptorDesc(DescriptorType type, uint8 shaderStageVisibilityMask, uint32 arrayCount);
+            Builder& addDescriptorDesc(DescriptorType type, uint8 shaderStageVisibilityMask, uint32 arrayCount);
             Ref<DescriptorSetLayout> build() const;
 
         private:
@@ -58,7 +57,8 @@ namespace BZ {
             friend class VulkanDescriptorSetLayout;
         };
 
-        const std::vector<DescriptorDesc> &getDescriptorDescs() const { return descriptorDescs; }
+        std::vector<DescriptorDesc>& getDescriptorDescs() { return descriptorDescs; }
+        uint32 getDescriptorCount() const { return static_cast<uint32>(descriptorDescs.size()); }
 
     protected:
         explicit DescriptorSetLayout(const Builder &builder);
@@ -72,12 +72,30 @@ namespace BZ {
     public:
         static Ref<DescriptorSet> create(const Ref<DescriptorSetLayout> &layout);
 
-        virtual void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) = 0;
-        virtual void setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) = 0;
+        void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size);
+        void setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding);
+
+        struct DynBufferData;
+        const DynBufferData* getDynamicBufferDataByBinding(uint32 binding) const;
+
+        uint32 getDynamicBufferCount() const { return static_cast<uint32>(dynamicBuffers.size()); }
+        Ref<DescriptorSetLayout> getLayout() const { return layout; }
 
     protected:
         explicit DescriptorSet(const Ref<DescriptorSetLayout> &layout);
 
         Ref<DescriptorSetLayout> layout;
+
+        struct DynBufferData {
+            DynBufferData(uint32 binding, Ref<Buffer> buffer, bool isAutoAddedByEngine) : binding(binding), buffer(buffer), isAutoAddedByEngine(isAutoAddedByEngine) {}
+            uint32 binding;
+            Ref<Buffer> buffer;
+            bool isAutoAddedByEngine;
+        };
+        //Only storing Buffers (dynamic) and not other descriptors because that's the only type that has the need (for automatic dynamic buffer offset filling by the engine).
+        std::vector<DynBufferData> dynamicBuffers;
+
+        virtual void internalSetConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) = 0;
+        virtual void internalSetCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) = 0;
     };
 }

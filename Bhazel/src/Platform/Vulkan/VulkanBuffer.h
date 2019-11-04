@@ -18,7 +18,7 @@ namespace BZ {
         virtual ~VulkanBuffer() override;
 
         void internalSetData(const void *data, uint32 dataSize, uint32 offset) override;
-        byte* internalMap(uint32 offset) override;
+        BufferPtr internalMap(uint32 offset) override;
         void internalUnmap() override;
 
     private:

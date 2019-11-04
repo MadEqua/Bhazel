@@ -248,19 +248,19 @@ namespace BZ {
         return commandBufferRef;
     }
 
-    void VulkanContext::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+    void VulkanContext::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
         VkBuffer vkBuffers[] = { static_cast<const VulkanBuffer &>(*buffer).getNativeHandle() };
-        VkDeviceSize offsets[] = { 0 };
+        VkDeviceSize offsets[] = { offset };
         vkCmdBindVertexBuffers(vulkanCommandBuffer.getNativeHandle(), 0, 1, vkBuffers, offsets);
     }
 
-    void VulkanContext::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer) {
+    void VulkanContext::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
         auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
 
         auto &vulkanBuffer = static_cast<const VulkanBuffer &>(*buffer);
-        vkCmdBindIndexBuffer(vulkanCommandBuffer.getNativeHandle(), vulkanBuffer.getNativeHandle(), 0, VK_INDEX_TYPE_UINT16); //TODO index size
+        vkCmdBindIndexBuffer(vulkanCommandBuffer.getNativeHandle(), vulkanBuffer.getNativeHandle(), offset, VK_INDEX_TYPE_UINT16); //TODO index size
     }
 
     void VulkanContext::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {

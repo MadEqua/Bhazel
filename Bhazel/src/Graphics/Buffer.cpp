@@ -72,6 +72,24 @@ namespace BZ {
         }
     }
 
+
+    BufferPtr::operator void*() const {
+        return basePtr + buffer->getCurrentBaseOfReplicaOffset();
+    }
+
+    BufferPtr::operator byte*() const {
+        return basePtr + buffer->getCurrentBaseOfReplicaOffset();
+    }
+
+    BufferPtr operator+(const BufferPtr &lhs, uint32 offset) {
+        return BufferPtr(*lhs.buffer, lhs.basePtr + offset);
+    }
+
+    BufferPtr operator-(const BufferPtr &lhs, uint32 offset) {
+        return BufferPtr(*lhs.buffer, lhs.basePtr - offset);
+    }
+
+
     Ref<Buffer> Buffer::create(BufferType type, uint32 size, MemoryType memoryType) {
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
@@ -127,16 +145,16 @@ namespace BZ {
         BZ_ASSERT_CORE(dataSize > 0, "Size is not valid!");
         BZ_ASSERT_CORE(!isMapped, "Buffer is being mapped!");
 
-        internalSetData(data, dataSize, getBaseOfReplicaOffset() + offset);
+        internalSetData(data, dataSize, getCurrentBaseOfReplicaOffset() + offset);
     }
 
-    byte* Buffer::map(uint32 offset) {
+    BufferPtr Buffer::map(uint32 offset) {
         BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
         BZ_ASSERT_CORE(!isMapped, "Buffer already mapped!");
-        BZ_ASSERT_CORE(memoryType != MemoryType::GpuOnly, "Can't map buffer with GpuOnly MemoryType");
+        BZ_ASSERT_CORE(isDynamic(), "Can't map buffer marked with non-dynamic.");
 
         isMapped = true;
-        return internalMap(getBaseOfReplicaOffset() + offset);
+        return internalMap(offset);
     }
 
     void Buffer::unmap() {
@@ -146,7 +164,7 @@ namespace BZ {
         internalUnmap();
     }
 
-    uint32 Buffer::getBaseOfReplicaOffset() const {
+    uint32 Buffer::getCurrentBaseOfReplicaOffset() const {
         return isDynamic() ? Application::getInstance().getGraphicsContext().getCurrentFrameIndex() * this->size : 0;
     }
 }

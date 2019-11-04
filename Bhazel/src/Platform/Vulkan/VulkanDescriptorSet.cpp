@@ -51,12 +51,7 @@ namespace BZ {
         BZ_ASSERT_VK(vkAllocateDescriptorSets(getDevice(), &allocInfo, &nativeHandle));
     }
 
-    void VulkanDescriptorSet::setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) {
-        BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBuffer || 
-            layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBufferDynamic,
-            "Binding {} is not of type ConstantBuffer!", binding);
-        BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
-
+    void VulkanDescriptorSet::internalSetConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) {
         VkDescriptorBufferInfo bufferInfo = {};
         bufferInfo.buffer = static_cast<const VulkanBuffer &>(*buffer).getNativeHandle();
         bufferInfo.offset = offset;
@@ -73,10 +68,7 @@ namespace BZ {
         vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
     }
 
-    void VulkanDescriptorSet::setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) {
-        BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].type == DescriptorType::CombinedTextureSampler, "Binding {} is not of type CombinedTextureSampler!", binding);
-        BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
-
+    void VulkanDescriptorSet::internalSetCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) {
         VkDescriptorImageInfo imageInfo = {};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.imageView = static_cast<const VulkanTextureView &>(*textureView).getNativeHandle();

@@ -79,10 +79,10 @@ namespace BZ {
         }
     }
 
-    byte* VulkanBuffer::internalMap(uint32 offset) {
+    BufferPtr VulkanBuffer::internalMap(uint32 offset) {
         void *ptr;
         BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), allocationHandle, &ptr));
-        return static_cast<byte*>(ptr) + offset;
+        return BufferPtr(*this, static_cast<byte*>(ptr) + offset);
     }
 
     void VulkanBuffer::internalUnmap() {
