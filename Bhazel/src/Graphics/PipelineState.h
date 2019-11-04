@@ -209,10 +209,10 @@ namespace BZ {
         const PipelineStateData& getData() const { return data; }
 
     protected:
-        explicit PipelineState(PipelineStateData &data);
+        explicit PipelineState(PipelineStateData &inData);
         virtual ~PipelineState() = default;
 
-    private:
-        const PipelineStateData data;
+    protected:
+        PipelineStateData data;
     };
 }

@@ -17,7 +17,7 @@ namespace BZ {
 
     class VulkanPipelineState : public PipelineState, public VulkanGpuObject<VulkanPipelineStateHandles> {
     public:
-        VulkanPipelineState(PipelineStateData &data);
+        VulkanPipelineState(PipelineStateData &inData);
         virtual ~VulkanPipelineState() override;
     };
 }

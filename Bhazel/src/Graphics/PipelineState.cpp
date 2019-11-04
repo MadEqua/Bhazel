@@ -16,9 +16,9 @@ namespace BZ {
     Ref<PipelineState> PipelineState::create(PipelineStateData& data) {
         switch(Graphics::api) {
             /*case Graphics::API::OpenGL:
-                return MakeRef<OpenGLPipelineState>(data);
+                return MakeRef<OpenGLPipelineState>(inData);
             case Graphics::API::D3D11:
-                return MakeRef<D3D11PipelineState>(data);*/
+                return MakeRef<D3D11PipelineState>(inData);*/
         case Graphics::API::Vulkan:
             return MakeRef<VulkanPipelineState>(data);
         default:
@@ -27,8 +27,8 @@ namespace BZ {
         }
     }
 
-    PipelineState::PipelineState(PipelineStateData &data) :
-        data(data) {
+    PipelineState::PipelineState(PipelineStateData &inData) :
+        data(inData) {
         BZ_ASSERT_CORE(data.shader, "PipelineState needs a shader!");
         BZ_ASSERT_CORE(std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Viewport) != data.dynamicStates.end() ||
                        !data.viewports.empty(),

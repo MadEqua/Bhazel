@@ -53,8 +53,8 @@ namespace BZ {
 
         PipelineStateData pipelineStateData;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, 1.0f, 1.0f} };
-        pipelineStateData.scissorRects = { { 0u, 0u, 1u, 1u} };
+        pipelineStateData.viewports = { { 0.0f, 0.0f, 1.0f, 1.0f } };
+        pipelineStateData.scissorRects = { { 0u, 0u, 1u, 1u } };
         pipelineStateData.blendingState.attachmentBlendingStates = { {} };
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
         Shader::Builder shaderBuilder;
@@ -98,11 +98,11 @@ namespace BZ {
         currentObjectIndex = 0;
 
         //The first scene of the frame will bind frame DescriptorSets.
-        //if(shouldBindFrameDescriptorSet) { //TODO: check this logic
+        if(shouldBindFrameDescriptorSet) { //TODO: check this logic
             uint32 currentFrameBase = frameConstantBuffer->getCurrentBaseOfReplicaOffset();
             graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, dummyPipelineState, BHAZEL_FRAME_DESCRIPTOR_SET_IDX, &currentFrameBase, 1);
             shouldBindFrameDescriptorSet = false;
-        //}
+        }
     }
 
     void Graphics::startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix) {

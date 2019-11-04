@@ -310,7 +310,8 @@ namespace BZ {
         pipelineStateData.shader = shaderBuilder.build();
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
-        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight())} };
+        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()) } };
+        pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { DynamicState::Scissor };
         pipelineState = PipelineState::create(pipelineStateData);

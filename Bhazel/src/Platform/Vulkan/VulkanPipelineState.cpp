@@ -10,8 +10,8 @@
 
 namespace BZ {
 
-    VulkanPipelineState::VulkanPipelineState(PipelineStateData &data) :
-        PipelineState(data) {
+    VulkanPipelineState::VulkanPipelineState(PipelineStateData &inData) :
+        PipelineState(inData) {
 
         //Vertex input data format
         std::vector<VkVertexInputBindingDescription> bindingDescriptions;

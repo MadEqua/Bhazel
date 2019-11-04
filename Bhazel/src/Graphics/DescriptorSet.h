@@ -75,7 +75,12 @@ namespace BZ {
         void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size);
         void setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding);
 
-        struct DynBufferData;
+        struct DynBufferData {
+            DynBufferData(uint32 binding, Ref<Buffer> buffer, bool isAutoAddedByEngine) : binding(binding), buffer(buffer), isAutoAddedByEngine(isAutoAddedByEngine) {}
+            uint32 binding;
+            Ref<Buffer> buffer;
+            bool isAutoAddedByEngine;
+        };
         const DynBufferData* getDynamicBufferDataByBinding(uint32 binding) const;
 
         uint32 getDynamicBufferCount() const { return static_cast<uint32>(dynamicBuffers.size()); }
@@ -86,12 +91,6 @@ namespace BZ {
 
         Ref<DescriptorSetLayout> layout;
 
-        struct DynBufferData {
-            DynBufferData(uint32 binding, Ref<Buffer> buffer, bool isAutoAddedByEngine) : binding(binding), buffer(buffer), isAutoAddedByEngine(isAutoAddedByEngine) {}
-            uint32 binding;
-            Ref<Buffer> buffer;
-            bool isAutoAddedByEngine;
-        };
         //Only storing Buffers (dynamic) and not other descriptors because that's the only type that has the need (for automatic dynamic buffer offset filling by the engine).
         std::vector<DynBufferData> dynamicBuffers;
 
