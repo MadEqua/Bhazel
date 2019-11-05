@@ -190,7 +190,7 @@ namespace BZ {
             }
             vertexOffset += cmdList->VtxBuffer.Size;
         }
-
+        Graphics::endScene();
         Graphics::endRecording(commandBuffer);
         Graphics::submitCommandBuffer(commandBuffer);
     }

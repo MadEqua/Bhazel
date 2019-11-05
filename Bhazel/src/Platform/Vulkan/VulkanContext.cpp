@@ -10,6 +10,8 @@
 #include "Platform/Vulkan/VulkanPipelineState.h"
 #include "Platform/Vulkan/VulkanDescriptorSet.h"
 
+#include "Graphics/Color.h"
+
 #include <GLFW/glfw3.h>
 
 
@@ -204,10 +206,6 @@ namespace BZ {
     /////////////////////////////////////////////////////////
     // API
     /////////////////////////////////////////////////////////
-    Ref<CommandBuffer> VulkanContext::startRecording() {
-        return startRecording(swapchain.getFramebuffer(currentFrameIndex));
-    }
-
     Ref<CommandBuffer> VulkanContext::startRecording(const Ref<Framebuffer> &framebuffer) {
         //Begin a command buffer
         VkCommandBufferBeginInfo beginInfo = {};
@@ -224,15 +222,21 @@ namespace BZ {
 
         //We know that the color attachments will be first and then the depthstencil
         VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
-        int i;
+        uint32 i;
         for(i = 0; i < vulkanFramebuffer.getColorAttachmentCount(); ++i) {
-            auto &attachmentClearValues = vulkanFramebuffer.getColorAttachment(i).description.clearValues;
-            memcpy(clearValues[i].color.float32, &attachmentClearValues, sizeof(float) * 4);
+            const auto &att = vulkanFramebuffer.getColorAttachment(i);
+            if(att.description.loadOperatorColorAndDepth == LoadOperation::Clear) {
+                auto &attachmentClearValues = att.description.clearValues;
+                memcpy(clearValues[i].color.float32, &attachmentClearValues, sizeof(float) * 4);
+            }
         }
         if(vulkanFramebuffer.hasDepthStencilAttachment()) {
-            auto &attachmentClearValues = vulkanFramebuffer.getDepthStencilAttachment()->description.clearValues;
-            clearValues[i].depthStencil.depth = attachmentClearValues.floating.x;
-            clearValues[i].depthStencil.stencil = attachmentClearValues.integer.y;
+            const auto &att = vulkanFramebuffer.getDepthStencilAttachment();
+            if(att->description.loadOperatorStencil == LoadOperation::Clear) {
+                auto &attachmentClearValues = att->description.clearValues;
+                clearValues[i].depthStencil.depth = attachmentClearValues.floating.x;
+                clearValues[i].depthStencil.stencil = attachmentClearValues.integer.y;
+            }
         }
 
         VkRenderPassBeginInfo renderPassBeginInfo = {};
@@ -246,6 +250,53 @@ namespace BZ {
         vkCmdBeginRenderPass(commandBufferRef->getNativeHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         return commandBufferRef;
+    }
+
+    void VulkanContext::clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+        auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
+        
+        VkRect2D vkRect;
+        vkRect.offset = { 0, 0 };
+        vkRect.extent = { static_cast<uint32>(framebuffer->getDimensions().x), static_cast<uint32>(framebuffer->getDimensions().y) };
+        
+        VkClearRect clearRect;
+        clearRect.baseArrayLayer = 0;
+        clearRect.layerCount = 1;
+        clearRect.rect = vkRect;
+
+        VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        for(uint32 i = 0; i < framebuffer->getColorAttachmentCount(); i++) {
+            vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            vkClearAttchments[i].colorAttachment = i;
+            memcpy(vkClearAttchments[i].clearValue.color.float32, &clearColor, sizeof(float) * 4);
+        }
+
+        vkCmdClearAttachments(vulkanCommandBuffer.getNativeHandle(), vulkanFramebuffer.getColorAttachmentCount(), vkClearAttchments, 1, &clearRect);
+    }
+
+    void VulkanContext::clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) {
+        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+        auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
+
+        VkRect2D vkRect;
+        vkRect.offset = { 0, 0 };
+        vkRect.extent = { static_cast<uint32>(framebuffer->getDimensions().x), static_cast<uint32>(framebuffer->getDimensions().y) };
+
+        VkClearRect clearRect;
+        clearRect.baseArrayLayer = 0;
+        clearRect.layerCount = 1;
+        clearRect.rect = vkRect;
+
+        VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        for(uint32 i = 0; i < framebuffer->getColorAttachmentCount(); i++) {
+            vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+            vkClearAttchments[i].colorAttachment = 0; //Irrelevant
+            vkClearAttchments[i].clearValue.depthStencil.depth = clearValue.floating.x;
+            vkClearAttchments[i].clearValue.depthStencil.stencil = clearValue.integer.y;
+        }
+
+        vkCmdClearAttachments(vulkanCommandBuffer.getNativeHandle(), vulkanFramebuffer.getColorAttachmentCount(), vkClearAttchments, 1, &clearRect);
     }
 
     void VulkanContext::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
@@ -323,38 +374,25 @@ namespace BZ {
         BZ_ASSERT_VK(vkEndCommandBuffer(vulkanCommandBuffer.getNativeHandle()));
     }
 
-    void VulkanContext::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
+    void VulkanContext::submitCommandBuffersAndFlush(const std::vector<Ref<CommandBuffer>> &pendingCommandBuffers) {
+        VkCommandBuffer vkCommandBuffers[64];
+        uint32 idx = 0;
+        for(const auto &cb : pendingCommandBuffers) {
+            auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*cb);
+            vkCommandBuffers[idx++] = vulkanCommandBuffer.getNativeHandle();
+        }
 
         VkSemaphore waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore.getNativeHandle() };
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
-        VkCommandBuffer vkCommandBuffers[] = { vulkanCommandBuffer.getNativeHandle() };
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT  }; //VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT?
+        VkSemaphore signalSemaphores[] = { frameDatas[currentFrameIndex].renderFinishedSemaphore.getNativeHandle() };
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
-        submitInfo.commandBufferCount = 1;
+        submitInfo.commandBufferCount = idx;
         submitInfo.pCommandBuffers = vkCommandBuffers;
-        submitInfo.signalSemaphoreCount = 0;
-        submitInfo.pSignalSemaphores = nullptr;
-
-        frameDatas[currentFrameIndex].renderFinishedFence.waitFor();
-
-        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, VK_NULL_HANDLE));
-    }
-
-    void VulkanContext::endFrame() {
-        VkSemaphore signalSemaphores[] = { frameDatas[currentFrameIndex].renderFinishedSemaphore.getNativeHandle() };
-
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.waitSemaphoreCount = 0;
-        submitInfo.pWaitSemaphores = nullptr;
-        submitInfo.pWaitDstStageMask = nullptr;
-        submitInfo.commandBufferCount = 0;
-        submitInfo.pCommandBuffers = nullptr;
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 

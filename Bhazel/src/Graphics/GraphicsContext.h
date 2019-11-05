@@ -12,6 +12,7 @@ namespace BZ {
     class DescriptorSetLayout;
     struct Viewport;
     struct ScissorRect;
+    union ClearValues;
 
     class GraphicsContext {
     public:
@@ -32,8 +33,10 @@ namespace BZ {
         /////////////////////////////////////////////////////////
         // API
         /////////////////////////////////////////////////////////
-        virtual Ref<CommandBuffer> startRecording() = 0;
         virtual Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) = 0;
+
+        virtual void clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) = 0;
+        virtual void clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) = 0;
 
         virtual void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) = 0;
         virtual void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) = 0;
@@ -53,8 +56,7 @@ namespace BZ {
 
         virtual void endRecording(const Ref<CommandBuffer> &commandBuffer) = 0;
 
-        virtual void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) = 0;
-        virtual void endFrame() = 0;
+        virtual void submitCommandBuffersAndFlush(const std::vector<Ref<CommandBuffer>> &pendingCommandBuffers) = 0;
 
         virtual void waitForDevice() = 0;
 

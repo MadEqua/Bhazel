@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics/Texture.h"
+#include "Graphics/Color.h"
 
 
 namespace BZ {
@@ -30,11 +31,6 @@ namespace BZ {
         DepthAttachmentStencilReadOnlyOptimal,
         Present,
         SharedPresent
-    };
-
-    union ClearValues {
-        glm::vec4 floating;
-        glm::ivec4 integer;
     };
 
     struct AttachmentDescription {

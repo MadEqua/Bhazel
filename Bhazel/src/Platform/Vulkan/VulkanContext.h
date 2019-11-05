@@ -45,8 +45,10 @@ namespace BZ {
         /////////////////////////////////////////////////////////
         // API
         /////////////////////////////////////////////////////////
-        Ref<CommandBuffer> startRecording() override;
         Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer) override;
+
+        void clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) override;
+        void clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) override;
 
         void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) override;
         void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) override;
@@ -65,8 +67,7 @@ namespace BZ {
 
         void endRecording(const Ref<CommandBuffer> &commandBuffer) override;
 
-        void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) override;
-        void endFrame() override;
+        void submitCommandBuffersAndFlush(const std::vector<Ref<CommandBuffer>> &pendingCommandBuffers) override;
 
         void waitForDevice() override;
 

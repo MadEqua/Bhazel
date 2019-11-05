@@ -126,7 +126,7 @@ namespace BZ {
             AttachmentDescription attachmentDesc;
             attachmentDesc.format = textureRef->getFormat().format;
             attachmentDesc.samples = 1;
-            attachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
+            attachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
             attachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
             attachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
             attachmentDesc.storeOperatorStencil = StoreOperation::DontCare;

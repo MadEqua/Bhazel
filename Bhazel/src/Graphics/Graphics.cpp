@@ -14,31 +14,38 @@ namespace BZ {
     //Graphics::ObjectConstantBufferData Graphics::objectConstantBufferData;
 
     Ref<Buffer> Graphics::frameConstantBuffer;
+    Ref<Buffer> Graphics::sceneConstantBuffer;
     Ref<Buffer> Graphics::objectConstantBuffer;
 
     BufferPtr Graphics::frameConstantBufferPtr;
+    BufferPtr Graphics::sceneConstantBufferPtr;
     BufferPtr Graphics::objectConstantBufferPtr;
 
     Ref<DescriptorSet> Graphics::frameDescriptorSet;
+    Ref<DescriptorSet> Graphics::sceneDescriptorSet;
     Ref<DescriptorSet> Graphics::objectDescriptorSet;
 
     Ref<DescriptorSetLayout> Graphics::descriptorSetLayout;
     
     Ref<PipelineState> Graphics::dummyPipelineState;
 
+    std::vector<Ref<CommandBuffer>> Graphics::pendingCommandBuffers;
+
     GraphicsContext* Graphics::graphicsContext = nullptr;
 
+    uint32 Graphics::currentSceneIndex = 0;
     uint32 Graphics::currentObjectIndex = 0;
-    bool Graphics::shouldBindFrameDescriptorSet = false;
 
 
     void Graphics::init() {
         graphicsContext = &Application::getInstance().getGraphicsContext();
 
         frameConstantBuffer = Buffer::create(BufferType::Constant, sizeof(FrameConstantBufferData), MemoryType::CpuToGpu);
+        sceneConstantBuffer = Buffer::create(BufferType::Constant, sizeof(SceneConstantBufferData) * MAX_SCENES_PER_FRAME, MemoryType::CpuToGpu);
         objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::CpuToGpu);
 
         frameConstantBufferPtr = frameConstantBuffer->map(0);
+        sceneConstantBufferPtr = sceneConstantBuffer->map(0);
         objectConstantBufferPtr = objectConstantBuffer->map(0);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
@@ -47,6 +54,9 @@ namespace BZ {
 
         frameDescriptorSet = DescriptorSet::create(descriptorSetLayout);
         frameDescriptorSet->setConstantBuffer(frameConstantBuffer, 0, 0, sizeof(FrameConstantBufferData));
+
+        sceneDescriptorSet = DescriptorSet::create(descriptorSetLayout);
+        sceneDescriptorSet->setConstantBuffer(sceneConstantBuffer, 0, 0, sizeof(SceneConstantBufferData));
 
         objectDescriptorSet = DescriptorSet::create(descriptorSetLayout);
         objectDescriptorSet->setConstantBuffer(objectConstantBuffer, 0, 0, sizeof(ObjectConstantBufferData));
@@ -64,45 +74,69 @@ namespace BZ {
         pipelineStateData.shader = shaderBuilder.build();
 
         dummyPipelineState = PipelineState::create(pipelineStateData);
+
+        pendingCommandBuffers.reserve(64);
     }
 
     void Graphics::destroy() {
         frameConstantBuffer->unmap();
+        sceneConstantBuffer->unmap();
         objectConstantBuffer->unmap();
 
         //Destroy this 'manually' to avoid the static destruction lottery
         frameConstantBuffer.reset();
+        sceneConstantBuffer.reset();
         objectConstantBuffer.reset();
+
         frameDescriptorSet.reset();
+        sceneDescriptorSet.reset();
         objectDescriptorSet.reset();
+
         descriptorSetLayout.reset();
         dummyPipelineState.reset();
     }
 
     Ref<CommandBuffer> Graphics::startRecording() {
-        return graphicsContext->startRecording();
+        auto &framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
+        return graphicsContext->startRecording(framebuffer);
     }
 
     Ref<CommandBuffer> Graphics::startRecording(const Ref<Framebuffer> &framebuffer) {
         return graphicsContext->startRecording(framebuffer);
     }
 
+    void Graphics::clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) {
+        graphicsContext->clearColorAttachments(commandBuffer, framebuffer, clearColor);
+    }
+
+    void Graphics::clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const ClearValues &clearColor) {
+        auto &framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
+        graphicsContext->clearColorAttachments(commandBuffer, framebuffer, clearColor);
+    }
+
+    void Graphics::clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const ClearValues &clearValue) {
+        auto &framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
+        graphicsContext->clearDepthStencilAttachments(commandBuffer, framebuffer, clearValue);
+    }
+
+    void Graphics::clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) {
+        graphicsContext->clearDepthStencilAttachments(commandBuffer, framebuffer, clearValue);
+    }
+
     void Graphics::startScene(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
-        FrameConstantBufferData frameConstantBufferData;
-        frameConstantBufferData.viewMatrix = viewMatrix;
-        frameConstantBufferData.projectionMatrix = projectionMatrix;
-        frameConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
+        BZ_ASSERT_CORE(currentSceneIndex < MAX_SCENES_PER_FRAME, "currentSceneIndex exceeded MAX_SCENES_PER_FRAME!");
 
-        memcpy(frameConstantBufferPtr, &frameConstantBufferData, sizeof(FrameConstantBufferData));
+        SceneConstantBufferData sceneConstantBufferData;
+        sceneConstantBufferData.viewMatrix = viewMatrix;
+        sceneConstantBufferData.projectionMatrix = projectionMatrix;
+        sceneConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
 
-        currentObjectIndex = 0;
+        uint32 sceneOffset = currentSceneIndex * sizeof(SceneConstantBufferData);
+        memcpy(sceneConstantBufferPtr + sceneOffset, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
 
-        //The first scene of the frame will bind frame DescriptorSets.
-        if(shouldBindFrameDescriptorSet) { //TODO: check this logic
-            uint32 currentFrameBase = frameConstantBuffer->getCurrentBaseOfReplicaOffset();
-            graphicsContext->bindDescriptorSet(commandBuffer, frameDescriptorSet, dummyPipelineState, BHAZEL_FRAME_DESCRIPTOR_SET_IDX, &currentFrameBase, 1);
-            shouldBindFrameDescriptorSet = false;
-        }
+        //TODO: don't really want to bind this every frame, but ImGui shader does not use engine descriptor sets and "unbinds" them when used.
+        uint32 totalOffset = sceneConstantBuffer->getCurrentBaseOfReplicaOffset() + sceneOffset;
+        graphicsContext->bindDescriptorSet(commandBuffer, sceneDescriptorSet, dummyPipelineState, BHAZEL_SCENE_DESCRIPTOR_SET_IDX, &totalOffset, 1);
     }
 
     void Graphics::startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix) {
@@ -114,7 +148,7 @@ namespace BZ {
         uint32 objectOffset = currentObjectIndex * sizeof(ObjectConstantBufferData);
         memcpy(objectConstantBufferPtr + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));
 
-        uint32 totalOffset = objectConstantBuffer->getCurrentBaseOfReplicaOffset() + currentObjectIndex * sizeof(ObjectConstantBufferData);
+        uint32 totalOffset = objectConstantBuffer->getCurrentBaseOfReplicaOffset() + objectOffset;
         graphicsContext->bindDescriptorSet(commandBuffer, objectDescriptorSet, dummyPipelineState, BHAZEL_OBJECT_DESCRIPTOR_SET_IDX, &totalOffset, 1);
     }
 
@@ -180,6 +214,7 @@ namespace BZ {
     }
 
     void Graphics::endScene() {
+        currentSceneIndex++;
     }
 
     void Graphics::endRecording(const Ref<CommandBuffer> &commandBuffer) {
@@ -187,7 +222,7 @@ namespace BZ {
     }
 
     void Graphics::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
-        graphicsContext->submitCommandBuffer(commandBuffer);
+        pendingCommandBuffers.push_back(commandBuffer);
     }
 
     void Graphics::waitForDevice() {
@@ -195,11 +230,13 @@ namespace BZ {
     }
 
     void Graphics::startFrame() {
-        shouldBindFrameDescriptorSet = true;
+        currentSceneIndex = 0;
+        currentObjectIndex = 0;
     }
 
     void Graphics::endFrame() {
-        graphicsContext->endFrame();
+        graphicsContext->submitCommandBuffersAndFlush(pendingCommandBuffers);
+        pendingCommandBuffers.clear();
     }
 
     void Graphics::onWindowResize(WindowResizedEvent &ev) {

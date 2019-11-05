@@ -82,6 +82,10 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     //cameraController->onUpdate(frameStats);
 
     auto commandBuffer = BZ::Graphics::startRecording();
+
+    BZ::ClearValues clearColor;
+    clearColor.floating = {0.1f, 0.1, 0.1f, 1.0f};
+    BZ::Graphics::clearColorAttachments(commandBuffer, clearColor);
     
     BZ::Graphics::startScene(commandBuffer, glm::mat4(1.0f), glm::mat4(1.0f));
 
@@ -97,6 +101,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
         BZ::Graphics::endObject();
     }
 
+    BZ::Graphics::endScene();
     BZ::Graphics::endRecording(commandBuffer);
     BZ::Graphics::submitCommandBuffer(commandBuffer);
 }
