@@ -71,7 +71,7 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        static void startFrame();
+        static void beginFrame();
         static void endFrame();
 
         static Ref<CommandBuffer> commandBuffers[MAX_COMMAND_BUFFERS];

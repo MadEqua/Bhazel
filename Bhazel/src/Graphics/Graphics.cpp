@@ -195,7 +195,7 @@ namespace BZ {
         auto &commandBuffer = commandBuffers[commandBufferId];
         auto &command = commandBuffer->addCommand(CommandType::BindBuffer);
         command.bindBufferData.buffer = buffer.get();
-        command.bindBufferData.offset = offset;
+        command.bindBufferData.offset = buffer->getCurrentBaseOfReplicaOffset() + offset;
     }
 
     void Graphics::bindPipelineState(uint32 commandBufferId, const Ref<PipelineState> &pipelineState) {
@@ -217,12 +217,30 @@ namespace BZ {
         BZ_ASSERT_CORE(dynamicBufferCount < MAX_DESCRIPTOR_DYNAMIC_OFFSETS, "Invalid dynamicBufferCount: {}!", dynamicBufferCount);
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
+        //Mix correctly the dynamicBufferOffsets coming from the user with the ones that the engine needs to send behind the scenes for dynamic buffers.
+        uint32 finalDynamicBufferOffsets[MAX_DESCRIPTOR_DYNAMIC_OFFSETS];
+        uint32 dynIndex = 0;
+        uint32 userDynIndex = 0;
+        uint32 binding = 0;
+        for(const auto &desc : descriptorSet->getLayout()->getDescriptorDescs()) {
+            if(desc.type == DescriptorType::ConstantBufferDynamic || desc.type == DescriptorType::StorageBufferDynamic) {
+                const auto *dynBufferData = descriptorSet->getDynamicBufferDataByBinding(binding);
+                BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
+                finalDynamicBufferOffsets[dynIndex] = dynBufferData->buffer->getCurrentBaseOfReplicaOffset();
+                if(!dynBufferData->isAutoAddedByEngine) {
+                    finalDynamicBufferOffsets[dynIndex] += dynamicBufferOffsets[userDynIndex++];
+                }
+                dynIndex++;
+            }
+            binding++;
+        }
+
         auto &commandBuffer = commandBuffers[commandBufferId];
         auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
         command.bindDescriptorSetData.descriptorSet = descriptorSet.get();
         command.bindDescriptorSetData.pipelineState = pipelineState.get();
         command.bindDescriptorSetData.setIndex = setIndex;
-        memcpy(command.bindDescriptorSetData.dynamicBufferOffsets, dynamicBufferOffsets, dynamicBufferCount * sizeof(uint32));
+        memcpy(command.bindDescriptorSetData.dynamicBufferOffsets, finalDynamicBufferOffsets, dynIndex * sizeof(uint32));
         command.bindDescriptorSetData.dynamicBufferCount = dynamicBufferCount;
     }
 
@@ -282,7 +300,7 @@ namespace BZ {
         graphicsContext->waitForDevice();
     }
 
-    void Graphics::startFrame() {
+    void Graphics::beginFrame() {
         currentCommandBufferIndex = 0;
         currentSceneIndex = 0;
         currentObjectIndex = 0;

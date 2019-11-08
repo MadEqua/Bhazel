@@ -30,32 +30,13 @@ namespace BZ {
                 clearDepthStencilAttachment(*cmd.clearAttachmentsData.framebuffer, cmd.clearAttachmentsData.clearValue);
                 break;
             case CommandType::BindBuffer:
-                bindBuffer(*cmd.bindBufferData.buffer, cmd.bindBufferData.buffer->getCurrentBaseOfReplicaOffset() + cmd.bindBufferData.offset);
+                bindBuffer(*cmd.bindBufferData.buffer, cmd.bindBufferData.offset);
                 break;
             case CommandType::BindPipelineState:
                 bindPipelineState(*cmd.bindPipelineStateData.pipelineState);
                 break;
-            case CommandType::BindDescriptorSet: {
-                //Mix correctly the dynamicBufferOffsets coming from the user with the ones that the engine needs to send behind the scenes for dynamic buffers.
-                uint32 finalDynamicBufferOffsets[MAX_DESCRIPTOR_DYNAMIC_OFFSETS + 3];
-                uint32 dynIndex = 0;
-                uint32 userDynIndex = 0;
-                uint32 binding = 0;
-                for(const auto &desc : cmd.bindDescriptorSetData.descriptorSet->getLayout()->getDescriptorDescs()) {
-                    if(desc.type == DescriptorType::ConstantBufferDynamic || desc.type == DescriptorType::StorageBufferDynamic) {
-                        const auto *dynBufferData = cmd.bindDescriptorSetData.descriptorSet->getDynamicBufferDataByBinding(binding);
-                        BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
-                        finalDynamicBufferOffsets[dynIndex] = dynBufferData->buffer->getCurrentBaseOfReplicaOffset();
-                        if(!dynBufferData->isAutoAddedByEngine) {
-                            finalDynamicBufferOffsets[dynIndex] += cmd.bindDescriptorSetData.dynamicBufferOffsets[userDynIndex++];
-                        }
-                        dynIndex++;
-                    }
-                    binding++;
-                }
-
-                bindDescriptorSet(*cmd.bindDescriptorSetData.descriptorSet, *cmd.bindDescriptorSetData.pipelineState, cmd.bindDescriptorSetData.setIndex, finalDynamicBufferOffsets, dynIndex);
-            }
+            case CommandType::BindDescriptorSet:
+                bindDescriptorSet(*cmd.bindDescriptorSetData.descriptorSet, *cmd.bindDescriptorSetData.pipelineState, cmd.bindDescriptorSetData.setIndex, cmd.bindDescriptorSetData.dynamicBufferOffsets, cmd.bindDescriptorSetData.dynamicBufferCount);
                 break;
             case CommandType::Draw:
                 draw(cmd.drawData.vertexCount, cmd.drawData.instanceCount, cmd.drawData.firstVertex, cmd.drawData.firstInstance);

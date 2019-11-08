@@ -68,7 +68,7 @@ namespace BZ {
 
             if(!window->isMinimized()) {
 
-                Graphics::startFrame();
+                Graphics::beginFrame();
 
                 layerStack.onUpdate(frameStats);
 
