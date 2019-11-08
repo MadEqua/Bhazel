@@ -6,9 +6,6 @@
 #include "Platform/Vulkan/VulkanContext.h"
 #include "Platform/Vulkan/VulkanCommandBuffer.h"
 #include "Platform/Vulkan/VulkanFramebuffer.h"
-#include "Platform/Vulkan/VulkanBuffer.h"
-#include "Platform/Vulkan/VulkanPipelineState.h"
-#include "Platform/Vulkan/VulkanDescriptorSet.h"
 
 #include "Graphics/Color.h"
 
@@ -203,183 +200,16 @@ namespace BZ {
         }
     }
 
-    /////////////////////////////////////////////////////////
-    // API
-    /////////////////////////////////////////////////////////
-    Ref<CommandBuffer> VulkanContext::startRecording(const Ref<Framebuffer> &framebuffer) {
-        //Begin a command buffer
-        VkCommandBufferBeginInfo beginInfo = {};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; //Disallowing command buffer reusage
-        beginInfo.pInheritanceInfo = nullptr;
-
-        auto &commandBufferRef = getCurrentFrameCommandPool(QueueProperty::Graphics, false).getCommandBuffer();
-
-        BZ_ASSERT_VK(vkBeginCommandBuffer(commandBufferRef->getNativeHandle(), &beginInfo));
-
-        //Record a render pass
-        auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
-
-        //We know that the color attachments will be first and then the depthstencil
-        VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
-        uint32 i;
-        for(i = 0; i < vulkanFramebuffer.getColorAttachmentCount(); ++i) {
-            const auto &att = vulkanFramebuffer.getColorAttachment(i);
-            if(att.description.loadOperatorColorAndDepth == LoadOperation::Clear) {
-                auto &attachmentClearValues = att.description.clearValues;
-                memcpy(clearValues[i].color.float32, &attachmentClearValues, sizeof(float) * 4);
-            }
-        }
-        if(vulkanFramebuffer.hasDepthStencilAttachment()) {
-            const auto &att = vulkanFramebuffer.getDepthStencilAttachment();
-            if(att->description.loadOperatorStencil == LoadOperation::Clear) {
-                auto &attachmentClearValues = att->description.clearValues;
-                clearValues[i].depthStencil.depth = attachmentClearValues.floating.x;
-                clearValues[i].depthStencil.stencil = attachmentClearValues.integer.y;
-            }
-        }
-
-        VkRenderPassBeginInfo renderPassBeginInfo = {};
-        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = vulkanFramebuffer.getNativeHandle().renderPassHandle;
-        renderPassBeginInfo.framebuffer = vulkanFramebuffer.getNativeHandle().frameBufferHandle;
-        renderPassBeginInfo.renderArea.offset = {};
-        renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(vulkanFramebuffer.getDimensions().x), static_cast<uint32_t>(vulkanFramebuffer.getDimensions().y) };
-        renderPassBeginInfo.clearValueCount = vulkanFramebuffer.getAttachmentCount();
-        renderPassBeginInfo.pClearValues = clearValues;
-        vkCmdBeginRenderPass(commandBufferRef->getNativeHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        return commandBufferRef;
+    Ref<CommandBuffer> VulkanContext::getCurrentFrameCommandBuffer() {
+       return getCurrentFrameCommandPool(QueueProperty::Graphics, false).getCommandBuffer();
     }
 
-    void VulkanContext::clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
-        
-        VkRect2D vkRect;
-        vkRect.offset = { 0, 0 };
-        vkRect.extent = { static_cast<uint32>(framebuffer->getDimensions().x), static_cast<uint32>(framebuffer->getDimensions().y) };
-        
-        VkClearRect clearRect;
-        clearRect.baseArrayLayer = 0;
-        clearRect.layerCount = 1;
-        clearRect.rect = vkRect;
-
-        VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
-        for(uint32 i = 0; i < framebuffer->getColorAttachmentCount(); i++) {
-            vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            vkClearAttchments[i].colorAttachment = i;
-            memcpy(vkClearAttchments[i].clearValue.color.float32, &clearColor, sizeof(float) * 4);
-        }
-
-        vkCmdClearAttachments(vulkanCommandBuffer.getNativeHandle(), vulkanFramebuffer.getColorAttachmentCount(), vkClearAttchments, 1, &clearRect);
-    }
-
-    void VulkanContext::clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(*framebuffer);
-
-        VkRect2D vkRect;
-        vkRect.offset = { 0, 0 };
-        vkRect.extent = { static_cast<uint32>(framebuffer->getDimensions().x), static_cast<uint32>(framebuffer->getDimensions().y) };
-
-        VkClearRect clearRect;
-        clearRect.baseArrayLayer = 0;
-        clearRect.layerCount = 1;
-        clearRect.rect = vkRect;
-
-        VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
-        for(uint32 i = 0; i < framebuffer->getColorAttachmentCount(); i++) {
-            vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-            vkClearAttchments[i].colorAttachment = 0; //Irrelevant
-            vkClearAttchments[i].clearValue.depthStencil.depth = clearValue.floating.x;
-            vkClearAttchments[i].clearValue.depthStencil.stencil = clearValue.integer.y;
-        }
-
-        vkCmdClearAttachments(vulkanCommandBuffer.getNativeHandle(), vulkanFramebuffer.getColorAttachmentCount(), vkClearAttchments, 1, &clearRect);
-    }
-
-    void VulkanContext::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-
-        VkBuffer vkBuffers[] = { static_cast<const VulkanBuffer &>(*buffer).getNativeHandle() };
-        VkDeviceSize offsets[] = { offset };
-        vkCmdBindVertexBuffers(vulkanCommandBuffer.getNativeHandle(), 0, 1, vkBuffers, offsets);
-    }
-
-    void VulkanContext::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-
-        auto &vulkanBuffer = static_cast<const VulkanBuffer &>(*buffer);
-        vkCmdBindIndexBuffer(vulkanCommandBuffer.getNativeHandle(), vulkanBuffer.getNativeHandle(), offset, VK_INDEX_TYPE_UINT16); //TODO index size
-    }
-
-    void VulkanContext::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-
-        auto &vulkanPipelineState = static_cast<const VulkanPipelineState &>(*pipelineState);
-        vkCmdBindPipeline(vulkanCommandBuffer.getNativeHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipelineState.getNativeHandle().pipeline);
-    }
-
-    void VulkanContext::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
-                                          const Ref<PipelineState> &pipelineState, uint32 setIndex,
-                                          uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        
-        auto &vulkanPipelineState = static_cast<const VulkanPipelineState &>(*pipelineState);
-        VkDescriptorSet descSets[] = { static_cast<const VulkanDescriptorSet &>(*descriptorSet).getNativeHandle() };
-        vkCmdBindDescriptorSets(vulkanCommandBuffer.getNativeHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS,
-            vulkanPipelineState.getNativeHandle().pipelineLayout, setIndex, 1, descSets, dynamicBufferCount, dynamicBufferOffsets);
-    }
-
-    void VulkanContext::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        vkCmdDraw(vulkanCommandBuffer.getNativeHandle(), vertexCount, instanceCount, firstVertex, firstInstance);
-    }
-
-    void VulkanContext::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        vkCmdDrawIndexed(vulkanCommandBuffer.getNativeHandle(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
-    }
-
-    void VulkanContext::setViewports(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        VkViewport vkViewports[MAX_VIEWPORTS];
-        for(int i = 0; i < viewportCount; ++i) {
-            vkViewports[i].x = viewports[i].rect.left;
-            vkViewports[i].y = viewports[i].rect.top;
-            vkViewports[i].width = viewports[i].rect.width;
-            vkViewports[i].height = viewports[i].rect.height;
-            vkViewports[i].minDepth = viewports[i].minDepth;
-            vkViewports[i].maxDepth = viewports[i].maxDepth;
-        }
-        vkCmdSetViewport(vulkanCommandBuffer.getNativeHandle(), firstIndex, viewportCount, vkViewports);
-    }
-
-    void VulkanContext::setScissorRects(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        VkRect2D vkRects[MAX_VIEWPORTS];
-        for(int i = 0; i < rectCount; ++i) {
-            vkRects[i].offset.x = rects[i].rect.left;
-            vkRects[i].offset.y = rects[i].rect.top;
-            vkRects[i].extent.width = rects[i].rect.width;
-            vkRects[i].extent.height = rects[i].rect.height;
-        }
-        vkCmdSetScissor(vulkanCommandBuffer.getNativeHandle(), firstIndex, rectCount, vkRects);
-    }
-
-    void VulkanContext::endRecording(const Ref<CommandBuffer> &commandBuffer) {
-        auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffer);
-        vkCmdEndRenderPass(vulkanCommandBuffer.getNativeHandle());
-        BZ_ASSERT_VK(vkEndCommandBuffer(vulkanCommandBuffer.getNativeHandle()));
-    }
-
-    void VulkanContext::submitCommandBuffersAndFlush(const std::vector<Ref<CommandBuffer>> &pendingCommandBuffers) {
-        VkCommandBuffer vkCommandBuffers[64];
-        uint32 idx = 0;
-        for(const auto &cb : pendingCommandBuffers) {
-            auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*cb);
-            vkCommandBuffers[idx++] = vulkanCommandBuffer.getNativeHandle();
+    void VulkanContext::submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) {
+        VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS];
+        uint32 idx;
+        for(idx = 0; idx < count; ++idx) {
+            auto &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer &>(*commandBuffers[idx]);
+            vkCommandBuffers[idx] = vulkanCommandBuffer.getNativeHandle();
         }
 
         VkSemaphore waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore.getNativeHandle() };

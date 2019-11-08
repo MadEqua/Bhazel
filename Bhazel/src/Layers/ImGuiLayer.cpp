@@ -151,7 +151,7 @@ namespace BZ {
             return;
         }
 
-        auto commandBuffer = BZ::Graphics::startRecording();
+        auto commandBufferId = Graphics::beginCommandBuffer();
 
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
@@ -160,16 +160,16 @@ namespace BZ {
         projMatrix[3][0] = -1.0f;
         projMatrix[3][1] = 1.0f;
 
-        Graphics::startScene(commandBuffer, glm::mat4(1.0f), projMatrix);
+        Graphics::beginScene(commandBufferId, glm::mat4(1.0f), projMatrix);
 
-        Graphics::bindPipelineState(commandBuffer, pipelineState);
-        Graphics::bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+        Graphics::bindPipelineState(commandBufferId, pipelineState);
+        Graphics::bindDescriptorSet(commandBufferId, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
         int vertexOffset = 0;
         int indexOffset = 0;
 
-        Graphics::bindVertexBuffer(commandBuffer, vertexBuffer, 0);
-        Graphics::bindIndexBuffer(commandBuffer, indexBuffer, 0);
+        Graphics::bindBuffer(commandBufferId, vertexBuffer, 0);
+        Graphics::bindBuffer(commandBufferId, indexBuffer, 0);
 
         for(int i = 0; i < imDrawData->CmdListsCount; ++i) {
             const ImDrawList *cmdList = imDrawData->CmdLists[i];
@@ -180,19 +180,17 @@ namespace BZ {
                 scissorRect.rect.top = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
                 scissorRect.rect.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
                 scissorRect.rect.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
-                Graphics::setScissorRects(commandBuffer, 0, &scissorRect, 1);
+                Graphics::setScissorRects(commandBufferId, 0, &scissorRect, 1);
 
-                //Graphics::startObject(commandBuffer, model);
-                Graphics::drawIndexed(commandBuffer, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
+                //Graphics::beginObject(commandBuffer, model);
+                Graphics::drawIndexed(commandBufferId, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
                 //Graphics::endObject();
 
                 indexOffset += pcmd->ElemCount;
             }
             vertexOffset += cmdList->VtxBuffer.Size;
         }
-        Graphics::endScene();
-        Graphics::endRecording(commandBuffer);
-        Graphics::submitCommandBuffer(commandBuffer);
+        Graphics::endCommandBuffer(commandBufferId);
     }
 
     void ImGuiLayer::initInput() {
@@ -285,10 +283,10 @@ namespace BZ {
 
         //DescriptorSetLayout
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::CombinedTextureSampler, flagsToMask(BZ::ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         Ref<DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-        descriptorSet = BZ::DescriptorSet::create(descriptorSetLayout);
+        descriptorSet = DescriptorSet::create(descriptorSetLayout);
         descriptorSet->setCombinedTextureSampler(fontTextureView, fontTextureSampler, 0);
 
         Window &window = Application::getInstance().getWindow();

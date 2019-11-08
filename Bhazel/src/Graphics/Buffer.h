@@ -124,6 +124,7 @@ namespace BZ {
         const DataLayout& getLayout() const { return layout; }
 
         uint32 getCurrentBaseOfReplicaOffset() const;
+        BufferType getType() const { return type; }
 
     protected:
         BufferType type;

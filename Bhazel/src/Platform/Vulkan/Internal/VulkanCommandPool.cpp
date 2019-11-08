@@ -41,9 +41,10 @@ namespace BZ {
         }
         else {
             auto &freeBuffer = buffersFree.back();
-            buffersInUse.push_back(freeBuffer);
 
+            buffersInUse.push_back(freeBuffer);
             buffersFree.pop_back();
+
             return freeBuffer;
         }
     }

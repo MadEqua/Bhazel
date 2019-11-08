@@ -3,12 +3,12 @@
 #include "Constants.h"
 
 #include "Graphics/Buffer.h"
-#include "Graphics/CommandBuffer.h"
 #include "Graphics/Framebuffer.h"
 #include "Graphics/PipelineState.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Shader.h"
 #include "Graphics/Color.h"
+#include "Graphics/CommandBuffer.h"
 
 
 namespace BZ {
@@ -22,7 +22,6 @@ namespace BZ {
     */
     class Graphics {
     public:
-
         enum class API {
             Unknown,
             OpenGL,
@@ -31,39 +30,33 @@ namespace BZ {
         };
 
         //Start recording getting a CommandBuffer from the CommandPool reserved to the current frame.
-        static Ref<CommandBuffer> startRecording();
-        static Ref<CommandBuffer> startRecording(const Ref<Framebuffer> &framebuffer);
+        static uint32 beginCommandBuffer();
 
-        static void clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const ClearValues &clearColor);
-        static void clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor);
-        static void clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const ClearValues &clearValue);
-        static void clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
+        static void clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor);
+        static void clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor);
+        static void clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue);
+        static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
 
-        static void startScene(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
-        static void startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix);
+        static void beginScene(uint32 commandBufferId, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
+        static void beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix);
 
-        static void bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset);
-        static void bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset);
+        //Vertex or index buffer
+        static void bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset);
         
-        static void bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState);
-        //static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
-        static void bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
+        static void bindPipelineState(uint32 commandBufferId, const Ref<PipelineState> &pipelineState);
+        //static void bindDescriptorSets(uint32 commandBufferId, const Ref<DescriptorSet> &descriptorSet);
+        static void bindDescriptorSet(uint32 commandBufferId, const Ref<DescriptorSet> &descriptorSet, 
                                       const Ref<PipelineState> &pipelineState, uint32 setIndex,
                                       uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
 
-        static void draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
-        static void drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);
+        static void draw(uint32 commandBufferId, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
+        static void drawIndexed(uint32 commandBufferId, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);
 
         //Pipeline dynamic state changes
-        static void setViewports(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount);
-        static void setScissorRects(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount);
+        static void setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount);
+        static void setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount);
 
-        static void endObject();
-        static void endScene();
-
-        static void endRecording(const Ref<CommandBuffer> &commandBuffer);
-
-        static void submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer);
+        static void endCommandBuffer(uint32 commandBufferId);
 
         static void waitForDevice();
 
@@ -80,6 +73,9 @@ namespace BZ {
 
         static void startFrame();
         static void endFrame();
+
+        static Ref<CommandBuffer> commandBuffers[MAX_COMMAND_BUFFERS];
+        static uint32 currentCommandBufferIndex;
 
         struct alignas(256) FrameConstantBufferData { //TODO: check this align value
             glm::vec2 timeAndDelta;
@@ -115,8 +111,6 @@ namespace BZ {
         //Dummy data, except for the DescriptorSetLayout list, which contains the above descriptorSetLayout.
         //Used to bind engine DescriptorSets at any code place.
         static Ref<PipelineState> dummyPipelineState;
-
-        static std::vector<Ref<CommandBuffer>> pendingCommandBuffers;
 
         static GraphicsContext *graphicsContext;
 

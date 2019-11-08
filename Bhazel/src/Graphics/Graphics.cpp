@@ -10,6 +10,9 @@ namespace BZ {
 
     Graphics::API Graphics::api = API::Unknown;
 
+    Ref<CommandBuffer> Graphics::commandBuffers[MAX_COMMAND_BUFFERS];
+    uint32 Graphics::currentCommandBufferIndex;
+
     //Graphics::FrameConstantBufferData Graphics::frameConstantBufferData;
     //Graphics::ObjectConstantBufferData Graphics::objectConstantBufferData;
 
@@ -29,12 +32,10 @@ namespace BZ {
     
     Ref<PipelineState> Graphics::dummyPipelineState;
 
-    std::vector<Ref<CommandBuffer>> Graphics::pendingCommandBuffers;
-
     GraphicsContext* Graphics::graphicsContext = nullptr;
 
-    uint32 Graphics::currentSceneIndex = 0;
-    uint32 Graphics::currentObjectIndex = 0;
+    uint32 Graphics::currentSceneIndex;
+    uint32 Graphics::currentObjectIndex;
 
 
     void Graphics::init() {
@@ -74,8 +75,6 @@ namespace BZ {
         pipelineStateData.shader = shaderBuilder.build();
 
         dummyPipelineState = PipelineState::create(pipelineStateData);
-
-        pendingCommandBuffers.reserve(64);
     }
 
     void Graphics::destroy() {
@@ -96,34 +95,52 @@ namespace BZ {
         dummyPipelineState.reset();
     }
 
-    Ref<CommandBuffer> Graphics::startRecording() {
-        auto &framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
-        return graphicsContext->startRecording(framebuffer);
+    uint32 Graphics::beginCommandBuffer() {
+        auto &commandBufferRef = graphicsContext->getCurrentFrameCommandBuffer();
+        commandBufferRef->resetIndex();
+
+        commandBuffers[currentCommandBufferIndex] = commandBufferRef;
+        return currentCommandBufferIndex++;
     }
 
-    Ref<CommandBuffer> Graphics::startRecording(const Ref<Framebuffer> &framebuffer) {
-        return graphicsContext->startRecording(framebuffer);
+    void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {       
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::ClearColorAttachments);
+        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer().get();
+        command.clearAttachmentsData.clearValue = clearColor;
     }
 
-    void Graphics::clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) {
-        graphicsContext->clearColorAttachments(commandBuffer, framebuffer, clearColor);
+    void Graphics::clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::ClearColorAttachments);
+        command.clearAttachmentsData.framebuffer = framebuffer.get();
+        command.clearAttachmentsData.clearValue = clearColor;
     }
 
-    void Graphics::clearColorAttachments(const Ref<CommandBuffer> &commandBuffer, const ClearValues &clearColor) {
-        auto &framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
-        graphicsContext->clearColorAttachments(commandBuffer, framebuffer, clearColor);
+    void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::ClearDepthStencilAttachment);
+        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer().get();
+        command.clearAttachmentsData.clearValue = clearValue;
     }
 
-    void Graphics::clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const ClearValues &clearValue) {
-        auto &framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
-        graphicsContext->clearDepthStencilAttachments(commandBuffer, framebuffer, clearValue);
+    void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::ClearDepthStencilAttachment);
+        command.clearAttachmentsData.framebuffer = framebuffer.get();
+        command.clearAttachmentsData.clearValue = clearValue;
     }
 
-    void Graphics::clearDepthStencilAttachments(const Ref<CommandBuffer> &commandBuffer, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) {
-        graphicsContext->clearDepthStencilAttachments(commandBuffer, framebuffer, clearValue);
-    }
-
-    void Graphics::startScene(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+    void Graphics::beginScene(uint32 commandBufferId, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
         BZ_ASSERT_CORE(currentSceneIndex < MAX_SCENES_PER_FRAME, "currentSceneIndex exceeded MAX_SCENES_PER_FRAME!");
 
         SceneConstantBufferData sceneConstantBufferData;
@@ -135,11 +152,21 @@ namespace BZ {
         memcpy(sceneConstantBufferPtr + sceneOffset, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
 
         //TODO: don't really want to bind this every frame, but ImGui shader does not use engine descriptor sets and "unbinds" them when used.
-        uint32 totalOffset = sceneConstantBuffer->getCurrentBaseOfReplicaOffset() + sceneOffset;
-        graphicsContext->bindDescriptorSet(commandBuffer, sceneDescriptorSet, dummyPipelineState, BHAZEL_SCENE_DESCRIPTOR_SET_IDX, &totalOffset, 1);
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
+        command.bindDescriptorSetData.descriptorSet = sceneDescriptorSet.get();
+        command.bindDescriptorSetData.pipelineState = dummyPipelineState.get();
+        command.bindDescriptorSetData.setIndex = BHAZEL_SCENE_DESCRIPTOR_SET_IDX;
+        command.bindDescriptorSetData.dynamicBufferOffsets[0] = sceneOffset;
+        command.bindDescriptorSetData.dynamicBufferCount = 1;
+
+        BZ_ASSERT_CORE(command.bindDescriptorSetData.dynamicBufferOffsets[0] < sceneConstantBuffer->getRealSize(), "Invalid offset!");
+
+        currentSceneIndex++;
     }
 
-    void Graphics::startObject(const Ref<CommandBuffer> &commandBuffer, const glm::mat4 &modelMatrix) {
+    void Graphics::beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
         BZ_ASSERT_CORE(currentObjectIndex < MAX_OBJECTS_PER_FRAME, "currentObjectIndex exceeded MAX_OBJECTS_PER_FRAME!");
 
         ObjectConstantBufferData objectConstantBufferData;
@@ -148,81 +175,107 @@ namespace BZ {
         uint32 objectOffset = currentObjectIndex * sizeof(ObjectConstantBufferData);
         memcpy(objectConstantBufferPtr + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));
 
-        uint32 totalOffset = objectConstantBuffer->getCurrentBaseOfReplicaOffset() + objectOffset;
-        graphicsContext->bindDescriptorSet(commandBuffer, objectDescriptorSet, dummyPipelineState, BHAZEL_OBJECT_DESCRIPTOR_SET_IDX, &totalOffset, 1);
-    }
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
+        command.bindDescriptorSetData.descriptorSet = objectDescriptorSet.get();
+        command.bindDescriptorSetData.pipelineState = dummyPipelineState.get();
+        command.bindDescriptorSetData.setIndex = BHAZEL_OBJECT_DESCRIPTOR_SET_IDX;
+        command.bindDescriptorSetData.dynamicBufferOffsets[0] = objectOffset;
+        command.bindDescriptorSetData.dynamicBufferCount = 1;
 
-    void Graphics::bindVertexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
-        graphicsContext->bindVertexBuffer(commandBuffer, buffer, buffer->getCurrentBaseOfReplicaOffset() + offset);
-    }
+        BZ_ASSERT_CORE(command.bindDescriptorSetData.dynamicBufferOffsets[0] < objectConstantBuffer->getRealSize(), "Invalid offset!");
 
-    void Graphics::bindIndexBuffer(const Ref<CommandBuffer> &commandBuffer, const Ref<Buffer> &buffer, uint32 offset) {
-        graphicsContext->bindIndexBuffer(commandBuffer, buffer, buffer->getCurrentBaseOfReplicaOffset() + offset);
-    }
-
-    void Graphics::bindPipelineState(const Ref<CommandBuffer> &commandBuffer, const Ref<PipelineState> &pipelineState) {
-        graphicsContext->bindPipelineState(commandBuffer, pipelineState);
-    }
-
-    /*static void bindDescriptorSets(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet);
-        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
-    }*/
-
-    void Graphics::bindDescriptorSet(const Ref<CommandBuffer> &commandBuffer, const Ref<DescriptorSet> &descriptorSet, 
-                                     const Ref<PipelineState> &pipelineState, uint32 setIndex,
-                                     uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
-
-        //Mix correctly the dynamicBufferOffsets coming from the user with the ones that the engine needs to send behind the scenes for dynamic buffers.
-        uint32 finalDynamicBufferOffsets[32];
-        uint32 dynIndex = 0;
-        uint32 userDynIndex = 0;
-        uint32 binding = 0;
-        for(const auto &desc : descriptorSet->getLayout()->getDescriptorDescs()) {
-            if(desc.type == DescriptorType::ConstantBufferDynamic || desc.type == DescriptorType::StorageBufferDynamic) {
-                const auto *dynBufferData = descriptorSet->getDynamicBufferDataByBinding(binding);
-                BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
-                finalDynamicBufferOffsets[dynIndex] = dynBufferData->buffer->getCurrentBaseOfReplicaOffset();
-                if(!dynBufferData->isAutoAddedByEngine) {
-                    finalDynamicBufferOffsets[dynIndex] += dynamicBufferOffsets[userDynIndex++];
-                }
-                dynIndex++;
-            }
-            binding++;
-        }
-
-        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState, setIndex, finalDynamicBufferOffsets, dynIndex);
-    }
-
-    void Graphics::draw(const Ref<CommandBuffer> &commandBuffer, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
-        graphicsContext->draw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
-    }
-
-    void Graphics::drawIndexed(const Ref<CommandBuffer> &commandBuffer, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
-        graphicsContext->drawIndexed(commandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
-    }
-
-    void Graphics::setViewports(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
-        graphicsContext->setViewports(commandBuffer, firstIndex, viewports, viewportCount);
-    }
-
-    void Graphics::setScissorRects(const Ref<CommandBuffer> &commandBuffer, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) {
-        graphicsContext->setScissorRects(commandBuffer, firstIndex, rects, rectCount);
-    }
-
-    void Graphics::endObject() {
         currentObjectIndex++;
     }
 
-    void Graphics::endScene() {
-        currentSceneIndex++;
+    void Graphics::bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset) {
+        BZ_ASSERT_CORE(buffer->getType() == BufferType::Vertex || buffer->getType() == BufferType::Index, "Invalid Buffer type!");
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::BindBuffer);
+        command.bindBufferData.buffer = buffer.get();
+        command.bindBufferData.offset = offset;
     }
 
-    void Graphics::endRecording(const Ref<CommandBuffer> &commandBuffer) {
-        graphicsContext->endRecording(commandBuffer);
+    void Graphics::bindPipelineState(uint32 commandBufferId, const Ref<PipelineState> &pipelineState) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::BindPipelineState);
+        command.bindPipelineStateData.pipelineState = pipelineState.get();
     }
 
-    void Graphics::submitCommandBuffer(const Ref<CommandBuffer> &commandBuffer) {
-        pendingCommandBuffers.push_back(commandBuffer);
+    /*static void bindDescriptorSets(uint32 commandBufferId, const Ref<DescriptorSet> &descriptorSet);
+        graphicsContext->bindDescriptorSet(commandBuffer, descriptorSet, pipelineState);
+    }*/
+
+    void Graphics::bindDescriptorSet(uint32 commandBufferId, const Ref<DescriptorSet> &descriptorSet, 
+                                     const Ref<PipelineState> &pipelineState, uint32 setIndex,
+                                     uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
+
+        BZ_ASSERT_CORE(dynamicBufferCount < MAX_DESCRIPTOR_DYNAMIC_OFFSETS, "Invalid dynamicBufferCount: {}!", dynamicBufferCount);
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
+        command.bindDescriptorSetData.descriptorSet = descriptorSet.get();
+        command.bindDescriptorSetData.pipelineState = pipelineState.get();
+        command.bindDescriptorSetData.setIndex = setIndex;
+        memcpy(command.bindDescriptorSetData.dynamicBufferOffsets, dynamicBufferOffsets, dynamicBufferCount * sizeof(uint32));
+        command.bindDescriptorSetData.dynamicBufferCount = dynamicBufferCount;
+    }
+
+    void Graphics::draw(uint32 commandBufferId, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::Draw);
+        command.drawData.vertexCount = vertexCount;
+        command.drawData.instanceCount = instanceCount;
+        command.drawData.firstVertex = firstVertex;
+        command.drawData.firstInstance = firstInstance;
+    }
+
+    void Graphics::drawIndexed(uint32 commandBufferId, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::DrawIndexed);
+        command.drawIndexedData.indexCount = indexCount;
+        command.drawIndexedData.instanceCount = instanceCount;
+        command.drawIndexedData.firstIndex = firstIndex;
+        command.drawIndexedData.vertexOffset = vertexOffset;
+        command.drawIndexedData.firstInstance = firstInstance;
+    }
+
+    void Graphics::setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
+        BZ_ASSERT_CORE(viewportCount < MAX_VIEWPORTS, "Invalid viewportCount: {}!", viewportCount);
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::SetViewports);
+        command.setViewportsData.firstIndex = firstIndex;
+        memcpy(command.setViewportsData.viewports, viewports, viewportCount * sizeof(Viewport));
+        command.setViewportsData.viewportCount = viewportCount;
+    }
+
+    void Graphics::setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) {
+        BZ_ASSERT_CORE(rectCount < MAX_VIEWPORTS, "Invalid rectCount: {}!", rectCount);
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::SetScissorRects);
+        command.setScissorRectsData.firstIndex = firstIndex;
+        memcpy(command.setScissorRectsData.rects, rects, rectCount * sizeof(ScissorRect));
+        command.setScissorRectsData.rectCount = rectCount;
+    }
+
+    void Graphics::endCommandBuffer(uint32 commandBufferId) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        commandBuffer->optimizeAndGenerate(graphicsContext->getCurrentFrameFramebuffer());
     }
 
     void Graphics::waitForDevice() {
@@ -230,16 +283,18 @@ namespace BZ {
     }
 
     void Graphics::startFrame() {
+        currentCommandBufferIndex = 0;
         currentSceneIndex = 0;
         currentObjectIndex = 0;
     }
 
     void Graphics::endFrame() {
-        graphicsContext->submitCommandBuffersAndFlush(pendingCommandBuffers);
-        pendingCommandBuffers.clear();
+        graphicsContext->submitCommandBuffersAndFlush(commandBuffers, currentCommandBufferIndex);
+
+        //No need to delete CommandBuffers. The pools are responsible for that.
     }
 
     void Graphics::onWindowResize(WindowResizedEvent &ev) {
-        //BZ::RenderCommand::setViewport(0, 0, ev.getWidth(), ev.getHeight());
+        //TODO: do something to viewport
     }
 }
