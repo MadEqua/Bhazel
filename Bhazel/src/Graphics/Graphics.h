@@ -91,10 +91,18 @@ namespace BZ {
             glm::mat4 modelMatrix;
         };
 
+        constexpr static uint32 MAX_SCENES_PER_FRAME = 16;
+        constexpr static uint32 MAX_OBJECTS_PER_FRAME = 512;
 
-        static Ref<Buffer> frameConstantBuffer;
-        static Ref<Buffer> sceneConstantBuffer;
-        static Ref<Buffer> objectConstantBuffer;
+        constexpr static uint32 FRAME_CONSTANT_BUFFER_SIZE = sizeof(FrameConstantBufferData);
+        constexpr static uint32 SCENE_CONSTANT_BUFFER_SIZE = sizeof(SceneConstantBufferData) * MAX_SCENES_PER_FRAME;
+        constexpr static uint32 OBJECT_CONSTANT_BUFFER_SIZE = sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME;
+
+        constexpr static uint32 FRAME_CONSTANT_BUFFER_OFFSET = 0;
+        constexpr static uint32 SCENE_CONSTANT_BUFFER_OFFSET = FRAME_CONSTANT_BUFFER_SIZE;
+        constexpr static uint32 OBJECT_CONSTANT_BUFFER_OFFSET = FRAME_CONSTANT_BUFFER_SIZE + SCENE_CONSTANT_BUFFER_SIZE;
+
+        static Ref<Buffer> constantBuffer;
 
         static BufferPtr frameConstantBufferPtr;
         static BufferPtr sceneConstantBufferPtr;

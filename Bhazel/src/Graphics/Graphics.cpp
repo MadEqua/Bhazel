@@ -13,12 +13,7 @@ namespace BZ {
     Ref<CommandBuffer> Graphics::commandBuffers[MAX_COMMAND_BUFFERS];
     uint32 Graphics::nextCommandBufferIndex;
 
-    //Graphics::FrameConstantBufferData Graphics::frameConstantBufferData;
-    //Graphics::ObjectConstantBufferData Graphics::objectConstantBufferData;
-
-    Ref<Buffer> Graphics::frameConstantBuffer;
-    Ref<Buffer> Graphics::sceneConstantBuffer;
-    Ref<Buffer> Graphics::objectConstantBuffer;
+    Ref<Buffer> Graphics::constantBuffer;
 
     BufferPtr Graphics::frameConstantBufferPtr;
     BufferPtr Graphics::sceneConstantBufferPtr;
@@ -32,7 +27,7 @@ namespace BZ {
     
     Ref<PipelineState> Graphics::dummyPipelineState;
 
-    GraphicsContext* Graphics::graphicsContext = nullptr;
+    GraphicsContext* Graphics::graphicsContext;
 
     uint32 Graphics::currentSceneIndex;
     uint32 Graphics::currentObjectIndex;
@@ -41,26 +36,26 @@ namespace BZ {
     void Graphics::init() {
         graphicsContext = &Application::getInstance().getGraphicsContext();
 
-        frameConstantBuffer = Buffer::create(BufferType::Constant, sizeof(FrameConstantBufferData), MemoryType::CpuToGpu);
-        sceneConstantBuffer = Buffer::create(BufferType::Constant, sizeof(SceneConstantBufferData) * MAX_SCENES_PER_FRAME, MemoryType::CpuToGpu);
-        objectConstantBuffer = Buffer::create(BufferType::Constant, sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME, MemoryType::CpuToGpu);
+        constantBuffer = Buffer::create(BufferType::Constant, 
+                                        FRAME_CONSTANT_BUFFER_SIZE + SCENE_CONSTANT_BUFFER_SIZE + OBJECT_CONSTANT_BUFFER_SIZE,
+                                        MemoryType::CpuToGpu);
 
-        frameConstantBufferPtr = frameConstantBuffer->map(0);
-        sceneConstantBufferPtr = sceneConstantBuffer->map(0);
-        objectConstantBufferPtr = objectConstantBuffer->map(0);
+        frameConstantBufferPtr = constantBuffer->map(0);
+        sceneConstantBufferPtr = frameConstantBufferPtr + SCENE_CONSTANT_BUFFER_OFFSET;
+        objectConstantBufferPtr = frameConstantBufferPtr + OBJECT_CONSTANT_BUFFER_OFFSET;
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
         descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         frameDescriptorSet = DescriptorSet::create(descriptorSetLayout);
-        frameDescriptorSet->setConstantBuffer(frameConstantBuffer, 0, 0, sizeof(FrameConstantBufferData));
+        frameDescriptorSet->setConstantBuffer(constantBuffer, 0, FRAME_CONSTANT_BUFFER_OFFSET, sizeof(FrameConstantBufferData));
 
         sceneDescriptorSet = DescriptorSet::create(descriptorSetLayout);
-        sceneDescriptorSet->setConstantBuffer(sceneConstantBuffer, 0, 0, sizeof(SceneConstantBufferData));
+        sceneDescriptorSet->setConstantBuffer(constantBuffer, 0, SCENE_CONSTANT_BUFFER_OFFSET, sizeof(SceneConstantBufferData));
 
         objectDescriptorSet = DescriptorSet::create(descriptorSetLayout);
-        objectDescriptorSet->setConstantBuffer(objectConstantBuffer, 0, 0, sizeof(ObjectConstantBufferData));
+        objectDescriptorSet->setConstantBuffer(constantBuffer, 0, OBJECT_CONSTANT_BUFFER_OFFSET, sizeof(ObjectConstantBufferData));
 
         PipelineStateData pipelineStateData;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
@@ -78,14 +73,10 @@ namespace BZ {
     }
 
     void Graphics::destroy() {
-        frameConstantBuffer->unmap();
-        sceneConstantBuffer->unmap();
-        objectConstantBuffer->unmap();
+        constantBuffer->unmap();
 
         //Destroy this 'manually' to avoid the static destruction lottery
-        frameConstantBuffer.reset();
-        sceneConstantBuffer.reset();
-        objectConstantBuffer.reset();
+        constantBuffer.reset();
 
         frameDescriptorSet.reset();
         sceneDescriptorSet.reset();
@@ -100,7 +91,7 @@ namespace BZ {
         commandBuffer->resetIndex();
         commandBuffers[nextCommandBufferIndex] = commandBuffer;
 
-        //Auto add a BeginRenderPass Command with a force clear RenderPass on the first Command.
+        //Auto add a BeginRenderPass Command with a force clear RenderPass on the first Command of the frame.
         auto &command = commandBuffer->addCommand(CommandType::BeginRenderPass);
         command.beginRenderPassData.framebuffer = graphicsContext->getCurrentFrameFramebuffer().get();
         command.beginRenderPassData.forceClearAttachments = nextCommandBufferIndex == 0;
@@ -171,10 +162,8 @@ namespace BZ {
         command.bindDescriptorSetData.descriptorSet = sceneDescriptorSet.get();
         command.bindDescriptorSetData.pipelineState = dummyPipelineState.get();
         command.bindDescriptorSetData.setIndex = BHAZEL_SCENE_DESCRIPTOR_SET_IDX;
-        command.bindDescriptorSetData.dynamicBufferOffsets[0] = sceneOffset;
+        command.bindDescriptorSetData.dynamicBufferOffsets[0] = constantBuffer->getCurrentBaseOfReplicaOffset() + sceneOffset; //SCENE_CONSTANT_BUFFER_OFFSET is added on the static offset part 
         command.bindDescriptorSetData.dynamicBufferCount = 1;
-
-        BZ_ASSERT_CORE(command.bindDescriptorSetData.dynamicBufferOffsets[0] < sceneConstantBuffer->getRealSize(), "Invalid offset!");
 
         currentSceneIndex++;
     }
@@ -194,10 +183,8 @@ namespace BZ {
         command.bindDescriptorSetData.descriptorSet = objectDescriptorSet.get();
         command.bindDescriptorSetData.pipelineState = dummyPipelineState.get();
         command.bindDescriptorSetData.setIndex = BHAZEL_OBJECT_DESCRIPTOR_SET_IDX;
-        command.bindDescriptorSetData.dynamicBufferOffsets[0] = objectOffset;
+        command.bindDescriptorSetData.dynamicBufferOffsets[0] = constantBuffer->getCurrentBaseOfReplicaOffset() + objectOffset; //OBJECT_CONSTANT_BUFFER_OFFSET is added on the static offset part 
         command.bindDescriptorSetData.dynamicBufferCount = 1;
-
-        BZ_ASSERT_CORE(command.bindDescriptorSetData.dynamicBufferOffsets[0] < objectConstantBuffer->getRealSize(), "Invalid offset!");
 
         currentObjectIndex++;
     }
