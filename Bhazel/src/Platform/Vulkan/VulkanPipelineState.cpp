@@ -223,7 +223,7 @@ namespace BZ {
         pipelineInfo.pColorBlendState = &colorBlendingState;
         pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = nativeHandle.pipelineLayout;
-        pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).getNativeHandle().renderPassHandle;
+        pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).getOriginalRenderPass().getNativeHandle();
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;

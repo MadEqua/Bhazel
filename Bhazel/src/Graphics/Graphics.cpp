@@ -11,7 +11,7 @@ namespace BZ {
     Graphics::API Graphics::api = API::Unknown;
 
     Ref<CommandBuffer> Graphics::commandBuffers[MAX_COMMAND_BUFFERS];
-    uint32 Graphics::currentCommandBufferIndex;
+    uint32 Graphics::nextCommandBufferIndex;
 
     //Graphics::FrameConstantBufferData Graphics::frameConstantBufferData;
     //Graphics::ObjectConstantBufferData Graphics::objectConstantBufferData;
@@ -96,11 +96,25 @@ namespace BZ {
     }
 
     uint32 Graphics::beginCommandBuffer() {
-        auto &commandBufferRef = graphicsContext->getCurrentFrameCommandBuffer();
-        commandBufferRef->resetIndex();
+        auto &commandBuffer = graphicsContext->getCurrentFrameCommandBuffer();
+        commandBuffer->resetIndex();
+        commandBuffers[nextCommandBufferIndex] = commandBuffer;
 
-        commandBuffers[currentCommandBufferIndex] = commandBufferRef;
-        return currentCommandBufferIndex++;
+        //Auto add a BeginRenderPass Command with a force clear RenderPass on the first Command.
+        auto &command = commandBuffer->addCommand(CommandType::BeginRenderPass);
+        command.beginRenderPassData.framebuffer = graphicsContext->getCurrentFrameFramebuffer().get();
+        command.beginRenderPassData.forceClearAttachments = nextCommandBufferIndex == 0;
+
+        return nextCommandBufferIndex++;
+    }
+
+    void Graphics::endCommandBuffer(uint32 commandBufferId) {
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        //Auto add an EndRenderPass Command.
+        auto &commandBuffer = commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::EndRenderPass);
+        commandBuffer->optimizeAndGenerate();
     }
 
     void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {       
@@ -289,26 +303,18 @@ namespace BZ {
         command.setScissorRectsData.rectCount = rectCount;
     }
 
-    void Graphics::endCommandBuffer(uint32 commandBufferId) {
-        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
-
-        auto &commandBuffer = commandBuffers[commandBufferId];
-        commandBuffer->optimizeAndGenerate(graphicsContext->getCurrentFrameFramebuffer());
-    }
-
     void Graphics::waitForDevice() {
         graphicsContext->waitForDevice();
     }
 
     void Graphics::beginFrame() {
-        currentCommandBufferIndex = 0;
+        nextCommandBufferIndex = 0;
         currentSceneIndex = 0;
         currentObjectIndex = 0;
     }
 
     void Graphics::endFrame() {
-        graphicsContext->submitCommandBuffersAndFlush(commandBuffers, currentCommandBufferIndex);
-
+        graphicsContext->submitCommandBuffersAndFlush(commandBuffers, nextCommandBufferIndex);
         //No need to delete CommandBuffers. The pools are responsible for that.
     }
 

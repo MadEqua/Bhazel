@@ -8,21 +8,27 @@
 namespace BZ {
 
     Command& CommandBuffer::addCommand(CommandType type) {
-        BZ_ASSERT_CORE(currentIndex < MAX_COMMANDS_PER_BUFFER, "Invalid currentIndex: {}!", currentIndex);
-        Command &cmd = commands[currentIndex++];
+        BZ_ASSERT_CORE(nextCommandIndex < MAX_COMMANDS_PER_BUFFER, "Invalid nextCommandIndex: {}!", nextCommandIndex);
+        Command &cmd = commands[nextCommandIndex++];
         cmd.type = type;
         return cmd;
     }
 
-    void CommandBuffer::optimizeAndGenerate(const Ref<Framebuffer> &framebuffer) {
+    void CommandBuffer::optimizeAndGenerate() {
         //TODO: optimize commands
 
-        begin(framebuffer);
+        begin();
 
-        for(uint32 cmdIdx = 0; cmdIdx < currentIndex; ++cmdIdx) {
+        for(uint32 cmdIdx = 0; cmdIdx < nextCommandIndex; ++cmdIdx) {
             Command &cmd = commands[cmdIdx];
 
             switch(cmd.type) {
+            case CommandType::BeginRenderPass:
+                beginRenderPass(*cmd.beginRenderPassData.framebuffer, cmd.beginRenderPassData.forceClearAttachments);
+                break;
+            case CommandType::EndRenderPass:
+                endRenderPass();
+                break;
             case CommandType::ClearColorAttachments:
                 clearColorAttachments(*cmd.clearAttachmentsData.framebuffer, cmd.clearAttachmentsData.clearValue);
                 break;

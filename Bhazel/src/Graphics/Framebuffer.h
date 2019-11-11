@@ -36,7 +36,7 @@ namespace BZ {
     struct AttachmentDescription {
         TextureFormat format = TextureFormat::R8G8B8;
         uint32 samples = 1;
-        LoadOperation loadOperatorColorAndDepth = LoadOperation::Clear;
+        LoadOperation loadOperatorColorAndDepth = LoadOperation::DontCare;
         StoreOperation storeOperatorColorAndDepth = StoreOperation::Store;
         LoadOperation loadOperatorStencil = LoadOperation::Clear;
         StoreOperation storeOperatorStencil = StoreOperation::Store;
@@ -48,13 +48,12 @@ namespace BZ {
 
     //Supports Color and DepthStencil attachments only.
     class Framebuffer {
-    protected:
+    public:
         struct Attachment {
             AttachmentDescription description;
             Ref<TextureView> textureView;
         };
 
-    public:
         class Builder {
         public:
             Builder& addColorAttachment(const AttachmentDescription &desc, const Ref<TextureView> &textureView);

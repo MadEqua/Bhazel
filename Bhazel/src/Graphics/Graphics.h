@@ -31,6 +31,7 @@ namespace BZ {
 
         //Start recording getting a CommandBuffer from the CommandPool reserved to the current frame.
         static uint32 beginCommandBuffer();
+        static void endCommandBuffer(uint32 commandBufferId);
 
         static void clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor);
         static void clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor);
@@ -56,8 +57,6 @@ namespace BZ {
         static void setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount);
         static void setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount);
 
-        static void endCommandBuffer(uint32 commandBufferId);
-
         static void waitForDevice();
 
         static Ref<DescriptorSetLayout> getDescriptorSetLayout() { return descriptorSetLayout; }
@@ -75,7 +74,7 @@ namespace BZ {
         static void endFrame();
 
         static Ref<CommandBuffer> commandBuffers[MAX_COMMAND_BUFFERS];
-        static uint32 currentCommandBufferIndex;
+        static uint32 nextCommandBufferIndex;
 
         struct alignas(256) FrameConstantBufferData { //TODO: check this align value
             glm::vec2 timeAndDelta;

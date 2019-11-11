@@ -132,6 +132,7 @@ namespace BZ {
             attachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
             attachmentDesc.initialLayout = TextureLayout::Undefined;
             attachmentDesc.finalLayout = TextureLayout::Present;
+            attachmentDesc.clearValues.floating = {0.1f, 0.1f, 0.1f, 1.0f};
 
             Framebuffer::Builder builder;
             builder.addColorAttachment(attachmentDesc, textureViewRef);

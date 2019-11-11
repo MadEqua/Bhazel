@@ -16,8 +16,11 @@ namespace BZ {
         explicit VulkanCommandBuffer(VkCommandBuffer vkCommandBuffer);
 
     protected:
-        void begin(const Ref<Framebuffer> &framebuffer) override;
+        void begin() override;
         void end() override;
+
+        void beginRenderPass(const Framebuffer &framebuffer, bool forceClearAttachments) override;
+        void endRenderPass() override;
 
         void clearColorAttachments(const Framebuffer &framebuffer, const ClearValues &clearColor) override;
         void clearDepthStencilAttachment(const Framebuffer &framebuffer, const ClearValues &clearValue) override;

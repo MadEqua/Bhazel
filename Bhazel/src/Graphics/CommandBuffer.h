@@ -13,6 +13,8 @@ namespace BZ {
     class DescriptorSet;
 
     enum class CommandType {
+        BeginRenderPass,
+        EndRenderPass,
         ClearColorAttachments,
         ClearDepthStencilAttachment,
         BindBuffer,             //Vertex and Index
@@ -45,6 +47,11 @@ namespace BZ {
         CommandType type;
 
         union {
+            struct BeginRenderPassData {
+                Framebuffer *framebuffer;
+                bool forceClearAttachments;
+            } beginRenderPassData;
+
             struct ClearAttachmentsData {
                 Framebuffer *framebuffer;
                 ClearValues clearValue;
@@ -105,19 +112,23 @@ namespace BZ {
     public:
         Command& addCommand(CommandType type);
 
-        void resetIndex() { currentIndex = 0; }
+        void resetIndex() { nextCommandIndex = 0; }
+        bool hasBeginRenderPassCommand() { return commands[0].type == CommandType::BeginRenderPass; }
 
-        void optimizeAndGenerate(const Ref<Framebuffer> &framebuffer);
+        void optimizeAndGenerate();
 
     protected:
         Command commands[MAX_COMMANDS_PER_BUFFER];
-        uint32 currentIndex = 0;
+        uint32 nextCommandIndex = 0;
+
+        virtual void begin() = 0;
+        virtual void end() = 0;
 
         /////////////////////////////////////////////////////////
         //Real command generation functions
         /////////////////////////////////////////////////////////
-        virtual void begin(const Ref<Framebuffer> &framebuffer) = 0;
-        virtual void end() = 0;
+        virtual void beginRenderPass(const Framebuffer &framebuffer, bool forceClearAttachments) = 0;
+        virtual void endRenderPass() = 0;
 
         virtual void clearColorAttachments(const Framebuffer &framebuffer, const ClearValues &clearColor) = 0;
         virtual void clearDepthStencilAttachment(const Framebuffer&framebuffer, const ClearValues &clearValue) = 0;

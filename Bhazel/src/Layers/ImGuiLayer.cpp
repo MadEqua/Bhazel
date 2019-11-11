@@ -181,10 +181,7 @@ namespace BZ {
                 scissorRect.rect.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
                 scissorRect.rect.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
                 Graphics::setScissorRects(commandBufferId, 0, &scissorRect, 1);
-
-                //Graphics::beginObject(commandBuffer, model);
                 Graphics::drawIndexed(commandBufferId, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
-                //Graphics::endObject();
 
                 indexOffset += pcmd->ElemCount;
             }
