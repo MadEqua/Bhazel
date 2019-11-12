@@ -1,0 +1,87 @@
+#include "bzpch.h"
+
+#include "VulkanDescriptorSet.h"
+#include "Platform/Vulkan/Internal/VulkanConversions.h"
+#include "Platform/Vulkan/VulkanBuffer.h"
+#include "Platform/Vulkan/VulkanTexture.h"
+
+
+namespace BZ {
+
+    VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(const Builder &builder) :
+        DescriptorSetLayout(builder) {
+
+        std::vector<VkDescriptorSetLayoutBinding> vkDescriptorSetLayoutBindings(builder.descriptorDescs.size());
+        for(int i = 0; i < builder.descriptorDescs.size(); ++i) {
+            const auto &descriptorDesc = builder.descriptorDescs[i];
+
+            VkDescriptorSetLayoutBinding descriptorSetLayoutBinding = {};
+            descriptorSetLayoutBinding.binding = i;
+            descriptorSetLayoutBinding.descriptorType = descriptorTypeToVk(descriptorDesc.type);
+            descriptorSetLayoutBinding.descriptorCount = descriptorDesc.arrayCount;
+            descriptorSetLayoutBinding.stageFlags = shaderStageMaskToVk(builder.descriptorDescs[i].shaderStageVisibililtyMask);
+            descriptorSetLayoutBinding.pImmutableSamplers = nullptr; //TODO: For image sampling descriptors
+            vkDescriptorSetLayoutBindings[i] = descriptorSetLayoutBinding;
+        }
+
+        VkDescriptorSetLayoutCreateInfo createInfo = {};
+        createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        createInfo.bindingCount = static_cast<uint32>(vkDescriptorSetLayoutBindings.size());
+        createInfo.pBindings = vkDescriptorSetLayoutBindings.data();
+
+        BZ_ASSERT_VK(vkCreateDescriptorSetLayout(getDevice(), &createInfo, nullptr, &nativeHandle));
+    }
+
+    VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout() {
+        vkDestroyDescriptorSetLayout(getDevice(), nativeHandle, nullptr);
+    }
+
+
+    VulkanDescriptorSet::VulkanDescriptorSet(const Ref<DescriptorSetLayout> &layout) :
+        DescriptorSet(layout) {
+
+        VkDescriptorSetLayout layouts[] = { static_cast<const VulkanDescriptorSetLayout &>(*layout).getNativeHandle() };
+
+        VkDescriptorSetAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = getGraphicsContext().getDescriptorPool().getNativeHandle();
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = layouts;
+
+        BZ_ASSERT_VK(vkAllocateDescriptorSets(getDevice(), &allocInfo, &nativeHandle));
+    }
+
+    void VulkanDescriptorSet::internalSetConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) {
+        VkDescriptorBufferInfo bufferInfo = {};
+        bufferInfo.buffer = static_cast<const VulkanBuffer &>(*buffer).getNativeHandle();
+        bufferInfo.offset = offset;
+        bufferInfo.range = size;
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = nativeHandle;
+        write.dstBinding = binding;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = descriptorTypeToVk(layout->getDescriptorDescs()[binding].type);
+        write.pBufferInfo = &bufferInfo;
+        vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
+    }
+
+    void VulkanDescriptorSet::internalSetCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) {
+        VkDescriptorImageInfo imageInfo = {};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = static_cast<const VulkanTextureView &>(*textureView).getNativeHandle();
+        imageInfo.sampler = static_cast<const VulkanSampler &>(*sampler).getNativeHandle();
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = nativeHandle;
+        write.dstBinding = binding;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = descriptorTypeToVk(layout->getDescriptorDescs()[binding].type);
+        write.pImageInfo = &imageInfo;
+        vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
+    }
+}

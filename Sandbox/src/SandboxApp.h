@@ -16,19 +16,17 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    //TODO: this is temporary
-    BZ::ShaderLibrary shaderLibrary;
-
-    BZ::Ref<BZ::InputDescription> inputDescription;
+    //BZ::Ref<BZ::Framebuffer> framebuffer;
     BZ::Ref<BZ::Buffer> vertexBuffer;
     BZ::Ref<BZ::Buffer> indexBuffer;
-    BZ::Ref<BZ::Texture> texture;
+    BZ::Ref<BZ::DescriptorSet> descriptorSet;
+    BZ::Ref<BZ::PipelineState> pipelineState;
 
-    BZ::Ref<BZ::PerspectiveCameraController> cameraController;
+    BZ::Ref<BZ::Texture2D> texture;
+    BZ::Ref<BZ::TextureView> textureView;
+    BZ::Ref<BZ::Sampler> sampler;
 
-    //Compute shader test stuff
-    constexpr static int PARTICLE_COUNT = 1024 * 10;
-    //BZ::ParticleSystem particleSystem;
+    //BZ::Ref<BZ::PerspectiveCameraController> cameraController;
 };
 
 

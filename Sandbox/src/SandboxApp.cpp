@@ -8,98 +8,107 @@
 
 ExampleLayer::ExampleLayer() :
     Layer("Example") {
-    //particleSystem(PARTICLE_COUNT) {
 }
 
 void ExampleLayer::onAttach() {
 }
 
 void ExampleLayer::onGraphicsContextCreated() {
-    auto shader = shaderLibrary.load(BZ::Renderer::api == BZ::Renderer::API::OpenGL ? "shaders/Texture.glsl" : "shaders/Texture.hlsl");
-    texture = BZ::Texture2D::create("textures/test.jpg");
+    //cameraController = BZ::MakeRef<BZ::PerspectiveCameraController>(60.0f, 1280.0f / 800.0f);
+    //cameraController->getCamera().setPosition({0.0f, 0.0f, 1.5f});*/
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f,
+    BZ::Shader::Builder shaderBuilder;
+    shaderBuilder.setName("test");
+    shaderBuilder.fromBinaryFile(BZ::ShaderStage::Vertex, "shaders/bin/vert.spv");
+    shaderBuilder.fromBinaryFile(BZ::ShaderStage::Fragment, "shaders/bin/frag.spv");
+    
+    BZ::PipelineStateData pipelineStateData;
+    pipelineStateData.shader = shaderBuilder.build();
 
-        0.5f, -0.5f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        1.0f, 0.0f,
-
-        0.5f, 0.5f, 0.0f,
-        0.0f, 0.0f, 1.0f,
-        1.0f, 1.0f,
-
-        -0.5f, 0.5f, 0.0f,
-        1.0f, 0.0f, 1.0f,
-        0.0f, 1.0f,
-    };
-
-    BZ::BufferLayout layout = {
-        {BZ::DataType::Float32, BZ::DataElements::Vec3, "POSITION"},
+    BZ::DataLayout dataLayout = {
+        {BZ::DataType::Float32, BZ::DataElements::Vec2, "POSITION"},
+        {BZ::DataType::Float32, BZ::DataElements::Vec2, "TEXCOORD"},
         {BZ::DataType::Float32, BZ::DataElements::Vec3, "COLOR"},
-        {BZ::DataType::Float32, BZ::DataElements::Vec2, "TEXCOORD"}
     };
-    vertexBuffer = BZ::Buffer::createVertexBuffer(vertices, sizeof(vertices), layout);
+    float vertices[] = {
+        -0.5f, -0.5f,
+        0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
 
-    uint32 indices[] = {0, 1, 2, 0, 2, 3};
-    indexBuffer = BZ::Buffer::createIndexBuffer(indices, sizeof(indices));
+        0.5f, -0.5f,
+        1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
 
-    inputDescription = BZ::InputDescription::create();
-    inputDescription->addVertexBuffer(vertexBuffer, shader);
-    inputDescription->setIndexBuffer(indexBuffer);
+        0.5f, 0.5f,
+        1.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
 
-    //particleSystem.init();
+        -0.5f, 0.5f,
+        0.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+    };
+    uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
-    BZ::RenderCommand::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+    vertexBuffer = BZ::Buffer::create(BZ::BufferType::Vertex, sizeof(vertices), BZ::MemoryType::GpuOnly, dataLayout);
+    vertexBuffer->setData(vertices, sizeof(vertices), 0);
+    indexBuffer = BZ::Buffer::create(BZ::BufferType::Index, sizeof(indices), BZ::MemoryType::GpuOnly);
+    indexBuffer->setData(indices, sizeof(indices), 0);
 
-    cameraController = BZ::MakeRef<BZ::PerspectiveCameraController>(60.0f, 1280.0f / 800.0f);
-    cameraController->getCamera().setPosition({0.0f, 0.0f, 1.5f});
+    texture = BZ::Texture2D::create("textures/test.jpg", BZ::TextureFormat::R8G8B8A8_sRGB);
+    textureView = BZ::TextureView::create(texture);
+
+    BZ::Sampler::Builder samplerBuilder;
+    sampler = BZ::Sampler::create(samplerBuilder);
+
+    BZ::DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+    descriptorSetLayoutBuilder.addDescriptorDesc(BZ::DescriptorType::CombinedTextureSampler, BZ::flagsToMask(BZ::ShaderStageFlags::Fragment), 1);
+    BZ::Ref<BZ::DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
+
+    descriptorSet = BZ::DescriptorSet::create(descriptorSetLayout);
+    descriptorSet->setCombinedTextureSampler(textureView, sampler, 0);
+
+    auto &windowDims = BZ::Application::getInstance().getWindow().getDimensions();
+
+    pipelineStateData.dataLayout = dataLayout;
+    pipelineStateData.primitiveTopology = BZ::PrimitiveTopology::Triangles;
+    pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y) } };
+    pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(windowDims.x), static_cast<uint32>(windowDims.y) } };
+    pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
+    pipelineStateData.blendingState.attachmentBlendingStates = { {} };
+    pipelineState = BZ::PipelineState::create(pipelineStateData);
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
-    cameraController->onUpdate(frameStats);
+    //cameraController->onUpdate(frameStats);
 
-    const float MOVE_SPEED = 3.0f * frameStats.lastFrameTime.asSeconds();
+    auto commandBufferId = BZ::Graphics::beginCommandBuffer();
 
-    //TODO: coordinate conversion
-    /**if(BZ::Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_1)) {
-        particleSystemPosition.x = BZ::Input::getMouseX();
-        particleSystemPosition.y = BZ::Input::getMouseY();
-    }*/
+    BZ::ClearValues clearColor;
+    clearColor.floating = {0.1f, 0.1, 0.1f, 1.0f};
+    //BZ::Graphics::clearColorAttachments(commandBufferId, clearColor);
+    
+    BZ::Graphics::beginScene(commandBufferId, glm::mat4(1.0f), glm::mat4(1.0f));
 
-    BZ::RenderCommand::clearColorAndDepthStencilBuffers();
+    BZ::Graphics::bindBuffer(commandBufferId, vertexBuffer, 0);
+    BZ::Graphics::bindBuffer(commandBufferId, indexBuffer, 0);
+    BZ::Graphics::bindPipelineState(commandBufferId, pipelineState);
+    BZ::Graphics::bindDescriptorSet(commandBufferId, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+    
+    for(int i = 0; i < 3; ++i) {
+        auto model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)), glm::vec3(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i*0.2f), 0.1f * (float)i, 0.0f));
+        BZ::Graphics::beginObject(commandBufferId, model);
+        BZ::Graphics::drawIndexed(commandBufferId, 6, 1, 0, 0, 0);
+    }
 
-    BZ::Renderer::beginScene(cameraController->getCamera(), frameStats);
-
-    texture->bindToPipeline(0);
-
-    auto textureShader = shaderLibrary.get("Texture");
-
-    glm::mat4 modelMatrix(1.0);
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
-
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
-
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
-
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(45.0f), glm::vec3(0, 1, 0));
-    BZ::Renderer::submit(textureShader, inputDescription, modelMatrix);
-
-    //particleSystem.onUpdate();
-
-    BZ::Renderer::endScene();
+    BZ::Graphics::endCommandBuffer(commandBufferId);
 }
 
 void ExampleLayer::onEvent(BZ::Event &event) {
-    cameraController->onEvent(event);
+    //cameraController->onEvent(event);
 }
 
 void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
-    constexpr float LIMIT = 0.5f;
+    /*constexpr float LIMIT = 0.5f;
     constexpr float LIMIT2 = 1.5f;
 
     static BZ::Timer testTimer;
@@ -147,9 +156,8 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     ImGui::End();*/
 }
 
-
 BZ::Application* BZ::createApplication() {
     return new Sandbox();
 }
 
-#include <Bhazel/EntryPoint.h>
+#include <EntryPoint.h>
