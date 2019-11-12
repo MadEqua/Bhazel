@@ -39,7 +39,7 @@ namespace BZ {
         static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
 
         static void beginScene(uint32 commandBufferId, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
-        static void beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix);
+        static void beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint);
 
         //Vertex or index buffer
         static void bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset);
@@ -89,10 +89,8 @@ namespace BZ {
 
         struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
             glm::mat4 modelMatrix;
+            glm::vec3 tint;
         };
-
-        constexpr static uint32 MAX_SCENES_PER_FRAME = 16;
-        constexpr static uint32 MAX_OBJECTS_PER_FRAME = 512;
 
         constexpr static uint32 FRAME_CONSTANT_BUFFER_SIZE = sizeof(FrameConstantBufferData);
         constexpr static uint32 SCENE_CONSTANT_BUFFER_SIZE = sizeof(SceneConstantBufferData) * MAX_SCENES_PER_FRAME;

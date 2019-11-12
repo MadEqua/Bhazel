@@ -168,12 +168,13 @@ namespace BZ {
         currentSceneIndex++;
     }
 
-    void Graphics::beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix) {
+    void Graphics::beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint) {
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
         BZ_ASSERT_CORE(currentObjectIndex < MAX_OBJECTS_PER_FRAME, "currentObjectIndex exceeded MAX_OBJECTS_PER_FRAME!");
 
         ObjectConstantBufferData objectConstantBufferData;
         objectConstantBufferData.modelMatrix = modelMatrix;
+        objectConstantBufferData.tint = tint;
 
         uint32 objectOffset = currentObjectIndex * sizeof(ObjectConstantBufferData);
         memcpy(objectConstantBufferPtr + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));

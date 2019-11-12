@@ -25,6 +25,7 @@
 #include "Graphics/Texture.h"
 #include "Graphics/DescriptorSet.h"
 
+#include "Renderer/Renderer2D.h"
 #include "Renderer/Camera.h"
 #include "Renderer/ParticleSystem.h"
 #include "Entities/CameraController.h"

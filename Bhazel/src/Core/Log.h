@@ -1,7 +1,6 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
-#include <spdlog/fmt/ostr.h>
 
 
 namespace BZ {
@@ -48,3 +47,30 @@ namespace BZ {
     #define BZ_LOG_DEBUG(...) BZ::Log::get().getClientLogger()->debug(__VA_ARGS__)
     #define BZ_LOG_TRACE(...) BZ::Log::get().getClientLogger()->trace(__VA_ARGS__)
 #endif
+
+
+///////////////////////////////////////////////////////////////////////
+//Custom Printers
+///////////////////////////////////////////////////////////////////////
+#include <spdlog/fmt/ostr.h>
+
+inline std::ostream &operator<<(std::ostream &os, const glm::vec3 &vec) {
+    return os << "(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const glm::vec4 &vec) {
+    return os << "(" << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << ")";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const glm::mat3 &mat) {
+    return os << "|" << mat[0].x << " " << mat[1].x << " " << mat[2].x << "|" << std::endl
+              << "|" << mat[0].y << " " << mat[1].y << " " << mat[2].y << "|" << std::endl
+              << "|" << mat[0].z << " " << mat[1].z << " " << mat[2].z << "|";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const glm::mat4 &mat) {
+    return os << "|" << mat[0].x << " " << mat[1].x << " " << mat[2].x << " " << mat[3].x << "|" << std::endl
+              << "|" << mat[0].y << " " << mat[1].y << " " << mat[2].y << " " << mat[3].y << "|" << std::endl
+              << "|" << mat[0].z << " " << mat[1].z << " " << mat[2].z << " " << mat[3].z << "|" << std::endl
+              << "|" << mat[0].w << " " << mat[1].w << " " << mat[2].w << " " << mat[3].w << "|";
+}

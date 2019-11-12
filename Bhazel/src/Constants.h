@@ -13,3 +13,6 @@ constexpr static uint32 MAX_VIEWPORTS = 16;
 constexpr static uint32 MAX_COMMAND_BUFFERS = 8;
 constexpr static uint32 MAX_COMMANDS_PER_BUFFER = 1024;
 constexpr static uint32 MAX_DESCRIPTOR_DYNAMIC_OFFSETS = 8;
+
+constexpr static uint32 MAX_SCENES_PER_FRAME = 16;
+constexpr static uint32 MAX_OBJECTS_PER_FRAME = 512;

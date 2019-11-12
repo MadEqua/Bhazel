@@ -6,6 +6,7 @@
 #include "Layers/Layer.h"
 #include "Events/WindowEvent.h"
 #include "Graphics/Graphics.h"
+#include "Renderer/Renderer2D.h"
 #include "Layers/ImGuiLayer.h"
 #include "Layers/FrameStatsLayer.h"
 
@@ -56,6 +57,8 @@ namespace BZ {
         input = std::unique_ptr<Input>(Input::create(window->getNativeHandle()));
 
         Graphics::init();
+        Renderer2D::init();
+
         layerStack.onGraphicsContextCreated();
 
         Timer frameTimer;
@@ -87,6 +90,7 @@ namespace BZ {
         }
 
         Graphics::waitForDevice();
+        Renderer2D::destroy();
         Graphics::destroy();
     }
 
