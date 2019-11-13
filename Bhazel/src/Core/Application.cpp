@@ -95,7 +95,7 @@ namespace BZ {
     }
 
     void Application::onEvent(Event &e) {
-        //if(!e.isInCategory(EventCategory::EventCategoryMouse))
+        if(!e.isInCategory(EventCategory::EventCategoryMouse))
             BZ_LOG_CORE_TRACE(e);
 
         EventDispatcher dispatcher(e);
