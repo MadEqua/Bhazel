@@ -3,7 +3,7 @@
 #include "Core/Input.h"
 
 #include "Platform/GLFW/GlfwInput.h"
-#include "Platform/Win32/Win32Input.h"
+//#include "Platform/Win32/Win32Input.h"
 #include "Graphics/Graphics.h"
 
 
@@ -15,7 +15,7 @@ namespace BZ {
         case Graphics::API::Vulkan:
             return new GlfwInput();
         case Graphics::API::D3D11:
-            return new Win32Input(nativeWindowHandle);
+            //return new Win32Input(nativeWindowHandle);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown Renderer API.");
             return nullptr;

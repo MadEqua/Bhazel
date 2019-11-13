@@ -37,8 +37,8 @@ namespace BZ {
 
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("Renderer2D");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/vert.spv"); //TOOD: good names
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/frag.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/TextureVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/TextureFrag.spv");
 
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();

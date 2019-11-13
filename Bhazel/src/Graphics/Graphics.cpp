@@ -65,8 +65,8 @@ namespace BZ {
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("dummy");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/dummyVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/dummyFrag.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/DummyVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/DummyFrag.spv");
         pipelineStateData.shader = shaderBuilder.build();
 
         dummyPipelineState = PipelineState::create(pipelineStateData);
