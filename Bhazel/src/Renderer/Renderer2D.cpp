@@ -73,7 +73,8 @@ namespace BZ {
         data.textureView = TextureView::create(data.texture);
 
         Sampler::Builder samplerBuilder;
-        data.sampler = Sampler::create(samplerBuilder);
+        samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
+        data.sampler = samplerBuilder.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);

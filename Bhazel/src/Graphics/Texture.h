@@ -88,6 +88,7 @@ namespace BZ {
     class Sampler {
     public:
         class Builder {
+        public:
             void setMinFilterMode(FilterMode filterMode) { minFilter = filterMode; }
             void setMagFilterMode(FilterMode filterMode) { magFilter = filterMode; }
             void setMipmapFilterMode(FilterMode filterMode) { mipmapFilter = filterMode; }
@@ -98,6 +99,8 @@ namespace BZ {
             void setAddressModeW(AddressMode addressMode) { addressModeW = addressMode; }
 
             void setUnnormalizedCoordinates(bool enable) { unnormalizedCoordinate = enable; }
+
+            Ref<Sampler> build() const;
 
         private:
             FilterMode minFilter = FilterMode::Linear;
@@ -110,8 +113,6 @@ namespace BZ {
 
             friend class VulkanSampler;
         };
-
-        static Ref<Sampler> create(const Builder &builder);
 
     protected:
         virtual ~Sampler() = default;

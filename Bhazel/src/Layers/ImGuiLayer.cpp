@@ -256,7 +256,7 @@ namespace BZ {
         io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
         fontTexture = Texture2D::create(fontData, texWidth * texHeight * 4, texWidth, texHeight, TextureFormat::R8G8B8A8);
         fontTextureView = TextureView::create(fontTexture);
-        fontTextureSampler = Sampler::create(Sampler::Builder());
+        fontTextureSampler = Sampler::Builder().build();
 
         //Buffers
         const uint32 maxIndices = 1 << sizeof(ImDrawIdx) * 8;
