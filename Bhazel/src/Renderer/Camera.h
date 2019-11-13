@@ -15,7 +15,7 @@ namespace BZ {
 
         const glm::vec3& getPosition() const { return position; }
         void setPosition(const glm::vec3 &pos) { position = pos; computeViewMatrix(); }
-        void setPosition(float x, float y, float z) { position.x = x; position.y = y; computeViewMatrix(); }
+        void setPosition(float x, float y, float z) { position.x = x; position.y = y; position.z = z; computeViewMatrix(); }
 
     protected:
         virtual void computeViewMatrix() = 0;
@@ -29,9 +29,9 @@ namespace BZ {
 
 
     //Meant for 2D rendering.
-    class OrthographicCamera : public Camera
-    {
+    class OrthographicCamera : public Camera {
     public:
+        OrthographicCamera();
         OrthographicCamera(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
         
         void computeProjectionMatrix(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
@@ -46,9 +46,9 @@ namespace BZ {
     };
 
 
-    class PerspectiveCamera : public Camera
-    {
+    class PerspectiveCamera : public Camera {
     public:
+        PerspectiveCamera();
         PerspectiveCamera(float fovy, float aspectRatio, float near = 0.1f, float far = 100.0f);
         
         void computeProjectionMatrix(float fovy, float aspectRatio, float near = 0.1f, float far = 100.0f);

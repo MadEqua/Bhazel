@@ -15,7 +15,7 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    BZ::Ref<BZ::OrthographicCameraController> cameraController;
+    BZ::OrthographicCameraController cameraController;
     glm::vec2 pos = {};
 };
 

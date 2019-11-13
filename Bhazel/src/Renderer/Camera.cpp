@@ -8,6 +8,11 @@
 
 namespace BZ {
 
+    OrthographicCamera::OrthographicCamera() {
+        computeProjectionMatrix(-1, 1, -1, 1, 0, 1);
+        computeViewMatrix();
+    }
+
     OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, float near, float far) {
         computeProjectionMatrix(left, right, bottom, top, near, far);
         computeViewMatrix();
@@ -25,6 +30,11 @@ namespace BZ {
         viewProjectionMatrix = projectionMatrix * viewMatrix;
     }
 
+
+    PerspectiveCamera::PerspectiveCamera() {
+        computeProjectionMatrix(60.0f, 16.0f/10.0f, 0.1f, 100.0f);
+        computeViewMatrix();
+    }
 
     PerspectiveCamera::PerspectiveCamera(float fovy, float aspectRatio, float near, float far) {
         computeProjectionMatrix(fovy, aspectRatio, near, far);

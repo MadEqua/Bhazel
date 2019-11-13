@@ -23,23 +23,22 @@ namespace BZ {
         const T& getCamera() const { return camera; }
 
     protected:
-        CameraController(T &camera, float aspectRatio, float zoom);
+        CameraController(T &camera, float zoom);
 
         virtual bool onMouseScrolled(MouseScrolledEvent &e) = 0;
         virtual bool onWindowResized(WindowResizedEvent &e) = 0;
 
-        float aspectRatio;
         float zoom;
 
-        float cameraMoveSpeed = 2.0f;
-        float cameraZoomSpeed = 0.05f;
+        float cameraMoveSpeed = 200.0f;
+        float cameraZoomSpeed = 0.1f;
 
         T camera;
     };
 
     template<typename T>
-    CameraController<T>::CameraController(T &camera, float aspectRatio, float zoom) :
-        camera(camera), aspectRatio(aspectRatio), zoom(zoom) {
+    CameraController<T>::CameraController(T &camera, float zoom) :
+        camera(camera), zoom(zoom) {
     }
 
     template<typename T>
@@ -50,10 +49,10 @@ namespace BZ {
     }
 
 
-    class OrthographicCameraController : public CameraController<OrthographicCamera>
-    {
+    class OrthographicCameraController : public CameraController<OrthographicCamera> {
     public:
-        OrthographicCameraController(float aspectRatio, float zoom = 1.0f, bool enableRotation = true);
+        OrthographicCameraController();
+        OrthographicCameraController(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f, bool enableRotation = true);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -62,14 +61,16 @@ namespace BZ {
         bool onWindowResized(WindowResizedEvent &e) override;
 
         bool enableRotation;
-        float cameraRotationSpeed = 180.0f;
+        float cameraRotationSpeed = 90.0f;
+        float originalLeft, originalRight, originalBottom, originalTop;
+        float left, right, bottom, top, near, far;
     };
 
 
-    class PerspectiveCameraController : public CameraController<PerspectiveCamera>
-    {
+    class PerspectiveCameraController : public CameraController<PerspectiveCamera> {
     public:
-        PerspectiveCameraController(float fovy, float aspectRatio, float zoom = 1.0f);
+        PerspectiveCameraController();
+        PerspectiveCameraController(float fovy, float aspectRatio);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -78,6 +79,7 @@ namespace BZ {
         bool onWindowResized(WindowResizedEvent &e) override;
 
         float fovy;
+        float aspectRatio;
         glm::ivec2 lastMousePosition = {-1, -1};
         glm::ivec2 windowSize;
     };

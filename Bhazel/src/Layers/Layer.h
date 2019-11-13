@@ -7,6 +7,7 @@ namespace BZ {
 
     class Event;
     struct FrameStats;
+    class Application;
 
     class Layer {
     public:
@@ -32,5 +33,6 @@ namespace BZ {
         
     protected:
         std::string debugName;
+        Application &application;
     };
 }

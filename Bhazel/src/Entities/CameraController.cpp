@@ -10,8 +10,15 @@
 
 namespace BZ {
 
-    OrthographicCameraController::OrthographicCameraController(float aspectRatio, float zoom, bool enableRotation) :
-        CameraController(OrthographicCamera(-aspectRatio * zoom, aspectRatio * zoom, -zoom, zoom), aspectRatio, zoom),
+    OrthographicCameraController::OrthographicCameraController() :
+        CameraController(OrthographicCamera(), 1.0f),
+        enableRotation(false) {
+    }
+
+    OrthographicCameraController::OrthographicCameraController(float left, float right, float bottom, float top, float near, float far, bool enableRotation) :
+        CameraController(OrthographicCamera(left, right, bottom, top, near, far), 1.0f),
+        originalLeft(left), originalRight(right), originalBottom(bottom), originalTop(top),
+        left(left), right(right), bottom(bottom), top(top), near(near), far(far),
         enableRotation(enableRotation) {
     }
 
@@ -61,20 +68,41 @@ namespace BZ {
 
     bool OrthographicCameraController::onMouseScrolled(MouseScrolledEvent &e) {
         zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
-        camera.computeProjectionMatrix(-aspectRatio * zoom, aspectRatio * zoom, -zoom, zoom);
+        
+        float originalWidth = originalRight - originalLeft;
+        float originalHeight = originalTop - originalBottom;
+
+        float newWidth = zoom * originalWidth;
+        float newHeight = zoom * originalHeight;
+
+        float diffX = newWidth - originalWidth;
+        float diffY = newHeight - originalHeight;
+
+        left = originalLeft - diffX * 0.5f;
+        right = originalRight + diffX * 0.5f;
+        bottom = originalBottom - diffY * 0.5f;
+        top = originalTop + diffY * 0.5f;
+
+        camera.computeProjectionMatrix(left, right, bottom, top, near, far);
         return false;
     }
 
     bool OrthographicCameraController::onWindowResized(WindowResizedEvent &e) {
-        aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());
-        camera.computeProjectionMatrix(-aspectRatio * zoom, aspectRatio * zoom, -zoom, zoom);
         return false;
     }
 
 
-    PerspectiveCameraController::PerspectiveCameraController(float fovy, float aspectRatio, float zoom) :
-        CameraController(PerspectiveCamera(fovy * zoom, aspectRatio), aspectRatio, zoom),
+    PerspectiveCameraController::PerspectiveCameraController() :
+        CameraController(PerspectiveCamera(), 1.0f),
+        fovy(60.0f),
+        aspectRatio(16.0f / 10.0f),
+        windowSize(Application::getInstance().getWindow().getDimensions()) {
+    }
+
+    PerspectiveCameraController::PerspectiveCameraController(float fovy, float aspectRatio) :
+        CameraController(PerspectiveCamera(fovy * zoom, aspectRatio), 1.0f),
         fovy(fovy),
+        aspectRatio(aspectRatio),
         windowSize(Application::getInstance().getWindow().getDimensions()) {
     }
 
