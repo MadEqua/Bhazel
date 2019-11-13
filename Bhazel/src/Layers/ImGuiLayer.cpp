@@ -89,10 +89,11 @@ namespace BZ {
             return false;
             });
 
-        dispatcher.dispatch<MouseMovedEvent>([](MouseMovedEvent &event) -> bool {
+        Window &window = application.getWindow();
+        dispatcher.dispatch<MouseMovedEvent>([&window](MouseMovedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseHoveredViewport = 0;
-            io.MousePos = ImVec2(static_cast<float>(event.getX()), static_cast<float>(event.getY()));
+            io.MousePos = ImVec2(static_cast<float>(event.getX()), static_cast<float>(window.getDimensions().y - event.getY()));
             return false;
             });
 

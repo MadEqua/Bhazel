@@ -139,7 +139,7 @@ namespace BZ {
 
         glfwSetCursorPosCallback(window, [](GLFWwindow *window, double x, double y) {
             GlfwWindow &win = *static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
-            MouseMovedEvent event(static_cast<int>(x), static_cast<int>(y));
+            MouseMovedEvent event(static_cast<int>(x), win.data.dimensions.y - static_cast<int>(y));
             win.eventCallback(event);
         });
     }

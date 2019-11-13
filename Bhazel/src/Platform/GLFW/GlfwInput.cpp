@@ -21,10 +21,11 @@ namespace BZ {
     }
 
     glm::ivec2 GlfwInput::getMousePosition() {
-        auto window = static_cast<GLFWwindow*>(Application::getInstance().getWindow().getNativeHandle());
+        auto &window = Application::getInstance().getWindow();
+        auto glfwWindow = static_cast<GLFWwindow*>(window.getNativeHandle());
         double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
-        return glm::ivec2(static_cast<int>(xpos), static_cast<int>(ypos));
+        glfwGetCursorPos(glfwWindow, &xpos, &ypos);
+        return glm::ivec2(static_cast<int>(xpos), window.data.dimensions.y - static_cast<int>(ypos));
     }
 
     int GlfwInput::getMouseX() {
