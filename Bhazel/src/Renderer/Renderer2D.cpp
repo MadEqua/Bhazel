@@ -95,12 +95,24 @@ namespace BZ {
         data.descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         auto &windowDims = Application::getInstance().getWindow().getDimensions();
+
+        BlendingState blendingState;
+        BlendingStateAttachment blendingStateAttachment;
+        blendingStateAttachment.enableBlending = true;
+        blendingStateAttachment.srcColorBlendingFactor = BlendingFactor::SourceAlpha;
+        blendingStateAttachment.dstColorBlendingFactor = BlendingFactor::OneMinusSourceAlpha;
+        blendingStateAttachment.colorBlendingOperation = BlendingOperation::Add;
+        blendingStateAttachment.srcAlphaBlendingFactor = BlendingFactor::SourceAlpha;
+        blendingStateAttachment.dstAlphaBlendingFactor = BlendingFactor::OneMinusSourceAlpha;
+        blendingStateAttachment.alphaBlendingOperation = BlendingOperation::Add;
+        blendingState.attachmentBlendingStates = { blendingStateAttachment };
+
         pipelineStateData.dataLayout = dataLayout;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y) } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(windowDims.x), static_cast<uint32>(windowDims.y) } };
         pipelineStateData.descriptorSetLayouts = { data.descriptorSetLayout };
-        pipelineStateData.blendingState.attachmentBlendingStates = { {} };
+        pipelineStateData.blendingState = blendingState;
         data.pipelineState = PipelineState::create(pipelineStateData);
     }
 

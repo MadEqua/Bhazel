@@ -24,13 +24,17 @@ void ExampleLayer::onGraphicsContextCreated() {
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     cameraController.onUpdate(frameStats);
 
+    auto& dims = application.getWindow().getDimensions();
+
     BZ::Renderer2D::beginScene(cameraController.getCamera());
 
-    /*for(int i = 0; i < 10; ++i) {
-        auto pos = glm::vec2(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i * 0.2f), 0.1f * (float)i);
-        pos.y = (i-5) / 10.0f;
-        BZ::Renderer2D::drawQuad(pos, { 0.2f, 0.2f }, { 1.0f, 1.0f, 1.0f });
-    }*/
+    for(int i = 0; i < 10; ++i) {
+        auto pos = glm::vec2(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i * 0.2f), 0.1f * (float)i) * 0.5f + 0.5f;
+        pos.y = i / 10.0f;
+        pos.x *= dims.x;
+        pos.y *= dims.y;
+        BZ::Renderer2D::drawQuad(pos, { 100.0f, 100.0f }, 0.0f, tex2, { 1.0f, 1.0f, 1.0f });
+    }
 
     BZ::Renderer2D::drawQuad(pos, { 200.0f, 200.0f }, rot, tex1, { 1.0f, 1.0f, 1.0f });
     BZ::Renderer2D::drawQuad({600.0f, 400.0f}, { 200.0f, 200.0f }, 0.0f, tex2, { 1.0f, 1.0f, 1.0f });

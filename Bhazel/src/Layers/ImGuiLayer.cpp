@@ -260,9 +260,9 @@ namespace BZ {
         fontTextureSampler = Sampler::Builder().build();
 
         //Buffers
-        const uint32 maxIndices = 1 << sizeof(ImDrawIdx) * 8;
-        vertexBuffer = Buffer::create(BufferType::Vertex, maxIndices * sizeof(ImDrawVert), MemoryType::CpuToGpu);
-        indexBuffer = Buffer::create(BufferType::Index, maxIndices * sizeof(ImDrawIdx), MemoryType::CpuToGpu);
+        const uint32 MAX_INDICES = 1 << sizeof(ImDrawIdx) * 8;
+        vertexBuffer = Buffer::create(BufferType::Vertex, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu);
+        indexBuffer = Buffer::create(BufferType::Index, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu);
         vertexBufferPtr = vertexBuffer->map(0);
         indexBufferPtr = indexBuffer->map(0);
 
