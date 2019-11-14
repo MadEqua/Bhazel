@@ -17,8 +17,7 @@ namespace BZ {
 
     OrthographicCameraController::OrthographicCameraController(float left, float right, float bottom, float top, float near, float far, bool enableRotation) :
         CameraController(OrthographicCamera(left, right, bottom, top, near, far), 1.0f),
-        originalLeft(left), originalRight(right), originalBottom(bottom), originalTop(top),
-        left(left), right(right), bottom(bottom), top(top), near(near), far(far),
+        originalLeft(left), originalRight(right), originalBottom(bottom), originalTop(top), near(near), far(far),
         enableRotation(enableRotation) {
     }
 
@@ -78,12 +77,9 @@ namespace BZ {
         float diffX = newWidth - originalWidth;
         float diffY = newHeight - originalHeight;
 
-        left = originalLeft - diffX * 0.5f;
-        right = originalRight + diffX * 0.5f;
-        bottom = originalBottom - diffY * 0.5f;
-        top = originalTop + diffY * 0.5f;
-
-        camera.computeProjectionMatrix(left, right, bottom, top, near, far);
+        camera.computeProjectionMatrix(originalLeft - diffX * 0.5f, originalRight + diffX * 0.5f,
+                                       originalBottom - diffY * 0.5f, originalTop + diffY * 0.5f,
+                                       near, far);
         return false;
     }
 

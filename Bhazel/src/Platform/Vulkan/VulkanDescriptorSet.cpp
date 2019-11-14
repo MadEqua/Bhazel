@@ -80,7 +80,38 @@ namespace BZ {
         write.dstBinding = binding;
         write.dstArrayElement = 0;
         write.descriptorCount = 1;
-        write.descriptorType = descriptorTypeToVk(layout->getDescriptorDescs()[binding].type);
+        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        write.pImageInfo = &imageInfo;
+        vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
+    }
+
+    void VulkanDescriptorSet::internalSetSampledTexture(const Ref<TextureView>& textureView, uint32 binding) {
+        VkDescriptorImageInfo imageInfo = {};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = static_cast<const VulkanTextureView&>(*textureView).getNativeHandle();
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = nativeHandle;
+        write.dstBinding = binding;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        write.pImageInfo = &imageInfo;
+        vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
+    }
+
+    void VulkanDescriptorSet::internalSetSampler(const Ref<Sampler>& sampler, uint32 binding) {
+        VkDescriptorImageInfo imageInfo = {};
+        imageInfo.sampler = static_cast<const VulkanSampler&>(*sampler).getNativeHandle();
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = nativeHandle;
+        write.dstBinding = binding;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
         write.pImageInfo = &imageInfo;
         vkUpdateDescriptorSets(getDevice(), 1, &write, 0, nullptr);
     }

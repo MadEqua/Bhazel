@@ -6,7 +6,8 @@ layout (set = 2, binding = 0, std140) uniform ObjectConstants {
     vec3 tint;
 } objectConstants;
 
-layout(set = 3, binding = 0) uniform sampler2D texSampler;
+layout(set = 3, binding = 0) uniform sampler texSampler;
+layout(set = 3, binding = 1) uniform texture2D tex;
 
 layout(location = 0) in vec2 texCoord;
 
@@ -19,6 +20,6 @@ void main() {
         col.g = sqrt(col.g);
     }*/
 
-    outColor = texture(texSampler, texCoord) * vec4(objectConstants.tint, 1.0);
+    outColor = texture(sampler2D(tex, texSampler), texCoord) * vec4(objectConstants.tint, 1.0);
     //outColor = vec4(col, 1.0);
 }

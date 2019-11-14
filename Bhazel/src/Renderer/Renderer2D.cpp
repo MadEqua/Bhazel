@@ -3,6 +3,7 @@
 #include "Renderer2D.h"
 
 #include "Graphics/Graphics.h"
+#include "Graphics/DescriptorSet.h"
 #include "Core/Application.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -10,21 +11,20 @@
 
 namespace BZ {
 
-    struct Renderer2DVertex {
-        glm::vec3 position;
-        glm::vec2 texCoord;
+    struct TextureData {
+        Ref<TextureView> textureView;
+        Ref<DescriptorSet> descriptorSet;
     };
 
     struct Renderer2DData {
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
 
-        Ref<DescriptorSet> descriptorSet;
         Ref<PipelineState> pipelineState;
-
-        Ref<Texture2D> texture;
-        Ref<TextureView> textureView;
         Ref<Sampler> sampler;
+        Ref<DescriptorSetLayout> descriptorSetLayout;
+
+        std::unordered_map<uint32, TextureData> textureDatas;
 
         uint32 commandBufferId;
     };
@@ -64,32 +64,27 @@ namespace BZ {
 
         uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
 
+        //TODO: use a single buffer
         data.vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(vertices), MemoryType::GpuOnly, dataLayout);
         data.vertexBuffer->setData(vertices, sizeof(vertices), 0);
         data.indexBuffer = Buffer::create(BufferType::Index, sizeof(indices), MemoryType::GpuOnly);
         data.indexBuffer->setData(indices, sizeof(indices), 0);
-
-        data.texture = Texture2D::create("textures/test.jpg", TextureFormat::R8G8B8A8_sRGB);
-        data.textureView = TextureView::create(data.texture);
 
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
         data.sampler = samplerBuilder.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        Ref<DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
-
-        data.descriptorSet = DescriptorSet::create(descriptorSetLayout);
-        data.descriptorSet->setCombinedTextureSampler(data.textureView, data.sampler, 0);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::Sampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::SampledTexture, flagsToMask(ShaderStageFlags::Fragment), 1);
+        data.descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         auto &windowDims = Application::getInstance().getWindow().getDimensions();
-
         pipelineStateData.dataLayout = dataLayout;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y) } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(windowDims.x), static_cast<uint32>(windowDims.y) } };
-        pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
+        pipelineStateData.descriptorSetLayouts = { data.descriptorSetLayout };
         pipelineStateData.blendingState.attachmentBlendingStates = { {} };
         data.pipelineState = PipelineState::create(pipelineStateData);
     }
@@ -97,13 +92,25 @@ namespace BZ {
     void Renderer2D::destroy() {
         data.vertexBuffer.reset();
         data.indexBuffer.reset();
-
-        data.descriptorSet.reset();
         data.pipelineState.reset();
-
-        data.texture.reset();
-        data.textureView.reset();
         data.sampler.reset();
+        data.textureDatas.clear();
+        data.descriptorSetLayout.reset();
+    }
+
+    const Ref<DescriptorSet>& Renderer2D::getDescriptorSetForTexture(const Ref<Texture2D> &texture) {
+        uint32 hash = reinterpret_cast<uint32>(texture.get()); //TODO: something better
+        if (data.textureDatas.find(hash) == data.textureDatas.end()) {
+            TextureData texData;
+            texData.textureView = TextureView::create(texture);
+            texData.descriptorSet = DescriptorSet::create(data.descriptorSetLayout);
+            texData.descriptorSet->setSampler(data.sampler, 0);
+            texData.descriptorSet->setSampledTexture(texData.textureView, 1);
+            data.textureDatas.emplace(hash, texData);
+        }
+
+        TextureData &texData = data.textureDatas[hash];
+        return texData.descriptorSet;
     }
 
     void Renderer2D::beginScene(const OrthographicCamera &camera) {
@@ -115,7 +122,6 @@ namespace BZ {
         Graphics::bindBuffer(data.commandBufferId, data.vertexBuffer, 0);
         Graphics::bindBuffer(data.commandBufferId, data.indexBuffer, 0);
         Graphics::bindPipelineState(data.commandBufferId, data.pipelineState);
-        Graphics::bindDescriptorSet(data.commandBufferId, data.descriptorSet, data.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
     }
 
     void Renderer2D::endScene() {
@@ -125,7 +131,11 @@ namespace BZ {
         data.commandBufferId = -1;
     }
 
-    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &tint) {
+    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &color) {
+        //drawQuad(position, dimensions, rotationDeg, data.texture, color);
+    }
+
+    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2  &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec3 &tint) {
         BZ_ASSERT_CORE(data.commandBufferId != -1, "There's not a started Scene!");
 
         float c = glm::cos(glm::radians(rotationDeg));
@@ -141,20 +151,10 @@ namespace BZ {
         modelMatrix[3][0] = position.x;
         modelMatrix[3][1] = position.y;
 
+        auto &descriptorRef = getDescriptorSetForTexture(texture);
+        Graphics::bindDescriptorSet(data.commandBufferId, descriptorRef, data.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+
         Graphics::beginObject(data.commandBufferId, modelMatrix, tint);
         Graphics::drawIndexed(data.commandBufferId, 6, 1, 0, 0, 0);
     }
-
-    /*void Renderer2D::drawQuad(const glm::vec3 &position, const glm::vec2 &dimensions, const glm::vec4 &tint) {
-        BZ_ASSERT_CORE(data.commandBufferId != -1, "There's not a started Scene!");
-
-        BZ::Graphics::bindBuffer(commandBufferId, vertexBuffer, 0);
-        BZ::Graphics::bindBuffer(commandBufferId, indexBuffer, 0);
-        BZ::Graphics::bindPipelineState(commandBufferId, pipelineState);
-        BZ::Graphics::bindDescriptorSet(commandBufferId, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
-
-
-        Graphics::beginObject(data.commandBufferId, modelMatrix);
-        Graphics::drawIndexed(data.commandBufferId, 4, 1, 0, 0, 0);
-    }*/
 }

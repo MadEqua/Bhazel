@@ -18,6 +18,8 @@ private:
     BZ::OrthographicCameraController cameraController;
     glm::vec2 pos = {};
     float rot = 0.0f;
+    BZ::Ref<BZ::Texture2D> tex1;
+    BZ::Ref<BZ::Texture2D> tex2;
 };
 
 

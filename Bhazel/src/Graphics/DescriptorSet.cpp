@@ -69,6 +69,20 @@ namespace BZ {
         internalSetCombinedTextureSampler(textureView, sampler, binding);
     }
 
+    void DescriptorSet::setSampledTexture(const Ref<TextureView>& textureView, uint32 binding) {
+        BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].type == DescriptorType::SampledTexture, "Binding {} is not of type SampledTexture!", binding);
+        BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
+
+        internalSetSampledTexture(textureView, binding);
+    }
+
+    void DescriptorSet::setSampler(const Ref<Sampler>& sampler, uint32 binding) {
+        BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].type == DescriptorType::Sampler, "Binding {} is not of type Sampler!", binding);
+        BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
+
+        internalSetSampler(sampler, binding);
+    }
+
     const DescriptorSet::DynBufferData* DescriptorSet::getDynamicBufferDataByBinding(uint32 binding) const {
         BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
         for(const auto &dynBufData : dynamicBuffers) {

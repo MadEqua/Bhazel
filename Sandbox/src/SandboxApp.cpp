@@ -16,6 +16,9 @@ void ExampleLayer::onGraphicsContextCreated() {
     float h = static_cast<float>(dims.y) * 0.5f;
     cameraController = BZ::OrthographicCameraController(-w, w, -h, h);
     cameraController.getCamera().setPosition({w, h, 0.0f});
+
+    tex1 = BZ::Texture2D::create("textures/test.jpg", BZ::TextureFormat::R8G8B8A8_sRGB);
+    tex2 = BZ::Texture2D::create("textures/alphaTest.png", BZ::TextureFormat::R8G8B8A8_sRGB);
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
@@ -29,7 +32,8 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
         BZ::Renderer2D::drawQuad(pos, { 0.2f, 0.2f }, { 1.0f, 1.0f, 1.0f });
     }*/
 
-    BZ::Renderer2D::drawQuad(pos, { 200.0f, 200.0f }, rot, { 1.0f, 1.0f, 1.0f });
+    BZ::Renderer2D::drawQuad(pos, { 200.0f, 200.0f }, rot, tex1, { 1.0f, 1.0f, 1.0f });
+    BZ::Renderer2D::drawQuad({100.0f, 100.0f}, { 200.0f, 200.0f }, 0.0f, tex2, { 1.0f, 1.0f, 1.0f });
     BZ::Renderer2D::endScene();
 }
 

@@ -62,8 +62,7 @@ namespace BZ {
 
         bool enableRotation;
         float cameraRotationSpeed = 90.0f;
-        float originalLeft, originalRight, originalBottom, originalTop;
-        float left, right, bottom, top, near, far;
+        float originalLeft, originalRight, originalBottom, originalTop, near, far;
     };
 
 

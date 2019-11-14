@@ -74,6 +74,8 @@ namespace BZ {
 
         void setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size);
         void setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding);
+        void setSampledTexture(const Ref<TextureView> &textureView, uint32 binding);
+        void setSampler(const Ref<Sampler>& sampler, uint32 binding);
 
         struct DynBufferData {
             DynBufferData(uint32 binding, Ref<Buffer> buffer, bool isAutoAddedByEngine) : binding(binding), buffer(buffer), isAutoAddedByEngine(isAutoAddedByEngine) {}
@@ -96,5 +98,7 @@ namespace BZ {
 
         virtual void internalSetConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) = 0;
         virtual void internalSetCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) = 0;
+        virtual void internalSetSampledTexture(const Ref<TextureView>& textureView, uint32 binding) = 0;
+        virtual void internalSetSampler(const Ref<Sampler>& sampler, uint32 binding) = 0;
     };
 }
