@@ -25,7 +25,7 @@ namespace BZ {
 
     void OrthographicCamera::computeViewMatrix() {
         glm::mat4 iden(1.0f);
-        viewMatrix = glm::rotate(iden, glm::radians(-rotation), glm::vec3(0, 0, 1));
+        viewMatrix = glm::rotate(iden, glm::radians(-rotationDeg), glm::vec3(0, 0, 1));
         viewMatrix = glm::translate(viewMatrix, -position);
         viewProjectionMatrix = projectionMatrix * viewMatrix;
     }

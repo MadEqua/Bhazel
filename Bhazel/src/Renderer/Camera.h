@@ -36,13 +36,13 @@ namespace BZ {
         
         void computeProjectionMatrix(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
 
-        float getRotation() const { return rotation; }
-        void setRotation(float rot) { rotation = rot; computeViewMatrix(); }
+        float getRotation() const { return rotationDeg; }
+        void setRotation(float rotDeg) { rotationDeg = rotDeg; computeViewMatrix(); }
     
     private:
         void computeViewMatrix() override;
 
-        float rotation = 0.0f;
+        float rotationDeg = 0.0f;
     };
 
 

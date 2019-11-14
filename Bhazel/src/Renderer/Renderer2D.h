@@ -10,8 +10,8 @@ namespace BZ {
         static void beginScene(const OrthographicCamera &camera);
         static void endScene();
 
-        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, const glm::vec3 &tint);
-        //static void drawQuad(const glm::vec3 &position, const glm::vec2 &dimensions, const glm::vec4 &tint);
+        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &tint);
+        //static void drawQuad(const glm::vec3 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &tint);
 
     private:
         friend class Application;

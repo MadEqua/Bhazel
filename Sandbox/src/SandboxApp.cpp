@@ -12,8 +12,10 @@ void ExampleLayer::onAttach() {
 
 void ExampleLayer::onGraphicsContextCreated() {
     auto &dims = application.getWindow().getDimensions();
-    cameraController = BZ::OrthographicCameraController(0.0f, static_cast<float>(dims.x), 0.0f, static_cast<float>(dims.y));
-    cameraController.getCamera().setPosition({0.0f, 0.0f, 0.0f});
+    float w = static_cast<float>(dims.x) * 0.5f;
+    float h = static_cast<float>(dims.y) * 0.5f;
+    cameraController = BZ::OrthographicCameraController(-w, w, -h, h);
+    cameraController.getCamera().setPosition({w, h, 0.0f});
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
@@ -27,7 +29,7 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
         BZ::Renderer2D::drawQuad(pos, { 0.2f, 0.2f }, { 1.0f, 1.0f, 1.0f });
     }*/
 
-    BZ::Renderer2D::drawQuad(pos, { 200.0f, 200.0f }, { 1.0f, 1.0f, 1.0f });
+    BZ::Renderer2D::drawQuad(pos, { 200.0f, 200.0f }, rot, { 1.0f, 1.0f, 1.0f });
     BZ::Renderer2D::endScene();
 }
 
@@ -41,6 +43,7 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     ImGui::Begin("Test");
     ImGui::SliderFloat("pos x", &pos.x, 0.0f, static_cast<float>(dims.x));
     ImGui::SliderFloat("pos y", &pos.y, 0.0f, static_cast<float>(dims.y));
+    ImGui::SliderFloat("rot", &rot, 0.0f, 360.0f);
     ImGui::End();
 }
 

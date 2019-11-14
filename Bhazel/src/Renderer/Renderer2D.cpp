@@ -125,12 +125,17 @@ namespace BZ {
         data.commandBufferId = -1;
     }
 
-    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, const glm::vec3 &tint) {
+    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &tint) {
         BZ_ASSERT_CORE(data.commandBufferId != -1, "There's not a started Scene!");
 
+        float c = glm::cos(glm::radians(rotationDeg));
+        float s = glm::sin(glm::radians(rotationDeg));
+
         glm::mat4 modelMatrix = {};
-        modelMatrix[0][0] = dimensions.x;
-        modelMatrix[1][1] = dimensions.y;
+        modelMatrix[0][0] = dimensions.x * c;
+        modelMatrix[0][1] = dimensions.x * s;
+        modelMatrix[1][0] = dimensions.y * -s;
+        modelMatrix[1][1] = dimensions.y * c;
         modelMatrix[2][2] = 1.0f;
         modelMatrix[3][3] = 1.0f;
         modelMatrix[3][0] = position.x;

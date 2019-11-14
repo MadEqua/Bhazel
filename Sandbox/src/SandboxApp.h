@@ -17,6 +17,7 @@ public:
 private:
     BZ::OrthographicCameraController cameraController;
     glm::vec2 pos = {};
+    float rot = 0.0f;
 };
 
 
