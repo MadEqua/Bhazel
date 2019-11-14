@@ -33,7 +33,8 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     }*/
 
     BZ::Renderer2D::drawQuad(pos, { 200.0f, 200.0f }, rot, tex1, { 1.0f, 1.0f, 1.0f });
-    BZ::Renderer2D::drawQuad({100.0f, 100.0f}, { 200.0f, 200.0f }, 0.0f, tex2, { 1.0f, 1.0f, 1.0f });
+    BZ::Renderer2D::drawQuad({600.0f, 400.0f}, { 200.0f, 200.0f }, 0.0f, tex2, { 1.0f, 1.0f, 1.0f });
+    BZ::Renderer2D::drawQuad({900.0f, 500.0f}, { 100.0f, 200.0f }, 0.0f, { 0.0f, 1.0f, 0.0f });
     BZ::Renderer2D::endScene();
 }
 

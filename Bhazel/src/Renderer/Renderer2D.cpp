@@ -21,6 +21,7 @@ namespace BZ {
         Ref<Buffer> indexBuffer;
 
         Ref<PipelineState> pipelineState;
+        Ref<Texture2D> whiteTexture;
         Ref<Sampler> sampler;
         Ref<DescriptorSetLayout> descriptorSetLayout;
 
@@ -44,22 +45,33 @@ namespace BZ {
         pipelineStateData.shader = shaderBuilder.build();
 
         DataLayout dataLayout = {
-            {DataType::Float32, DataElements::Vec3, "POSITION"}, //TODO: pack this better
-            {DataType::Float32, DataElements::Vec2, "TEXCOORD"},
+            {DataType::Float32, DataElements::Vec3, "POSITION"},
+            {DataType::Uint16, DataElements::Vec2, "TEXCOORD", true}
         };
 
-        float vertices[] = {
-            -0.5f, -0.5f, 0.0f,
-            0.0f, 0.0f,
+        struct Vertex {
+            float pos[3];
+            uint16 texCoord[2];
+        };
 
-            0.5f, -0.5f, 0.0f,
-            1.0f, 0.0f,
-
-            0.5f, 0.5f, 0.0f,
-            1.0f, 1.0f,
-
-            -0.5f, 0.5f, 0.0f,
-            0.0f, 1.0f,
+        const uint16 MAX_TEX_COORD = 0xffff;
+        Vertex vertices[4] = {
+            {
+                { -0.5f, -0.5f, 0.0f },
+                { 0, 0 }
+            },
+            {
+                { 0.5f, -0.5f, 0.0f },
+                { MAX_TEX_COORD, 0 }
+            },
+            {
+                { 0.5f, 0.5f, 0.0f },
+                { MAX_TEX_COORD, MAX_TEX_COORD }
+            },
+            {
+                { -0.5f, 0.5f, 0.0f },
+                { 0, MAX_TEX_COORD }
+            }
         };
 
         uint16 indices[] = { 0, 1, 2, 2, 3, 0 };
@@ -73,6 +85,9 @@ namespace BZ {
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
         data.sampler = samplerBuilder.build();
+
+        byte whiteTextureData[] = {255, 255, 255, 255};
+        data.whiteTexture = Texture2D::create(whiteTextureData, sizeof(whiteTextureData), 1, 1, TextureFormat::R8G8B8A8);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::Sampler, flagsToMask(ShaderStageFlags::Fragment), 1);
@@ -95,6 +110,7 @@ namespace BZ {
         data.pipelineState.reset();
         data.sampler.reset();
         data.textureDatas.clear();
+        data.whiteTexture.reset();
         data.descriptorSetLayout.reset();
     }
 
@@ -132,7 +148,7 @@ namespace BZ {
     }
 
     void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &color) {
-        //drawQuad(position, dimensions, rotationDeg, data.texture, color);
+        drawQuad(position, dimensions, rotationDeg, data.whiteTexture, color);
     }
 
     void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2  &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec3 &tint) {
