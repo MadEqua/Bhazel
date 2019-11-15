@@ -21,3 +21,4 @@
 #include "Core/Types.h"
 #include "Core/Log.h"
 #include "Core/Core.h"
+#include "Core/Timer.h"

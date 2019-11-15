@@ -38,6 +38,7 @@ namespace BZ {
     bool operator>(const TimeDuration &lhs, const TimeDuration &rhs);
     bool operator>=(const TimeDuration &lhs, const TimeDuration &rhs);
 
+
     class Timer {
     public:
         Timer();
@@ -57,4 +58,26 @@ namespace BZ {
 
         std::chrono::time_point<std::chrono::high_resolution_clock> lastStartPoint;
     };
+
+
+    class ScopedTimer {
+    public:
+        struct Result {
+            const char* name;
+            TimeDuration timeDuration;
+        };
+        using Fn = std::function<void(const Result&)>;
+
+        ScopedTimer(const char *name, Fn &&func);
+        ~ScopedTimer();
+
+        const char* getName() const { return name; }
+
+    private:
+        const char *name;
+        Timer timer;
+        Fn func;
+    };
+
+#define PROFILE_SCOPE(name, fn) ScopedTimer timer##__LINE__(name, fn)
 }

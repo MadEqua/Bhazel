@@ -99,4 +99,17 @@ namespace BZ {
         else
             return countedTime;
     }
+
+
+    ScopedTimer::ScopedTimer(const char* name, Fn&& func) :
+        name(name), func(std::move(func)) {
+        timer.start();
+    }
+
+    ScopedTimer::~ScopedTimer() {
+        Result result;
+        result.timeDuration = timer.getCountedTime();
+        result.name = name;
+        func(result);
+    }
 }
