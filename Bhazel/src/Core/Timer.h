@@ -15,9 +15,14 @@ namespace BZ {
         void operator-=(const TimeDuration &rhs);
 
         float asSeconds() const;
+
         float asMillisecondsFloat() const;
         uint32 asMillisecondsUint32() const;
         uint64 asMillisecondsUint64() const;
+
+        float asMicrosecondsFloat() const;
+        uint64 asMicroseconds() const;
+
         uint64 asNanoseconds() const;
 
     private:
@@ -62,22 +67,13 @@ namespace BZ {
 
     class ScopedTimer {
     public:
-        struct Result {
-            const char* name;
-            TimeDuration timeDuration;
-        };
-        using Fn = std::function<void(const Result&)>;
+        using Fn = std::function<void(const TimeDuration&)>;
 
-        ScopedTimer(const char *name, Fn &&func);
+        ScopedTimer(Fn &&callback);
         ~ScopedTimer();
 
-        const char* getName() const { return name; }
-
     private:
-        const char *name;
         Timer timer;
-        Fn func;
+        Fn callback;
     };
-
-#define PROFILE_SCOPE(name, fn) ScopedTimer timer##__LINE__(name, fn)
 }

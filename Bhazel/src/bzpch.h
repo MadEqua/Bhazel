@@ -19,6 +19,8 @@
 
 #include "Core/Singleton.h"
 #include "Core/Types.h"
-#include "Core/Log.h"
 #include "Core/Core.h"
+#include "Core/Log.h"
+#include "Core/Assert.h"
 #include "Core/Timer.h"
+#include "Core/Profiler.h"

@@ -16,8 +16,7 @@ namespace BZ {
     Application* Application::instance = nullptr;
 
     Application::Application() {
-        //Init logger
-        Log::get();
+        BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(!instance, "Application already exists");
         instance = this;
@@ -36,14 +35,6 @@ namespace BZ {
 
         assetsPath = settings.getFieldAsString("assetsPath", "");
 
-        imGuiLayer = new ImGuiLayer();
-        pushOverlay(imGuiLayer);
-
-        pushOverlay(new FrameStatsLayer(*this));
-    }
-
-    void Application::run() {
-        auto &settings = iniParser.getParsedIniSettings();
         WindowData windowData;
         windowData.dimensions.x = settings.getFieldAsBasicType<uint32>("width", 1280);
         windowData.dimensions.y = settings.getFieldAsBasicType<uint32>("height", 800);
@@ -58,6 +49,23 @@ namespace BZ {
 
         Graphics::init();
         Renderer2D::init();
+
+        imGuiLayer = new ImGuiLayer();
+        pushOverlay(imGuiLayer);
+
+        pushOverlay(new FrameStatsLayer(*this));
+    }
+
+    Application::~Application() {
+        BZ_PROFILE_FUNCTION();
+
+        Graphics::waitForDevice();
+        Renderer2D::destroy();
+        Graphics::destroy();
+    }
+
+    void Application::run() {
+        BZ_PROFILE_FUNCTION();
 
         layerStack.onGraphicsContextCreated();
 
@@ -88,15 +96,11 @@ namespace BZ {
             }
             frameTimer.reset();
         }
-
-        Graphics::waitForDevice();
-        Renderer2D::destroy();
-        Graphics::destroy();
     }
 
     void Application::onEvent(Event &e) {
-        if(!e.isInCategory(EventCategory::EventCategoryMouse))
-            BZ_LOG_CORE_TRACE(e);
+        //if(!e.isInCategory(EventCategory::EventCategoryMouse))
+        //    BZ_LOG_CORE_TRACE(e);
 
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(Application::onWindowResized));

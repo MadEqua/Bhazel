@@ -1,21 +1,18 @@
 #pragma once
 
-#ifdef BZ_DIST
-    #define BZ_ASSERT(x, ...)
-    #define BZ_ASSERT_CORE(x, ...)
+#define ENABLE_PROFILER 0
 
-    #define BZ_ASSERT_ALWAYS(...)
-    #define BZ_ASSERT_ALWAYS_CORE(...)
-#else
-    #define BZ_ASSERT(x, ...) if(!(x)) { BZ_LOG_CRITICAL("Assertion Failed! File: {0}. Line: {1}.", __FILE__, __LINE__); BZ_LOG_CRITICAL(__VA_ARGS__); __debugbreak(); }
-    #define BZ_ASSERT_CORE(x, ...) if(!(x)) { BZ_LOG_CORE_CRITICAL("Assertion Failed! File: {0}. Line: {1}.", __FILE__, __LINE__); BZ_LOG_CORE_CRITICAL(__VA_ARGS__); __debugbreak(); }
+#ifndef BZ_DIST
+    #define BZ_ASSERTS
+    #define BZ_FULL_LOGGER
 
-    #define BZ_ASSERT_ALWAYS(...) BZ_ASSERT(0, __VA_ARGS__)
-    #define BZ_ASSERT_ALWAYS_CORE(...) BZ_ASSERT_CORE(0, __VA_ARGS__)
+    #if ENABLE_PROFILER
+        #define BZ_PROFILER
+    #endif
 #endif
 
-#define BIT(x) (1 << x)
 
+#define BIT(x) (1 << x)
 #define BZ_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 
 namespace BZ {

@@ -21,14 +21,16 @@ void ExampleLayer::onGraphicsContextCreated() {
     tex2 = BZ::Texture2D::create("textures/alphaTest.png", BZ::TextureFormat::R8G8B8A8_sRGB);
 }
 
-void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
+void ExampleLayer::onUpdate(const BZ::FrameStats& frameStats) {
+    BZ_PROFILE_FUNCTION();
+
     cameraController.onUpdate(frameStats);
 
     auto& dims = application.getWindow().getDimensions();
 
     BZ::Renderer2D::beginScene(cameraController.getCamera());
 
-    for(int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i) {
         auto pos = glm::vec2(glm::sin(1.0f * frameStats.runningTime.asSeconds() + (float)i * 0.2f), 0.1f * (float)i) * 0.5f + 0.5f;
         pos.y = i / 10.0f;
         pos.x *= dims.x;
@@ -37,8 +39,8 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     }
 
     BZ::Renderer2D::drawQuad(pos, { 200.0f, 200.0f }, rot, tex1, { 1.0f, 1.0f, 1.0f });
-    BZ::Renderer2D::drawQuad({600.0f, 400.0f}, { 200.0f, 200.0f }, 0.0f, tex2, { 1.0f, 1.0f, 1.0f });
-    BZ::Renderer2D::drawQuad({900.0f, 500.0f}, { 100.0f, 200.0f }, 0.0f, { 0.0f, 1.0f, 0.0f });
+    BZ::Renderer2D::drawQuad({ 600.0f, 400.0f }, { 200.0f, 200.0f }, 0.0f, tex2, { 1.0f, 1.0f, 1.0f });
+    BZ::Renderer2D::drawQuad({ 900.0f, 500.0f }, { 100.0f, 200.0f }, 0.0f, { 0.0f, 1.0f, 0.0f });
     BZ::Renderer2D::endScene();
 }
 
@@ -47,6 +49,8 @@ void ExampleLayer::onEvent(BZ::Event &event) {
 }
 
 void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
+    BZ_PROFILE_FUNCTION();
+
     auto &dims = application.getWindow().getDimensions();
 
     ImGui::Begin("Test");

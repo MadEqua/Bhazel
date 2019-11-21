@@ -34,6 +34,8 @@ namespace BZ {
 
 
     void Graphics::init() {
+        BZ_PROFILE_FUNCTION();
+
         graphicsContext = &Application::getInstance().getGraphicsContext();
 
         constantBuffer = Buffer::create(BufferType::Constant, 
@@ -73,6 +75,8 @@ namespace BZ {
     }
 
     void Graphics::destroy() {
+        BZ_PROFILE_FUNCTION();
+
         constantBuffer->unmap();
 
         //Destroy this 'manually' to avoid the static destruction lottery
@@ -87,6 +91,8 @@ namespace BZ {
     }
 
     uint32 Graphics::beginCommandBuffer() {
+        BZ_PROFILE_FUNCTION();
+
         auto &commandBuffer = graphicsContext->getCurrentFrameCommandBuffer();
         commandBuffer->resetIndex();
         commandBuffers[nextCommandBufferIndex] = commandBuffer;
@@ -100,6 +106,8 @@ namespace BZ {
     }
 
     void Graphics::endCommandBuffer(uint32 commandBufferId) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         //Auto add an EndRenderPass Command.
@@ -108,7 +116,9 @@ namespace BZ {
         commandBuffer->optimizeAndGenerate();
     }
 
-    void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {       
+    void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = commandBuffers[commandBufferId];
@@ -118,6 +128,8 @@ namespace BZ {
     }
 
     void Graphics::clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = commandBuffers[commandBufferId];
@@ -127,6 +139,8 @@ namespace BZ {
     }
 
     void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = commandBuffers[commandBufferId];
@@ -136,6 +150,8 @@ namespace BZ {
     }
 
     void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = commandBuffers[commandBufferId];
@@ -145,6 +161,8 @@ namespace BZ {
     }
 
     void Graphics::beginScene(uint32 commandBufferId, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
         BZ_ASSERT_CORE(currentSceneIndex < MAX_SCENES_PER_FRAME, "currentSceneIndex exceeded MAX_SCENES_PER_FRAME!");
 
@@ -169,6 +187,8 @@ namespace BZ {
     }
 
     void Graphics::beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
         BZ_ASSERT_CORE(currentObjectIndex < MAX_OBJECTS_PER_FRAME, "currentObjectIndex exceeded MAX_OBJECTS_PER_FRAME!");
 
@@ -191,6 +211,8 @@ namespace BZ {
     }
 
     void Graphics::bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(buffer->getType() == BufferType::Vertex || buffer->getType() == BufferType::Index, "Invalid Buffer type!");
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
@@ -201,6 +223,8 @@ namespace BZ {
     }
 
     void Graphics::bindPipelineState(uint32 commandBufferId, const Ref<PipelineState> &pipelineState) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = commandBuffers[commandBufferId];
@@ -215,6 +239,7 @@ namespace BZ {
     void Graphics::bindDescriptorSet(uint32 commandBufferId, const Ref<DescriptorSet> &descriptorSet, 
                                      const Ref<PipelineState> &pipelineState, uint32 setIndex,
                                      uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
+        BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(dynamicBufferCount < MAX_DESCRIPTOR_DYNAMIC_OFFSETS, "Invalid dynamicBufferCount: {}!", dynamicBufferCount);
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
@@ -247,6 +272,8 @@ namespace BZ {
     }
 
     void Graphics::draw(uint32 commandBufferId, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = commandBuffers[commandBufferId];
@@ -258,6 +285,8 @@ namespace BZ {
     }
 
     void Graphics::drawIndexed(uint32 commandBufferId, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = commandBuffers[commandBufferId];
@@ -270,6 +299,8 @@ namespace BZ {
     }
 
     void Graphics::setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(viewportCount < MAX_VIEWPORTS, "Invalid viewportCount: {}!", viewportCount);
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
@@ -281,6 +312,8 @@ namespace BZ {
     }
 
     void Graphics::setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(rectCount < MAX_VIEWPORTS, "Invalid rectCount: {}!", rectCount);
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
@@ -292,16 +325,22 @@ namespace BZ {
     }
 
     void Graphics::waitForDevice() {
+        BZ_PROFILE_FUNCTION();
+
         graphicsContext->waitForDevice();
     }
 
     void Graphics::beginFrame() {
+        BZ_PROFILE_FUNCTION();
+
         nextCommandBufferIndex = 0;
         currentSceneIndex = 0;
         currentObjectIndex = 0;
     }
 
     void Graphics::endFrame() {
+        BZ_PROFILE_FUNCTION();
+
         graphicsContext->submitCommandBuffersAndFlush(commandBuffers, nextCommandBufferIndex);
         //No need to delete CommandBuffers. The pools are responsible for that.
     }

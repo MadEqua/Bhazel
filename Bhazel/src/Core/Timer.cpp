@@ -40,6 +40,14 @@ namespace BZ {
         return static_cast<uint64>(std::chrono::duration_cast<std::chrono::milliseconds>(nanos).count());
     }
 
+    float TimeDuration::asMicrosecondsFloat() const {
+        return std::chrono::duration_cast<std::chrono::duration<float, std::micro>>(nanos).count();
+    }
+
+    uint64 TimeDuration::asMicroseconds() const {
+        return static_cast<uint64>(std::chrono::duration_cast<std::chrono::microseconds>(nanos).count());
+    }
+
     uint64 TimeDuration::asNanoseconds() const {
         return static_cast<uint64>(nanos.count());
     }
@@ -101,15 +109,12 @@ namespace BZ {
     }
 
 
-    ScopedTimer::ScopedTimer(const char* name, Fn&& func) :
-        name(name), func(std::move(func)) {
+    ScopedTimer::ScopedTimer(Fn&& callback) :
+        callback(std::move(callback)) {
         timer.start();
     }
 
     ScopedTimer::~ScopedTimer() {
-        Result result;
-        result.timeDuration = timer.getCountedTime();
-        result.name = name;
-        func(result);
+        callback(timer.getCountedTime());
     }
 }

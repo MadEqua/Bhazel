@@ -34,6 +34,8 @@ namespace BZ {
 
 
     void Renderer2D::init() {
+        BZ_PROFILE_FUNCTION();
+
         data.commandBufferId = -1;
 
         Shader::Builder shaderBuilder;
@@ -117,6 +119,8 @@ namespace BZ {
     }
 
     void Renderer2D::destroy() {
+        BZ_PROFILE_FUNCTION();
+
         data.vertexBuffer.reset();
         data.indexBuffer.reset();
         data.pipelineState.reset();
@@ -142,6 +146,8 @@ namespace BZ {
     }
 
     void Renderer2D::beginScene(const OrthographicCamera &camera) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(data.commandBufferId == -1, "There's already an unended Scene!");
 
         data.commandBufferId = Graphics::beginCommandBuffer();
@@ -153,6 +159,8 @@ namespace BZ {
     }
 
     void Renderer2D::endScene() {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(data.commandBufferId != -1, "There's not a started Scene!");
 
         Graphics::endCommandBuffer(data.commandBufferId);
@@ -160,10 +168,14 @@ namespace BZ {
     }
 
     void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &color) {
+        BZ_PROFILE_FUNCTION();
+
         drawQuad(position, dimensions, rotationDeg, data.whiteTexture, color);
     }
 
     void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2  &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec3 &tint) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(data.commandBufferId != -1, "There's not a started Scene!");
 
         float c = glm::cos(glm::radians(rotationDeg));
