@@ -32,7 +32,7 @@ namespace BZ {
         if(!isGLFWInitialized) {
             glfwSetErrorCallback(GLFWErrorCallback);
             int success = glfwInit();
-            BZ_ASSERT_CORE(success, "Could not intialize GLFW!");
+            BZ_CRITICAL_ERROR_CORE(success, "Could not intialize GLFW!");
             isGLFWInitialized = true;
         }
 
@@ -54,7 +54,7 @@ namespace BZ {
         }
 
         window = glfwCreateWindow(data.dimensions.x, data.dimensions.y, data.title.c_str(), nullptr, nullptr);
-        BZ_ASSERT_CORE(window, "Could not create GLFW Window!");  
+        BZ_CRITICAL_ERROR_CORE(window, "Could not create GLFW Window!");
 
         glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
 

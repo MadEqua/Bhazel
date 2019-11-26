@@ -21,7 +21,7 @@ namespace BZ {
         BZ_ASSERT_CORE(!instance, "Application already exists");
         instance = this;
 
-        BZ_ASSERT_CORE(iniParser.parse("bhazel.ini"), "Failed to open \"bhazel.ini\" file.");
+        BZ_CRITICAL_ERROR_CORE(iniParser.parse("bhazel.ini"), "Failed to open \"bhazel.ini\" file.");
         auto &settings = iniParser.getParsedIniSettings();
         std::string renderingAPIString = settings.getFieldAsString("renderingAPI", "");
         if(renderingAPIString == "OpenGL" || renderingAPIString == "GL") 
@@ -31,7 +31,7 @@ namespace BZ {
         else if(renderingAPIString == "VK" || renderingAPIString == "Vulkan") 
             Graphics::api = Graphics::API::Vulkan;
         else 
-            BZ_ASSERT_ALWAYS_CORE("Invalid Rendering API on .ini file: {0}.", renderingAPIString);
+            BZ_CRITICAL_ERROR_CORE("Invalid Rendering API on .ini file: {0}.", renderingAPIString);
 
         assetsPath = settings.getFieldAsString("assetsPath", "");
 

@@ -72,7 +72,7 @@ namespace BZ {
         stbi_set_flip_vertically_on_load(flip);
         int channels;
         stbi_uc* data = stbi_load(path, &widthOut, &heightOut, &channels, 4);
-        BZ_ASSERT_CORE(data, "Failed to load image '{}'.", path);
+        BZ_CRITICAL_ERROR_CORE(data, "Failed to load image '{}'.", path);
         return static_cast<byte*>(data);
     }
 

@@ -175,7 +175,7 @@ namespace BZ {
     template<typename T>
     static T VulkanContext::getExtensionFunction(VkInstance instance, const char *name) {
         auto func = (T) vkGetInstanceProcAddr(instance, name);
-        BZ_ASSERT_CORE(func, "Unable to get {} function pointer!", name);
+        BZ_CRITICAL_ERROR_CORE(func, "Unable to get {} function pointer!", name);
         return func;
     }
 
@@ -195,8 +195,7 @@ namespace BZ {
                 }
             }
 
-            if(!layerFound)
-                BZ_ASSERT_ALWAYS_CORE("Requested Validation Layer '{}' but it was not found!", layerName);
+            BZ_CRITICAL_ERROR_CORE(layerFound, "Requested Validation Layer '{}' but it was not found!", layerName);
         }
     }
 

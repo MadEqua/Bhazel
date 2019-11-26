@@ -17,7 +17,6 @@ namespace BZ {
 
         int width, height;
         const byte *data = loadFile(path.c_str(), true, width, height);
-        BZ_ASSERT_CORE(data, "Failed to load image '{}'.", path);
 
         init(data, width * height * 4, width, height);
         freeData(data);

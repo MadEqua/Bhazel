@@ -70,7 +70,7 @@ namespace BZ {
 
     void Shader::Builder::readAndPreprocessSingleSourceFile(const char *filePath, std::array<std::string, SHADER_STAGES_COUNT> &out) {
         std::ifstream file(filePath, std::ios::in);
-        BZ_ASSERT_CORE(file, "Failed to load file '{}'!", filePath);
+        BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
 
         const char *typeToken = "#type";
         const size_t typeTokenLength = strlen(typeToken);
@@ -101,7 +101,7 @@ namespace BZ {
 
     std::vector<char> Shader::Builder::readBinaryFile(const char *filePath) {
         std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-        BZ_ASSERT_CORE(file, "Failed to load file '{}'!", filePath);
+        BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
 
         size_t fileSize = (size_t)file.tellg();
         std::vector<char> buffer(fileSize);
@@ -113,7 +113,7 @@ namespace BZ {
 
     std::string Shader::Builder::readSourceFile(const char *filePath) {
         std::ifstream file(filePath, std::ios::in);
-        BZ_ASSERT_CORE(file, "Failed to load file '{}'!", filePath);
+        BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
         
         size_t fileSize = (size_t)file.tellg();
         std::string content;
