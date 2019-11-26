@@ -16,7 +16,7 @@ namespace BZ {
         Ref<DescriptorSet> descriptorSet;
     };
 
-    struct Renderer2DData {
+    static struct Renderer2DData {
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
 
@@ -28,9 +28,7 @@ namespace BZ {
         std::unordered_map<uint32, TextureData> textureDatas;
 
         uint32 commandBufferId;
-    };
-
-    static Renderer2DData data;
+    } data;
 
 
     void Renderer2D::init() {

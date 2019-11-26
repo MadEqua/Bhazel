@@ -17,7 +17,7 @@ namespace BZ {
     class GraphicsContext;
 
     /*
-    * Low level Graphics API. Static wrapper to the GraphicsContext API.
+    * Low level Graphics API.
     * Also manages data related to engine ConstantBuffers.
     */
     class Graphics {
@@ -59,7 +59,7 @@ namespace BZ {
 
         static void waitForDevice();
 
-        static Ref<DescriptorSetLayout> getDescriptorSetLayout() { return descriptorSetLayout; }
+        static Ref<DescriptorSetLayout> getDescriptorSetLayout();
 
         static API api;
 
@@ -72,54 +72,5 @@ namespace BZ {
 
         static void beginFrame();
         static void endFrame();
-
-        static Ref<CommandBuffer> commandBuffers[MAX_COMMAND_BUFFERS];
-        static uint32 nextCommandBufferIndex;
-
-        struct alignas(256) FrameConstantBufferData { //TODO: check this align value
-            glm::vec2 timeAndDelta;
-        };
-
-        struct alignas(256) SceneConstantBufferData { //TODO: check this align value
-            glm::mat4 viewMatrix;
-            glm::mat4 projectionMatrix;
-            glm::mat4 viewProjectionMatrix;
-            alignas(16) glm::vec3 cameraPosition;
-        };
-
-        struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
-            glm::mat4 modelMatrix;
-            glm::vec3 tint;
-        };
-
-        constexpr static uint32 FRAME_CONSTANT_BUFFER_SIZE = sizeof(FrameConstantBufferData);
-        constexpr static uint32 SCENE_CONSTANT_BUFFER_SIZE = sizeof(SceneConstantBufferData) * MAX_SCENES_PER_FRAME;
-        constexpr static uint32 OBJECT_CONSTANT_BUFFER_SIZE = sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME;
-
-        constexpr static uint32 FRAME_CONSTANT_BUFFER_OFFSET = 0;
-        constexpr static uint32 SCENE_CONSTANT_BUFFER_OFFSET = FRAME_CONSTANT_BUFFER_SIZE;
-        constexpr static uint32 OBJECT_CONSTANT_BUFFER_OFFSET = FRAME_CONSTANT_BUFFER_SIZE + SCENE_CONSTANT_BUFFER_SIZE;
-
-        static Ref<Buffer> constantBuffer;
-
-        static BufferPtr frameConstantBufferPtr;
-        static BufferPtr sceneConstantBufferPtr;
-        static BufferPtr objectConstantBufferPtr;
-
-        static Ref<DescriptorSet> frameDescriptorSet;
-        static Ref<DescriptorSet> sceneDescriptorSet;
-        static Ref<DescriptorSet> objectDescriptorSet;
-
-        //Same layout for all DescriptorSets.
-        static Ref<DescriptorSetLayout> descriptorSetLayout;
-
-        //Dummy data, except for the DescriptorSetLayout list, which contains the above descriptorSetLayout.
-        //Used to bind engine DescriptorSets at any code place.
-        static Ref<PipelineState> dummyPipelineState;
-
-        static GraphicsContext *graphicsContext;
-
-        static uint32 currentSceneIndex;
-        static uint32 currentObjectIndex;
     };
 }
