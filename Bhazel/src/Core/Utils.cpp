@@ -63,4 +63,8 @@ namespace BZ::Utils {
             return glm::mat4();
         }
     }
+
+    std::size_t hashCombine(std::size_t hash1, std::size_t hash2) {
+        return hash1 ^ (hash2 * 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
+    }
 }

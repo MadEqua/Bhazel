@@ -12,4 +12,6 @@ namespace BZ::Utils {
     glm::mat4 ortho(float left, float right, float bottom, float top, float near, float far);
     glm::mat4 frustum(float left, float right, float bottom, float top, float near, float far);
     glm::mat4 perspective(float fovy, float aspectRatio, float near, float far);
+
+    std::size_t hashCombine(std::size_t hash1, std::size_t hash2);
 }

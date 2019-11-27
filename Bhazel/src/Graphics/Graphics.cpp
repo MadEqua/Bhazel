@@ -273,12 +273,15 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+        BZ_ASSERT_CORE(size % 4 == 0, "Size must be a multiple of 4!");
+        BZ_ASSERT_CORE(offset % 4 == 0, "Offset must be a multiple of 4!");
+        BZ_ASSERT_CORE(size <= MAX_PUSH_CONSTANT_SIZE, "Push constant size must be less or equal than {}. Sending size: {}!", MAX_PUSH_CONSTANT_SIZE, size);
 
         auto& commandBuffer = BZ::data.commandBuffers[commandBufferId];
         auto& command = commandBuffer->addCommand(CommandType::SetPushConstants);
         command.setPushConstantsData.pipelineState = pipelineState.get();
         command.setPushConstantsData.shaderStageMask = shaderStageMask;
-        command.setPushConstantsData.data = data;
+        memcpy(&command.setPushConstantsData.data, data, size);
         command.setPushConstantsData.size = size;
         command.setPushConstantsData.offset = offset;
     }

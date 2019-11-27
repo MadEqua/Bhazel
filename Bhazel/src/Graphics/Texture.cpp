@@ -108,14 +108,20 @@ namespace BZ {
     }
 
 
-    Ref<TextureView> TextureView::create(const Ref<Texture>& texture) {
+    Ref<TextureView> TextureView::create(const Ref<Texture> &texture) {
         switch(Graphics::api) {
-            /*case Graphics::API::OpenGL:
-                return MakeRef<OpenGLTexture2D>(assetsPath + path);
-            case Graphics::API::D3D11:
-                return MakeRef<D3D11Texture2D>(assetsPath + path);*/
         case Graphics::API::Vulkan:
             return MakeRef<VulkanTextureView>(texture);
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return nullptr;
+        }
+    }
+
+    Ref<TextureView> TextureView::create(const Texture &texture) {
+        switch (Graphics::api) {
+        case Graphics::API::Vulkan:
+            return MakeRef<VulkanTextureView>(Ref<VulkanTexture2D>((VulkanTexture2D*)(&texture)));
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

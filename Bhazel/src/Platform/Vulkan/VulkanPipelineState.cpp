@@ -174,6 +174,9 @@ namespace BZ {
         std::vector<VkPushConstantRange> pushConstantRanges(data.pushConstantDescs.size());
         idx = 0;
         for (const auto& desc : data.pushConstantDescs) {
+            BZ_ASSERT_CORE(desc.size % 4 == 0, "Size must be a multiple of 4!");
+            BZ_ASSERT_CORE(desc.offset % 4 == 0, "Offset must be a multiple of 4!");
+
             pushConstantRanges[idx].offset = desc.offset;
             pushConstantRanges[idx].size = desc.size;
             pushConstantRanges[idx].stageFlags = shaderStageMaskToVk(desc.shaderStageMask);

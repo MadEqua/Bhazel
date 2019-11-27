@@ -78,7 +78,7 @@ namespace BZ {
             struct SetPushConstants {
                 PipelineState* pipelineState;
                 uint8 shaderStageMask;
-                const void* data;
+                byte data[MAX_PUSH_CONSTANT_SIZE];
                 uint32 size;
                 uint32 offset;
             } setPushConstantsData;

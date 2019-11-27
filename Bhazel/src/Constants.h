@@ -15,4 +15,4 @@ constexpr static uint32 MAX_DESCRIPTOR_DYNAMIC_OFFSETS = 8;
 
 constexpr static uint32 MAX_SCENES_PER_FRAME = 16;
 
-constexpr static uint32 MAX_DESCRIPTOR_ARRAY_SIZE = 8;
+constexpr static uint32 MAX_PUSH_CONSTANT_SIZE = 128;

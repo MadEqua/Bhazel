@@ -15,12 +15,13 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    static const uint32 OBJECT_COUNT = 10;
+    static const uint32 OBJECT_COUNT = 1000;
     
     struct Object {
         glm::vec2 pos;
         glm::vec2 vel;
         glm::vec2 dims;
+        glm::vec3 tint;
         float rot;
         uint32 texId;
     };
