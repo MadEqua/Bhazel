@@ -171,12 +171,21 @@ namespace BZ {
             descriptorSetLayouts[idx++] = static_cast<const VulkanDescriptorSetLayout&>(*layout).getNativeHandle();
         }
 
+        std::vector<VkPushConstantRange> pushConstantRanges(data.pushConstantDescs.size());
+        idx = 0;
+        for (const auto& desc : data.pushConstantDescs) {
+            pushConstantRanges[idx].offset = desc.offset;
+            pushConstantRanges[idx].size = desc.size;
+            pushConstantRanges[idx].stageFlags = shaderStageMaskToVk(desc.shaderStageMask);
+            idx++;
+        }
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = static_cast<uint32>(descriptorSetLayouts.size());
         pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-        pipelineLayoutInfo.pushConstantRangeCount = 0; //TODO
-        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32>(pushConstantRanges.size());
+        pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
 
         BZ_ASSERT_VK(vkCreatePipelineLayout(getDevice(), &pipelineLayoutInfo, nullptr, &nativeHandle.pipelineLayout));
 

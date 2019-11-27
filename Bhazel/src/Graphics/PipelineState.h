@@ -156,8 +156,7 @@ namespace BZ {
         uint8 writeMask = flagsToMask(ColorMaskFlags::All);
     };
 
-    struct BlendingState
-    {
+    struct BlendingState {
         //TODO: logic operations
         //bool enableLogicOperations = false;
         //LogicOperation logicOperation; 
@@ -177,6 +176,12 @@ namespace BZ {
         StencilReference
     };
 
+    struct PushConstantDesc {
+        uint8 shaderStageMask;
+        uint32 offset;
+        uint32 size;
+    };
+
     class Shader;
     class Framebuffer;
     class DescriptorSetLayout;
@@ -189,6 +194,7 @@ namespace BZ {
         Ref<Shader> shader;
         PrimitiveTopology primitiveTopology;
         std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
+        std::vector<PushConstantDesc> pushConstantDescs;
         std::vector<Viewport> viewports;
         std::vector<ScissorRect> scissorRects;
         RasterizerState rasterizerState;

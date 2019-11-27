@@ -33,6 +33,9 @@ namespace BZ {
                                const PipelineState &pipelineState, uint32 setIndex,
                                uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) override;
 
+        void setPushConstants(const PipelineState &pipelineState, uint8 shaderStageMask,
+            const void* data, uint32 size, uint32 offset) override;
+
         void draw(uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) override;
         void drawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) override;
 

@@ -7,6 +7,8 @@
 #include "Platform/Vulkan/VulkanPipelineState.h"
 #include "Platform/Vulkan/VulkanDescriptorSet.h"
 
+#include "Platform/Vulkan/Internal/VulkanConversions.h"
+
 
 namespace BZ {
 
@@ -136,6 +138,11 @@ namespace BZ {
         vkCmdBindDescriptorSets(nativeHandle, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 vulkanPipelineState.getNativeHandle().pipelineLayout, setIndex,
                                 1, descSets, dynamicBufferCount, dynamicBufferOffsets);
+    }
+
+    void VulkanCommandBuffer::setPushConstants(const PipelineState &pipelineState, uint8 shaderStageMask, const void* data, uint32 size, uint32 offset) {
+        auto& vulkanPipelineState = static_cast<const VulkanPipelineState&>(pipelineState);
+        vkCmdPushConstants(nativeHandle, vulkanPipelineState.getNativeHandle().pipelineLayout, shaderStageMaskToVk(shaderStageMask), offset, size, data);
     }
 
     void VulkanCommandBuffer::draw(uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {

@@ -1,16 +1,14 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout (set = 2, binding = 0, std140) uniform ObjectConstants {
-    mat4 modelMatrix;
+layout(push_constant) uniform PushConstants {
     vec3 tint;
-} objectConstants;
+} pushConstants;
 
-layout(set = 3, binding = 0) uniform sampler texSampler;
-layout(set = 3, binding = 1) uniform texture2D tex;
+layout(set = 2, binding = 0) uniform sampler texSampler;
+layout(set = 2, binding = 1) uniform texture2D tex;
 
 layout(location = 0) in vec2 texCoord;
-
 layout(location = 0) out vec4 outColor;
 
 void main() {
@@ -20,6 +18,7 @@ void main() {
         col.g = sqrt(col.g);
     }*/
 
-    outColor = texture(sampler2D(tex, texSampler), texCoord) * vec4(objectConstants.tint, 1.0);
+    outColor = texture(sampler2D(tex, texSampler), texCoord) * vec4(pushConstants.tint, 1.0);
+    //outColor = vec4(tint, 1.0);
     //outColor = vec4(col, 1.0);
 }

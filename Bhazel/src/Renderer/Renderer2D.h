@@ -21,8 +21,6 @@ namespace BZ {
 
         static void init();
         static void destroy();
-
-        static const Ref<DescriptorSet>& getDescriptorSetForTexture(const Ref<Texture2D>& texture);
     };
 }
 

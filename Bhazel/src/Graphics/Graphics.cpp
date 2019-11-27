@@ -16,21 +16,14 @@ namespace BZ {
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
         glm::mat4 viewProjectionMatrix;
-        alignas(16) glm::vec3 cameraPosition;
+        glm::vec3 cameraPosition;
     };
 
-    struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
-        glm::mat4 modelMatrix;
-        glm::vec3 tint;
-    };
+    constexpr uint32 FRAME_CONSTANT_BUFFER_SIZE = sizeof(FrameConstantBufferData);
+    constexpr uint32 SCENE_CONSTANT_BUFFER_SIZE = sizeof(SceneConstantBufferData) * MAX_SCENES_PER_FRAME;
 
-    constexpr static uint32 FRAME_CONSTANT_BUFFER_SIZE = sizeof(FrameConstantBufferData);
-    constexpr static uint32 SCENE_CONSTANT_BUFFER_SIZE = sizeof(SceneConstantBufferData) * MAX_SCENES_PER_FRAME;
-    constexpr static uint32 OBJECT_CONSTANT_BUFFER_SIZE = sizeof(ObjectConstantBufferData) * MAX_OBJECTS_PER_FRAME;
-
-    constexpr static uint32 FRAME_CONSTANT_BUFFER_OFFSET = 0;
-    constexpr static uint32 SCENE_CONSTANT_BUFFER_OFFSET = FRAME_CONSTANT_BUFFER_SIZE;
-    constexpr static uint32 OBJECT_CONSTANT_BUFFER_OFFSET = FRAME_CONSTANT_BUFFER_SIZE + SCENE_CONSTANT_BUFFER_SIZE;
+    constexpr uint32 FRAME_CONSTANT_BUFFER_OFFSET = 0;
+    constexpr uint32 SCENE_CONSTANT_BUFFER_OFFSET = FRAME_CONSTANT_BUFFER_SIZE;
 
     static struct GraphicsData {
         Ref<CommandBuffer> commandBuffers[MAX_COMMAND_BUFFERS];
@@ -40,7 +33,6 @@ namespace BZ {
 
         BufferPtr frameConstantBufferPtr;
         BufferPtr sceneConstantBufferPtr;
-        BufferPtr objectConstantBufferPtr;
 
         Ref<DescriptorSet> frameDescriptorSet;
         Ref<DescriptorSet> sceneDescriptorSet;
@@ -49,14 +41,9 @@ namespace BZ {
         //Same layout for all DescriptorSets.
         Ref<DescriptorSetLayout> descriptorSetLayout;
 
-        //Dummy data, except for the DescriptorSetLayout list, which contains the above descriptorSetLayout.
-        //Used to bind engine DescriptorSets at any code place.
-        Ref<PipelineState> dummyPipelineState;
-
         GraphicsContext* graphicsContext;
 
         uint32 currentSceneIndex;
-        uint32 currentObjectIndex;
     } data;
 
     Graphics::API Graphics::api = API::Unknown;
@@ -68,12 +55,11 @@ namespace BZ {
         data.graphicsContext = &Application::getInstance().getGraphicsContext();
 
         data.constantBuffer = Buffer::create(BufferType::Constant,
-                                        FRAME_CONSTANT_BUFFER_SIZE + SCENE_CONSTANT_BUFFER_SIZE + OBJECT_CONSTANT_BUFFER_SIZE,
+                                        FRAME_CONSTANT_BUFFER_SIZE + SCENE_CONSTANT_BUFFER_SIZE,
                                         MemoryType::CpuToGpu);
 
         data.frameConstantBufferPtr = data.constantBuffer->map(0);
         data.sceneConstantBufferPtr = data.frameConstantBufferPtr + SCENE_CONSTANT_BUFFER_OFFSET;
-        data.objectConstantBufferPtr = data.frameConstantBufferPtr + OBJECT_CONSTANT_BUFFER_OFFSET;
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
@@ -84,23 +70,6 @@ namespace BZ {
 
         data.sceneDescriptorSet = DescriptorSet::create(data.descriptorSetLayout);
         data.sceneDescriptorSet->setConstantBuffer(data.constantBuffer, 0, SCENE_CONSTANT_BUFFER_OFFSET, sizeof(SceneConstantBufferData));
-
-        data.objectDescriptorSet = DescriptorSet::create(data.descriptorSetLayout);
-        data.objectDescriptorSet->setConstantBuffer(data.constantBuffer, 0, OBJECT_CONSTANT_BUFFER_OFFSET, sizeof(ObjectConstantBufferData));
-
-        PipelineStateData pipelineStateData;
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, 1.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, 1u, 1u } };
-        pipelineStateData.blendingState.attachmentBlendingStates = { {} };
-        pipelineStateData.descriptorSetLayouts = { data.descriptorSetLayout };
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("dummy");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/DummyVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/DummyFrag.spv");
-        pipelineStateData.shader = shaderBuilder.build();
-
-        data.dummyPipelineState = PipelineState::create(pipelineStateData);
     }
 
     void Graphics::destroy() {
@@ -116,7 +85,6 @@ namespace BZ {
         data.objectDescriptorSet.reset();
 
         data.descriptorSetLayout.reset();
-        data.dummyPipelineState.reset();
     }
 
     uint32 Graphics::beginCommandBuffer() {
@@ -189,7 +157,7 @@ namespace BZ {
         command.clearAttachmentsData.clearValue = clearValue;
     }
 
-    void Graphics::beginScene(uint32 commandBufferId, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+    void Graphics::beginScene(uint32 commandBufferId, const Ref<PipelineState>& pipelineState, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
@@ -207,7 +175,7 @@ namespace BZ {
         auto &commandBuffer = data.commandBuffers[commandBufferId];
         auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
         command.bindDescriptorSetData.descriptorSet = data.sceneDescriptorSet.get();
-        command.bindDescriptorSetData.pipelineState = data.dummyPipelineState.get();
+        command.bindDescriptorSetData.pipelineState = pipelineState.get();
         command.bindDescriptorSetData.setIndex = BHAZEL_SCENE_DESCRIPTOR_SET_IDX;
         command.bindDescriptorSetData.dynamicBufferOffsets[0] = data.constantBuffer->getCurrentBaseOfReplicaOffset() + sceneOffset; //SCENE_CONSTANT_BUFFER_OFFSET is added on the static offset part 
         command.bindDescriptorSetData.dynamicBufferCount = 1;
@@ -215,7 +183,7 @@ namespace BZ {
         data.currentSceneIndex++;
     }
 
-    void Graphics::beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint) {
+    /*void Graphics::beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint, uint32 textureIdx) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
@@ -224,6 +192,7 @@ namespace BZ {
         ObjectConstantBufferData objectConstantBufferData;
         objectConstantBufferData.modelMatrix = modelMatrix;
         objectConstantBufferData.tint = tint;
+        objectConstantBufferData.textureIdx = textureIdx;
 
         uint32 objectOffset = data.currentObjectIndex * sizeof(ObjectConstantBufferData);
         memcpy(data.objectConstantBufferPtr + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));
@@ -237,7 +206,7 @@ namespace BZ {
         command.bindDescriptorSetData.dynamicBufferCount = 1;
 
         data.currentObjectIndex++;
-    }
+    }*/
 
     void Graphics::bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset) {
         BZ_PROFILE_FUNCTION();
@@ -298,6 +267,20 @@ namespace BZ {
         command.bindDescriptorSetData.setIndex = setIndex;
         memcpy(command.bindDescriptorSetData.dynamicBufferOffsets, finalDynamicBufferOffsets, dynIndex * sizeof(uint32));
         command.bindDescriptorSetData.dynamicBufferCount = dynamicBufferCount;
+    }
+
+    void Graphics::setPushConstants(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, uint8 shaderStageMask, const void *data, uint32 size, uint32 offset) {
+        BZ_PROFILE_FUNCTION();
+
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto& commandBuffer = BZ::data.commandBuffers[commandBufferId];
+        auto& command = commandBuffer->addCommand(CommandType::SetPushConstants);
+        command.setPushConstantsData.pipelineState = pipelineState.get();
+        command.setPushConstantsData.shaderStageMask = shaderStageMask;
+        command.setPushConstantsData.data = data;
+        command.setPushConstantsData.size = size;
+        command.setPushConstantsData.offset = offset;
     }
 
     void Graphics::draw(uint32 commandBufferId, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
@@ -368,7 +351,6 @@ namespace BZ {
 
         data.nextCommandBufferIndex = 0;
         data.currentSceneIndex = 0;
-        data.currentObjectIndex = 0;
     }
 
     void Graphics::endFrame() {

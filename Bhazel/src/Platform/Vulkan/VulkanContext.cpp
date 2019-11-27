@@ -52,8 +52,10 @@ namespace BZ {
         swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
 
         VulkanDescriptorPool::Builder builder;
-        builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 1024);
-        builder.addDescriptorTypeCount(DescriptorType::CombinedTextureSampler, 1024);
+        builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 512);
+        builder.addDescriptorTypeCount(DescriptorType::CombinedTextureSampler, 512);
+        builder.addDescriptorTypeCount(DescriptorType::Sampler, 512);
+        builder.addDescriptorTypeCount(DescriptorType::SampledTexture, 512);
         descriptorPool.init(device, builder);
 
         //Init VulkanMemoryAllocator lib.

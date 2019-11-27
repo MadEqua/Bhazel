@@ -38,8 +38,8 @@ namespace BZ {
         static void clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue);
         static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
 
-        static void beginScene(uint32 commandBufferId, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
-        static void beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint);
+        static void beginScene(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
+        //static void beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint, uint32 textureIdx);
 
         //Vertex or index buffer
         static void bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset);
@@ -49,6 +49,9 @@ namespace BZ {
         static void bindDescriptorSet(uint32 commandBufferId, const Ref<DescriptorSet> &descriptorSet, 
                                       const Ref<PipelineState> &pipelineState, uint32 setIndex,
                                       uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
+
+        static void setPushConstants(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, uint8 shaderStageMask,
+                                     const void *data, uint32 size, uint32 offset);
 
         static void draw(uint32 commandBufferId, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
         static void drawIndexed(uint32 commandBufferId, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);

@@ -14,14 +14,9 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     vec3 cameraPosition;
 } sceneConstants;
 
-layout (set = 2, binding = 0, std140) uniform ObjectConstants {
-    mat4 modelMatrix;
-    vec3 tint;
-} objectConstants;
-
 layout(location = 0) out vec2 texCoord;
 
 void main() {
-    gl_Position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * objectConstants.modelMatrix * vec4(inPosition, 1.0);
+    gl_Position = sceneConstants.projectionMatrix * sceneConstants.viewMatrix * vec4(inPosition, 1.0);
     texCoord = inTexCoord;
 }

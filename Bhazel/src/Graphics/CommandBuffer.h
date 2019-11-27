@@ -20,6 +20,7 @@ namespace BZ {
         BindBuffer,             //Vertex and Index
         BindPipelineState,
         BindDescriptorSet,
+        SetPushConstants,
         Draw,
         DrawIndexed,            //Requires Dynamic State
         SetViewports,           //Requires Dynamic State
@@ -74,6 +75,14 @@ namespace BZ {
                 uint32 dynamicBufferCount;
             } bindDescriptorSetData;
 
+            struct SetPushConstants {
+                PipelineState* pipelineState;
+                uint8 shaderStageMask;
+                const void* data;
+                uint32 size;
+                uint32 offset;
+            } setPushConstantsData;
+
             struct DrawData {
                 uint32 vertexCount;
                 uint32 instanceCount;
@@ -113,7 +122,6 @@ namespace BZ {
         Command& addCommand(CommandType type);
 
         void resetIndex() { nextCommandIndex = 0; }
-        bool hasBeginRenderPassCommand() { return commands[0].type == CommandType::BeginRenderPass; }
 
         void optimizeAndGenerate();
 
@@ -140,6 +148,9 @@ namespace BZ {
         virtual void bindDescriptorSet(const DescriptorSet &descriptorSet,
                                        const PipelineState &pipelineState, uint32 setIndex,
                                        uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) = 0;
+
+        virtual void setPushConstants(const PipelineState &pipelineState, uint8 shaderStageMask,
+                                      const void* data, uint32 size, uint32 offset) = 0;
 
         virtual void draw(uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) = 0;
         virtual void drawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) = 0;
