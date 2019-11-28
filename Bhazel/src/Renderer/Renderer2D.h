@@ -8,10 +8,20 @@ namespace BZ {
 
     class DescriptorSet;
 
+    struct Sprite {
+        glm::vec2 position;
+        glm::vec2 dimensions;
+        float rotationDeg;
+        glm::vec3 tint;
+        Ref<Texture2D> texture;
+    };
+
     class Renderer2D {
     public:
         static void beginScene(const OrthographicCamera &camera);
         static void endScene();
+
+        static void drawSprite(const Sprite &sprite);
 
         static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &color);
         static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec3 &tint);

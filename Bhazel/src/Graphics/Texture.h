@@ -72,7 +72,6 @@ namespace BZ {
     class TextureView {
     public:
         static Ref<TextureView> create(const Ref<Texture> &texture);
-        static Ref<TextureView> create(const Texture &texture);
 
         //TextureFormat getFormat() const { return texture->getFormat(); } TODO: TextureView own format
         const TextureFormatWrapper& getTextureFormat() const { return texture->getFormat(); }

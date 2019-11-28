@@ -118,16 +118,6 @@ namespace BZ {
         }
     }
 
-    Ref<TextureView> TextureView::create(const Texture &texture) {
-        switch (Graphics::api) {
-        case Graphics::API::Vulkan:
-            return MakeRef<VulkanTextureView>(Ref<VulkanTexture2D>((VulkanTexture2D*)(&texture)));
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return nullptr;
-        }
-    }
-
     TextureView::TextureView(const Ref<Texture> &texture) :
         texture(texture) {
         BZ_ASSERT_CORE(texture, "Invalid Texture!");

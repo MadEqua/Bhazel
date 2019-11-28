@@ -22,84 +22,14 @@ void ExampleLayer::onGraphicsContextCreated() {
     tex2 = BZ::Texture2D::create("textures/particle.png", BZ::TextureFormat::R8G8B8A8_sRGB);
 
     for(uint32 i = 0; i < OBJECT_COUNT; i++) {
-        objects[i].pos = glm::linearRand({ 0.0f, 0.0f }, dims);
-        objects[i].vel = glm::linearRand(glm::vec2(-300.0f, -300.0f), { 300.0f, 300.0f });
-        objects[i].dims = glm::linearRand(glm::vec2(10.0f, 10.0f), { 150.0f, 150.0f });
-        objects[i].tint = {1,1,1};// glm::linearRand(glm::vec3(0.0f), { 1.0f, 1.0f, 1.0f });
-        objects[i].rot = glm::linearRand(0.0f, 359.0f);
-        objects[i].texId = glm::linearRand(0, 1);
+        BZ::Sprite &spr = objects[i].sprite;
+        spr.position = glm::linearRand({ 0.0f, 0.0f }, dims);
+        spr.dimensions= glm::linearRand(glm::vec2(10.0f, 10.0f), { 150.0f, 150.0f });
+        spr.rotationDeg = glm::linearRand(0.0f, 359.0f);
+        spr.tint = {1,1,1};// glm::linearRand(glm::vec3(0.0f), { 1.0f, 1.0f, 1.0f });
+        spr.texture = glm::linearRand(0, 1) == 0 ? tex1 : tex2;
+        objects[i].velocity = glm::linearRand(glm::vec2(-300.0f, -300.0f), { 300.0f, 300.0f });
     }
-
-    /*const float DIM = 200.0f;
-    objects[0].pos = { 50.0f, 300.0f };
-    objects[0].vel = { 0.0f, 0.0f };
-    objects[0].dims = { DIM, DIM };
-    objects[0].tint = { 1.0f, 0.0f, 0.0f };
-    objects[0].rot = 0.0f;
-    objects[0].texId = 0;
-
-    objects[1].pos = { 50.0f+DIM, 300.0f };
-    objects[1].vel = { 0.0f, 0.0f };
-    objects[1].dims = { DIM, DIM };
-    objects[1].tint = { 0.0f, 1.0f, 0.0f };
-    objects[1].rot = 0.0f;
-    objects[1].texId = 1;
-
-    objects[2].pos = { 50.0f+2*DIM, 300.0f };
-    objects[2].vel = { 0.0f, 0.0f };
-    objects[2].dims = { DIM, DIM };
-    objects[2].tint = { 0.0f, 0.0f, 1.0f };
-    objects[2].rot = 0.0f;
-    objects[2].texId = 0;
-
-    objects[3].pos = { 50.0f+3 * DIM, 300.0f };
-    objects[3].vel = { 0.0f, 0.0f };
-    objects[3].dims = { DIM, DIM };
-    objects[3].tint = { 1.0f, 1.0f, 0.0f };
-    objects[3].rot = 0.0f;
-    objects[3].texId = 1;
-
-    objects[4].pos = { 50.0f+4 * DIM, 300.0f };
-    objects[4].vel = { 0.0f, 0.0f };
-    objects[4].dims = { DIM, DIM };
-    objects[4].tint = { 1.0f, 0.0f, 1.0f };
-    objects[4].rot = 0.0f;
-    objects[4].texId = 0;
-
-    objects[5].pos = { 50.0f, 500.0f };
-    objects[5].vel = { 0.0f, 0.0f };
-    objects[5].dims = { DIM, DIM };
-    objects[5].tint = { 1.0f, 0.0f, 0.0f };
-    objects[5].rot = 0.0f;
-    objects[5].texId = 0;
-
-    objects[6].pos = { 50.0f + DIM, 500.0f };
-    objects[6].vel = { 0.0f, 0.0f };
-    objects[6].dims = { DIM, DIM };
-    objects[6].tint = { 0.0f, 1.0f, 0.0f };
-    objects[6].rot = 0.0f;
-    objects[6].texId = 1;
-
-    objects[7].pos = { 50.0f + 2 * DIM, 500.0f };
-    objects[7].vel = { 0.0f, 0.0f };
-    objects[7].dims = { DIM, DIM };
-    objects[7].tint = { 0.0f, 0.0f, 1.0f };
-    objects[7].rot = 0.0f;
-    objects[7].texId = 0;
-
-    objects[8].pos = { 50.0f + 3 * DIM, 500.0f };
-    objects[8].vel = { 0.0f, 0.0f };
-    objects[8].dims = { DIM, DIM };
-    objects[8].tint = { 1.0f, 1.0f, 0.0f };
-    objects[8].rot = 0.0f;
-    objects[8].texId = 1;
-
-    objects[9].pos = { 50.0f + 4 * DIM, 500.0f };
-    objects[9].vel = { 0.0f, 0.0f };
-    objects[9].dims = { DIM, DIM };
-    objects[9].tint = { 1.0f, 0.0f, 1.0f };
-    objects[9].rot = 0.0f;
-    objects[9].texId = 0;*/
 }
 
 void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
@@ -112,25 +42,28 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Renderer2D::beginScene(cameraController.getCamera());
 
     for (uint32 i = 0; i < OBJECT_COUNT; i++) {
-        objects[i].pos += objects[i].vel * frameStats.lastFrameTime.asSeconds();
-        if (objects[i].pos.x >= dims.x) {
-            objects[i].pos.x = static_cast<float>(dims.x);
-            objects[i].vel.x = -objects[i].vel.x;
+        Object& obj = objects[i];
+        BZ::Sprite& spr = obj.sprite;
+
+        spr.position += obj.velocity * frameStats.lastFrameTime.asSeconds();
+        if (spr.position.x >= dims.x) {
+            spr.position.x = static_cast<float>(dims.x);
+            obj.velocity.x = -obj.velocity.x;
         }
-        else if (objects[i].pos.x <= 0) {
-            objects[i].pos.x = 0.0f;
-            objects[i].vel.x = -objects[i].vel.x;
+        else if (spr.position.x <= 0) {
+            spr.position.x = 0.0f;
+            obj.velocity.x = -obj.velocity.x;
         }
-        if (objects[i].pos.y >= dims.y) {
-            objects[i].pos.y = static_cast<float>(dims.y);
-            objects[i].vel.y = -objects[i].vel.y;
+        if (spr.position.y >= dims.y) {
+            spr.position.y = static_cast<float>(dims.y);
+            obj.velocity.y = -obj.velocity.y;
         }
-        else if (objects[i].pos.y <= 0) {
-            objects[i].pos.y = 0.0f;
-            objects[i].vel.y = -objects[i].vel.y;
+        else if (spr.position.y <= 0) {
+            spr.position.y = 0.0f;
+            obj.velocity.y = -obj.velocity.y;
         }
 
-        BZ::Renderer2D::drawQuad(objects[i].pos, objects[i].dims, objects[i].rot, objects[i].texId ? tex1 : tex2, objects[i].tint);
+        BZ::Renderer2D::drawSprite(spr);
     }
 
     /*for (int i = 0; i < 512; ++i) {
