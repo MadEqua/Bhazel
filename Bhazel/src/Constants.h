@@ -10,7 +10,7 @@ constexpr static uint32 APP_FIRST_DESCRIPTOR_SET_IDX = 2;
 constexpr static uint32 MAX_VIEWPORTS = 16;
 
 constexpr static uint32 MAX_COMMAND_BUFFERS = 8;
-constexpr static uint32 MAX_COMMANDS_PER_BUFFER = 1024*4;
+constexpr static uint32 MAX_COMMANDS_PER_BUFFER = 1024 * 4;
 constexpr static uint32 MAX_DESCRIPTOR_DYNAMIC_OFFSETS = 8;
 
 constexpr static uint32 MAX_SCENES_PER_FRAME = 16;

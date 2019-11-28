@@ -227,7 +227,6 @@ namespace BZ {
                     for (int i = 0; i < 4; ++i) {
                         vertices[i].pos[0] = quadVertices[i].pos[0] * spr.dimensions.x * c + quadVertices[i].pos[1] * spr.dimensions.y * -s + spr.position.x;
                         vertices[i].pos[1] = quadVertices[i].pos[0] * spr.dimensions.x * s + quadVertices[i].pos[1] * spr.dimensions.y * c + spr.position.y;
-                        vertices[i].pos[2] = 0.0f;
                         vertices[i].texCoord[0] = quadVertices[i].texCoord[0];
                         vertices[i].texCoord[1] = quadVertices[i].texCoord[1];
                     }

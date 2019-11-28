@@ -15,7 +15,7 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    static const uint32 OBJECT_COUNT = 1000;
+    static const uint32 OBJECT_COUNT = 100'000;
 
     struct Object {
         BZ::Sprite sprite;

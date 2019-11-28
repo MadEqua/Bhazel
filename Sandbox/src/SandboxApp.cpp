@@ -24,7 +24,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     for(uint32 i = 0; i < OBJECT_COUNT; i++) {
         BZ::Sprite &spr = objects[i].sprite;
         spr.position = glm::linearRand({ 0.0f, 0.0f }, dims);
-        float dim = glm::linearRand(5.0f, 30.0f);
+        float dim = glm::linearRand(2.0f, 15.0f);
         spr.dimensions = { dim, dim };
         spr.rotationDeg = glm::linearRand(0.0f, 359.0f);
         int tint = glm::linearRand(0, 5);
