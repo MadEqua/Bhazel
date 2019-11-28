@@ -121,7 +121,8 @@ namespace BZ {
         }
         else if(buffer.getType() == BufferType::Index) {
             VkBuffer vkBuffer = static_cast<const VulkanBuffer &>(buffer).getNativeHandle();
-            vkCmdBindIndexBuffer(nativeHandle, vkBuffer, offset, VK_INDEX_TYPE_UINT16); //TODO index size
+            VkIndexType type = buffer.getLayout().begin()->dataType == DataType::Uint16 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+            vkCmdBindIndexBuffer(nativeHandle, vkBuffer, offset, type);
         }
     }
 

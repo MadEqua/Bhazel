@@ -259,10 +259,17 @@ namespace BZ {
         fontTextureView = TextureView::create(fontTexture);
         fontTextureSampler = Sampler::Builder().build();
 
+        //VertexLayout
+        DataLayout vertexLayout = {
+            {DataType::Float32, DataElements::Vec2, "POSITION"},
+            {DataType::Float32, DataElements::Vec2, "TEXCOORD"},
+            {DataType::Uint8, DataElements::Vec4, "COLOR", true},
+        };
+
         //Buffers
         const uint32 MAX_INDICES = 1 << sizeof(ImDrawIdx) * 8;
-        vertexBuffer = Buffer::create(BufferType::Vertex, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu);
-        indexBuffer = Buffer::create(BufferType::Index, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu);
+        vertexBuffer = Buffer::create(BufferType::Vertex, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
+        indexBuffer = Buffer::create(BufferType::Index, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { {DataType::Uint16, DataElements::Scalar, ""} });
         vertexBufferPtr = vertexBuffer->map(0);
         indexBufferPtr = indexBuffer->map(0);
 
@@ -271,13 +278,6 @@ namespace BZ {
         shaderBuilder.setName("ImGui");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/ImGuiVert.spv");
         shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/ImGuiFrag.spv");
-
-        //DataLayout
-        DataLayout dataLayout = {
-            {DataType::Float32, DataElements::Vec2, "POSITION"},
-            {DataType::Float32, DataElements::Vec2, "TEXCOORD"},
-            {DataType::Uint8, DataElements::Vec4, "COLOR", true},
-        };
 
         //DescriptorSetLayout
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
@@ -302,7 +302,7 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
         PipelineStateData pipelineStateData;
-        pipelineStateData.dataLayout = dataLayout;
+        pipelineStateData.dataLayout = vertexLayout;
         pipelineStateData.shader = shaderBuilder.build();
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };

@@ -13,9 +13,13 @@ namespace BZ {
     constexpr uint32 MAX_RENDERER2D_TEXTURES = 16;
     constexpr uint32 MAX_RENDERER2D_OBJECTS = 100'000;
 
-    static DataLayout dataLayout = {
+    static DataLayout vertexLayout = {
         {DataType::Float32, DataElements::Vec3, "POSITION"},
         {DataType::Uint16, DataElements::Vec2, "TEXCOORD", true},
+    };
+
+    static DataLayout indexLayout = {
+        {DataType::Uint32, DataElements::Scalar, "Idx"},
     };
 
     struct Vertex {
@@ -43,7 +47,7 @@ namespace BZ {
         }
     };
 
-    static uint16 quadIndices[6] = { 0, 1, 2, 2, 3, 0 };
+    static uint32 quadIndices[6] = { 0, 1, 2, 2, 3, 0 };
 
     struct Object {
         glm::vec2 position;
@@ -123,8 +127,8 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();
 
-        rendererData.vertexBuffer = Buffer::create(BufferType::Vertex, 4 * sizeof(Vertex) * MAX_RENDERER2D_OBJECTS, MemoryType::CpuToGpu, dataLayout);
-        rendererData.indexBuffer = Buffer::create(BufferType::Index, 6 * sizeof(uint16) * MAX_RENDERER2D_OBJECTS, MemoryType::CpuToGpu);
+        rendererData.vertexBuffer = Buffer::create(BufferType::Vertex, 4 * sizeof(Vertex) * MAX_RENDERER2D_OBJECTS, MemoryType::CpuToGpu, vertexLayout);
+        rendererData.indexBuffer = Buffer::create(BufferType::Index, 6 * sizeof(uint32) * MAX_RENDERER2D_OBJECTS, MemoryType::CpuToGpu, indexLayout);
 
         rendererData.vertexBufferPtr = rendererData.vertexBuffer->map(0);
         rendererData.indexBufferPtr = rendererData.indexBuffer->map(0);
@@ -157,7 +161,7 @@ namespace BZ {
         blendingStateAttachment.alphaBlendingOperation = BlendingOperation::Add;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
-        pipelineStateData.dataLayout = dataLayout;
+        pipelineStateData.dataLayout = vertexLayout;
 
         //Push constants are used to pass tint values
         PushConstantDesc pushConstantDesc;
@@ -239,7 +243,7 @@ namespace BZ {
                     float s = glm::sin(glm::radians(obj.rotationDeg));
 
                     Vertex vertices[4];
-                    uint16 indices[6];
+                    uint32 indices[6];
                     for (int i = 0; i < 4; ++i) {
                         vertices[i].pos[0] = quadVertices[i].pos[0] * obj.dimensions.x * c + quadVertices[i].pos[1] * obj.dimensions.y * -s + obj.position.x;
                         vertices[i].pos[1] = quadVertices[i].pos[0] * obj.dimensions.x * s + quadVertices[i].pos[1] * obj.dimensions.y * c + obj.position.y;

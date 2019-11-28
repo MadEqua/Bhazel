@@ -118,8 +118,17 @@ namespace BZ {
         else
             realSize = size;
 
-        if(layout)
+        if (layout) {
+            BZ_ASSERT_CORE(type == BufferType::Vertex || type == BufferType::Index, "Buffer with layout must be Vertex or Index!");
+
+            if(type == BufferType::Index)
+                BZ_ASSERT_CORE(layout->begin()->dataType == DataType::Uint16 || layout->begin()->dataType == DataType::Uint32, "Index Buffer Datatype must be Uint32 or Uint16!");
+
             this->layout = *layout;
+        }
+        else {
+            BZ_ASSERT_CORE(type != BufferType::Vertex && type != BufferType::Index, "Buffer without layout cannot be Vertex or Index!");
+        }
     }
 
     Buffer::~Buffer() {
