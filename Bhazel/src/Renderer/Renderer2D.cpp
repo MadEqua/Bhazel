@@ -10,6 +10,8 @@
 
 namespace BZ {
 
+    Renderer2DStats Renderer2D::stats;
+
     constexpr uint32 MAX_RENDERER2D_SPRITES = 100'000;
 
     static DataLayout vertexLayout = {
@@ -180,6 +182,8 @@ namespace BZ {
 
         rendererData.nextSprite = 0;
 
+        memset(&stats, 0, sizeof(stats));
+
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
         Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getViewMatrix(), camera.getProjectionMatrix());
     }
@@ -199,9 +203,9 @@ namespace BZ {
             Graphics::bindBuffer(rendererData.commandBufferId, rendererData.indexBuffer, 0);
             Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
 
-            uint32 objectsToDraw = 0;
+            uint32 spritesInBatch = 0;
             uint32 nextBatchOffset = 0;
-            uint32 currentBoundTexHash = -1;
+            uint64 currentBoundTexHash = -1;
             glm::vec3 currentActiveTint = glm::vec3(-1.0f);
             uint64 currentBatchTexHash = rendererData.sprites[0].textureHash;
             glm::vec3 currentBatchTint = rendererData.sprites[0].tint;
@@ -242,26 +246,32 @@ namespace BZ {
                 //Command recording
                 bool texChanged = currentBatchTexHash != spr.textureHash;
                 bool tintChanged = currentBatchTint != spr.tint;
+
+                //Batch finishes on these cases. Issue draw call.
                 if (texChanged || tintChanged || isLastIteration) {
                     if (currentBoundTexHash != currentBatchTexHash) {
                         const TexData& texData = rendererData.texDataStorage[currentBatchTexHash];
                         Graphics::bindDescriptorSet(rendererData.commandBufferId, texData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
                         currentBoundTexHash = currentBatchTexHash;
+                        stats.descriptorSetBindCount++;
                     }
 
                     if (currentActiveTint != currentBatchTint) {
                         Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlags::Fragment), &currentBatchTint.x, sizeof(glm::vec3), 0);
                         currentActiveTint = currentBatchTint;
+                        stats.tintPushCount++;
                     }
 
-                    Graphics::drawIndexed(rendererData.commandBufferId, objectsToDraw * 6, 1, nextBatchOffset * 6, 0, 0);
+                    Graphics::drawIndexed(rendererData.commandBufferId, spritesInBatch * 6, 1, nextBatchOffset * 6, 0, 0);
                     nextBatchOffset = objIdx;
-                    objectsToDraw = 0;
+                    spritesInBatch = 0;
 
                     currentBatchTexHash = spr.textureHash;
                     currentBatchTint = spr.tint;
+
+                    stats.drawCallCount++;
                 }
-                objectsToDraw++;
+                spritesInBatch++;
             }
         }
 
@@ -298,5 +308,7 @@ namespace BZ {
         std::hash<double> hasher;
         size_t tintHash = Utils::hashCombine(Utils::hashCombine(hasher(tint.r), hasher(tint.g)), hasher(tint.b));
         spr.sortKey = (spr.textureHash << 32) | (tintHash >> 32);
+
+        stats.spriteCount++;
     }
 }

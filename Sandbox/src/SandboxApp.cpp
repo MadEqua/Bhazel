@@ -18,15 +18,37 @@ void ExampleLayer::onGraphicsContextCreated() {
     cameraController = BZ::OrthographicCameraController(-halfW, halfW, -halfH, halfH);
     cameraController.getCamera().setPosition({halfW, halfH, 0.0f});
 
-    tex1 = BZ::Texture2D::create("textures/test.jpg", BZ::TextureFormat::R8G8B8A8_sRGB);
+    tex1 = BZ::Texture2D::create("textures/alphatest.png", BZ::TextureFormat::R8G8B8A8_sRGB);
     tex2 = BZ::Texture2D::create("textures/particle.png", BZ::TextureFormat::R8G8B8A8_sRGB);
 
     for(uint32 i = 0; i < OBJECT_COUNT; i++) {
         BZ::Sprite &spr = objects[i].sprite;
         spr.position = glm::linearRand({ 0.0f, 0.0f }, dims);
-        spr.dimensions= glm::linearRand(glm::vec2(10.0f, 10.0f), { 150.0f, 150.0f });
+        float dim = glm::linearRand(5.0f, 30.0f);
+        spr.dimensions = { dim, dim };
         spr.rotationDeg = glm::linearRand(0.0f, 359.0f);
-        spr.tint = {1,1,1};// glm::linearRand(glm::vec3(0.0f), { 1.0f, 1.0f, 1.0f });
+        int tint = glm::linearRand(0, 5);
+        switch (tint) {
+        case 0:
+            spr.tint = { 1.0f, 0.0f, 0.0f };
+            break;
+        case 1:
+            spr.tint = { 0.0f, 1.0f, 0.0f };
+            break;
+        case 2:
+            spr.tint = { 0.0f, 0.0f, 1.0f };
+            break;
+        case 3:
+            spr.tint = { 1.0f, 1.0f, 0.0f };
+            break;
+        case 4:
+            spr.tint = { 0.0f, 1.0f, 1.0f };
+            break;
+        case 5:
+            spr.tint = { 1.0f, 0.0f, 1.0f };
+            break;
+        }
+        //spr.tint = glm::linearRand(glm::vec3(0.0f), { 1.0f, 1.0f, 1.0f });//{1,1,1};
         spr.texture = glm::linearRand(0, 1) == 0 ? tex1 : tex2;
         objects[i].velocity = glm::linearRand(glm::vec2(-300.0f, -300.0f), { 300.0f, 300.0f });
     }
@@ -89,12 +111,6 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 
     auto &dims = application.getWindow().getDimensions();
-
-    ImGui::Begin("Test");
-    ImGui::SliderFloat("pos x", &pos.x, 0.0f, static_cast<float>(dims.x));
-    ImGui::SliderFloat("pos y", &pos.y, 0.0f, static_cast<float>(dims.y));
-    ImGui::SliderFloat("rot", &rot, 0.0f, 360.0f);
-    ImGui::End();
 }
 
 BZ::Application* BZ::createApplication() {

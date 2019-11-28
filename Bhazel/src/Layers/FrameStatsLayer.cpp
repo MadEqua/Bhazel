@@ -1,7 +1,6 @@
 #include "bzpch.h"
 
 #include "FrameStatsLayer.h"
-#include "Core/Application.h"
 
 #include <imgui.h>
 
@@ -26,7 +25,7 @@ namespace BZ {
             frameTimeHistoryIdx = (frameTimeHistoryIdx + 1) % FRAME_HISTORY_SIZE;
         }
 
-        if(ImGui::Begin("Stats")) {
+        if(ImGui::Begin("Frame Stats")) {
             ImGui::Text("Last Frame Time: %.3f ms.", visibleFrameStats.lastFrameTime.asMillisecondsFloat());
             ImGui::Text("FPS: %.3f.", 1.0f / visibleFrameStats.lastFrameTime.asSeconds());
             ImGui::Separator();

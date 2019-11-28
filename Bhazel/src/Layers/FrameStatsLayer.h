@@ -6,7 +6,6 @@
 
 namespace BZ {
 
-
     class FrameStatsLayer : public Layer {
     public:
         FrameStatsLayer(const Application &application);

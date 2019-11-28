@@ -41,8 +41,6 @@ namespace BZ {
     }
 
     void ImGuiLayer::onImGuiRender(const FrameStats &frameStats) {
-        static bool show = true;
-        ImGui::ShowDemoWindow(&show);
     }
 
     void ImGuiLayer::onEvent(Event &event) {
