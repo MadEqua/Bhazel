@@ -18,8 +18,8 @@ void ExampleLayer::onGraphicsContextCreated() {
     cameraController = BZ::OrthographicCameraController(-halfW, halfW, -halfH, halfH);
     cameraController.getCamera().setPosition({halfW, halfH, 0.0f});
 
-    tex1 = BZ::Texture2D::create("textures/alphatest.png", BZ::TextureFormat::R8G8B8A8_sRGB);
-    tex2 = BZ::Texture2D::create("textures/particle.png", BZ::TextureFormat::R8G8B8A8_sRGB);
+    tex1 = BZ::Texture2D::create("textures/alphatest.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
+    tex2 = BZ::Texture2D::create("textures/particle.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
 
     for(uint32 i = 0; i < OBJECT_COUNT; i++) {
         BZ::Sprite &spr = objects[i].sprite;

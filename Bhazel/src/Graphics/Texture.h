@@ -46,6 +46,7 @@ namespace BZ {
         uint32 getWidth() const { return dimensions.x; }
         uint32 getHeight() const { return dimensions.y; }
         uint32 getDepth() const { return dimensions.z; }
+        uint32 getMipLevels() const { return mipLevels; }
 
  
     protected:
@@ -56,13 +57,14 @@ namespace BZ {
 
         TextureFormatWrapper format;
         glm::ivec3 dimensions = {1,1,1};
+        uint32 mipLevels = 1;
     };
 
 
     class Texture2D : public Texture {
     public:
-        static Ref<Texture2D> create(const std::string &path, TextureFormat format);
-        static Ref<Texture2D> create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format);
+        static Ref<Texture2D> create(const std::string &path, TextureFormat format, bool generateMipmaps);
+        static Ref<Texture2D> create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
 
     protected:
         explicit Texture2D(TextureFormat format);
@@ -91,7 +93,10 @@ namespace BZ {
         public:
             void setMinFilterMode(FilterMode filterMode) { minFilter = filterMode; }
             void setMagFilterMode(FilterMode filterMode) { magFilter = filterMode; }
+
             void setMipmapFilterMode(FilterMode filterMode) { mipmapFilter = filterMode; }
+            void setMinMipmap(uint32 min) { minMipmap = min; };
+            void setMaxMipmap(uint32 max) { maxMipmap = max; };
 
             void setAddressModeAll(AddressMode addressMode) { addressModeU = addressMode; addressModeV = addressMode; addressModeW = addressMode; }
             void setAddressModeU(AddressMode addressMode) { addressModeU = addressMode; }
@@ -106,6 +111,8 @@ namespace BZ {
             FilterMode minFilter = FilterMode::Linear;
             FilterMode magFilter = FilterMode::Linear;
             FilterMode mipmapFilter = FilterMode::Linear;
+            uint32 minMipmap = 0;
+            uint32 maxMipmap = 0xffffffff;
             AddressMode addressModeU  = AddressMode::Repeat;
             AddressMode addressModeV = AddressMode::Repeat;
             AddressMode addressModeW = AddressMode::Repeat;

@@ -81,29 +81,29 @@ namespace BZ {
     }
 
 
-    Ref<Texture2D> Texture2D::create(const std::string &path, TextureFormat format) {
+    Ref<Texture2D> Texture2D::create(const std::string &path, TextureFormat format, bool generateMipmaps) {
         auto &assetsPath = Application::getInstance().getAssetsPath();
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTexture2D>(assetsPath + path, format);
+            return MakeRef<VulkanTexture2D>(assetsPath + path, format, generateMipmaps);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Ref<Texture2D> Texture2D::create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format) {
+    Ref<Texture2D> Texture2D::create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps) {
         auto &assetsPath = Application::getInstance().getAssetsPath();
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTexture2D>(data, dataSize, width, height, format);
+            return MakeRef<VulkanTexture2D>(data, dataSize, width, height, format, generateMipmaps);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Texture2D::Texture2D(TextureFormat format) : 
+    Texture2D::Texture2D(TextureFormat format) :
         Texture(format) {
     }
 

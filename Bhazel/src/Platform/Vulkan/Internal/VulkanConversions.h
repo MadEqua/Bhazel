@@ -34,6 +34,7 @@ namespace BZ {
    VkMemoryPropertyFlags memoryTypeToRequiredFlagsVk(MemoryType memoryType);
    VkMemoryPropertyFlags memoryTypeToPreferredFlagsVk(MemoryType memoryType);
    VkFilter filterModeToVk(FilterMode mode);
+   VkSamplerMipmapMode sampleMipmapModeToVk(FilterMode mode);
    VkSamplerAddressMode addressModeToVk(AddressMode mode);
    VkDynamicState dynamicStateToVk(DynamicState dynamicState);
 }

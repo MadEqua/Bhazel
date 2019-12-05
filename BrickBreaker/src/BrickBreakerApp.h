@@ -10,6 +10,8 @@ const float BALL_RADIUS = 5.0f;
 const float BALL_SPEED = 500.0f;
 
 const float BRICK_FADE_SECONDS = 1.0f;
+const glm::vec4 BRICK_TINT1 = { 0.7f, 0.1f, 0.2f, 1.0f };
+const glm::vec4 BRICK_TINT2 = { 0.1f, 0.7f, 0.2f, 1.0f };
 
 struct Brick {
     BZ::Sprite sprite;

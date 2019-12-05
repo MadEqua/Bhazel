@@ -12,8 +12,8 @@ namespace BZ {
     public:
         static Ref<VulkanTexture2D> wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
 
-        VulkanTexture2D(const std::string &path, TextureFormat format);
-        VulkanTexture2D(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format);
+        VulkanTexture2D(const std::string &path, TextureFormat format, bool generateMipmaps);
+        VulkanTexture2D(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
         
         //Coming from an already existent VkImage. Used on the swapchain images.
         VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
@@ -28,7 +28,9 @@ namespace BZ {
         VkBuffer stagingBufferHandle;
         VmaAllocation stagingBufferAllocationHandle;
 
-        void init(const byte *data, uint32 dataSize, uint32 width, uint32 height);
+        void init(const byte *data, uint32 dataSize, uint32 width, uint32 height, bool generateMipmaps);
+
+        void generateMipmaps(VkCommandBuffer commandBuffer);
 
         void initStagingBuffer(uint32 size);
         void destroyStagingBuffer();

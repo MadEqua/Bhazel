@@ -617,6 +617,18 @@ namespace BZ {
         }
     }
 
+    VkSamplerMipmapMode sampleMipmapModeToVk(FilterMode mode) {
+        switch (mode) {
+        case FilterMode::Nearest:
+            return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        case FilterMode::Linear:
+            return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown FilterMode!");
+            return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        }
+    }
+
     VkSamplerAddressMode addressModeToVk(AddressMode mode) {
         switch(mode) {
         case AddressMode::Repeat:
