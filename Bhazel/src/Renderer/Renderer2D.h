@@ -12,7 +12,7 @@ namespace BZ {
         glm::vec2 position;
         glm::vec2 dimensions;
         float rotationDeg;
-        glm::vec3 tint;
+        glm::vec4 tintAndAlpha;
         Ref<Texture2D> texture;
     };
 
@@ -30,8 +30,8 @@ namespace BZ {
 
         static void drawSprite(const Sprite &sprite);
 
-        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &color);
-        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec3 &tint);
+        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &colorAndAlpha);
+        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha);
 
         static const Renderer2DStats& getStats() { return stats; }
 

@@ -4,12 +4,12 @@
 
 #include "bzpch.h"
 
-#include "Layers/Layer.h"
-
 #include "Core/Application.h"
 #include "Core/Timer.h"
 #include "Core/Input.h"
 #include "Core/KeyCodes.h"
+
+#include "Layers/Layer.h"
 
 #include "Events/WindowEvent.h"
 #include "Events/ApplicationEvent.h"
@@ -29,3 +29,7 @@
 #include "Renderer/Camera.h"
 #include "Renderer/ParticleSystem.h"
 #include "Entities/CameraController.h"
+
+#include "Collisions/AABB.h"
+#include "Collisions/BoundingSphere.h"
+#include "Collisions/CollisionUtils.h"

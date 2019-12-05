@@ -25,8 +25,8 @@ namespace BZ {
     protected:
         CameraController(T &camera, float zoom);
 
-        virtual bool onMouseScrolled(MouseScrolledEvent &e) = 0;
-        virtual bool onWindowResized(WindowResizedEvent &e) = 0;
+        virtual bool onMouseScrolled(const MouseScrolledEvent &e) = 0;
+        virtual bool onWindowResized(const WindowResizedEvent &e) = 0;
 
         float zoom;
 
@@ -57,8 +57,8 @@ namespace BZ {
         void onUpdate(const FrameStats &frameStats) override;
 
     private:
-        bool onMouseScrolled(MouseScrolledEvent &e) override;
-        bool onWindowResized(WindowResizedEvent &e) override;
+        bool onMouseScrolled(const MouseScrolledEvent &e) override;
+        bool onWindowResized(const WindowResizedEvent &e) override;
 
         bool enableRotation;
         float cameraRotationSpeed = 90.0f;
@@ -74,8 +74,8 @@ namespace BZ {
         void onUpdate(const FrameStats &frameStats) override;
 
     private:
-        bool onMouseScrolled(MouseScrolledEvent &e) override;
-        bool onWindowResized(WindowResizedEvent &e) override;
+        bool onMouseScrolled(const MouseScrolledEvent &e) override;
+        bool onWindowResized(const WindowResizedEvent &e) override;
 
         float fovy;
         float aspectRatio;

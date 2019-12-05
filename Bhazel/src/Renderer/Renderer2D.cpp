@@ -54,7 +54,7 @@ namespace BZ {
         glm::vec2 position;
         glm::vec2 dimensions;
         float rotationDeg;
-        glm::vec3 tint;
+        glm::vec4 tintAndAlpha;
         uint64 textureHash;
         uint64 sortKey;
     };
@@ -143,10 +143,10 @@ namespace BZ {
 
         pipelineStateData.dataLayout = vertexLayout;
 
-        //Push constants are used to pass tint values
+        //Push constants are used to pass tint and alpha values
         PushConstantDesc pushConstantDesc;
         pushConstantDesc.offset = 0;
-        pushConstantDesc.size = sizeof(glm::vec3);
+        pushConstantDesc.size = sizeof(glm::vec4);
         pushConstantDesc.shaderStageMask = flagsToMask(ShaderStageFlags::Fragment);
 
         pipelineStateData.pushConstantDescs = { pushConstantDesc };
@@ -206,9 +206,9 @@ namespace BZ {
             uint32 spritesInBatch = 0;
             uint32 nextBatchOffset = 0;
             uint64 currentBoundTexHash = -1;
-            glm::vec3 currentActiveTint = glm::vec3(-1.0f);
+            glm::vec4 currentActiveTint = glm::vec4(-1.0f);
             uint64 currentBatchTexHash = rendererData.sprites[0].textureHash;
-            glm::vec3 currentBatchTint = rendererData.sprites[0].tint;
+            glm::vec4 currentBatchTint = rendererData.sprites[0].tintAndAlpha;
 
             //Generate vertex and index buffers and record commands
             for (uint32 objIdx = 0; objIdx <= rendererData.nextSprite; ++objIdx) {
@@ -244,7 +244,7 @@ namespace BZ {
 
                 //Command recording
                 bool texChanged = currentBatchTexHash != spr.textureHash;
-                bool tintChanged = currentBatchTint != spr.tint;
+                bool tintChanged = currentBatchTint != spr.tintAndAlpha;
 
                 //Batch finishes on these cases. Issue draw call.
                 if (texChanged || tintChanged || isLastIteration) {
@@ -256,7 +256,7 @@ namespace BZ {
                     }
 
                     if (currentActiveTint != currentBatchTint) {
-                        Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlags::Fragment), &currentBatchTint.x, sizeof(glm::vec3), 0);
+                        Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlags::Fragment), &currentBatchTint.x, sizeof(glm::vec4), 0);
                         currentActiveTint = currentBatchTint;
                         stats.tintPushCount++;
                     }
@@ -266,7 +266,7 @@ namespace BZ {
                     spritesInBatch = 0;
 
                     currentBatchTexHash = spr.textureHash;
-                    currentBatchTint = spr.tint;
+                    currentBatchTint = spr.tintAndAlpha;
 
                     stats.drawCallCount++;
                 }
@@ -281,16 +281,16 @@ namespace BZ {
     void Renderer2D::drawSprite(const Sprite &sprite) {
         BZ_PROFILE_FUNCTION();
 
-        drawQuad(sprite.position, sprite.dimensions, sprite.rotationDeg, sprite.texture, sprite.tint);
+        drawQuad(sprite.position, sprite.dimensions, sprite.rotationDeg, sprite.texture, sprite.tintAndAlpha);
     }
 
-    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec3 &color) {
+    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &colorAndAlpha) {
         BZ_PROFILE_FUNCTION();
 
-        drawQuad(position, dimensions, rotationDeg, rendererData.whiteTexture, color);
+        drawQuad(position, dimensions, rotationDeg, rendererData.whiteTexture, colorAndAlpha);
     }
 
-    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec3 &tint) {
+    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(rendererData.commandBufferId != -1, "There's not a started Scene!");
@@ -301,11 +301,11 @@ namespace BZ {
         spr.dimensions = dimensions;
         spr.rotationDeg = rotationDeg;
         spr.textureHash = initTexture(texture);
-        spr.tint = tint;
+        spr.tintAndAlpha = tintAndAlpha;
 
         //Sort by Texture and then by tint
         std::hash<double> hasher;
-        size_t tintHash = Utils::hashCombine(Utils::hashCombine(hasher(tint.r), hasher(tint.g)), hasher(tint.b));
+        size_t tintHash = Utils::hashCombine(Utils::hashCombine(Utils::hashCombine(hasher(tintAndAlpha.r), hasher(tintAndAlpha.g)), hasher(tintAndAlpha.b)), hasher(tintAndAlpha.a));
         spr.sortKey = (spr.textureHash << 32) | (tintHash >> 32);
 
         stats.spriteCount++;

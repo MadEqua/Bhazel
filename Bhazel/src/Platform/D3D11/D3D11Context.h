@@ -11,7 +11,7 @@ namespace BZ {
     public:
         explicit D3D11Context(void *windowHandle);
 
-        virtual void onWindowResize(WindowResizedEvent& e) override;
+        virtual void onWindowResize(const WindowResizedEvent& e) override;
 
         ID3D11Device* getDevice() { return device.Get(); }
         ID3D11DeviceContext* getDeviceContext() { return deviceContext.Get(); }

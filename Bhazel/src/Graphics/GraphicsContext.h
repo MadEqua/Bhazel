@@ -15,7 +15,7 @@ namespace BZ {
 
         virtual ~GraphicsContext() = default;
         
-        virtual void onWindowResize(WindowResizedEvent& e) {};
+        virtual void onWindowResize(const WindowResizedEvent& e) {};
 
         virtual void setVSync(bool enabled) { vsync = enabled; };
         bool isVSync() const { return vsync; }

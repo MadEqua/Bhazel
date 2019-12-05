@@ -68,7 +68,7 @@ namespace BZ {
 
     private:
         friend class Application;
-        static void onWindowResize(WindowResizedEvent &ev);
+        static void onWindowResize(const WindowResizedEvent &ev);
 
         static void init();
         static void destroy();

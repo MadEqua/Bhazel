@@ -45,7 +45,7 @@ namespace BZ {
 
     class EventDispatcher {
         template<typename T>
-        using EventFn = std::function<bool(T&)>;
+        using EventFn = std::function<bool(const T&)>;
     public:
         EventDispatcher(Event &event) : event(event) {}
 

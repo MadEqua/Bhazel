@@ -3,8 +3,10 @@
 Work in progress game engine written in C++.
 
 Current features:
+-  Central event dispatching system for keyboard, mouse and window events.
+- Input polling facilities.
+-  Layer stack system allowing the application to receive events within a certain order. Layers also have a specified update and render order.
 -  Support for multiple rendering APIs (OpenGL, Direct3D 11 and Vulkan) and platforms (GLFW and Win32).
--  Layer stack system allowing the application to receive both engine and input events within a certain order. Layers also have a specified update and render order.
 -  Thin abstraction of the rendering API objects and functionality.
 -  Batching 2D Renderer written on top of the rendering API abstraction.
 -  Camera abstractions and simple controllers.

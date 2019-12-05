@@ -45,7 +45,7 @@ namespace BZ {
 
     void ImGuiLayer::onEvent(Event &event) {
         EventDispatcher dispatcher(event);
-        dispatcher.dispatch<KeyPressedEvent>([](KeyPressedEvent &event) -> bool {
+        dispatcher.dispatch<KeyPressedEvent>([](const KeyPressedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
 
             int keyCode = event.getKeyCode();
@@ -63,7 +63,7 @@ namespace BZ {
             return false;
             });
 
-        dispatcher.dispatch<KeyReleasedEvent>([](KeyReleasedEvent &event) -> bool {
+        dispatcher.dispatch<KeyReleasedEvent>([](const KeyReleasedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
 
             int keyCode = event.getKeyCode();
@@ -81,33 +81,33 @@ namespace BZ {
             return false;
             });
 
-        dispatcher.dispatch<KeyTypedEvent>([](KeyTypedEvent &event) -> bool {
+        dispatcher.dispatch<KeyTypedEvent>([](const KeyTypedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.AddInputCharacter(event.getKeyCode());
             return false;
             });
 
         Window &window = application.getWindow();
-        dispatcher.dispatch<MouseMovedEvent>([&window](MouseMovedEvent &event) -> bool {
+        dispatcher.dispatch<MouseMovedEvent>([&window](const MouseMovedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseHoveredViewport = 0;
             io.MousePos = ImVec2(static_cast<float>(event.getX()), static_cast<float>(window.getDimensions().y - event.getY()));
             return false;
             });
 
-        dispatcher.dispatch<MouseButtonPressedEvent>([](MouseButtonPressedEvent &event) -> bool {
+        dispatcher.dispatch<MouseButtonPressedEvent>([](const MouseButtonPressedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseDown[event.getMouseButton()] = true;
             return false;
             });
 
-        dispatcher.dispatch<MouseButtonReleasedEvent>([](MouseButtonReleasedEvent &event) -> bool {
+        dispatcher.dispatch<MouseButtonReleasedEvent>([](const MouseButtonReleasedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseDown[event.getMouseButton()] = false;
             return false;
             });
 
-        dispatcher.dispatch<MouseScrolledEvent>([](MouseScrolledEvent &event) -> bool {
+        dispatcher.dispatch<MouseScrolledEvent>([](const MouseScrolledEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseWheel = event.getYOffset();
             return false;

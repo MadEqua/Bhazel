@@ -85,7 +85,7 @@ namespace BZ {
         return frameDatas[currentFrameIndex].commandPoolsByFamily[families[0]->getIndex()];
     }
 
-    void VulkanContext::onWindowResize(WindowResizedEvent& e) {
+    void VulkanContext::onWindowResize(const WindowResizedEvent& e) {
         BZ_ASSERT_VK(vkDeviceWaitIdle(device.getNativeHandle()));
 
         swapchain.recreate();

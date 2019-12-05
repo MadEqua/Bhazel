@@ -363,7 +363,7 @@ namespace BZ {
         //No need to delete CommandBuffers. The pools are responsible for that.
     }
 
-    void Graphics::onWindowResize(WindowResizedEvent &ev) {
+    void Graphics::onWindowResize(const WindowResizedEvent &ev) {
         //TODO: do something to viewport
     }
 }

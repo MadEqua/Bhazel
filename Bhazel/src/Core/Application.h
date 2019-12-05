@@ -44,7 +44,7 @@ namespace BZ {
         static Application& getInstance() { return *instance; }
 
     private:
-        bool onWindowResized(WindowResizedEvent &e);
+        bool onWindowResized(const WindowResizedEvent &e);
 
         std::unique_ptr<Window> window;
         std::unique_ptr<GraphicsContext> graphicsContext;

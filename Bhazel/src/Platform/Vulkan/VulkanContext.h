@@ -29,7 +29,7 @@ namespace BZ {
         ~VulkanContext() override;
 
         void init() override;
-        void onWindowResize(WindowResizedEvent &e) override;
+        void onWindowResize(const WindowResizedEvent &e) override;
 
         void setVSync(bool enabled) override;
 

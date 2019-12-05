@@ -65,7 +65,7 @@ namespace BZ {
         }
     }
 
-    bool OrthographicCameraController::onMouseScrolled(MouseScrolledEvent &e) {
+    bool OrthographicCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
         zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
         
         float originalWidth = originalRight - originalLeft;
@@ -83,7 +83,7 @@ namespace BZ {
         return false;
     }
 
-    bool OrthographicCameraController::onWindowResized(WindowResizedEvent &e) {
+    bool OrthographicCameraController::onWindowResized(const WindowResizedEvent &e) {
         return false;
     }
 
@@ -153,13 +153,13 @@ namespace BZ {
         }
     }
 
-    bool PerspectiveCameraController::onMouseScrolled(MouseScrolledEvent &e) {
+    bool PerspectiveCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
         zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
         camera.computeProjectionMatrix(fovy * zoom, aspectRatio);
         return false;
     }
 
-    bool PerspectiveCameraController::onWindowResized(WindowResizedEvent &e) {
+    bool PerspectiveCameraController::onWindowResized(const WindowResizedEvent &e) {
         windowSize.x = e.getWidth();
         windowSize.y = e.getHeight();
         aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());

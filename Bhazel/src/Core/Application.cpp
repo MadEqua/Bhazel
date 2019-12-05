@@ -118,7 +118,7 @@ namespace BZ {
         layerStack.pushOverlay(overlay);
     }
 
-    bool Application::onWindowResized(WindowResizedEvent &e) {
+    bool Application::onWindowResized(const WindowResizedEvent &e) {
         graphicsContext->onWindowResize(e);
         Graphics::onWindowResize(e);
         return false;
