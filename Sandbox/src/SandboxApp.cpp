@@ -30,22 +30,22 @@ void ExampleLayer::onGraphicsContextCreated() {
         int tint = glm::linearRand(0, 5);
         switch (tint) {
         case 0:
-            spr.tint = { 1.0f, 0.0f, 0.0f };
+            spr.tintAndAlpha = { 1.0f, 0.0f, 0.0f, 1.0f };
             break;
         case 1:
-            spr.tint = { 0.0f, 1.0f, 0.0f };
+            spr.tintAndAlpha = { 0.0f, 1.0f, 0.0f, 1.0f };
             break;
         case 2:
-            spr.tint = { 0.0f, 0.0f, 1.0f };
+            spr.tintAndAlpha = { 0.0f, 0.0f, 1.0f, 1.0f };
             break;
         case 3:
-            spr.tint = { 1.0f, 1.0f, 0.0f };
+            spr.tintAndAlpha = { 1.0f, 1.0f, 0.0f, 1.0f };
             break;
         case 4:
-            spr.tint = { 0.0f, 1.0f, 1.0f };
+            spr.tintAndAlpha = { 0.0f, 1.0f, 1.0f, 1.0f };
             break;
         case 5:
-            spr.tint = { 1.0f, 0.0f, 1.0f };
+            spr.tintAndAlpha = { 1.0f, 0.0f, 1.0f, 1.0f };
             break;
         }
         //spr.tint = glm::linearRand(glm::vec3(0.0f), { 1.0f, 1.0f, 1.0f });//{1,1,1};
