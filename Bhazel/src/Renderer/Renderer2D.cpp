@@ -128,7 +128,8 @@ namespace BZ {
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::SampledTexture, flagsToMask(ShaderStageFlags::Fragment), 1);
         rendererData.descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-        auto &windowDims = Application::getInstance().getWindow().getDimensions();
+        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
 
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
@@ -151,8 +152,8 @@ namespace BZ {
 
         pipelineStateData.pushConstantDescs = { pushConstantDesc };
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(windowDims.x), static_cast<float>(windowDims.y) } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(windowDims.x), static_cast<uint32>(windowDims.y) } };
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
+        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.descriptorSetLayouts = { rendererData.descriptorSetLayout };
         pipelineStateData.blendingState = blendingState;
         rendererData.pipelineState = PipelineState::create(pipelineStateData);

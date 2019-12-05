@@ -1,27 +1,126 @@
 #include "BrickBreakerApp.h"
 
-#include <imgui.h>
 #include <glm/gtc/random.hpp>
 
 
-BrickMap::BrickMap() {
+void Brick::update(const BZ::FrameStats &frameStats) {
+
 }
 
-void BrickMap::initBlocks(const BZ::Ref<BZ::Texture2D> &texture) {
+void Ball::init(const BZ::Ref<BZ::Texture2D> &texture) {
+    sprite.dimensions = { BALL_RADIUS * 2.0f, BALL_RADIUS * 2.0f };
+    sprite.rotationDeg = 0.0f;
+    sprite.texture = texture;
+    sprite.tintAndAlpha = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    setToInitialPosition();
+}
+
+void Ball::update(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &paddle) {
+    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+
+    sprite.position += velocity * frameStats.lastFrameTime.asSeconds();
+
+    if (sprite.position.x < 0) {
+        sprite.position.x = 0;
+        velocity.x = -velocity.x;
+    }
+    else if (sprite.position.x > WINDOW_DIMS.x) {
+        sprite.position.x = WINDOW_DIMS.x;
+        velocity.x = -velocity.x;
+    }
+
+    if (sprite.position.y < PADDLE_DIMS.y) {
+        setToInitialPosition();
+    }
+    else if (sprite.position.y > WINDOW_DIMS.y) {
+        sprite.position.y = WINDOW_DIMS.y;
+        velocity.y = -velocity.y;
+    }
+    boundingSphere = BZ::BoundingSphere(glm::vec3(sprite.position, 0.1f), BALL_RADIUS);
+
+    for (Brick& brick : brickMap.bricks) {
+        if (brick.isCollidable) {
+            auto intResult = BZ::CollisionUtils::intersects(brick.aabb, boundingSphere);
+            if (intResult.intersects) {
+                sprite.position.x += intResult.penetration.x;
+                sprite.position.y += intResult.penetration.y;
+                //velocity = glm::normalize(intResult.penetration) * BALL_SPEED;
+                velocity = glm::reflect(velocity, glm::normalize(glm::vec2(intResult.penetration)));
+                brick.isCollidable = false;
+                brick.secsToFade = BRICK_FADE_SECONDS;
+            }
+        }
+    }
+
+    auto intResult = BZ::CollisionUtils::intersects(paddle.aabb, boundingSphere);
+    if (intResult.intersects) {
+        sprite.position.x += intResult.penetration.x;
+        sprite.position.y += intResult.penetration.y;
+
+        //[left, right] -> [-1, 1]
+        //float positionInPaddle = (((ball.sprite.position.x - paddle.sprite.position.x) / paddle.sprite.dimensions.x) * 2.0f);
+        //const glm::vec2 MAX_DISPLACEMENT = { 1.0f, 0.0f };
+        //ball.velocity = glm::normalize((glm::normalize(glm::vec2(intResult.penetration.x, intResult.penetration.y)) + (MAX_DISPLACEMENT * positionInPaddle))) * BALL_SPEED;
+        velocity = glm::reflect(velocity, glm::normalize(glm::vec2(intResult.penetration)));
+    }
+
+    BZ::Renderer2D::drawSprite(sprite);
+}
+
+void Ball::setToInitialPosition() {
+    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+    const auto WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
+
+    sprite.position = { WINDOW_HALF_DIMS.x, PADDLE_Y + BRICK_MARGIN };
+    velocity = glm::normalize(glm::vec2(glm::linearRand(-1.0f, 1.0f), 1.0f)) * BALL_SPEED;
+}
+
+void Paddle::init(const BZ::Ref<BZ::Texture2D> &texture) {
+    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+    const auto WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
+
+    sprite.position = { WINDOW_HALF_DIMS.x, PADDLE_Y };
+    sprite.dimensions = PADDLE_DIMS;
+    sprite.rotationDeg = 0.0f;
+    sprite.texture = texture;
+    sprite.tintAndAlpha = { 1.0f, 1.0f, 1.0f, 1.0f };
+}
+
+void Paddle::update(const BZ::FrameStats &frameStats) {
+    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+
+    auto &input = BZ::Application::getInstance().getInput();
+    if (input.isKeyPressed(BZ_KEY_LEFT)) {
+        sprite.position.x -= PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
+    }
+    if (input.isKeyPressed(BZ_KEY_RIGHT)) {
+        sprite.position.x += PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
+    }
+
+    if (sprite.position.x - PADDLE_HALF_DIMS.x < 0) {
+        sprite.position.x = PADDLE_HALF_DIMS.x;
+    }
+    else if (sprite.position.x + PADDLE_HALF_DIMS.x > WINDOW_DIMS.x) {
+        sprite.position.x = WINDOW_DIMS.x - PADDLE_HALF_DIMS.x;
+    }
+
+    aabb = BZ::AABB(glm::vec3(sprite.position, 0.1f), glm::vec3(sprite.dimensions, 0.1f));
+    BZ::Renderer2D::drawSprite(sprite);
+}
+
+void BrickMap::init(const BZ::Ref<BZ::Texture2D> &texture) {
     const auto &WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensions();
-    const int MARGIN = 5;
-    const glm::ivec2 BRICK_DIMS = { 50, 25 };
-    const glm::ivec2 BRICK_HALF_DIMS = BRICK_DIMS / 2;
 
     bool flip = true;
-    for (int x = MARGIN + BRICK_HALF_DIMS.x; x < WINDOW_DIMS.x - BRICK_HALF_DIMS.x; x += BRICK_DIMS.x + MARGIN) {
-        for (int y = WINDOW_DIMS.y - MARGIN - BRICK_HALF_DIMS.y; y > (WINDOW_DIMS.y / 2) - BRICK_HALF_DIMS.y; y -= BRICK_DIMS.y + MARGIN) {
+    for (float x = BRICK_MARGIN + BRICK_HALF_DIMS.x; x < WINDOW_DIMS.x - BRICK_HALF_DIMS.x; x += BRICK_DIMS.x + BRICK_MARGIN) {
+        for (float y = WINDOW_DIMS.y - BRICK_MARGIN - BRICK_HALF_DIMS.y; y > (WINDOW_DIMS.y / 2) - BRICK_HALF_DIMS.y; y -= BRICK_DIMS.y + BRICK_MARGIN) {
             Brick brick;
             brick.isVisible = true;
             brick.isCollidable = true;
             brick.secsToFade = 0.0f;
-            brick.sprite.position = { static_cast<float>(x), static_cast<float>(y) };
-            brick.sprite.dimensions = { BRICK_DIMS.x, BRICK_DIMS.y };
+            brick.sprite.position = { x, y };
+            brick.sprite.dimensions = BRICK_DIMS;
             brick.sprite.rotationDeg = 0.0f;
             brick.sprite.texture = texture;
             brick.sprite.tintAndAlpha = flip ? BRICK_TINT1 : BRICK_TINT2;
@@ -32,7 +131,7 @@ void BrickMap::initBlocks(const BZ::Ref<BZ::Texture2D> &texture) {
     }
 }
 
-void BrickMap::draw(const BZ::FrameStats &frameStats) {
+void BrickMap::update(const BZ::FrameStats &frameStats) {
     for (uint32 i = 0; i < bricks.size(); ++i) {
         Brick &brick = bricks[i];
         if (brick.isVisible) {
@@ -67,20 +166,9 @@ void MainLayer::onGraphicsContextCreated() {
     paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
     ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
 
-    brickMap.initBlocks(brickTexture);
-
-    paddle.sprite.position = { WINDOW_HALF_DIMS.x, 25.0f };
-    paddle.sprite.dimensions = PADDLE_DIMS;
-    paddle.sprite.rotationDeg = 0.0f;
-    paddle.sprite.texture = paddleTexture;
-    paddle.sprite.tintAndAlpha = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-    ball.sprite.position = { WINDOW_HALF_DIMS.x, 50.0f };
-    ball.sprite.dimensions = { BALL_RADIUS * 2.0f, BALL_RADIUS * 2.0f };
-    ball.sprite.rotationDeg = 0.0f;
-    ball.sprite.texture = ballTexture;
-    ball.sprite.tintAndAlpha = { 1.0f, 1.0f, 1.0f, 1.0f };
-    ball.velocity = glm::normalize(glm::vec2(1.0f, 1.0f)) * BALL_SPEED;
+    brickMap.init(brickTexture);
+    paddle.init(paddleTexture);
+    ball.init(ballTexture);
 }
 
 void MainLayer::onUpdate(const BZ::FrameStats &frameStats) {
@@ -88,77 +176,10 @@ void MainLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     cameraController.onUpdate(frameStats);
 
-    const auto WINDOW_DIMS = application.getWindow().getDimensionsFloat();
-
-    auto &input = BZ::Application::getInstance().getInput();
-    if (input.isKeyPressed(BZ_KEY_LEFT)) {
-        paddle.sprite.position.x -= PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
-    }
-    if (input.isKeyPressed(BZ_KEY_RIGHT)) {
-        paddle.sprite.position.x += PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
-    }
-    paddle.aabb = BZ::AABB(glm::vec3(paddle.sprite.position, 0.1f), glm::vec3(paddle.sprite.dimensions, 0.1f));
-
-
-    if (paddle.sprite.position.x - PADDLE_HALF_DIMS.x < 0) {
-        paddle.sprite.position.x = PADDLE_HALF_DIMS.x;
-    }
-    else if (paddle.sprite.position.x + PADDLE_HALF_DIMS.x > WINDOW_DIMS.x) {
-        paddle.sprite.position.x = WINDOW_DIMS.x - PADDLE_HALF_DIMS.x;
-    }
-
-    ball.sprite.position += ball.velocity * frameStats.lastFrameTime.asSeconds();
-    if (ball.sprite.position.x < 0) {
-        ball.sprite.position.x = 0;
-        ball.velocity.x = -ball.velocity.x;
-    }
-    else if (ball.sprite.position.x > WINDOW_DIMS.x) {
-        ball.sprite.position.x = WINDOW_DIMS.x;
-        ball.velocity.x = -ball.velocity.x;
-    }
-
-    if (ball.sprite.position.y < PADDLE_DIMS.y) {
-        const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
-
-        ball.sprite.position = { WINDOW_HALF_DIMS.x, 50.0f };
-        ball.velocity = glm::normalize(glm::vec2(1.0f, 1.0f)) * BALL_SPEED;
-    }
-    else if (ball.sprite.position.y > WINDOW_DIMS.y) {
-        ball.sprite.position.y = WINDOW_DIMS.y;
-        ball.velocity.y = -ball.velocity.y;
-    }
-    ball.boundingSphere = BZ::BoundingSphere(glm::vec3(ball.sprite.position, 0.1f), BALL_RADIUS);
-
-    for (Brick& brick : brickMap.bricks) {
-        if (brick.isCollidable) {
-            auto intResult = BZ::CollisionUtils::intersects(brick.aabb, ball.boundingSphere);
-            if(intResult.intersects) {
-                ball.sprite.position.x += intResult.penetration.x;
-                ball.sprite.position.y += intResult.penetration.y;
-                //ball.velocity = glm::normalize(intResult.penetration) * BALL_SPEED;
-                ball.velocity = glm::reflect(ball.velocity, glm::normalize(glm::vec2(intResult.penetration)));
-                brick.isCollidable = false;
-                brick.secsToFade = BRICK_FADE_SECONDS;
-            }
-        }
-    }
-
-    auto intResult = BZ::CollisionUtils::intersects(paddle.aabb, ball.boundingSphere);
-    if (intResult.intersects) {
-        ball.sprite.position.x += intResult.penetration.x;
-        ball.sprite.position.y += intResult.penetration.y;
-
-        //[left, right] -> [-1, 1]
-        //float positionInPaddle = (((ball.sprite.position.x - paddle.sprite.position.x) / paddle.sprite.dimensions.x) * 2.0f);
-        //const glm::vec2 MAX_DISPLACEMENT = { 1.0f, 0.0f };
-        //ball.velocity = glm::normalize((glm::normalize(glm::vec2(intResult.penetration.x, intResult.penetration.y)) + (MAX_DISPLACEMENT * positionInPaddle))) * BALL_SPEED;
-        ball.velocity = glm::reflect(ball.velocity, glm::normalize(glm::vec2(intResult.penetration)));
-    }
-
     BZ::Renderer2D::beginScene(cameraController.getCamera());
-    brickMap.draw(frameStats);
-    BZ::Renderer2D::drawSprite(ball.sprite);
-    BZ::Renderer2D::drawSprite(paddle.sprite);
+    brickMap.update(frameStats);
+    paddle.update(frameStats);
+    ball.update(frameStats, brickMap, paddle);
     BZ::Renderer2D::endScene();
 }
 
@@ -168,7 +189,6 @@ void MainLayer::onEvent(BZ::Event &event) {
 
 void MainLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
-    auto &dims = application.getWindow().getDimensions();
 }
 
 BZ::Application* BZ::createApplication() {

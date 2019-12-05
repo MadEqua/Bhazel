@@ -2,6 +2,7 @@
 
 #include <Bhazel.h>
 
+const float PADDLE_Y = 25.0f;
 const glm::vec2 PADDLE_DIMS = { 250.0f, 25.0f };
 const glm::vec2 PADDLE_HALF_DIMS = PADDLE_DIMS * 0.5f;
 const float PADDLE_VELOCITY = 600.0f;
@@ -10,8 +11,12 @@ const float BALL_RADIUS = 5.0f;
 const float BALL_SPEED = 500.0f;
 
 const float BRICK_FADE_SECONDS = 1.0f;
+const glm::vec2 BRICK_DIMS = { 50.0f, 25.0f };
+const glm::vec2 BRICK_HALF_DIMS = BRICK_DIMS * 0.5f;
 const glm::vec4 BRICK_TINT1 = { 0.7f, 0.1f, 0.2f, 1.0f };
 const glm::vec4 BRICK_TINT2 = { 0.1f, 0.7f, 0.2f, 1.0f };
+const float BRICK_MARGIN = 5.0f;
+
 
 struct Brick {
     BZ::Sprite sprite;
@@ -19,27 +24,35 @@ struct Brick {
     bool isCollidable;
     BZ::AABB aabb;
     float secsToFade;
+
+    void update(const BZ::FrameStats &frameStats);
+};
+
+struct BrickMap {
+public:
+    void init(const BZ::Ref<BZ::Texture2D> &texture);
+    void update(const BZ::FrameStats &frameStats);
+
+    std::vector<Brick> bricks;
+};
+
+struct Paddle {
+    BZ::Sprite sprite;
+    BZ::AABB aabb;
+
+    void init(const BZ::Ref<BZ::Texture2D> &texture);
+    void update(const BZ::FrameStats &frameStats);
 };
 
 struct Ball {
     BZ::Sprite sprite;
     BZ::BoundingSphere boundingSphere;
     glm::vec2 velocity;
-};
 
-struct Paddle {
-    BZ::Sprite sprite;
-    BZ::AABB aabb;
-};
+    void init(const BZ::Ref<BZ::Texture2D> &texture);
+    void update(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &paddle);
 
-struct BrickMap {
-public:
-    BrickMap();
-
-    void initBlocks(const BZ::Ref<BZ::Texture2D> &texture);
-    void draw(const BZ::FrameStats &frameStats);
-
-    std::vector<Brick> bricks;
+    void setToInitialPosition();
 };
 
 
