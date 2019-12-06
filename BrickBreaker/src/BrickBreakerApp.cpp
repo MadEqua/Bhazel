@@ -156,12 +156,12 @@ void BrickMap::init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ
     for (int i = 0; i < PARTICLE_SYSTEMS_COUNT; ++i) {
         BZ::ParticleSystem2D &ps = particleSystems[i];
         BZ::Particle2DRanges ranges;
-        ranges.dimensionRange = { { 30.0f, 30.0f }, { 40.0f, 40.0f } };
+        ranges.dimensionRange = { { 20.0f, 20.0f }, { 30.0f, 30.0f } };
         ranges.velocityRange = { { -300.0f, -300.0f }, { 300.0f, 300.0f } };
         ranges.angularVelocityRange = { -180.0f, 180.0f };
         ranges.tintAndAlphaRange = BRICK_HIT_TINT;
-        ranges.lifeSecsRange = { 0.75f, 1.0f };
-        ps.addEmitter({ 0.0f, 0.0f }, 200, 0.1f, ranges, explosionTexture);
+        ranges.lifeSecsRange = { 0.5f, 0.75f };
+        ps.addEmitter({ 0.0f, 0.0f }, 500, 0.05f, ranges, explosionTexture);
     }
 
     currentParticleSystem = 0;

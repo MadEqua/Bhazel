@@ -4,7 +4,7 @@
 
 
 const float PADDLE_Y = 25.0f;
-const glm::vec2 PADDLE_DIMS = { 106.0f, 8.0f };
+const glm::vec2 PADDLE_DIMS = { 100.0f, 10.0f };
 const glm::vec2 PADDLE_HALF_DIMS = PADDLE_DIMS * 0.5f;
 const float PADDLE_VELOCITY = 600.0f;
 
@@ -13,7 +13,7 @@ const float BALL_SPEED = 600.0f;
 const glm::vec4 BALL_TINT = { 1.0f, 1.0f, 1.0f, 1.0f };
 const float BALL_TINT_SECONDS = 2.0f;
 
-const float BRICK_FADE_SECONDS = 1.0f;
+const float BRICK_FADE_SECONDS = 0.7f;
 const glm::vec2 BRICK_DIMS = { 50.0f, 25.0f };
 const glm::vec2 BRICK_HALF_DIMS = BRICK_DIMS * 0.5f;
 const glm::vec4 BRICK_TINT1 = { 0.6f, 0.1f, 0.2f, 1.0f };
