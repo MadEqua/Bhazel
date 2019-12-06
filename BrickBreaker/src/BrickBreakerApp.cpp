@@ -8,10 +8,11 @@ void Brick::update(const BZ::FrameStats &frameStats) {
 }
 
 void Ball::init(const BZ::Ref<BZ::Texture2D> &texture) {
-    sprite.dimensions = { BALL_RADIUS * 2.0f, BALL_RADIUS * 2.0f };
+    sprite.dimensions = texture->getDimensions();
     sprite.rotationDeg = 0.0f;
     sprite.texture = texture;
-    sprite.tintAndAlpha = { 1.0f, 1.0f, 1.0f, 1.0f };
+    sprite.tintAndAlpha = BALL_TINT;
+    secsToTint = 0.0f;
 
     setToInitialPosition();
 }
@@ -37,6 +38,7 @@ void Ball::update(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &
         sprite.position.y = WINDOW_DIMS.y;
         velocity.y = -velocity.y;
     }
+
     boundingSphere = BZ::BoundingSphere(glm::vec3(sprite.position, 0.1f), BALL_RADIUS);
 
     for (Brick& brick : brickMap.bricks) {
@@ -49,6 +51,9 @@ void Ball::update(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &
                 velocity = glm::reflect(velocity, glm::normalize(glm::vec2(intResult.penetration)));
                 brick.isCollidable = false;
                 brick.secsToFade = BRICK_FADE_SECONDS;
+
+                colorToTint = brick.sprite.tintAndAlpha;
+                secsToTint = BALL_TINT_SECONDS;
             }
         }
     }
@@ -65,6 +70,10 @@ void Ball::update(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &
         velocity = glm::reflect(velocity, glm::normalize(glm::vec2(intResult.penetration)));
     }
 
+    if (secsToTint > 0.0f) {
+        sprite.tintAndAlpha = glm::mix(BALL_TINT, colorToTint, secsToTint / BALL_TINT_SECONDS);
+        secsToTint -= frameStats.lastFrameTime.asSeconds();
+    }
     BZ::Renderer2D::drawSprite(sprite);
 }
 
@@ -81,7 +90,7 @@ void Paddle::init(const BZ::Ref<BZ::Texture2D> &texture) {
     const auto WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
 
     sprite.position = { WINDOW_HALF_DIMS.x, PADDLE_Y };
-    sprite.dimensions = PADDLE_DIMS;
+    sprite.dimensions = texture->getDimensions();
     sprite.rotationDeg = 0.0f;
     sprite.texture = texture;
     sprite.tintAndAlpha = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -105,8 +114,9 @@ void Paddle::update(const BZ::FrameStats &frameStats) {
         sprite.position.x = WINDOW_DIMS.x - PADDLE_HALF_DIMS.x;
     }
 
-    aabb = BZ::AABB(glm::vec3(sprite.position, 0.1f), glm::vec3(sprite.dimensions, 0.1f));
+    aabb = BZ::AABB(glm::vec3(sprite.position, 0.1f), glm::vec3(PADDLE_DIMS, 0.1f));
     BZ::Renderer2D::drawSprite(sprite);
+    //BZ::Renderer2D::drawQuad(glm::vec2(aabb.getCenter()), glm::vec2(aabb.getDimensions()), 0.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 }
 
 void BrickMap::init(const BZ::Ref<BZ::Texture2D> &texture) {
@@ -120,11 +130,11 @@ void BrickMap::init(const BZ::Ref<BZ::Texture2D> &texture) {
             brick.isCollidable = true;
             brick.secsToFade = 0.0f;
             brick.sprite.position = { x, y };
-            brick.sprite.dimensions = BRICK_DIMS;
+            brick.sprite.dimensions = texture->getDimensions();
             brick.sprite.rotationDeg = 0.0f;
             brick.sprite.texture = texture;
             brick.sprite.tintAndAlpha = flip ? BRICK_TINT1 : BRICK_TINT2;
-            brick.aabb = BZ::AABB(glm::vec3(brick.sprite.position, 0.1f), glm::vec3(brick.sprite.dimensions, 0.1f));
+            brick.aabb = BZ::AABB(glm::vec3(brick.sprite.position, 0.1f), glm::vec3(BRICK_DIMS, 0.1f));
             bricks.push_back(brick);
             flip = !flip;
         }
@@ -136,11 +146,13 @@ void BrickMap::update(const BZ::FrameStats &frameStats) {
         Brick &brick = bricks[i];
         if (brick.isVisible) {
             if (brick.secsToFade > 0.0f) {
+                //brick.sprite.tintAndAlpha = { 1.0f, 0.0f, 0.0f, brick.secsToFade / BRICK_FADE_SECONDS };
+                brick.sprite.tintAndAlpha = BRICK_HIT_TINT;
+                brick.sprite.tintAndAlpha.a = brick.secsToFade / BRICK_FADE_SECONDS;
                 brick.secsToFade -= frameStats.lastFrameTime.asSeconds();
                 if (brick.secsToFade <= 0.0f) {
                     brick.isVisible = false;
                 }
-                brick.sprite.tintAndAlpha = { 1.0f, 0.0f, 0.0f, brick.secsToFade / BRICK_FADE_SECONDS };
             }
 
             BZ::Renderer2D::drawSprite(brick.sprite);

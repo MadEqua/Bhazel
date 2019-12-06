@@ -3,19 +3,22 @@
 #include <Bhazel.h>
 
 const float PADDLE_Y = 25.0f;
-const glm::vec2 PADDLE_DIMS = { 250.0f, 25.0f };
+const glm::vec2 PADDLE_DIMS = { 106.0f, 8.0f };
 const glm::vec2 PADDLE_HALF_DIMS = PADDLE_DIMS * 0.5f;
 const float PADDLE_VELOCITY = 600.0f;
 
-const float BALL_RADIUS = 5.0f;
-const float BALL_SPEED = 500.0f;
+const float BALL_RADIUS = 12.0f;
+const float BALL_SPEED = 600.0f;
+const glm::vec4 BALL_TINT = { 1.0f, 1.0f, 1.0f, 1.0f };
+const float BALL_TINT_SECONDS = 2.0f;
 
 const float BRICK_FADE_SECONDS = 1.0f;
 const glm::vec2 BRICK_DIMS = { 50.0f, 25.0f };
 const glm::vec2 BRICK_HALF_DIMS = BRICK_DIMS * 0.5f;
 const glm::vec4 BRICK_TINT1 = { 0.7f, 0.1f, 0.2f, 1.0f };
 const glm::vec4 BRICK_TINT2 = { 0.1f, 0.7f, 0.2f, 1.0f };
-const float BRICK_MARGIN = 5.0f;
+const glm::vec4 BRICK_HIT_TINT = { 0.1f, 0.1f, 0.7f, 1.0f };
+const float BRICK_MARGIN = 20.0f;
 
 
 struct Brick {
@@ -48,6 +51,8 @@ struct Ball {
     BZ::Sprite sprite;
     BZ::BoundingSphere boundingSphere;
     glm::vec2 velocity;
+    float secsToTint;
+    glm::vec4 colorToTint;
 
     void init(const BZ::Ref<BZ::Texture2D> &texture);
     void update(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &paddle);

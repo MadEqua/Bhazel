@@ -43,12 +43,12 @@ namespace BZ {
 
         const TextureFormatWrapper& getFormat() const { return format; }
 
+        const glm::ivec3& getDimensions() const { return dimensions; }
         uint32 getWidth() const { return dimensions.x; }
         uint32 getHeight() const { return dimensions.y; }
         uint32 getDepth() const { return dimensions.z; }
         uint32 getMipLevels() const { return mipLevels; }
 
- 
     protected:
         explicit Texture(TextureFormat format);
 
