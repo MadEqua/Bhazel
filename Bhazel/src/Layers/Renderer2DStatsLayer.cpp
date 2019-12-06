@@ -25,7 +25,7 @@ namespace BZ {
             ImGui::Text("Sprite Count: %d", visibleFrameStats.spriteCount);
             ImGui::Text("Draw Call Count: %d", visibleFrameStats.drawCallCount);
             ImGui::Text("Descriptor Set Bind Count: %d", visibleFrameStats.descriptorSetBindCount);
-            ImGui::Text("Tint Push Count: %d", visibleFrameStats.tintPushCount);
+            //ImGui::Text("Tint Push Count: %d", visibleFrameStats.tintPushCount);
             ImGui::Separator();
             ImGui::NewLine();
             ImGui::SliderInt("Refresh period ns", reinterpret_cast<int*>(&refreshPeriodNs), 0, 1000000000);

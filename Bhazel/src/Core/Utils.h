@@ -14,4 +14,8 @@ namespace BZ::Utils {
     glm::mat4 perspective(float fovy, float aspectRatio, float near, float far);
 
     std::size_t hashCombine(std::size_t hash1, std::size_t hash2);
+
+    //Returns ARGB
+    uint32 packColor(const glm::vec4 &color);
+    glm::vec4 unpackColor(uint32 color);
 }

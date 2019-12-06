@@ -16,8 +16,9 @@ namespace BZ {
     constexpr uint32 MAX_RENDERER2D_SPRITES = 100'000;
 
     static DataLayout vertexLayout = {
-        {DataType::Float32, DataElements::Vec2, "POSITION"},
-        {DataType::Uint16, DataElements::Vec2, "TEXCOORD", true},
+        { DataType::Float32, DataElements::Vec2, "POSITION" },
+        { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
+        { DataType::Uint32, DataElements::Scalar, "COLOR"},
     };
 
     static DataLayout indexLayout = {
@@ -27,25 +28,30 @@ namespace BZ {
     struct Vertex {
         float pos[2];
         uint16 texCoord[2];
+        uint32 colorAndAlpha;
     };
 
     constexpr uint16 MAX_TEX_COORD = 0xffff;
     static Vertex quadVertices[4] = {
         {
             { -0.5f, -0.5f },
-            { 0, 0 }
+            { 0, 0 },
+            0
         },
         {
             { 0.5f, -0.5f },
-            { MAX_TEX_COORD, 0 }
+            { MAX_TEX_COORD, 0 },
+            0
         },
         {
             { 0.5f, 0.5f },
-            { MAX_TEX_COORD, MAX_TEX_COORD }
+            { MAX_TEX_COORD, MAX_TEX_COORD },
+            0
         },
         {
             { -0.5f, 0.5f },
-            { 0, MAX_TEX_COORD }
+            { 0, MAX_TEX_COORD },
+            0
         }
     };
 
@@ -146,12 +152,12 @@ namespace BZ {
         pipelineStateData.dataLayout = vertexLayout;
 
         //Push constants are used to pass tint and alpha values
-        PushConstantDesc pushConstantDesc;
-        pushConstantDesc.offset = 0;
-        pushConstantDesc.size = sizeof(glm::vec4);
-        pushConstantDesc.shaderStageMask = flagsToMask(ShaderStageFlags::Fragment);
+        //PushConstantDesc pushConstantDesc;
+        //pushConstantDesc.offset = 0;
+        //pushConstantDesc.size = sizeof(glm::vec4);
+        //pushConstantDesc.shaderStageMask = flagsToMask(ShaderStageFlags::Fragment);
 
-        pipelineStateData.pushConstantDescs = { pushConstantDesc };
+        //pipelineStateData.pushConstantDescs = { pushConstantDesc };
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
@@ -208,9 +214,9 @@ namespace BZ {
             uint32 spritesInBatch = 0;
             uint32 nextBatchOffset = 0;
             uint64 currentBoundTexHash = -1;
-            glm::vec4 currentActiveTint = glm::vec4(-1.0f);
+            //glm::vec4 currentActiveTint = glm::vec4(-1.0f);
             uint64 currentBatchTexHash = rendererData.sprites[0].textureHash;
-            glm::vec4 currentBatchTint = rendererData.sprites[0].tintAndAlpha;
+            //glm::vec4 currentBatchTint = rendererData.sprites[0].tintAndAlpha;
 
             //Generate vertex and index buffers and record commands
             for (uint32 objIdx = 0; objIdx <= rendererData.nextSprite; ++objIdx) {
@@ -226,11 +232,13 @@ namespace BZ {
 
                     Vertex vertices[4];
                     uint32 indices[6];
+                    uint32 packedColor = Utils::packColor(spr.tintAndAlpha);
                     for (int i = 0; i < 4; ++i) {
                         vertices[i].pos[0] = quadVertices[i].pos[0] * spr.dimensions.x * c + quadVertices[i].pos[1] * spr.dimensions.y * -s + spr.position.x;
                         vertices[i].pos[1] = quadVertices[i].pos[0] * spr.dimensions.x * s + quadVertices[i].pos[1] * spr.dimensions.y * c + spr.position.y;
                         vertices[i].texCoord[0] = quadVertices[i].texCoord[0];
                         vertices[i].texCoord[1] = quadVertices[i].texCoord[1];
+                        vertices[i].colorAndAlpha = packedColor;
                     }
 
                     for (int i = 0; i < 6; ++i) {
@@ -246,10 +254,10 @@ namespace BZ {
 
                 //Command recording
                 bool texChanged = currentBatchTexHash != spr.textureHash;
-                bool tintChanged = currentBatchTint != spr.tintAndAlpha;
+                //bool tintChanged = currentBatchTint != spr.tintAndAlpha;
 
                 //Batch finishes on these cases. Issue draw call.
-                if (texChanged || tintChanged || isLastIteration) {
+                if (texChanged  || isLastIteration) {
                     if (currentBoundTexHash != currentBatchTexHash) {
                         const TexData& texData = rendererData.texDataStorage[currentBatchTexHash];
                         Graphics::bindDescriptorSet(rendererData.commandBufferId, texData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
@@ -257,18 +265,18 @@ namespace BZ {
                         stats.descriptorSetBindCount++;
                     }
 
-                    if (currentActiveTint != currentBatchTint) {
-                        Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlags::Fragment), &currentBatchTint.x, sizeof(glm::vec4), 0);
-                        currentActiveTint = currentBatchTint;
-                        stats.tintPushCount++;
-                    }
+                    //if (currentActiveTint != currentBatchTint) {
+                    //    Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlags::Fragment), &currentBatchTint.x, sizeof(glm::vec4), 0);
+                    //    currentActiveTint = currentBatchTint;
+                    //    stats.tintPushCount++;
+                    //}
 
                     Graphics::drawIndexed(rendererData.commandBufferId, spritesInBatch * 6, 1, nextBatchOffset * 6, 0, 0);
                     nextBatchOffset = objIdx;
                     spritesInBatch = 0;
 
                     currentBatchTexHash = spr.textureHash;
-                    currentBatchTint = spr.tintAndAlpha;
+                    //currentBatchTint = spr.tintAndAlpha;
 
                     stats.drawCallCount++;
                 }
@@ -306,9 +314,10 @@ namespace BZ {
         spr.tintAndAlpha = tintAndAlpha;
 
         //Sort by Texture and then by tint
-        std::hash<double> hasher;
-        size_t tintHash = Utils::hashCombine(Utils::hashCombine(Utils::hashCombine(hasher(tintAndAlpha.r), hasher(tintAndAlpha.g)), hasher(tintAndAlpha.b)), hasher(tintAndAlpha.a));
-        spr.sortKey = (spr.textureHash << 32) | (tintHash >> 32);
+        //std::hash<double> hasher;
+        //size_t tintHash = Utils::hashCombine(Utils::hashCombine(Utils::hashCombine(hasher(tintAndAlpha.r), hasher(tintAndAlpha.g)), hasher(tintAndAlpha.b)), hasher(tintAndAlpha.a));
+        //spr.sortKey = (spr.textureHash << 32) | (tintHash >> 32);
+        spr.sortKey = spr.textureHash;
 
         stats.spriteCount++;
     }

@@ -67,4 +67,22 @@ namespace BZ::Utils {
     std::size_t hashCombine(std::size_t hash1, std::size_t hash2) {
         return hash1 ^ (hash2 * 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
     }
+
+    uint32 packColor(const glm::vec4 &color) {
+        uint32 pack = 0;
+        pack |= static_cast<uint8>(color.a * 255.0f) << 24;
+        pack |= static_cast<uint8>(color.r * 255.0f) << 16;
+        pack |= static_cast<uint8>(color.g * 255.0f) << 8;
+        pack |= static_cast<uint8>(color.b * 255.0f);
+        return pack;
+    }
+
+    glm::vec4 unpackColor(uint32 color) {
+        glm::vec4 vec;
+        vec.a = ((color >> 24) & 255) / 255.0f;
+        vec.r = ((color >> 16) & 255) / 255.0f;
+        vec.g = ((color >> 8) & 255) / 255.0f;
+        vec.b = (color & 255) / 255.0f;
+        return vec;
+    }
 }

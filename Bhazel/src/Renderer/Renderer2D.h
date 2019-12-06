@@ -21,7 +21,7 @@ namespace BZ {
         uint32 spriteCount;
         uint32 drawCallCount;
         uint32 descriptorSetBindCount;
-        uint32 tintPushCount;
+        //uint32 tintPushCount;
     };
 
     class Renderer2D {
