@@ -6,6 +6,7 @@
 #include "Graphics/DescriptorSet.h"
 #include "Core/Application.h"
 #include "Core/Utils.h"
+#include "Renderer/ParticleSystem2D.h"
 
 
 namespace BZ {
@@ -310,5 +311,13 @@ namespace BZ {
         spr.sortKey = (spr.textureHash << 32) | (tintHash >> 32);
 
         stats.spriteCount++;
+    }
+
+    void Renderer2D::drawParticleSystem2D(const ParticleSystem2D & particleSystem) {
+        for (const auto &emitter : particleSystem.getEmitters()) {
+            for (const auto &particle : emitter.getActiveParticles()) {
+                drawQuad(particle.position, particle.dimensions, particle.rotationDeg, emitter.texture, particle.tintAndAlpha);
+            }
+        }
     }
 }

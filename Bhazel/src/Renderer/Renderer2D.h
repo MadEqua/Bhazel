@@ -7,6 +7,7 @@
 namespace BZ {
 
     class DescriptorSet;
+    class ParticleSystem2D;
 
     struct Sprite {
         glm::vec2 position;
@@ -32,6 +33,8 @@ namespace BZ {
 
         static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &colorAndAlpha);
         static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha);
+
+        static void drawParticleSystem2D(const ParticleSystem2D &particleSystem);
 
         static const Renderer2DStats& getStats() { return stats; }
 
