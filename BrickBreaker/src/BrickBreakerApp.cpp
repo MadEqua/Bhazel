@@ -17,6 +17,7 @@ void Ball::init(const BZ::Ref<BZ::Texture2D> &ballTexture, const BZ::Ref<BZ::Tex
     ranges.angularVelocityRange = { -180.0f, 180.0f };
     ranges.tintAndAlphaRange = BALL_TINT;
     particleSystem.addEmitter({ 0.0f, 0.0f }, 100, -1, ranges, ballParticleTexture);
+    particleSystem.start();
 }
 
 void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &paddle) {
@@ -193,12 +194,8 @@ void BrickMap::onUpdate(const BZ::FrameStats &frameStats) {
 void BrickMap::startParticleSystem(const Brick &brick) {
     BZ::ParticleSystem2D &ps = particleSystems[currentParticleSystem];
     
-    //for (auto &emitter : ps.getEmitters()) {
-    //    emitter.ranges.tintAndAlphaRange = brick.sprite.tintAndAlpha;
-    //}
-
     ps.setPosition(brick.sprite.position);
-    ps.reset();
+    ps.start();
 
     currentParticleSystem = (currentParticleSystem + 1) % PARTICLE_SYSTEMS_COUNT;
 }

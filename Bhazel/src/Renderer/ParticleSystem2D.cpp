@@ -29,7 +29,7 @@ namespace BZ {
         ranges(ranges) {
     }
 
-    void Emitter2D::reset() {
+    void Emitter2D::start() {
         secsUntilNextParticle = 1.0f / particlesPerSec;
         secsToLive = totalLifeSecs;
         activeParticles.clear();
@@ -102,13 +102,18 @@ namespace BZ {
         emitters.emplace_back(*this, positionOffset, particlesPerSec, totalLifeSecs, ranges, texture);
     }
 
-    void ParticleSystem2D::reset() {
-        for (auto &emitter : emitters)
-            emitter.reset();
+    void ParticleSystem2D::start() {
+        for (auto &emitter : emitters) {
+            emitter.start();
+        }
+        isStarted = true;
     }
 
     void ParticleSystem2D::onUpdate(const FrameStats &frameStats) {
-        for (auto &emitter : emitters)
-            emitter.onUpdate(frameStats);
+        if (isStarted) {
+            for (auto &emitter : emitters) {
+                emitter.onUpdate(frameStats);
+            }
+        }
     }
 }

@@ -55,7 +55,7 @@ namespace BZ {
     public:
         Emitter2D(ParticleSystem2D &parent, const glm::vec2 &positionOffset, uint32 particlesPerSec, float totalLifeSecs, Particle2DRanges &ranges, const Ref<Texture2D> &texture);
 
-        void reset();
+        void start();
         void onUpdate(const FrameStats &frameStats);
 
         const std::vector<Particle2D>& getActiveParticles() const { return activeParticles; }
@@ -89,7 +89,7 @@ namespace BZ {
         explicit ParticleSystem2D(const glm::vec2 &position);
 
         void addEmitter(const glm::vec2 &positionOffset, uint32 particlesPerSec, float totalLifeSecs, Particle2DRanges &ranges, const Ref<Texture2D> &texture);
-        void reset();
+        void start();
 
         void setPosition(const glm::vec2 &position) { this->position = position; }
         const glm::vec2& getPosition() const { return position; }
@@ -102,5 +102,6 @@ namespace BZ {
     private:
         std::vector<Emitter2D> emitters;
         glm::vec2 position;
+        bool isStarted = false;
     };
 }
