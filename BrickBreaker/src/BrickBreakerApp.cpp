@@ -3,10 +3,6 @@
 #include <glm/gtc/random.hpp>
 
 
-void Brick::update(const BZ::FrameStats &frameStats) {
-
-}
-
 void Ball::init(const BZ::Ref<BZ::Texture2D> &texture) {
     sprite.dimensions = texture->getDimensions();
     sprite.rotationDeg = 0.0f;

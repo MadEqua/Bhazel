@@ -27,8 +27,6 @@ struct Brick {
     bool isCollidable;
     BZ::AABB aabb;
     float secsToFade;
-
-    void update(const BZ::FrameStats &frameStats);
 };
 
 struct BrickMap {
