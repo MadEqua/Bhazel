@@ -15,20 +15,12 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    static const uint32 OBJECT_COUNT = 100'000;
-
-    struct Object {
-        BZ::Sprite sprite;
-        glm::vec2 velocity;
-    };
-
-    Object objects[OBJECT_COUNT];
-
     BZ::OrthographicCameraController cameraController;
-    glm::vec2 pos = {};
-    float rot = 0.0f;
+
     BZ::Ref<BZ::Texture2D> tex1;
     BZ::Ref<BZ::Texture2D> tex2;
+
+    BZ::ParticleSystem2D particleSystem;
 };
 
 

@@ -22,7 +22,7 @@ namespace BZ {
         positionOffset(positionOffset),
         particlesPerSec(particlesPerSec),
         secsPerParticle(1.0f / particlesPerSec),
-        secsUntilNextParticle(1.0f / particlesPerSec),
+        secsUntilNextEmission(1.0f / particlesPerSec),
         totalLifeSecs(totalLifeSecs),
         secsToLive(totalLifeSecs),
         texture(texture),
@@ -30,7 +30,7 @@ namespace BZ {
     }
 
     void Emitter2D::start() {
-        secsUntilNextParticle = 1.0f / particlesPerSec;
+        secsUntilNextEmission = 1.0f / particlesPerSec;
         secsToLive = totalLifeSecs;
         activeParticles.clear();
     }
@@ -62,14 +62,18 @@ namespace BZ {
 
         //If immortal or still alive then emit
         if (totalLifeSecs < 0.0f || secsToLive >= 0.0f) {
-            secsUntilNextParticle -= frameStats.lastFrameTime.asSeconds();
-            if (secsUntilNextParticle < 0.0f) {
-                uint32 countToEmit = static_cast<uint32>(-secsUntilNextParticle / secsPerParticle);
+            secsUntilNextEmission -= frameStats.lastFrameTime.asSeconds();
+            if (secsUntilNextEmission < 0.0f) {
+                uint32 countToEmit = static_cast<uint32>(-secsUntilNextEmission / secsPerParticle);
                 if (countToEmit > 0) {
+                    //BZ_LOG_DEBUG("emitting {}", countToEmit);
                     for (uint32 i = 0; i < countToEmit; ++i) {
                         emitParticle();
                     }
-                    secsUntilNextParticle += secsPerParticle;
+
+                    //TODO: find out the correct operation
+                    //secsUntilNextEmission += secsPerParticle;
+                    secsUntilNextEmission = secsPerParticle;
                 }
             }
         }

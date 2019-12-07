@@ -274,8 +274,8 @@ namespace BZ {
         //Shaders
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("ImGui");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "shaders/bin/ImGuiVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "shaders/bin/ImGuiFrag.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ImGuiVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/ImGuiFrag.spv");
 
         //DescriptorSetLayout
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;

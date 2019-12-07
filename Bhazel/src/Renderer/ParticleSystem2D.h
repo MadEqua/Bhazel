@@ -72,7 +72,7 @@ namespace BZ {
         glm::vec2 positionOffset; //Relative to parent ParticleSystem
         float secsToLive;
         float secsPerParticle;
-        float secsUntilNextParticle;
+        float secsUntilNextEmission;
 
         std::vector<Particle2D> activeParticles;
         //std::vector<Particle2D> inactiveParticles;
