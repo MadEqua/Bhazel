@@ -75,8 +75,6 @@ void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 }
 
-BZ::Application* BZ::createApplication() {
+BZ::Application* createApplication() {
     return new Sandbox();
 }
-
-#include <EntryPoint.h>

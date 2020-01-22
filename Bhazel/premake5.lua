@@ -3,20 +3,18 @@ project "Bhazel"
     language "C++"
     cppdialect "C++17"
 
-    targetdir("../bin/" .. outputDir .. "/%{prj.name}")
-    objdir("../bin-int/" .. outputDir .. "/%{prj.name}")
+    targetdir "../bin/%{OUTPUT_DIR}/%{prj.name}"
+    objdir "../bin-int/%{OUTPUT_DIR}/%{prj.name}"
 
     pchheader "bzpch.h"
     pchsource "src/bzpch.cpp"
 
-    files
-    {
+    files {
         "src/**.h",
         "src/**.cpp",
     }
 
-    includedirs
-    {
+    includedirs {
         "src",
         "vendor/spdlog/include",
         "vendor/GLFW/include",
@@ -28,13 +26,11 @@ project "Bhazel"
         "%{VULKAN_SDK_DIR}/Include"
     }
 
-    libdirs
-    {
+    libdirs {
         "%{VULKAN_SDK_DIR}/Lib"
     }
 
-    links
-    {
+    links {
         "GLFW",
         "glad",
         "ImGui",
@@ -43,21 +39,18 @@ project "Bhazel"
         "opengl32.lib",
     }
 
-    defines
-    {
+    defines {
         "GLFW_INCLUDE_NONE",
     }
 
     filter "system:windows"
         systemversion "latest"
 
-        defines
-        {
+        defines {
             "BZ_PLATFORM_WINDOWS",
         }
 
-        links
-        {
+        links {
             "d3d11.lib",
             "dxguid.lib",
             "D3DCompiler.lib",

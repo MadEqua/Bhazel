@@ -2,14 +2,13 @@ workspace "Bhazel"
     architecture "x64"
     startproject "Sandbox"
 
-    configurations
-    {
+    configurations {
         "Debug",
         "Release",
         "Dist"
     }
 
-outputDir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+OUTPUT_DIR = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 VULKAN_SDK_DIR = "C:/VulkanSDK/1.1.121.2"
 

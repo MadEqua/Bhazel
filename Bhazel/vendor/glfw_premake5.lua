@@ -2,11 +2,10 @@ project "GLFW"
     kind "StaticLib"
     language "C"
 
-    targetdir ("bin/" .. outputDir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
+    targetdir "../bin/%{OUTPUT_DIR}/%{prj.name}"
+    objdir "../bin-int/%{OUTPUT_DIR}/%{prj.name}"
 
-    files
-    {
+    files {
         "%{prj.name}/include/GLFW/glfw3.h",
         "%{prj.name}/include/GLFW/glfw3native.h",
         "%{prj.name}/src/glfw_config.h",
@@ -21,8 +20,7 @@ project "GLFW"
     filter "system:windows"
         systemversion "latest"
         
-        files
-        {
+        files {
             "%{prj.name}/src/win32_init.c",
             "%{prj.name}/src/win32_joystick.c",
             "%{prj.name}/src/win32_monitor.c",
@@ -34,8 +32,7 @@ project "GLFW"
             "%{prj.name}/src/osmesa_context.c"
         }
 
-        defines 
-        { 
+        defines { 
             "_GLFW_WIN32",
             "_CRT_SECURE_NO_WARNINGS"
         }

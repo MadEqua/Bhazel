@@ -59,7 +59,4 @@ namespace BZ {
 
         static Application *instance;
     };
-
-    //To be defined in Bhazel client applications. It should return an object inherited from Application.
-    Application* createApplication();
 }

@@ -3,18 +3,16 @@ project "BrickBreaker"
     language "C++"
     cppdialect "C++17"
 
-    targetdir("../bin/" .. outputDir .. "/%{prj.name}")
-    objdir("../bin-int/" .. outputDir .. "/%{prj.name}")
-    debugdir("../bin/" .. outputDir .. "/%{prj.name}")
+    targetdir "../bin/%{OUTPUT_DIR}/%{prj.name}"
+    objdir "../bin-int/%{OUTPUT_DIR}/%{prj.name}"
+    debugdir "../bin/%{OUTPUT_DIR}/%{prj.name}"
 
-    files
-    {
+    files {
         "src/**.h",
         "src/**.cpp"
     }
 
-    includedirs
-    {
+    includedirs {
         "src",
         "../Bhazel/src",
         "../Bhazel/vendor/spdlog/include",
@@ -22,16 +20,14 @@ project "BrickBreaker"
         "../Bhazel/vendor/ImGui",
     }
 
-    links
-    {
+    links {
         "Bhazel"
     }
 
     filter "system:windows"
         systemversion "latest"
 
-        defines
-        {
+        defines {
             "BZ_PLATFORM_WINDOWS",
         }
 

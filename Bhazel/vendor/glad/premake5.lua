@@ -2,18 +2,16 @@ project "glad"
     kind "StaticLib"
     language "C"
 
-    targetdir ("../bin/" .. outputDir .. "/%{prj.name}")
-    objdir ("../bin-int/" .. outputDir .. "/%{prj.name}")
+    targetdir "../bin/%{OUTPUT_DIR}/%{prj.name}"
+    objdir "../bin-int/%{OUTPUT_DIR}/%{prj.name}"
 
-    files
-    {
+    files {
         "include/glad/glad.h",
         "include/KHR/khrplatform.h",
         "src/glad.c"
     }
 
-    includedirs
-    {
+    includedirs {
         "include"
     }
 

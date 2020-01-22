@@ -3,11 +3,10 @@ project "ImGui"
     language "C++"
     cppdialect "C++17"
 
-    targetdir ("bin/" .. outputDir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputDir .. "/%{prj.name}")
+    targetdir "../bin/%{OUTPUT_DIR}/%{prj.name}"
+    objdir "../bin-int/%{OUTPUT_DIR}/%{prj.name}"
 
-    files
-    {
+    files {
         "%{prj.name}/imconfig.h",
         "%{prj.name}/imgui.h",
         "%{prj.name}/imgui.cpp",
