@@ -114,7 +114,7 @@ namespace BZ {
     std::string Shader::Builder::readSourceFile(const char *filePath) {
         std::ifstream file(filePath, std::ios::in);
         BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
-        
+
         size_t fileSize = (size_t)file.tellg();
         std::string content;
         content.reserve(fileSize);

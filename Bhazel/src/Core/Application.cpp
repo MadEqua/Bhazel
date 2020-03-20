@@ -7,6 +7,7 @@
 #include "Events/WindowEvent.h"
 #include "Graphics/Graphics.h"
 #include "Renderer/Renderer2D.h"
+#include "Renderer/Renderer.h"
 #include "Layers/ImGuiLayer.h"
 #include "Layers/FrameStatsLayer.h"
 #include "Layers/Renderer2DStatsLayer.h"
@@ -49,6 +50,7 @@ namespace BZ {
         input = std::unique_ptr<Input>(Input::create(window->getNativeHandle()));
 
         Graphics::init();
+        Renderer::init();
         Renderer2D::init();
 
         imGuiLayer = new ImGuiLayer();
@@ -63,6 +65,7 @@ namespace BZ {
 
         Graphics::waitForDevice();
         Renderer2D::destroy();
+        Renderer::destroy();
         Graphics::destroy();
     }
 

@@ -3,9 +3,9 @@
 #include <Bhazel.h>
 
 
-class ExampleLayer : public BZ::Layer {
+class ParticleLayer : public BZ::Layer {
 public:
-    ExampleLayer();
+    ParticleLayer();
 
     void onAttach() override;
     void onGraphicsContextCreated() override;
@@ -24,9 +24,27 @@ private:
 };
 
 
+class Layer3D : public BZ::Layer {
+public:
+    Layer3D();
+
+    void onAttach() override;
+    void onGraphicsContextCreated() override;
+
+    void onUpdate(const BZ::FrameStats &frameStats) override;
+    void onEvent(BZ::Event &event) override;
+    void onImGuiRender(const BZ::FrameStats &frameStats) override;
+
+private:
+    BZ::PerspectiveCameraController cameraController;
+};
+
+
+
 class Sandbox : public BZ::Application {
 public:
     Sandbox() {
-        pushLayer(new ExampleLayer());
+        //pushLayer(new ParticleLayer());
+        pushLayer(new Layer3D());
     }
 };

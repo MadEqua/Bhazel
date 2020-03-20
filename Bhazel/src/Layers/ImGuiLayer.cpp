@@ -135,6 +135,11 @@ namespace BZ {
             return;
         }
 
+        if (imDrawData->CmdListsCount <= 0) {
+            BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Command List count: {}. Bailing out.", imDrawData->CmdListsCount);
+            return;
+        }
+
         byte *vtxDst = vertexBufferPtr;
         byte *idxDst = indexBufferPtr;
         for(int n = 0; n < imDrawData->CmdListsCount; n++) {
@@ -143,11 +148,6 @@ namespace BZ {
             memcpy(idxDst, drawList->IdxBuffer.Data, drawList->IdxBuffer.Size * sizeof(ImDrawIdx));
             vtxDst += drawList->VtxBuffer.Size * sizeof(ImDrawVert);
             idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
-        }
-
-        if(imDrawData->CmdListsCount <= 0) {
-            BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Command List count: {}. Bailing out.", imDrawData->CmdListsCount);
-            return;
         }
 
         auto commandBufferId = Graphics::beginCommandBuffer();
@@ -265,7 +265,7 @@ namespace BZ {
         };
 
         //Buffers
-        const uint32 MAX_INDICES = 1 << sizeof(ImDrawIdx) * 8;
+        const uint32 MAX_INDICES = 1 << (sizeof(ImDrawIdx) * 8);
         vertexBuffer = Buffer::create(BufferType::Vertex, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
         indexBuffer = Buffer::create(BufferType::Index, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { {DataType::Uint16, DataElements::Scalar, ""} });
         vertexBufferPtr = vertexBuffer->map(0);

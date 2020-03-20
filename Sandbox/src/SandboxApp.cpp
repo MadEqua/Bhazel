@@ -3,24 +3,23 @@
 #include <imgui.h>
 
 
-ExampleLayer::ExampleLayer() :
-    Layer("Example") {
+ParticleLayer::ParticleLayer() :
+    Layer("Particle") {
 }
 
-void ExampleLayer::onAttach() {
+void ParticleLayer::onAttach() {
 }
 
-void ExampleLayer::onGraphicsContextCreated() {
-    auto &dims = application.getWindow().getDimensions();
-    float halfW = static_cast<float>(dims.x) * 0.5f;
-    float halfH = static_cast<float>(dims.y) * 0.5f;
-    cameraController = BZ::OrthographicCameraController(-halfW, halfW, -halfH, halfH);
-    cameraController.getCamera().setPosition({ halfW, halfH, 0.0f });
+void ParticleLayer::onGraphicsContextCreated() {
+    const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
+    const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
+    cameraController = BZ::OrthographicCameraController(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
+    cameraController.getCamera().setPosition({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
 
     tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
     tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
 
-    particleSystem.setPosition({ halfW, halfH });
+    particleSystem.setPosition({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y});
     BZ::Particle2DRanges ranges;
     ranges.lifeSecsRange = { 3.0f, 6.0f };
     ranges.dimensionRange = { { 5.0f, 5.0f }, { 10.0f, 10.0f } };
@@ -43,7 +42,7 @@ void ExampleLayer::onGraphicsContextCreated() {
     particleSystem.start();
 }
 
-void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
+void ParticleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 
     auto WINDOW_DIMS = application.getWindow().getDimensions();
@@ -67,13 +66,49 @@ void ExampleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Renderer2D::endScene();
 }
 
-void ExampleLayer::onEvent(BZ::Event &event) {
+void ParticleLayer::onEvent(BZ::Event &event) {
     cameraController.onEvent(event);
 }
 
-void ExampleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
+void ParticleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 }
+
+
+
+Layer3D::Layer3D() :
+    Layer("3D") {
+}
+
+void Layer3D::onAttach() {
+}
+
+void Layer3D::onGraphicsContextCreated() {
+    cameraController = BZ::PerspectiveCameraController(50.0f, application.getWindow().getRatio());
+    cameraController.getCamera().setPosition({ 0.0f, 0.0f, 5.0f });
+}
+
+void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
+    BZ_PROFILE_FUNCTION();
+
+    //auto WINDOW_DIMS = application.getWindow().getDimensions();
+
+    cameraController.onUpdate(frameStats);
+
+    BZ::Renderer::beginScene(cameraController.getCamera());
+    BZ::Renderer::drawCube(BZ::Transform());
+    BZ::Renderer::endScene();
+}
+
+void Layer3D::onEvent(BZ::Event &event) {
+    cameraController.onEvent(event);
+}
+
+void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
+    BZ_PROFILE_FUNCTION();
+}
+
+
 
 BZ::Application* createApplication() {
     return new Sandbox();

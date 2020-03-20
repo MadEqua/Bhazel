@@ -240,7 +240,7 @@ namespace BZ {
 
         FrameData &frameData = frameDatas[currentFrameIndex];
         for(auto &familyAndPool : frameData.commandPoolsByFamily) {
-            if(frameData.renderFinishedFence.isSignaled()) //TODO: is we are gpu bound and the fence is never signaled here, then the pool will never be reset
+            if(frameData.renderFinishedFence.isSignaled()) //TODO: if we are gpu bound and the fence is never signaled here, then the pool will never be reset
                 familyAndPool.second.reset();
             else
                 BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled, will not clean CommandPool! App is GPU bound.", currentFrameIndex);

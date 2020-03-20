@@ -1,8 +1,9 @@
 #version 450 core
 
-layout(location = 0) in vec2 attrPosition;
-layout(location = 1) in vec2 attrTexCoord;
-layout(location = 2) in uint attrColorPacked;
+layout(location = 0) in vec3 attrPosition;
+layout(location = 1) in vec3 attrNormal;
+layout(location = 2) in vec3 attrTangent;
+layout(location = 3) in vec2 attrTexCoord;
 
 layout (set = 0, binding = 0, std140) uniform FrameConstants {
     vec2 timeAndDelta;
@@ -16,10 +17,8 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
 } uSceneConstants;
 
 layout(location = 0) out vec2 outTexCoord;
-layout(location = 1) flat out uint outColorPacked;
 
 void main() {
-    gl_Position = uSceneConstants.viewProjectionMatrix * vec4(attrPosition, 0.0, 1.0);
+    gl_Position = uSceneConstants.viewProjectionMatrix * vec4(attrPosition, 1.0);
     outTexCoord = attrTexCoord;
-    outColorPacked = attrColorPacked;
 }

@@ -90,21 +90,21 @@ namespace BZ {
 
     PerspectiveCameraController::PerspectiveCameraController() :
         CameraController(PerspectiveCamera(), 1.0f),
-        fovy(60.0f),
-        aspectRatio(16.0f / 10.0f),
-        windowSize(Application::getInstance().getWindow().getDimensions()) {
+        fovy(50.0f),
+        aspectRatio(16.0f / 10.0f) {
     }
 
     PerspectiveCameraController::PerspectiveCameraController(float fovy, float aspectRatio) :
         CameraController(PerspectiveCamera(fovy * zoom, aspectRatio), 1.0f),
         fovy(fovy),
-        aspectRatio(aspectRatio),
-        windowSize(Application::getInstance().getWindow().getDimensions()) {
+        aspectRatio(aspectRatio) {
     }
 
     void PerspectiveCameraController::onUpdate(const FrameStats &frameStats) {
         Input &input = Application::getInstance().getInput();
         auto mousePosition = input.getMousePosition();
+        const auto windowSize = Application::getInstance().getWindow().getDimensions();
+
         if(mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if(lastMousePosition.x != -1 && lastMousePosition.y != -1) {
 
@@ -160,8 +160,6 @@ namespace BZ {
     }
 
     bool PerspectiveCameraController::onWindowResized(const WindowResizedEvent &e) {
-        windowSize.x = e.getWidth();
-        windowSize.y = e.getHeight();
         aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());
         camera.computeProjectionMatrix(fovy * zoom, aspectRatio);
         return false;

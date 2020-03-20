@@ -6,7 +6,6 @@
 
 namespace BZ {
 
-    class DescriptorSet;
     class ParticleSystem2D;
 
     struct Sprite {
@@ -24,6 +23,9 @@ namespace BZ {
         //uint32 tintPushCount;
     };
 
+    /*
+    * Batch renderer for 2D geometry.
+    */
     class Renderer2D {
     public:
         static void beginScene(const OrthographicCamera &camera);

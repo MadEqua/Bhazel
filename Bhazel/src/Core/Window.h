@@ -29,6 +29,7 @@ namespace BZ {
         uint32 getHeight() const {return data.dimensions.y;}
         const glm::ivec2& getDimensions() const { return data.dimensions; }
         const glm::vec2 getDimensionsFloat() const { return { data.dimensions.x, data.dimensions.y }; }
+        float getRatio() const { return static_cast<float>(data.dimensions.x) / static_cast<float>(data.dimensions.y); }
 
         bool isMinimized() const { return minimized; }
         bool isClosed() const { return closed; }

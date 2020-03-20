@@ -32,7 +32,7 @@ namespace BZ {
 
 
     PerspectiveCamera::PerspectiveCamera() {
-        computeProjectionMatrix(60.0f, 16.0f/10.0f, 0.1f, 100.0f);
+        computeProjectionMatrix(50.0f, 16.0f/10.0f, 0.1f, 100.0f);
         computeViewMatrix();
     }
 

@@ -80,6 +80,5 @@ namespace BZ {
         float fovy;
         float aspectRatio;
         glm::ivec2 lastMousePosition = {-1, -1};
-        glm::ivec2 windowSize;
     };
 }

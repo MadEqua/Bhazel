@@ -53,7 +53,7 @@ namespace BZ {
         bool enableRasterizerDiscard = false;
         PolygonMode polygonMode = PolygonMode::Fill;
         CullMode cullMode = CullMode::None;
-        bool frontCounterClockwise = false;
+        bool frontFaceCounterClockwise = true;
         bool enableDepthBias = false;
         float depthBiasConstantFactor = 0.0f;
         float depthBiasClamp = 0.0f;

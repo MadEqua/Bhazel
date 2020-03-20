@@ -9,7 +9,7 @@ namespace BZ {
 
     /*VulkanPhysicalDevice::VulkanPhysicalDevice(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions) {
         init(instance, surface, requiredDeviceExtensions);
-   }*/
+    }*/
 
     void VulkanPhysicalDevice::init(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions) {
         BZ_ASSERT_CORE(physicalDevice == VK_NULL_HANDLE, "PhysicalDevice is already inited!");

@@ -90,7 +90,7 @@ namespace BZ {
         rasterizerState.polygonMode = polygonModeToVk(data.rasterizerState.polygonMode);
         rasterizerState.lineWidth = data.rasterizerState.lineWidth;
         rasterizerState.cullMode = cullModeToVk(data.rasterizerState.cullMode);
-        rasterizerState.frontFace = data.rasterizerState.frontCounterClockwise ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizerState.frontFace = data.rasterizerState.frontFaceCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE: VK_FRONT_FACE_CLOCKWISE;
         rasterizerState.depthBiasEnable = data.rasterizerState.enableDepthBias;
         rasterizerState.depthBiasConstantFactor = data.rasterizerState.depthBiasConstantFactor;
         rasterizerState.depthBiasClamp = data.rasterizerState.depthBiasClamp;
