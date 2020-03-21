@@ -16,8 +16,8 @@ void ParticleLayer::onGraphicsContextCreated() {
     cameraController = BZ::OrthographicCameraController(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
     cameraController.getCamera().setPosition({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
 
-    tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
-    tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
+    tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
+    tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
 
     particleSystem.setPosition({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y});
     BZ::Particle2DRanges ranges;

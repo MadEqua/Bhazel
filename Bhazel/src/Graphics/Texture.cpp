@@ -20,20 +20,69 @@ namespace BZ {
     bool TextureFormatWrapper::isColor() const {
         switch(format) {
         case TextureFormat::R8:
-        case TextureFormat::R8_sRGB:
+        case TextureFormat::R8_SRGB:
         case TextureFormat::R8G8:
-        case TextureFormat::R8G8_sRGB:
+        case TextureFormat::R8G8_SRGB:
         case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_sRGB:
+        case TextureFormat::R8G8B8_SRGB:
         case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_sRGB:
+        case TextureFormat::R8G8B8A8_SRGB:
         case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_sRGB:
+        case TextureFormat::B8G8R8A8_SRGB:
             return true;
         case TextureFormat::Undefined:
+        case TextureFormat::D32:
         case TextureFormat::D16S8:
         case TextureFormat::D24S8:
             return false;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            return false;
+        };
+    }
+
+    bool TextureFormatWrapper::isDepth() const {
+        switch (format) {
+        case TextureFormat::Undefined:
+        case TextureFormat::R8:
+        case TextureFormat::R8_SRGB:
+        case TextureFormat::R8G8:
+        case TextureFormat::R8G8_SRGB:
+        case TextureFormat::R8G8B8:
+        case TextureFormat::R8G8B8_SRGB:
+        case TextureFormat::R8G8B8A8:
+        case TextureFormat::R8G8B8A8_SRGB:
+        case TextureFormat::B8G8R8A8:
+        case TextureFormat::B8G8R8A8_SRGB:
+            return false;
+        case TextureFormat::D32:
+        case TextureFormat::D16S8:
+        case TextureFormat::D24S8:
+            return true;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            return false;
+        };
+    }
+
+    bool TextureFormatWrapper::isStencil() const {
+        switch (format) {
+        case TextureFormat::Undefined:
+        case TextureFormat::R8:
+        case TextureFormat::R8_SRGB:
+        case TextureFormat::R8G8:
+        case TextureFormat::R8G8_SRGB:
+        case TextureFormat::R8G8B8:
+        case TextureFormat::R8G8B8_SRGB:
+        case TextureFormat::R8G8B8A8:
+        case TextureFormat::R8G8B8A8_SRGB:
+        case TextureFormat::B8G8R8A8:
+        case TextureFormat::B8G8R8A8_SRGB:
+        case TextureFormat::D32:
+            return false;
+        case TextureFormat::D16S8:
+        case TextureFormat::D24S8:
+            return true;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
             return false;
@@ -44,18 +93,43 @@ namespace BZ {
         switch(format) {
         case TextureFormat::Undefined:
         case TextureFormat::R8:
-        case TextureFormat::R8_sRGB:
+        case TextureFormat::R8_SRGB:
         case TextureFormat::R8G8:
-        case TextureFormat::R8G8_sRGB:
+        case TextureFormat::R8G8_SRGB:
         case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_sRGB:
+        case TextureFormat::R8G8B8_SRGB:
         case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_sRGB:
+        case TextureFormat::R8G8B8A8_SRGB:
         case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_sRGB:
+        case TextureFormat::B8G8R8A8_SRGB:
+        case TextureFormat::D32:
             return false;
         case TextureFormat::D16S8:
         case TextureFormat::D24S8:
+            return true;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            return false;
+        };
+    }
+
+    bool TextureFormatWrapper::isDepthOnly() const {
+        switch (format) {
+        case TextureFormat::Undefined:
+        case TextureFormat::R8:
+        case TextureFormat::R8_SRGB:
+        case TextureFormat::R8G8:
+        case TextureFormat::R8G8_SRGB:
+        case TextureFormat::R8G8B8:
+        case TextureFormat::R8G8B8_SRGB:
+        case TextureFormat::R8G8B8A8:
+        case TextureFormat::R8G8B8A8_SRGB:
+        case TextureFormat::B8G8R8A8:
+        case TextureFormat::B8G8R8A8_SRGB:
+        case TextureFormat::D16S8:
+        case TextureFormat::D24S8:
+            return false;
+        case TextureFormat::D32:
             return true;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
@@ -93,10 +167,19 @@ namespace BZ {
     }
 
     Ref<Texture2D> Texture2D::create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps) {
-        auto &assetsPath = Application::getInstance().getAssetsPath();
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
             return MakeRef<VulkanTexture2D>(data, dataSize, width, height, format, generateMipmaps);
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return nullptr;
+        }
+    }
+
+    Ref<Texture2D> Texture2D::createRenderTarget(uint32 width, uint32 height, TextureFormat format) {
+        switch (Graphics::api) {
+        case Graphics::API::Vulkan:
+            return MakeRef<VulkanTexture2D>(width, height, format);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

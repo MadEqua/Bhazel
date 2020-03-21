@@ -27,6 +27,11 @@ namespace BZ {
         init(data, dataSize, width, height, generateMipmaps);
     }
 
+    VulkanTexture2D::VulkanTexture2D(uint32 width, uint32 height, TextureFormat format):
+        Texture2D(format), isWrapping(false) {
+        init(nullptr, 0, width, height, false);
+    }
+
     VulkanTexture2D::VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) :
         Texture2D(vkFormatToTextureFormat(vkFormat)), isWrapping(true) {
 
@@ -66,7 +71,18 @@ namespace BZ {
         imageInfo.format = vkFormat;
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageInfo.usage = (generateMipmaps ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT : 0) | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+        if (data == nullptr) {
+            imageInfo.usage = format.isColor() ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        }
+        else {
+            imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+            if (generateMipmaps) {
+                imageInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+            }
+        }
+
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.flags = 0;
@@ -76,26 +92,28 @@ namespace BZ {
         allocInfo.preferredFlags = memoryTypeToPreferredFlagsVk(MemoryType::GpuOnly);
         BZ_ASSERT_VK(vmaCreateImage(getGraphicsContext().getMemoryAllocator(), &imageInfo, &allocInfo, &nativeHandle, &allocationHandle, nullptr));
 
-        initStagingBuffer(dataSize);
+        if (data != nullptr) {
+            initStagingBuffer(dataSize);
 
-        void *ptr;
-        BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), stagingBufferAllocationHandle, &ptr));
-        memcpy(ptr, data, dataSize);
-        vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), stagingBufferAllocationHandle);
+            void *ptr;
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), stagingBufferAllocationHandle, &ptr));
+            memcpy(ptr, data, dataSize);
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), stagingBufferAllocationHandle);
 
-        //Transfer from staging buffer to device local image.
-        VkCommandBuffer commBuffer = beginSingleTimeCommands();
-        transitionImageLayout(commBuffer, nativeHandle, vkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        copyBufferToImage(commBuffer, stagingBufferHandle, nativeHandle, width, height);
-        
-        if (generateMipmaps)
-            this->generateMipmaps(commBuffer);
-        else
-            transitionImageLayout(commBuffer, nativeHandle, vkFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            //Transfer from staging buffer to device local image.
+            VkCommandBuffer commBuffer = beginSingleTimeCommands();
+            transitionImageLayout(commBuffer, nativeHandle, vkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            copyBufferToImage(commBuffer, stagingBufferHandle, nativeHandle, width, height);
 
-        endSingleTimeCommands(commBuffer);
+            if (generateMipmaps)
+                this->generateMipmaps(commBuffer);
+            else
+                transitionImageLayout(commBuffer, nativeHandle, vkFormat, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-        destroyStagingBuffer();
+            endSingleTimeCommands(commBuffer);
+
+            destroyStagingBuffer();
+        }
     }
 
     void VulkanTexture2D::generateMipmaps(VkCommandBuffer commandBuffer) {
@@ -309,7 +327,17 @@ namespace BZ {
         imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+        if (texture->getFormat().isColor()) {
+            imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+        else if (texture->getFormat().isDepth()) {
+            imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        }
+        if (texture->getFormat().isStencil()) {
+            imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
         imageViewCreateInfo.subresourceRange.levelCount = texture->getMipLevels();
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;

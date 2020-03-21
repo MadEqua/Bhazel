@@ -191,24 +191,26 @@ namespace BZ {
         switch(format) {
         case TextureFormat::R8:
             return VK_FORMAT_R8_UNORM;
-        case TextureFormat::R8_sRGB:
+        case TextureFormat::R8_SRGB:
             return VK_FORMAT_R8_SRGB;
         case TextureFormat::R8G8:
             return VK_FORMAT_R8G8_UNORM;
-        case TextureFormat::R8G8_sRGB:
+        case TextureFormat::R8G8_SRGB:
             return VK_FORMAT_R8G8_SRGB;
         case TextureFormat::R8G8B8:
             return VK_FORMAT_R8G8B8_UNORM;
-        case TextureFormat::R8G8B8_sRGB:
+        case TextureFormat::R8G8B8_SRGB:
             return VK_FORMAT_R8G8B8_SRGB;
         case TextureFormat::R8G8B8A8:
             return VK_FORMAT_R8G8B8A8_UNORM;
-        case TextureFormat::R8G8B8A8_sRGB:
+        case TextureFormat::R8G8B8A8_SRGB:
             return VK_FORMAT_R8G8B8A8_SRGB;
         case TextureFormat::B8G8R8A8:
             return VK_FORMAT_B8G8R8A8_UNORM;
-        case TextureFormat::B8G8R8A8_sRGB:
+        case TextureFormat::B8G8R8A8_SRGB:
             return VK_FORMAT_B8G8R8A8_SRGB;
+        case TextureFormat::D32:
+            return VK_FORMAT_D32_SFLOAT;
         case TextureFormat::D16S8:
             return VK_FORMAT_D16_UNORM_S8_UINT;
         case TextureFormat::D24S8:
@@ -226,23 +228,25 @@ namespace BZ {
         case VK_FORMAT_R8_UNORM:
             return TextureFormat::R8;
         case VK_FORMAT_R8_SRGB:
-            return TextureFormat::R8_sRGB;
+            return TextureFormat::R8_SRGB;
         case VK_FORMAT_R8G8_UNORM:
             return TextureFormat::R8G8;
         case VK_FORMAT_R8G8_SRGB:
-            return TextureFormat::R8G8_sRGB;
+            return TextureFormat::R8G8_SRGB;
         case VK_FORMAT_R8G8B8_UNORM:
             return TextureFormat::R8G8B8;
         case VK_FORMAT_R8G8B8_SRGB:
-            return TextureFormat::R8G8B8_sRGB;
+            return TextureFormat::R8G8B8_SRGB;
         case VK_FORMAT_R8G8B8A8_UNORM:
             return  TextureFormat::R8G8B8A8;
         case VK_FORMAT_R8G8B8A8_SRGB:
-            return TextureFormat::R8G8B8A8_sRGB;
+            return TextureFormat::R8G8B8A8_SRGB;
         case VK_FORMAT_B8G8R8A8_UNORM:
             return TextureFormat::B8G8R8A8;
         case VK_FORMAT_B8G8R8A8_SRGB:
-            return TextureFormat::B8G8R8A8_sRGB;
+            return TextureFormat::B8G8R8A8_SRGB;
+        case VK_FORMAT_D32_SFLOAT:
+            return TextureFormat::D32;
         case VK_FORMAT_D16_UNORM_S8_UINT:
             return TextureFormat::D16S8;
         case VK_FORMAT_D24_UNORM_S8_UINT:

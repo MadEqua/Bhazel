@@ -63,7 +63,7 @@ namespace BZ {
 
         private:
             std::vector<Attachment> attachments;
-            glm::ivec3 dimensions = {1,1,1};
+            glm::ivec3 dimensions = { 1, 1, 1 };
 
             friend class Framebuffer;
             friend class VulkanFramebuffer;

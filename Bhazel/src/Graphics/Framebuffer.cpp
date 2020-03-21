@@ -16,7 +16,7 @@ namespace BZ {
     }
 
     Framebuffer::Builder& Framebuffer::Builder::addDepthStencilAttachment(const AttachmentDescription &desc, const Ref<TextureView> &textureView) {
-        BZ_ASSERT_CORE(textureView->getTextureFormat().isColor(), "TextureView needs to have a DepthStencil format!");
+        BZ_ASSERT_CORE(textureView->getTextureFormat().isDepthStencil(), "TextureView needs to have a DepthStencil format!");
         attachments.push_back({ desc, textureView });
         return *this;
     }

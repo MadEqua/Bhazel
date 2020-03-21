@@ -10,14 +10,6 @@
 
 namespace BZ {
 
-    /*VulkanSwapchain::VulkanSwapchain(const VulkanDevice &device, const VulkanSurface &surface) {
-        init(device, surface);
-    }
-
-    VulkanSwapchain::~VulkanSwapchain() {
-        destroy();
-    }*/
-
     void VulkanSwapchain::init(const VulkanDevice &device, const VulkanSurface &surface) {
         this->device = &device;
         this->surface = &surface;
@@ -110,6 +102,10 @@ namespace BZ {
     }
 
     void VulkanSwapchain::createFramebuffers() {
+        //Create depth texture
+        auto depthTexture = Texture2D::createRenderTarget(extent.width, extent.height, TextureFormat::D24S8);
+        auto depthTexView = TextureView::create(depthTexture);
+
         //Get the images created for the swapchain
         std::vector<VkImage> swapChainImages;
         uint32_t imageCount;
@@ -123,19 +119,32 @@ namespace BZ {
             auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
             auto textureViewRef = TextureView::create(textureRef);
 
-            AttachmentDescription attachmentDesc;
-            attachmentDesc.format = textureRef->getFormat().format;
-            attachmentDesc.samples = 1;
-            attachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
-            attachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
-            attachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
-            attachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
-            attachmentDesc.initialLayout = TextureLayout::Undefined;
-            attachmentDesc.finalLayout = TextureLayout::Present;
-            attachmentDesc.clearValues.floating = {0.0f, 0.0f, 0.0f, 1.0f};
+            AttachmentDescription colorAttachmentDesc;
+            colorAttachmentDesc.format = textureRef->getFormat().format;
+            colorAttachmentDesc.samples = 1;
+            colorAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
+            colorAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
+            colorAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
+            colorAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
+            colorAttachmentDesc.initialLayout = TextureLayout::Undefined;
+            colorAttachmentDesc.finalLayout = TextureLayout::Present;
+            colorAttachmentDesc.clearValues.floating = {0.0f, 0.0f, 0.0f, 1.0f};
+
+            AttachmentDescription depthStencilAttachmentDesc;
+            depthStencilAttachmentDesc.format = depthTexture->getFormat().format;
+            depthStencilAttachmentDesc.samples = 1;
+            depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
+            depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
+            depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
+            depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::Store;
+            depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
+            depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
+            depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
+            depthStencilAttachmentDesc.clearValues.integer.y = 0;
 
             Framebuffer::Builder builder;
-            builder.addColorAttachment(attachmentDesc, textureViewRef);
+            builder.addColorAttachment(colorAttachmentDesc, textureViewRef);
+            builder.addDepthStencilAttachment(depthStencilAttachmentDesc, depthTexView);
             builder.setDimensions(glm::ivec3(extent.width, extent.height, 1));
 
             framebuffers[i] = builder.build();

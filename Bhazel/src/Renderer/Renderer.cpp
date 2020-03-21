@@ -88,6 +88,17 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();
 
+        DepthStencilState depthStencilState;
+        depthStencilState.enableDepthTest = true;
+        depthStencilState.enableDepthWrite = true;
+        depthStencilState.depthTestFunction = TestFunction::Less;
+        pipelineStateData.depthStencilState = depthStencilState;
+
+        RasterizerState rasterizerState;
+        rasterizerState.cullMode = CullMode::Back;
+        rasterizerState.frontFaceCounterClockwise = true;
+        pipelineStateData.rasterizerState = rasterizerState;
+
         const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
         const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
 
@@ -103,7 +114,6 @@ namespace BZ {
         //pipelineStateData.descriptorSetLayouts = { rendererData.descriptorSetLayout };
         pipelineStateData.blendingState = blendingState;
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
-
     }
 
     void Renderer::destroy() {

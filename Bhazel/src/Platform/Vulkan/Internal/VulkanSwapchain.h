@@ -16,23 +16,25 @@ namespace BZ {
         std::vector<VkPresentModeKHR> presentModes;
     };
 
+    /*
+    * Abstract the Swapchain and respective Framebuffer creation, also manages the Depth Buffer texture for convenience.
+    */
     class VulkanSwapchain {
     public:
         VulkanSwapchain() = default;
-        //VulkanSwapchain(const VulkanDevice &device, const VulkanSurface &surface);
-        //~VulkanSwapchain();
 
         void init(const VulkanDevice &device, const VulkanSurface &surface);
         void destroy();
 
         void recreate();
 
-        void aquireImage (const VulkanSemaphore &imageAvailableSemaphore);
+        void aquireImage(const VulkanSemaphore &imageAvailableSemaphore);
         void presentImage(const VulkanSemaphore &renderFinishedSemaphore);
 
         VkSwapchainKHR getNativeHandle() const { return swapchain; }
 
         Ref<Framebuffer> getFramebuffer(int frameIndex) { return framebuffers[frameIndex]; }
+        glm::ivec2 getDimensions() const { return { extent.width, extent.height }; }
 
     private:
         const VulkanDevice *device;

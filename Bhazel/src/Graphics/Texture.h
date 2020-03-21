@@ -5,13 +5,12 @@ namespace BZ {
 
     enum class TextureFormat {
         Undefined,
-        R8, R8_sRGB,
-        R8G8, R8G8_sRGB,
-        R8G8B8, R8G8B8_sRGB,
-        R8G8B8A8, R8G8B8A8_sRGB,
-        B8G8R8A8, B8G8R8A8_sRGB,
-        D16S8,
-        D24S8,
+        R8, R8_SRGB,
+        R8G8, R8G8_SRGB,
+        R8G8B8, R8G8B8_SRGB,
+        R8G8B8A8, R8G8B8A8_SRGB,
+        B8G8R8A8, B8G8R8A8_SRGB,
+        D32, D16S8, D24S8,
     };
 
     struct TextureFormatWrapper {
@@ -21,7 +20,10 @@ namespace BZ {
 
         //TextureFormat operator()() { return format; }
         bool isColor() const;
+        bool isDepth() const;
+        bool isStencil() const;
         bool isDepthStencil() const;
+        bool isDepthOnly() const;
     };
 
     enum class FilterMode {
@@ -56,7 +58,7 @@ namespace BZ {
         static void freeData(const byte *data);
 
         TextureFormatWrapper format;
-        glm::ivec3 dimensions = {1,1,1};
+        glm::ivec3 dimensions = { 1, 1, 1 };
         uint32 mipLevels = 1;
     };
 
@@ -65,6 +67,8 @@ namespace BZ {
     public:
         static Ref<Texture2D> create(const std::string &path, TextureFormat format, bool generateMipmaps);
         static Ref<Texture2D> create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
+        
+        static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, TextureFormat format);
 
     protected:
         explicit Texture2D(TextureFormat format);

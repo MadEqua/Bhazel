@@ -14,6 +14,7 @@ namespace BZ {
 
         VulkanTexture2D(const std::string &path, TextureFormat format, bool generateMipmaps);
         VulkanTexture2D(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
+        VulkanTexture2D(uint32 width, uint32 height, TextureFormat format);
         
         //Coming from an already existent VkImage. Used on the swapchain images.
         VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);

@@ -214,11 +214,11 @@ void MainLayer::onGraphicsContextCreated() {
     cameraController = BZ::OrthographicCameraController(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
     cameraController.getCamera().setPosition({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
 
-    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
-    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
-    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
-    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
-    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", BZ::TextureFormat::R8G8B8A8_sRGB, true);
+    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
+    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
+    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
+    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
+    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
 
     brickMap.init(brickTexture, brickExplosionTexture);
     paddle.init(paddleTexture);

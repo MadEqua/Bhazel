@@ -117,7 +117,7 @@ namespace BZ {
         BufferPtr map(uint32 offset);
         void unmap();
 
-        uint32 getSize() const { return size; }
+        uint32 getDimensions() const { return size; }
         uint32 getRealSize() const { return realSize; }
 
         bool isDynamic() const { return memoryType != MemoryType::GpuOnly; }

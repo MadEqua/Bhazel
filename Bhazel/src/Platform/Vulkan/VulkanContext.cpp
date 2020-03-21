@@ -46,6 +46,12 @@ namespace BZ {
         physicalDevice.init(instance, surface, requiredDeviceExtensions);
         device.init(physicalDevice, requiredDeviceExtensions);
 
+        //Init VulkanMemoryAllocator lib.
+        VmaAllocatorCreateInfo allocatorInfo = {};
+        allocatorInfo.physicalDevice = physicalDevice.getNativeHandle();
+        allocatorInfo.device = device.getNativeHandle();
+        vmaCreateAllocator(&allocatorInfo, &memoryAllocator);
+
         createFrameData();
 
         swapchain.init(device, surface);
@@ -57,12 +63,6 @@ namespace BZ {
         builder.addDescriptorTypeCount(DescriptorType::Sampler, 512);
         builder.addDescriptorTypeCount(DescriptorType::SampledTexture, 512);
         descriptorPool.init(device, builder);
-
-        //Init VulkanMemoryAllocator lib.
-        VmaAllocatorCreateInfo allocatorInfo = {};
-        allocatorInfo.physicalDevice = physicalDevice.getNativeHandle();
-        allocatorInfo.device = device.getNativeHandle();
-        vmaCreateAllocator(&allocatorInfo, &memoryAllocator);
     }
 
     void VulkanContext::setVSync(bool enabled) {
