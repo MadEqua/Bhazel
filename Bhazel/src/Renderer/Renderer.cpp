@@ -12,9 +12,9 @@ namespace BZ {
     RendererStats Renderer::stats;
 
     static DataLayout vertexLayout = {
-        { DataType::Float32, DataElements::Vec3, "POSITION" },
-        { DataType::Float32, DataElements::Vec3, "NORMAL" },
-        { DataType::Float32, DataElements::Vec3, "TANGENT" },
+        { DataType::Uint16, DataElements::Vec3, "POSITION", true },
+        { DataType::Uint16, DataElements::Vec3, "NORMAL", true },
+        { DataType::Uint16, DataElements::Vec3, "TANGENT", true },
         { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
     };
 
@@ -23,47 +23,74 @@ namespace BZ {
     };
 
     struct Vertex {
-        float pos[3];
-        float normal[3];
-        float tangent[3];
+        uint16 pos[3];
+        uint16 normal[3];
+        uint16 tangent[3];
         uint16 texCoord[2];
     };
 
-    constexpr int CUBE_VERTEX_COUNT = 8;
-    constexpr int CUBE_INDEX_COUNT = 6 * 2 * 3;
-    constexpr uint16 MAX_TEX_COORD = 0xffff;
-    constexpr float v = 1.0f;
+    constexpr int CUBE_VERTEX_COUNT = 36;
+    constexpr uint16 ONE = 0xffff;
     Vertex cubeVertices[CUBE_VERTEX_COUNT] = {
-        { { -v, -v, v }, {}, {}, { 0, 0 } },
-    { { v, -v, v }, {}, {}, { MAX_TEX_COORD, 0 } },
-    { { v, v, v }, {}, {}, { MAX_TEX_COORD, MAX_TEX_COORD } },
-    { { -v, v, v }, {}, {}, { 0, MAX_TEX_COORD } },
-    { { -v, -v, -v }, {}, {}, { MAX_TEX_COORD, 0 } },
-    { { v, -v, -v }, {}, {}, { 0, 0 } },
-    { { v, v, -v }, {}, {}, { 0, MAX_TEX_COORD } },
-    { { -v, v, -v }, {}, {}, { MAX_TEX_COORD, MAX_TEX_COORD } },
-    };
+        //Front
+        { { -ONE, -ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { 0, 0 } },
+        { { ONE, -ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { ONE, 0 } },
+        { { ONE, ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { ONE, ONE } },
+        { { -ONE, -ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { 0, 0 } },
+        { { ONE, ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { ONE, ONE } },
+        { { -ONE, ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { 0, ONE } },
 
-    uint32 cubeIndices[CUBE_INDEX_COUNT] = {
-        0, 1, 2,
-        0, 2, 3,
-        1, 5, 6,
-        1, 6, 2,
-        4, 0, 3,
-        4, 3, 7,
-        5, 4, 6,
-        5, 7, 6,
-        4, 5, 1,
-        4, 1, 0,
-        3, 2, 6,
-        3, 6, 7
+        //Right
+        { { ONE, -ONE, ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { 0, 0 } },
+        { { ONE, -ONE, -ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { ONE, 0 } },
+        { { ONE, ONE, -ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { ONE, ONE } },
+        { { ONE, -ONE, ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { 0, 0 } },
+        { { ONE, ONE, -ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { ONE, ONE } },
+        { { ONE, ONE, ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { 0, ONE } },
+
+        //Left
+        { { -ONE, -ONE, -ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { 0, 0 } },
+        { { -ONE, -ONE, ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { ONE, 0 } },
+        { { -ONE, ONE, ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { ONE, ONE } },
+        { { -ONE, -ONE, -ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { 0, 0 } },
+        { { -ONE, ONE, ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { ONE, ONE } },
+        { { -ONE, ONE, -ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { 0, ONE } },
+
+        //Back
+        { { ONE, -ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { 0, 0 } },
+        { { -ONE, -ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { ONE, 0 } },
+        { { -ONE, ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { ONE, ONE } },
+        { { ONE, -ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { 0, 0 } },
+        { { -ONE, ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { ONE, ONE } },
+        { { ONE, ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { 0, ONE } },
+
+        //Bottom
+        { { -ONE, -ONE, -ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { 0, 0 } },
+        { { ONE, -ONE, -ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { ONE, 0 } },
+        { { ONE, -ONE, ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { ONE, ONE } },
+        { { -ONE, -ONE, -ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { 0, 0 } },
+        { { ONE, -ONE, ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { ONE, ONE } },
+        { { -ONE, -ONE, ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { 0, ONE } },
+
+        //Top
+        { { -ONE, ONE, ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { 0, 0 } },
+        { { ONE, ONE, ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { ONE, 0 } },
+        { { ONE, ONE, -ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { ONE, ONE } },
+        { { -ONE, ONE, ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { 0, 0 } },
+        { { ONE, ONE, -ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { ONE, ONE } },
+        { { -ONE, ONE, -ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { 0, ONE } },
     };
 
     static struct RendererData {
         uint32 commandBufferId;
 
         Ref<Buffer> cubeVertexBuffer;
-        Ref<Buffer> cubeIndexBuffer;
+
+        Ref<TextureView> testTextureView;
+        Ref<Sampler> sampler;
+
+        Ref<DescriptorSetLayout> descriptorSetLayout;
+        Ref<DescriptorSet> descriptorSet;
 
         Ref<PipelineState> pipelineState;
     } rendererData;
@@ -75,10 +102,22 @@ namespace BZ {
         rendererData.commandBufferId = -1;
 
         rendererData.cubeVertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * CUBE_VERTEX_COUNT, MemoryType::GpuOnly, vertexLayout);
-        rendererData.cubeIndexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * CUBE_INDEX_COUNT, MemoryType::GpuOnly, indexLayout);
-
         rendererData.cubeVertexBuffer->setData(cubeVertices, sizeof(cubeVertices), 0);
-        rendererData.cubeIndexBuffer->setData(cubeIndices, sizeof(cubeIndices), 0);
+
+        Sampler::Builder samplerBuilder;
+        samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
+        rendererData.sampler = samplerBuilder.build();
+
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::Sampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::SampledTexture, flagsToMask(ShaderStageFlags::Fragment), 1);
+        rendererData.descriptorSetLayout = descriptorSetLayoutBuilder.build();
+
+        auto testTexture = Texture2D::create("Sandbox/textures/test.jpg", TextureFormat::R8G8B8A8_SRGB, true);
+        rendererData.testTextureView = TextureView::create(testTexture);
+        rendererData.descriptorSet = DescriptorSet::create(rendererData.descriptorSetLayout);
+        rendererData.descriptorSet->setSampler(rendererData.sampler, 0);
+        rendererData.descriptorSet->setSampledTexture(rendererData.testTextureView, 1);
 
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("Renderer");
@@ -87,6 +126,8 @@ namespace BZ {
 
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();
+
+        pipelineStateData.descriptorSetLayouts = { rendererData.descriptorSetLayout };
 
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
@@ -118,7 +159,10 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         rendererData.cubeVertexBuffer.reset();
-        rendererData.cubeIndexBuffer.reset();
+        rendererData.testTextureView.reset();
+        rendererData.sampler.reset();
+        rendererData.descriptorSetLayout.reset();
+        rendererData.descriptorSet.reset();
 
         rendererData.pipelineState.reset();
     }
@@ -147,14 +191,12 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         Graphics::bindBuffer(rendererData.commandBufferId, rendererData.cubeVertexBuffer, 0);
-        Graphics::bindBuffer(rendererData.commandBufferId, rendererData.cubeIndexBuffer, 0);
-
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
 
         //TODO: bind transform data
-        //Graphics::bindDescriptorSet(rendererData.commandBufferId, 
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
-        Graphics::drawIndexed(rendererData.commandBufferId, CUBE_INDEX_COUNT, 1, 0, 0, 0);
+        Graphics::draw(rendererData.commandBufferId, CUBE_VERTEX_COUNT, 1, 0, 0);
     }
 
     void Renderer::drawMesh(const Mesh &mesh) {

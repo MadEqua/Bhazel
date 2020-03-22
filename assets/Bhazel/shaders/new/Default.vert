@@ -17,8 +17,10 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
 } uSceneConstants;
 
 layout(location = 0) out vec2 outTexCoord;
+layout(location = 1) out vec3 outNormal;
 
 void main() {
     gl_Position = uSceneConstants.viewProjectionMatrix * vec4(attrPosition, 1.0);
     outTexCoord = attrTexCoord;
+    outNormal = attrNormal;
 }

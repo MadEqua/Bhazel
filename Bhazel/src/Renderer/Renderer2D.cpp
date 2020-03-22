@@ -31,7 +31,7 @@ namespace BZ {
         uint32 colorAndAlpha;
     };
 
-    constexpr uint16 MAX_TEX_COORD = 0xffff;
+    constexpr uint16 UINT16_MAX_VALUE = 0xffff;
     static Vertex quadVertices[4] = {
         {
             { -0.5f, -0.5f },
@@ -40,17 +40,17 @@ namespace BZ {
         },
         {
             { 0.5f, -0.5f },
-            { MAX_TEX_COORD, 0 },
+            { UINT16_MAX_VALUE, 0 },
             0
         },
         {
             { 0.5f, 0.5f },
-            { MAX_TEX_COORD, MAX_TEX_COORD },
+            { UINT16_MAX_VALUE, UINT16_MAX_VALUE },
             0
         },
         {
             { -0.5f, 0.5f },
-            { 0, MAX_TEX_COORD },
+            { 0, UINT16_MAX_VALUE },
             0
         }
     };
