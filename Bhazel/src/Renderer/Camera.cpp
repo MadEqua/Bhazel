@@ -52,6 +52,7 @@ namespace BZ {
         viewMatrix = glm::rotate(viewMatrix, glm::radians(-eulerRotation.x), glm::vec3(1, 0, 0));
         viewMatrix = glm::rotate(viewMatrix, glm::radians(-eulerRotation.z), glm::vec3(0, 0, 1));
         viewMatrix = glm::translate(viewMatrix, -position);
+
         viewProjectionMatrix = projectionMatrix * viewMatrix;
     }
 }

@@ -11,12 +11,12 @@
 namespace BZ {
 
     OrthographicCameraController::OrthographicCameraController() :
-        CameraController(OrthographicCamera(), 1.0f),
+        CameraController(OrthographicCamera()),
         enableRotation(false) {
     }
 
     OrthographicCameraController::OrthographicCameraController(float left, float right, float bottom, float top, float near, float far, bool enableRotation) :
-        CameraController(OrthographicCamera(left, right, bottom, top, near, far), 1.0f),
+        CameraController(OrthographicCamera(left, right, bottom, top, near, far)),
         originalLeft(left), originalRight(right), originalBottom(bottom), originalTop(top), near(near), far(far),
         enableRotation(enableRotation) {
     }
@@ -89,13 +89,13 @@ namespace BZ {
 
 
     PerspectiveCameraController::PerspectiveCameraController() :
-        CameraController(PerspectiveCamera(), 1.0f),
+        CameraController(PerspectiveCamera()),
         fovy(50.0f),
         aspectRatio(16.0f / 10.0f) {
     }
 
     PerspectiveCameraController::PerspectiveCameraController(float fovy, float aspectRatio) :
-        CameraController(PerspectiveCamera(fovy * zoom, aspectRatio), 1.0f),
+        CameraController(PerspectiveCamera(fovy, aspectRatio)),
         fovy(fovy),
         aspectRatio(aspectRatio) {
     }
@@ -126,30 +126,30 @@ namespace BZ {
 
 
         bool positionChanged = false;
-        glm::vec3 localMovement = {};
+        glm::vec3 movementDir = {};
 
         if(input.isKeyPressed(BZ_KEY_A)) {
-            localMovement += glm::vec3(-1.0f, 0.0f, 0.0f);
+            movementDir += glm::vec3(-1.0f, 0.0f, 0.0f);
             positionChanged = true;
         }
         else if(input.isKeyPressed(BZ_KEY_D)) {
-            localMovement += glm::vec3(1.0, 0.0f, 0.0f);
+            movementDir += glm::vec3(1.0, 0.0f, 0.0f);
             positionChanged = true;
         }
 
         if(input.isKeyPressed(BZ_KEY_W)) {
-            localMovement += glm::vec3(0.0f, 0.0f, -1.0f);
+            movementDir += glm::vec3(0.0f, 0.0f, -1.0f);
             positionChanged = true;
         }
         else if(input.isKeyPressed(BZ_KEY_S)) {
-            localMovement += glm::vec3(0.0f, 0.0f, 1.0f);
+            movementDir += glm::vec3(0.0f, 0.0f, 1.0f);
             positionChanged = true;
         }
 
         if(positionChanged) {
-            glm::vec4 worldMovement = glm::transpose(camera.getViewMatrix()) * 
-                glm::vec4(localMovement * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds(), 0.0f);
-            camera.setPosition(camera.getPosition() + glm::vec3(worldMovement));
+            glm::vec3 localMovement = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            glm::vec3 worldMovement = glm::transpose(glm::mat3(camera.getViewMatrix())) * localMovement;
+            camera.setPosition(camera.getPosition() + worldMovement);
         }
     }
 

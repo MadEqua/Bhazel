@@ -23,21 +23,21 @@ namespace BZ {
         const T& getCamera() const { return camera; }
 
     protected:
-        CameraController(T &camera, float zoom);
+        CameraController(T &camera);
 
         virtual bool onMouseScrolled(const MouseScrolledEvent &e) = 0;
         virtual bool onWindowResized(const WindowResizedEvent &e) = 0;
 
-        float zoom;
+        float zoom = 1.0f;
 
-        float cameraMoveSpeed = 200.0f;
+        float cameraMoveSpeed = 100.0f;
         float cameraZoomSpeed = 0.1f;
 
         T camera;
     };
 
     template<typename T>
-    CameraController<T>::CameraController(T &camera, float zoom) :
+    CameraController<T>::CameraController(T &camera) :
         camera(camera), zoom(zoom) {
     }
 

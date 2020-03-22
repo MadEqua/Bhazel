@@ -99,20 +99,18 @@ namespace BZ {
         rasterizerState.frontFaceCounterClockwise = true;
         pipelineStateData.rasterizerState = rasterizerState;
 
-        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
-
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
+        pipelineStateData.blendingState = blendingState;
+
+        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
 
         pipelineStateData.dataLayout = vertexLayout;
-
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
-        //pipelineStateData.descriptorSetLayouts = { rendererData.descriptorSetLayout };
-        pipelineStateData.blendingState = blendingState;
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
     }
 

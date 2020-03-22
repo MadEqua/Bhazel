@@ -37,7 +37,7 @@ void ParticleLayer::onGraphicsContextCreated() {
     ranges2.accelerationRange = { 0.0f, -100.0f };
     
     particleSystem.addEmitter({ 0.0f, 0.0f }, 3'000, -1, ranges2, tex1);
-    particleSystem.addEmitter({ 0.0f, 0.0f }, 50'000, -1, ranges, tex2);
+    particleSystem.addEmitter({ 0.0f, 0.0f }, 5'000, -1, ranges, tex2);
 
     particleSystem.start();
 }
@@ -84,8 +84,8 @@ void Layer3D::onAttach() {
 }
 
 void Layer3D::onGraphicsContextCreated() {
-    cameraController = BZ::PerspectiveCameraController(50.0f, application.getWindow().getRatio());
-    cameraController.getCamera().setPosition({ 0.0f, 0.0f, 5.0f });
+    cameraController = BZ::PerspectiveCameraController(50.0f, application.getWindow().getAspectRatio());
+    cameraController.getCamera().setPosition({ 0.0f, 0.0f, 10.0f });
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
