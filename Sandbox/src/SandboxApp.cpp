@@ -13,8 +13,9 @@ void ParticleLayer::onAttach() {
 void ParticleLayer::onGraphicsContextCreated() {
     const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
-    cameraController = BZ::OrthographicCameraController(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
-    cameraController.getCamera().setPosition({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
+    camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
+    camera.getTransform().setTranslation({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
+    cameraController = BZ::OrthographicCameraController(camera);
 
     tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
     tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", BZ::TextureFormat::R8G8B8A8_SRGB, true);
@@ -84,8 +85,9 @@ void Layer3D::onAttach() {
 }
 
 void Layer3D::onGraphicsContextCreated() {
-    cameraController = BZ::PerspectiveCameraController(50.0f, application.getWindow().getAspectRatio());
-    cameraController.getCamera().setPosition({ 0.0f, 0.0f, 10.0f });
+    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio());
+    camera.getTransform().setTranslation({ 0.0f, 5.0f, 5.0f });
+    cameraController = BZ::RotateCameraController(camera);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {

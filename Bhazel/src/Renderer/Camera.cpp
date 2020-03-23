@@ -9,50 +9,35 @@
 namespace BZ {
 
     OrthographicCamera::OrthographicCamera() {
-        computeProjectionMatrix(-1, 1, -1, 1, 0, 1);
-        computeViewMatrix();
     }
 
     OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, float near, float far) {
-        computeProjectionMatrix(left, right, bottom, top, near, far);
-        computeViewMatrix();
+        parameters.left = left;
+        parameters.right = right;
+        parameters.bottom = bottom;
+        parameters.top = top;
+        parameters.near = near;
+        parameters.far = far;
+        computeProjectionMatrix();
     }
 
-    void OrthographicCamera::computeProjectionMatrix(float left, float right, float bottom, float top, float near, float far) {
-        projectionMatrix = Utils::ortho(left, right, bottom, top, near, far);
-        viewProjectionMatrix = projectionMatrix * viewMatrix;
-    }
-
-    void OrthographicCamera::computeViewMatrix() {
-        glm::mat4 iden(1.0f);
-        viewMatrix = glm::rotate(iden, glm::radians(-rotationDeg), glm::vec3(0, 0, 1));
-        viewMatrix = glm::translate(viewMatrix, -position);
-        viewProjectionMatrix = projectionMatrix * viewMatrix;
+    void OrthographicCamera::computeProjectionMatrix() {
+        projectionMatrix = Utils::ortho(parameters.left, parameters.right, parameters.bottom, parameters.top, parameters.near, parameters.far);
     }
 
 
     PerspectiveCamera::PerspectiveCamera() {
-        computeProjectionMatrix(50.0f, 16.0f/10.0f, 0.1f, 100.0f);
-        computeViewMatrix();
     }
 
     PerspectiveCamera::PerspectiveCamera(float fovy, float aspectRatio, float near, float far) {
-        computeProjectionMatrix(fovy, aspectRatio, near, far);
-        computeViewMatrix();
+        parameters.fovy = fovy;
+        parameters.aspectRatio = aspectRatio;
+        parameters.near = near;
+        parameters.far = far;
+        computeProjectionMatrix();
     }
 
-    void PerspectiveCamera::computeProjectionMatrix(float fovy, float aspectRatio, float near, float far) {
-        projectionMatrix = Utils::perspective(fovy, aspectRatio, near, far);
-        viewProjectionMatrix = projectionMatrix * viewMatrix;
-    }
-
-    void PerspectiveCamera::computeViewMatrix() {
-        glm::mat4 iden(1.0f);
-        viewMatrix = glm::rotate(iden, glm::radians(-eulerRotation.y), glm::vec3(0, 1, 0));
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(-eulerRotation.x), glm::vec3(1, 0, 0));
-        viewMatrix = glm::rotate(viewMatrix, glm::radians(-eulerRotation.z), glm::vec3(0, 0, 1));
-        viewMatrix = glm::translate(viewMatrix, -position);
-
-        viewProjectionMatrix = projectionMatrix * viewMatrix;
+    void PerspectiveCamera::computeProjectionMatrix() {
+        projectionMatrix = Utils::perspective(parameters.fovy, parameters.aspectRatio, parameters.near, parameters.far);
     }
 }

@@ -12,9 +12,9 @@ namespace BZ {
     RendererStats Renderer::stats;
 
     static DataLayout vertexLayout = {
-        { DataType::Uint16, DataElements::Vec3, "POSITION", true },
-        { DataType::Uint16, DataElements::Vec3, "NORMAL", true },
-        { DataType::Uint16, DataElements::Vec3, "TANGENT", true },
+        { DataType::Int16, DataElements::Vec3, "POSITION", true },
+        { DataType::Int16, DataElements::Vec3, "NORMAL", true },
+        { DataType::Int16, DataElements::Vec3, "TANGENT", true },
         { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
     };
 
@@ -23,62 +23,68 @@ namespace BZ {
     };
 
     struct Vertex {
-        uint16 pos[3];
-        uint16 normal[3];
-        uint16 tangent[3];
+        int16 pos[3];
+        int16 normal[3];
+        int16 tangent[3];
         uint16 texCoord[2];
     };
 
     constexpr int CUBE_VERTEX_COUNT = 36;
-    constexpr uint16 ONE = 0xffff;
+    
+    constexpr int16 NEG_ONE_I = 0xf88001;
+    constexpr int16 ONE_I = 0x7fff - 1;
+
+    constexpr uint16 ZERO = 0;
+    constexpr uint16 ONE_UI = 0xffff - 1;
+
     Vertex cubeVertices[CUBE_VERTEX_COUNT] = {
         //Front
-        { { -ONE, -ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { 0, 0 } },
-        { { ONE, -ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { ONE, 0 } },
-        { { ONE, ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { ONE, ONE } },
-        { { -ONE, -ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { 0, 0 } },
-        { { ONE, ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { ONE, ONE } },
-        { { -ONE, ONE, ONE }, { 0, 0, ONE }, { ONE, 0, 0 }, { 0, ONE } },
+        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { ONE_I, NEG_ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
+        { { ONE_I, ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { ONE_I, ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
 
         //Right
-        { { ONE, -ONE, ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { 0, 0 } },
-        { { ONE, -ONE, -ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { ONE, 0 } },
-        { { ONE, ONE, -ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { ONE, ONE } },
-        { { ONE, -ONE, ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { 0, 0 } },
-        { { ONE, ONE, -ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { ONE, ONE } },
-        { { ONE, ONE, ONE }, { ONE, 0, 0 }, { 0, 0, -ONE }, { 0, ONE } },
+        { { ONE_I, NEG_ONE_I, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ZERO, ZERO } },
+        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ONE_UI, ZERO } },
+        { { ONE_I, ONE_I, NEG_ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ONE_UI, ONE_UI } },
+        { { ONE_I, NEG_ONE_I, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ZERO, ZERO } },
+        { { ONE_I, ONE_I, NEG_ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ONE_UI, ONE_UI } },
+        { { ONE_I, ONE_I, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ZERO, ONE_UI } },
 
         //Left
-        { { -ONE, -ONE, -ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { 0, 0 } },
-        { { -ONE, -ONE, ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { ONE, 0 } },
-        { { -ONE, ONE, ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { ONE, ONE } },
-        { { -ONE, -ONE, -ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { 0, 0 } },
-        { { -ONE, ONE, ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { ONE, ONE } },
-        { { -ONE, ONE, -ONE }, { -ONE, 0, 0 }, { 0, 0, ONE }, { 0, ONE } },
+        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ZERO, ZERO } },
+        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ONE_UI, ZERO } },
+        { { NEG_ONE_I, ONE_I, ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ZERO, ZERO } },
+        { { NEG_ONE_I, ONE_I, ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ZERO, ONE_UI } },
 
         //Back
-        { { ONE, -ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { 0, 0 } },
-        { { -ONE, -ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { ONE, 0 } },
-        { { -ONE, ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { ONE, ONE } },
-        { { ONE, -ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { 0, 0 } },
-        { { -ONE, ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { ONE, ONE } },
-        { { ONE, ONE, -ONE }, { 0, 0, -ONE }, { -ONE, 0, 0 }, { 0, ONE } },
+        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
+        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
 
         //Bottom
-        { { -ONE, -ONE, -ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { 0, 0 } },
-        { { ONE, -ONE, -ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { ONE, 0 } },
-        { { ONE, -ONE, ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { ONE, ONE } },
-        { { -ONE, -ONE, -ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { 0, 0 } },
-        { { ONE, -ONE, ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { ONE, ONE } },
-        { { -ONE, -ONE, ONE }, { 0, -ONE, 0 }, { -ONE, 0, 0 }, { 0, ONE } },
+        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
+        { { ONE_I, NEG_ONE_I, ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { ONE_I, NEG_ONE_I, ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
 
         //Top
-        { { -ONE, ONE, ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { 0, 0 } },
-        { { ONE, ONE, ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { ONE, 0 } },
-        { { ONE, ONE, -ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { ONE, ONE } },
-        { { -ONE, ONE, ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { 0, 0 } },
-        { { ONE, ONE, -ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { ONE, ONE } },
-        { { -ONE, ONE, -ONE }, { 0, ONE, 0 }, { ONE, 0, 0 }, { 0, ONE } },
+        { { NEG_ONE_I, ONE_I, ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { ONE_I, ONE_I, ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
+        { { ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, ONE_I, ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
+        { { ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
     };
 
     static struct RendererData {

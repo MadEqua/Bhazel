@@ -82,7 +82,9 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
+    BZ::OrthographicCamera camera;
     BZ::OrthographicCameraController cameraController;
+
     BrickMap brickMap;
     Ball ball;
     Paddle paddle;

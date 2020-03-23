@@ -15,6 +15,7 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
+    BZ::OrthographicCamera camera;
     BZ::OrthographicCameraController cameraController;
 
     BZ::Ref<BZ::Texture2D> tex1;
@@ -36,7 +37,8 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    BZ::PerspectiveCameraController cameraController;
+    BZ::PerspectiveCamera camera;
+    BZ::RotateCameraController cameraController;
 };
 
 

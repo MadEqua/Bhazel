@@ -3,6 +3,9 @@
 #undef near
 #undef far
 
+#include "Transform.h"
+
+
 namespace BZ {
 
     class Camera {
@@ -10,21 +13,14 @@ namespace BZ {
         virtual ~Camera() = default;
 
         const glm::mat4& getProjectionMatrix() const { return projectionMatrix; }
-        const glm::mat4& getViewMatrix() const { return viewMatrix; }
-        const glm::mat4& getViewProjectionMatrix() const { return viewProjectionMatrix; }
+        const glm::mat4& getViewMatrix() const { return transform.getParentToLocalMatrix(); }
 
-        const glm::vec3& getPosition() const { return position; }
-        void setPosition(const glm::vec3 &pos) { position = pos; computeViewMatrix(); }
-        void setPosition(float x, float y, float z) { position.x = x; position.y = y; position.z = z; computeViewMatrix(); }
+        Transform& getTransform() { return transform; }
+        const Transform& getTransform() const { return transform; }
 
     protected:
-        virtual void computeViewMatrix() = 0;
-
+        Transform transform;
         glm::mat4 projectionMatrix;
-        glm::mat4 viewMatrix;
-        glm::mat4 viewProjectionMatrix;
-
-        glm::vec3 position = {};
     };
 
 
@@ -34,15 +30,22 @@ namespace BZ {
         OrthographicCamera();
         OrthographicCamera(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
         
-        void computeProjectionMatrix(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
+        float getRotation() const { return transform.getRotationEuler().z; }
+        void setRotation(float rotDeg) { transform.setRotationEuler(0.0f, 0.0f, rotDeg); }
 
-        float getRotation() const { return rotationDeg; }
-        void setRotation(float rotDeg) { rotationDeg = rotDeg; computeViewMatrix(); }
-    
+        struct Parameters {
+            float left, right;
+            float bottom, top;
+            float near, far;
+        };
+
+        Parameters& getParameters() { return parameters;  }
+        void setParameters(const Parameters &parameters) { this->parameters = parameters; computeProjectionMatrix(); }
+
     private:
-        void computeViewMatrix() override;
+        Parameters parameters;
 
-        float rotationDeg = 0.0f;
+        void computeProjectionMatrix();
     };
 
 
@@ -51,14 +54,18 @@ namespace BZ {
         PerspectiveCamera();
         PerspectiveCamera(float fovy, float aspectRatio, float near = 0.1f, float far = 100.0f);
         
-        void computeProjectionMatrix(float fovy, float aspectRatio, float near = 0.1f, float far = 100.0f);
+        struct Parameters {
+            float fovy;
+            float aspectRatio;
+            float near, far;
+        };
 
-        const glm::vec3& getRotation() const { return eulerRotation; }
-        void setRotation(const glm::vec3 &rot) { eulerRotation = rot; computeViewMatrix(); }
+        Parameters& getParameters() { return parameters; }
+        void setParameters(const Parameters &parameters) { this->parameters = parameters; computeProjectionMatrix(); }
 
     private:
-        void computeViewMatrix() override;
+        Parameters parameters;
 
-        glm::vec3 eulerRotation = {};
+        void computeProjectionMatrix();
     };
 }

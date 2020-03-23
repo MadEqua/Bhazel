@@ -6,13 +6,8 @@
 
 namespace BZ {
 
+    //TODO
     class Mesh {
-    };
-
-    class Transform {
-        glm::vec3 translation = {};
-        glm::vec3 rotationEuler = {};
-        glm::vec3 scale = { 1.0f, 1.0f, 1.0f };
     };
 
     struct RendererStats {

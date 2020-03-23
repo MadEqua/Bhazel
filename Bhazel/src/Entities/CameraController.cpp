@@ -10,19 +10,23 @@
 
 namespace BZ {
 
-    OrthographicCameraController::OrthographicCameraController() :
-        CameraController(OrthographicCamera()),
+    OrthographicCameraController::OrthographicCameraController() {
+    }
+
+    OrthographicCameraController::OrthographicCameraController(OrthographicCamera &camera, bool enableRotation) :
+        CameraController(camera),
+        originalParameters(camera.getParameters()),
         enableRotation(false) {
     }
 
-    OrthographicCameraController::OrthographicCameraController(float left, float right, float bottom, float top, float near, float far, bool enableRotation) :
+    /*OrthographicCameraController::OrthographicCameraController(float left, float right, float bottom, float top, float near, float far, bool enableRotation) :
         CameraController(OrthographicCamera(left, right, bottom, top, near, far)),
         originalLeft(left), originalRight(right), originalBottom(bottom), originalTop(top), near(near), far(far),
         enableRotation(enableRotation) {
-    }
+    }*/
 
     void OrthographicCameraController::onUpdate(const FrameStats &frameStats) {
-        auto cameraPosition = camera.getPosition();
+        auto cameraPosition = camera->getTransform().getTranslation();
         bool positionChanged = false;
 
         Input &input = Application::getInstance().getInput();
@@ -45,10 +49,10 @@ namespace BZ {
         }
 
         if(positionChanged) 
-            camera.setPosition(cameraPosition);
+            camera->getTransform().setTranslation(cameraPosition);
 
         if(enableRotation) {
-            auto cameraRotation = camera.getRotation();
+            auto cameraRotation = camera->getRotation();
             bool rotationChanged = false;
 
             if(input.isKeyPressed(BZ_KEY_Q)) {
@@ -61,15 +65,15 @@ namespace BZ {
             }
 
             if(rotationChanged)
-                camera.setRotation(cameraRotation);
+                camera->setRotation(cameraRotation);
         }
     }
 
     bool OrthographicCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
         zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
         
-        float originalWidth = originalRight - originalLeft;
-        float originalHeight = originalTop - originalBottom;
+        float originalWidth = originalParameters.right - originalParameters.left;
+        float originalHeight = originalParameters.top - originalParameters.bottom;
 
         float newWidth = zoom * originalWidth;
         float newHeight = zoom * originalHeight;
@@ -77,9 +81,15 @@ namespace BZ {
         float diffX = newWidth - originalWidth;
         float diffY = newHeight - originalHeight;
 
-        camera.computeProjectionMatrix(originalLeft - diffX * 0.5f, originalRight + diffX * 0.5f,
-                                       originalBottom - diffY * 0.5f, originalTop + diffY * 0.5f,
-                                       near, far);
+        OrthographicCamera::Parameters params;
+        params.left = originalParameters.left - diffX * 0.5f;
+        params.right = originalParameters.right - diffX * 0.5f;
+        params.bottom = originalParameters.bottom - diffY * 0.5f;
+        params.top = originalParameters.top - diffY * 0.5f;
+        params.near = originalParameters.near;
+        params.far = originalParameters.far;
+        camera->setParameters(params);
+
         return false;
     }
 
@@ -88,19 +98,21 @@ namespace BZ {
     }
 
 
-    PerspectiveCameraController::PerspectiveCameraController() :
-        CameraController(PerspectiveCamera()),
-        fovy(50.0f),
-        aspectRatio(16.0f / 10.0f) {
+    FreeCameraController::FreeCameraController() {
     }
 
-    PerspectiveCameraController::PerspectiveCameraController(float fovy, float aspectRatio) :
+    FreeCameraController::FreeCameraController(PerspectiveCamera &camera) :
+        CameraController(camera),
+        originalParameters(camera.getParameters()) {
+    }
+
+    /*FreeCameraController::FreeCameraController(float fovy, float aspectRatio) :
         CameraController(PerspectiveCamera(fovy, aspectRatio)),
         fovy(fovy),
         aspectRatio(aspectRatio) {
     }
-
-    void PerspectiveCameraController::onUpdate(const FrameStats &frameStats) {
+    */
+    void FreeCameraController::onUpdate(const FrameStats &frameStats) {
         Input &input = Application::getInstance().getInput();
         auto mousePosition = input.getMousePosition();
         const auto windowSize = Application::getInstance().getWindow().getDimensions();
@@ -112,10 +124,10 @@ namespace BZ {
                 lastMousePosition = mousePosition;
 
                 if(input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
-                    auto cameraRotation = camera.getRotation();
+                    auto cameraRotation = camera->getTransform().getRotationEuler();
                     cameraRotation.y -= static_cast<float>(dif.x) * 0.2f;
                     cameraRotation.x -= static_cast<float>(dif.y) * 0.2f;
-                    camera.setRotation(cameraRotation);
+                    camera->getTransform().setRotationEuler(cameraRotation);
                 }
             }
             else
@@ -148,20 +160,136 @@ namespace BZ {
 
         if(positionChanged) {
             glm::vec3 localMovement = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
-            glm::vec3 worldMovement = glm::transpose(glm::mat3(camera.getViewMatrix())) * localMovement;
-            camera.setPosition(camera.getPosition() + worldMovement);
+            glm::vec3 worldMovement = glm::transpose(glm::mat3(camera->getViewMatrix())) * localMovement;
+            camera->getTransform().setTranslation(camera->getTransform().getTranslation() + worldMovement);
         }
     }
 
-    bool PerspectiveCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
+    bool FreeCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
         zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
-        camera.computeProjectionMatrix(fovy * zoom, aspectRatio);
+
+        PerspectiveCamera::Parameters params;
+        params.fovy = originalParameters.fovy * zoom;
+        params.aspectRatio = originalParameters.aspectRatio;
+        params.near = originalParameters.near;
+        params.far = originalParameters.far;
+        camera->setParameters(params);
         return false;
     }
 
-    bool PerspectiveCameraController::onWindowResized(const WindowResizedEvent &e) {
-        aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());
-        camera.computeProjectionMatrix(fovy * zoom, aspectRatio);
+    bool FreeCameraController::onWindowResized(const WindowResizedEvent &e) {
+        PerspectiveCamera::Parameters params;
+        params.fovy = originalParameters.fovy * zoom;
+        params.aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());
+        params.near = originalParameters.near;
+        params.far = originalParameters.far;
+        camera->setParameters(params);
         return false;
+    }
+
+
+    RotateCameraController::RotateCameraController() {
+    }
+
+    RotateCameraController::RotateCameraController(PerspectiveCamera &camera) :
+        CameraController(camera),
+        originalParameters(camera.getParameters()) {
+
+        originalDistance = glm::length(camera.getTransform().getTranslation());
+        camera.getTransform().lookAt(glm::vec3(0.0f));
+    }
+
+    /*RotateCameraController::RotateCameraController(float fovy, float aspectRatio) :
+        CameraController(PerspectiveCamera(fovy, aspectRatio)),
+        fovy(fovy),
+        aspectRatio(aspectRatio) {
+
+        compute();
+    }*/
+
+    void RotateCameraController::onUpdate(const FrameStats &frameStats) {
+        Input &input = Application::getInstance().getInput();
+        auto mousePosition = input.getMousePosition();
+        const auto windowSize = Application::getInstance().getWindow().getDimensions();
+
+        /*if (mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
+            if (lastMousePosition.x != -1 && lastMousePosition.y != -1) {
+
+                auto dif = mousePosition - lastMousePosition;
+                lastMousePosition = mousePosition;
+
+                if (input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
+                    auto cameraRotation = camera.getRotation();
+                    cameraRotation.y -= static_cast<float>(dif.x) * 0.2f;
+                    cameraRotation.x -= static_cast<float>(dif.y) * 0.2f;
+                    camera.setRotation(cameraRotation);
+                }
+            }
+            else
+                lastMousePosition = mousePosition;
+        }
+        else
+            lastMousePosition = { -1, -1 };*/
+
+
+        bool positionChanged = false;
+        glm::vec3 rotationDir = {};
+
+        if (input.isKeyPressed(BZ_KEY_A)) {
+            rotationDir += glm::vec3(0.0f, -1.0f, 0.0f);
+            positionChanged = true;
+        }
+        else if (input.isKeyPressed(BZ_KEY_D)) {
+            rotationDir += glm::vec3(1.0, 1.0f, 0.0f);
+            positionChanged = true;
+        }
+
+        if (input.isKeyPressed(BZ_KEY_W)) {
+            rotationDir += glm::vec3(0.0f, 0.0f, -1.0f);
+            positionChanged = true;
+        }
+        else if (input.isKeyPressed(BZ_KEY_S)) {
+            rotationDir += glm::vec3(0.0f, 0.0f, 1.0f);
+            positionChanged = true;
+        }
+
+        if (positionChanged) {
+            rotationY += rotationDir.y * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            rotationZ += rotationDir.z * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            
+            //TODO use rotationZ
+            glm::vec3 cameraPosition = { originalDistance * glm::sin(glm::radians(rotationY)), 
+                                         camera->getTransform().getTranslation().y,
+                                         originalDistance * glm::cos(glm::radians(rotationY)) };
+
+            camera->getTransform().setTranslation(cameraPosition);
+            camera->getTransform().lookAt(glm::vec3(0.0f));
+        }
+    }
+
+    bool RotateCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
+        zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
+
+        PerspectiveCamera::Parameters params;
+        params.fovy = originalParameters.fovy * zoom;
+        params.aspectRatio = originalParameters.aspectRatio;
+        params.near = originalParameters.near;
+        params.far = originalParameters.far;
+        camera->setParameters(params);
+        return false;
+    }
+
+    bool RotateCameraController::onWindowResized(const WindowResizedEvent &e) {
+        PerspectiveCamera::Parameters params;
+        params.fovy = originalParameters.fovy * zoom;
+        params.aspectRatio = static_cast<float>(e.getWidth()) / static_cast<float>(e.getHeight());
+        params.near = originalParameters.near;
+        params.far = originalParameters.far;
+        camera->setParameters(params);
+        return false;
+    }
+
+    void RotateCameraController::compute() {
+;
     }
 }
