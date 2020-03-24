@@ -27,7 +27,7 @@ namespace BZ {
     //Meant for 2D rendering.
     class OrthographicCamera : public Camera {
     public:
-        OrthographicCamera();
+        OrthographicCamera() = default;
         OrthographicCamera(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
         
         float getRotation() const { return transform.getRotationEuler().z; }
@@ -51,7 +51,7 @@ namespace BZ {
 
     class PerspectiveCamera : public Camera {
     public:
-        PerspectiveCamera();
+        PerspectiveCamera() = default;
         PerspectiveCamera(float fovy, float aspectRatio, float near = 0.1f, float far = 100.0f);
         
         struct Parameters {

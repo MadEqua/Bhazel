@@ -8,9 +8,6 @@
 
 namespace BZ {
 
-    OrthographicCamera::OrthographicCamera() {
-    }
-
     OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, float near, float far) {
         parameters.left = left;
         parameters.right = right;
@@ -25,9 +22,6 @@ namespace BZ {
         projectionMatrix = Utils::ortho(parameters.left, parameters.right, parameters.bottom, parameters.top, parameters.near, parameters.far);
     }
 
-
-    PerspectiveCamera::PerspectiveCamera() {
-    }
 
     PerspectiveCamera::PerspectiveCamera(float fovy, float aspectRatio, float near, float far) {
         parameters.fovy = fovy;

@@ -10,20 +10,11 @@
 
 namespace BZ {
 
-    OrthographicCameraController::OrthographicCameraController() {
-    }
-
     OrthographicCameraController::OrthographicCameraController(OrthographicCamera &camera, bool enableRotation) :
         CameraController(camera),
         originalParameters(camera.getParameters()),
         enableRotation(false) {
     }
-
-    /*OrthographicCameraController::OrthographicCameraController(float left, float right, float bottom, float top, float near, float far, bool enableRotation) :
-        CameraController(OrthographicCamera(left, right, bottom, top, near, far)),
-        originalLeft(left), originalRight(right), originalBottom(bottom), originalTop(top), near(near), far(far),
-        enableRotation(enableRotation) {
-    }*/
 
     void OrthographicCameraController::onUpdate(const FrameStats &frameStats) {
         auto cameraPosition = camera->getTransform().getTranslation();
@@ -98,20 +89,11 @@ namespace BZ {
     }
 
 
-    FreeCameraController::FreeCameraController() {
-    }
-
     FreeCameraController::FreeCameraController(PerspectiveCamera &camera) :
         CameraController(camera),
         originalParameters(camera.getParameters()) {
     }
 
-    /*FreeCameraController::FreeCameraController(float fovy, float aspectRatio) :
-        CameraController(PerspectiveCamera(fovy, aspectRatio)),
-        fovy(fovy),
-        aspectRatio(aspectRatio) {
-    }
-    */
     void FreeCameraController::onUpdate(const FrameStats &frameStats) {
         Input &input = Application::getInstance().getInput();
         auto mousePosition = input.getMousePosition();
@@ -188,24 +170,18 @@ namespace BZ {
     }
 
 
-    RotateCameraController::RotateCameraController() {
-    }
-
     RotateCameraController::RotateCameraController(PerspectiveCamera &camera) :
         CameraController(camera),
         originalParameters(camera.getParameters()) {
 
-        originalDistance = glm::length(camera.getTransform().getTranslation());
+        const glm::vec3 &position = camera.getTransform().getTranslation();
+
+        camPosCilindrical[0] = glm::sqrt(position.x * position.x + position.z * position.z);
+        camPosCilindrical[1] = glm::atan(position.x, position.z);
+        camPosCilindrical[2] = position.y;
+
         camera.getTransform().lookAt(glm::vec3(0.0f));
     }
-
-    /*RotateCameraController::RotateCameraController(float fovy, float aspectRatio) :
-        CameraController(PerspectiveCamera(fovy, aspectRatio)),
-        fovy(fovy),
-        aspectRatio(aspectRatio) {
-
-        compute();
-    }*/
 
     void RotateCameraController::onUpdate(const FrameStats &frameStats) {
         Input &input = Application::getInstance().getInput();
@@ -240,27 +216,26 @@ namespace BZ {
             positionChanged = true;
         }
         else if (input.isKeyPressed(BZ_KEY_D)) {
-            rotationDir += glm::vec3(1.0, 1.0f, 0.0f);
+            rotationDir += glm::vec3(0.0, 1.0f, 0.0f);
             positionChanged = true;
         }
 
         if (input.isKeyPressed(BZ_KEY_W)) {
-            rotationDir += glm::vec3(0.0f, 0.0f, -1.0f);
+            rotationDir += glm::vec3(0.0f, 0.0f, 1.0f);
             positionChanged = true;
         }
         else if (input.isKeyPressed(BZ_KEY_S)) {
-            rotationDir += glm::vec3(0.0f, 0.0f, 1.0f);
+            rotationDir += glm::vec3(0.0f, 0.0f, -1.0f);
             positionChanged = true;
         }
 
         if (positionChanged) {
-            rotationY += rotationDir.y * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
-            rotationZ += rotationDir.z * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
-            
-            //TODO use rotationZ
-            glm::vec3 cameraPosition = { originalDistance * glm::sin(glm::radians(rotationY)), 
-                                         camera->getTransform().getTranslation().y,
-                                         originalDistance * glm::cos(glm::radians(rotationY)) };
+            camPosCilindrical[1] += rotationDir.y * cameraRotSpeed * frameStats.lastFrameTime.asSeconds();
+            camPosCilindrical[2] += rotationDir.z * cameraMovSpeed * frameStats.lastFrameTime.asSeconds();
+
+            glm::vec3 cameraPosition = { camPosCilindrical[0] * glm::sin(camPosCilindrical[1]),
+                                         camPosCilindrical[2],
+                                         camPosCilindrical[0] * glm::cos(camPosCilindrical[1]) };
 
             camera->getTransform().setTranslation(cameraPosition);
             camera->getTransform().lookAt(glm::vec3(0.0f));
@@ -287,9 +262,5 @@ namespace BZ {
         params.far = originalParameters.far;
         camera->setParameters(params);
         return false;
-    }
-
-    void RotateCameraController::compute() {
-;
     }
 }

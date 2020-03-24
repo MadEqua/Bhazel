@@ -50,9 +50,8 @@ namespace BZ {
 
     class OrthographicCameraController : public CameraController<OrthographicCamera> {
     public:
-        OrthographicCameraController();
+        OrthographicCameraController() = default;
         OrthographicCameraController(OrthographicCamera &camera, bool enableRotation = true);
-        //OrthographicCameraController(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f, bool enableRotation = true);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -70,9 +69,8 @@ namespace BZ {
 
     class FreeCameraController : public CameraController<PerspectiveCamera> {
     public:
-        FreeCameraController();
+        FreeCameraController() = default;
         FreeCameraController(PerspectiveCamera &camera);
-        //FreeCameraController(float fovy, float aspectRatio);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -87,13 +85,13 @@ namespace BZ {
     };
 
     /*
-    * Camera that rotates around and always looks at the origin.
+    * Camera that rotates around and looks at the origin.
+    * Using cilindrical coordinates to achieve that.
     */
     class RotateCameraController : public CameraController<PerspectiveCamera> {
     public:
-        RotateCameraController();
+        RotateCameraController() = default;
         RotateCameraController(PerspectiveCamera &camera);
-        //RotateCameraController(float fovy, float aspectRatio);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -101,16 +99,19 @@ namespace BZ {
         bool onMouseScrolled(const MouseScrolledEvent &e) override;
         bool onWindowResized(const WindowResizedEvent &e) override;
 
-        void compute();
-
         PerspectiveCamera::Parameters originalParameters;
 
-        float originalDistance;
+        /*
+        * (r, theta, z)
+        * r = cilinder radius
+        * theta = angle around the cilinder circle in radians (0 is on the z axis)
+        * z = height of the cilinder
+        */
+        glm::vec3 camPosCilindrical;
 
-        float rotationY = 0.0f;
-        float rotationZ = 0.0f;
+        float cameraRotSpeed = 2.0f;
+        float cameraMovSpeed = 10.0f;
 
-        float cameraMoveSpeed = 100.0f;
         glm::ivec2 lastMousePosition = { -1, -1 };
     };
 }

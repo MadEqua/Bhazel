@@ -12,7 +12,7 @@ void ParticleLayer::onAttach() {
 
 void ParticleLayer::onGraphicsContextCreated() {
     const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
-    const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
+    const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
     camera.getTransform().setTranslation({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
     cameraController = BZ::OrthographicCameraController(camera);
@@ -86,7 +86,7 @@ void Layer3D::onAttach() {
 
 void Layer3D::onGraphicsContextCreated() {
     camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio());
-    camera.getTransform().setTranslation({ 0.0f, 5.0f, 5.0f });
+    camera.getTransform().setTranslation({ 0.0f, 3.0f, 5.0f });
     cameraController = BZ::RotateCameraController(camera);
 }
 
