@@ -25,7 +25,7 @@ namespace BZ {
             cameraPosition.x -= cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
-        else if(input.isKeyPressed(BZ_KEY_D)) {
+        if(input.isKeyPressed(BZ_KEY_D)) {
             cameraPosition.x += cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
@@ -34,7 +34,7 @@ namespace BZ {
             cameraPosition.y += cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
-        else if(input.isKeyPressed(BZ_KEY_S)) {
+        if(input.isKeyPressed(BZ_KEY_S)) {
             cameraPosition.y -= cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
             positionChanged = true;
         }
@@ -103,7 +103,6 @@ namespace BZ {
             if(lastMousePosition.x != -1 && lastMousePosition.y != -1) {
 
                 auto dif = mousePosition - lastMousePosition;
-                lastMousePosition = mousePosition;
 
                 if(input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
                     auto cameraRotation = camera->getTransform().getRotationEuler();
@@ -112,8 +111,7 @@ namespace BZ {
                     camera->getTransform().setRotationEuler(cameraRotation);
                 }
             }
-            else
-                lastMousePosition = mousePosition;
+            lastMousePosition = mousePosition;
         }
         else
             lastMousePosition = {-1, -1};
@@ -126,7 +124,7 @@ namespace BZ {
             movementDir += glm::vec3(-1.0f, 0.0f, 0.0f);
             positionChanged = true;
         }
-        else if(input.isKeyPressed(BZ_KEY_D)) {
+        if(input.isKeyPressed(BZ_KEY_D)) {
             movementDir += glm::vec3(1.0, 0.0f, 0.0f);
             positionChanged = true;
         }
@@ -135,7 +133,7 @@ namespace BZ {
             movementDir += glm::vec3(0.0f, 0.0f, -1.0f);
             positionChanged = true;
         }
-        else if(input.isKeyPressed(BZ_KEY_S)) {
+        if(input.isKeyPressed(BZ_KEY_S)) {
             movementDir += glm::vec3(0.0f, 0.0f, 1.0f);
             positionChanged = true;
         }
@@ -188,54 +186,54 @@ namespace BZ {
         auto mousePosition = input.getMousePosition();
         const auto windowSize = Application::getInstance().getWindow().getDimensions();
 
-        /*if (mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
+        thetaAccel = 0.0f;
+
+        if (mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if (lastMousePosition.x != -1 && lastMousePosition.y != -1) {
 
                 auto dif = mousePosition - lastMousePosition;
-                lastMousePosition = mousePosition;
 
                 if (input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
-                    auto cameraRotation = camera.getRotation();
-                    cameraRotation.y -= static_cast<float>(dif.x) * 0.2f;
-                    cameraRotation.x -= static_cast<float>(dif.y) * 0.2f;
-                    camera.setRotation(cameraRotation);
+                    thetaAccel = dif.x * 0.1f;
                 }
             }
-            else
-                lastMousePosition = mousePosition;
+            lastMousePosition = mousePosition;
         }
         else
-            lastMousePosition = { -1, -1 };*/
+            lastMousePosition = { -1, -1 };
 
 
-        bool positionChanged = false;
-        glm::vec3 rotationDir = {};
+        bool changes = false;
+        thetaVelocity += thetaAccel;
+        thetaVelocity = glm::clamp(thetaVelocity, -8.0f, 8.0f);
 
-        if (input.isKeyPressed(BZ_KEY_A)) {
-            rotationDir += glm::vec3(0.0f, -1.0f, 0.0f);
-            positionChanged = true;
-        }
-        else if (input.isKeyPressed(BZ_KEY_D)) {
-            rotationDir += glm::vec3(0.0, 1.0f, 0.0f);
-            positionChanged = true;
+        if (glm::abs(thetaVelocity) > 0.0f) {
+            camPosCilindrical[1] += thetaVelocity * frameStats.lastFrameTime.asSeconds();
+            changes = true;
         }
 
+        thetaVelocity *= glm::pow(0.001f, frameStats.lastFrameTime.asSeconds());
+        if (glm::abs(thetaVelocity) < 0.01f) {
+            thetaVelocity = 0.0f;
+        }
+
+
+        float zMovement = 0.0f;
         if (input.isKeyPressed(BZ_KEY_W)) {
-            rotationDir += glm::vec3(0.0f, 0.0f, 1.0f);
-            positionChanged = true;
+            zMovement += 1.0f;
+            changes = true;
         }
-        else if (input.isKeyPressed(BZ_KEY_S)) {
-            rotationDir += glm::vec3(0.0f, 0.0f, -1.0f);
-            positionChanged = true;
+        if (input.isKeyPressed(BZ_KEY_S)) {
+            zMovement -= 1.0f;
+            changes = true;
         }
 
-        if (positionChanged) {
-            camPosCilindrical[1] += rotationDir.y * cameraRotSpeed * frameStats.lastFrameTime.asSeconds();
-            camPosCilindrical[2] += rotationDir.z * cameraMovSpeed * frameStats.lastFrameTime.asSeconds();
+        if (changes) {
+            camPosCilindrical[2] += zMovement * cameraMovSpeed * frameStats.lastFrameTime.asSeconds();
 
             glm::vec3 cameraPosition = { camPosCilindrical[0] * glm::sin(camPosCilindrical[1]),
-                                         camPosCilindrical[2],
-                                         camPosCilindrical[0] * glm::cos(camPosCilindrical[1]) };
+                camPosCilindrical[2],
+                camPosCilindrical[0] * glm::cos(camPosCilindrical[1]) };
 
             camera->getTransform().setTranslation(cameraPosition);
             camera->getTransform().lookAt(glm::vec3(0.0f));

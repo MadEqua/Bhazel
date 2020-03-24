@@ -109,7 +109,9 @@ namespace BZ {
         */
         glm::vec3 camPosCilindrical;
 
-        float cameraRotSpeed = 2.0f;
+        float thetaAccel = 0.0f;
+        float thetaVelocity = 0.0f;
+
         float cameraMovSpeed = 10.0f;
 
         glm::ivec2 lastMousePosition = { -1, -1 };
