@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Camera.h"
-#include "Graphics/Texture.h"
-
 
 namespace BZ {
+
+    class Camera;
+    class Transform;
 
     //TODO
     class Mesh {

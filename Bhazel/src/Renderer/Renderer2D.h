@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Camera.h"
 #include "Graphics/Texture.h"
 
 
 namespace BZ {
 
     class ParticleSystem2D;
+    class OrthographicCamera;
 
     struct Sprite {
         glm::vec2 position;

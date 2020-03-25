@@ -2,6 +2,8 @@
 
 #include "Renderer.h"
 
+#include "Camera.h"
+#include "Transform.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/DescriptorSet.h"
 #include "Core/Application.h"
@@ -31,7 +33,7 @@ namespace BZ {
 
     constexpr int CUBE_VERTEX_COUNT = 36;
     
-    constexpr int16 NEG_ONE_I = 0xf88001;
+    constexpr int16 NEG_ONE_I = 0x8001;
     constexpr int16 ONE_I = 0x7fff - 1;
 
     constexpr uint16 ZERO = 0;
@@ -196,10 +198,11 @@ namespace BZ {
     void Renderer::drawCube(const Transform &transform) {
         BZ_PROFILE_FUNCTION();
 
+        Graphics::beginObject(rendererData.commandBufferId, rendererData.pipelineState, transform.getLocalToParentMatrix());
+
         Graphics::bindBuffer(rendererData.commandBufferId, rendererData.cubeVertexBuffer, 0);
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
 
-        //TODO: bind transform data
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
         Graphics::draw(rendererData.commandBufferId, CUBE_VERTEX_COUNT, 1, 0, 0);

@@ -217,7 +217,6 @@ namespace BZ {
             thetaVelocity = 0.0f;
         }
 
-
         float zMovement = 0.0f;
         if (input.isKeyPressed(BZ_KEY_W)) {
             zMovement += 1.0f;

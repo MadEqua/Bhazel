@@ -7,6 +7,7 @@
 #include "Core/Application.h"
 #include "Core/Utils.h"
 #include "Renderer/ParticleSystem2D.h"
+#include "Camera.h"
 
 
 namespace BZ {

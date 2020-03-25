@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Constants.h"
-
 #include "Graphics/Buffer.h"
 #include "Graphics/Framebuffer.h"
 #include "Graphics/PipelineState.h"
@@ -39,7 +37,7 @@ namespace BZ {
         static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
 
         static void beginScene(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix); //TODO: more frameData
-        //static void beginObject(uint32 commandBufferId, const glm::mat4 &modelMatrix, const glm::vec3 &tint, uint32 textureIdx);
+        static void beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix);
 
         //Vertex or index buffer
         static void bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset);

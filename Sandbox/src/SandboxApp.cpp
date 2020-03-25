@@ -82,6 +82,8 @@ Layer3D::Layer3D() :
 }
 
 void Layer3D::onAttach() {
+    cubeTransforms[1].setTranslation(1.5f, 0.0f, 0.0f);
+    cubeTransforms[1].setScale(0.5f, 0.5f, 0.5f);
 }
 
 void Layer3D::onGraphicsContextCreated() {
@@ -98,7 +100,11 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     cameraController.onUpdate(frameStats);
 
     BZ::Renderer::beginScene(cameraController.getCamera());
-    BZ::Renderer::drawCube(BZ::Transform());
+
+    for (int i = 0; i < sizeof(cubeTransforms) / sizeof(BZ::Transform); ++i) {
+        BZ::Renderer::drawCube(cubeTransforms[i]);
+    }
+
     BZ::Renderer::endScene();
 }
 
@@ -108,6 +114,27 @@ void Layer3D::onEvent(BZ::Event &event) {
 
 void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
+
+    for (int i = 0; i < sizeof(cubeTransforms) / sizeof(BZ::Transform); ++i) {
+        auto translation = cubeTransforms[i].getTranslation();
+        auto rot = cubeTransforms[i].getRotationEuler();
+        auto scale = cubeTransforms[i].getScale();
+
+        ImGui::Begin("Transforms");
+        ImGui::PushID(i);
+        if (ImGui::DragFloat3("Translation", &translation[0], 0.1f, -10.0f, 10.0f)) {
+            cubeTransforms[i].setTranslation(translation);
+        }
+        if (ImGui::DragFloat3("Rot", &rot[0], 1.0f, -359.0f, 359.0f)) {
+            cubeTransforms[i].setRotationEuler(rot);
+        }
+        if (ImGui::DragFloat3("Scale", &scale[0], 0.1f, 0.0f, 10.0f)) {
+            cubeTransforms[i].setScale(scale);
+        }
+        ImGui::Separator();
+        ImGui::PopID();
+        ImGui::End();
+    }
 }
 
 

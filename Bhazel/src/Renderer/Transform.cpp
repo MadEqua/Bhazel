@@ -81,8 +81,10 @@ namespace BZ {
         localToParentMatrix = glm::rotate(localToParentMatrix, glm::radians(rotationEuler.z), glm::vec3(0, 0, 1));
         localToParentMatrix = glm::rotate(localToParentMatrix, glm::radians(rotationEuler.x), glm::vec3(1, 0, 0));
         localToParentMatrix = glm::rotate(localToParentMatrix, glm::radians(rotationEuler.y), glm::vec3(0, 1, 0));
+        localToParentMatrix = glm::scale(localToParentMatrix, scale);
 
-        parentToLocalMatrix = glm::rotate(iden, glm::radians(-rotationEuler.y), glm::vec3(0, 1, 0));
+        parentToLocalMatrix = glm::scale(iden, scale);
+        parentToLocalMatrix = glm::rotate(parentToLocalMatrix, glm::radians(-rotationEuler.y), glm::vec3(0, 1, 0));
         parentToLocalMatrix = glm::rotate(parentToLocalMatrix, glm::radians(-rotationEuler.x), glm::vec3(1, 0, 0));
         parentToLocalMatrix = glm::rotate(parentToLocalMatrix, glm::radians(-rotationEuler.z), glm::vec3(0, 0, 1));
         parentToLocalMatrix = glm::translate(parentToLocalMatrix, -translation);

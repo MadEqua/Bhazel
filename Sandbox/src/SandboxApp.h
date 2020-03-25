@@ -37,6 +37,8 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
+    BZ::Transform cubeTransforms[2];
+
     BZ::PerspectiveCamera camera;
     BZ::RotateCameraController cameraController;
 };
