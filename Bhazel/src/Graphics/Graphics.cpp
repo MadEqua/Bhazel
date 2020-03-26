@@ -22,6 +22,7 @@ namespace BZ {
 
     struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
         glm::mat4 modelMatrix;
+        glm::mat4 normalMatrix; //mat4 to respect std140 mat3 alignment
     };
 
     constexpr uint32 FRAME_CONSTANT_BUFFER_SIZE = sizeof(FrameConstantBufferData);
@@ -170,7 +171,7 @@ namespace BZ {
         command.clearAttachmentsData.clearValue = clearValue;
     }
 
-    void Graphics::beginScene(uint32 commandBufferId, const Ref<PipelineState>& pipelineState, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
+    void Graphics::beginScene(uint32 commandBufferId, const Ref<PipelineState>& pipelineState, const glm::vec3 &cameraPosition, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
@@ -180,6 +181,7 @@ namespace BZ {
         sceneConstantBufferData.viewMatrix = viewMatrix;
         sceneConstantBufferData.projectionMatrix = projectionMatrix;
         sceneConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
+        sceneConstantBufferData.cameraPosition = cameraPosition;
 
         uint32 sceneOffset = data.currentSceneIndex * sizeof(SceneConstantBufferData);
         memcpy(data.sceneConstantBufferPtr + sceneOffset, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
@@ -196,7 +198,7 @@ namespace BZ {
         data.currentSceneIndex++;
     }
 
-    void Graphics::beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix) {
+    void Graphics::beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix, const glm::mat3 &normalMatrix) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
@@ -204,6 +206,7 @@ namespace BZ {
 
         ObjectConstantBufferData objectConstantBufferData;
         objectConstantBufferData.modelMatrix = modelMatrix;
+        objectConstantBufferData.normalMatrix = normalMatrix;
 
         uint32 objectOffset = data.currentObjectIndex * sizeof(ObjectConstantBufferData);
         memcpy(data.objectConstantBufferPtr + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));

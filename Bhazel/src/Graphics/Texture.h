@@ -65,7 +65,7 @@ namespace BZ {
 
     class Texture2D : public Texture {
     public:
-        static Ref<Texture2D> create(const std::string &path, TextureFormat format, bool generateMipmaps);
+        static Ref<Texture2D> create(const char* path, TextureFormat format, bool generateMipmaps);
         static Ref<Texture2D> create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
         
         static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, TextureFormat format);

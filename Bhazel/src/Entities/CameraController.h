@@ -91,7 +91,7 @@ namespace BZ {
     class RotateCameraController : public CameraController<PerspectiveCamera> {
     public:
         RotateCameraController() = default;
-        RotateCameraController(PerspectiveCamera &camera);
+        RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed = 10.0f);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -112,7 +112,7 @@ namespace BZ {
         float thetaAccel = 0.0f;
         float thetaVelocity = 0.0f;
 
-        float cameraMovSpeed = 10.0f;
+        float cameraMoveSpeed;
 
         glm::ivec2 lastMousePosition = { -1, -1 };
     };

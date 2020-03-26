@@ -18,13 +18,18 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
 
 layout (set = 2, binding = 0, std140) uniform ObjectConstants {
     mat4 modelMatrix;
+    mat3 normalMatrix;
 } uObjectConstants;
 
-layout(location = 0) out vec2 outTexCoord;
+layout(location = 0) out vec3 outPosition;
 layout(location = 1) out vec3 outNormal;
+layout(location = 2) out vec2 outTexCoord;
 
 void main() {
-    gl_Position = uSceneConstants.viewProjectionMatrix * uObjectConstants.modelMatrix * vec4(attrPosition, 1.0);
+    vec4 positionWorld = uObjectConstants.modelMatrix * vec4(attrPosition, 1.0);
+    gl_Position = uSceneConstants.viewProjectionMatrix * positionWorld;
+
+    outPosition = positionWorld.xyz;
+    outNormal = normalize(uObjectConstants.normalMatrix * attrNormal);
     outTexCoord = attrTexCoord;
-    outNormal = attrNormal;
 }

@@ -12,7 +12,7 @@ namespace BZ {
     public:
         static Ref<VulkanTexture2D> wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
 
-        VulkanTexture2D(const std::string &path, TextureFormat format, bool generateMipmaps);
+        VulkanTexture2D(const char* path, TextureFormat format, bool generateMipmaps);
         VulkanTexture2D(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
         VulkanTexture2D(uint32 width, uint32 height, TextureFormat format);
         

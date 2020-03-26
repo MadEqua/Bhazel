@@ -12,11 +12,11 @@ namespace BZ {
         return MakeRef<VulkanTexture2D>(vkImage, width, height, vkFormat);
     }
 
-    VulkanTexture2D::VulkanTexture2D(const std::string &path, TextureFormat format, bool generateMipmaps) :
+    VulkanTexture2D::VulkanTexture2D(const char* path, TextureFormat format, bool generateMipmaps) :
         Texture2D(format), isWrapping(false) {
 
         int width, height;
-        const byte *data = loadFile(path.c_str(), true, width, height);
+        const byte *data = loadFile(path, true, width, height);
 
         init(data, width * height * 4, width, height, generateMipmaps);
         freeData(data);

@@ -88,5 +88,10 @@ namespace BZ {
         parentToLocalMatrix = glm::rotate(parentToLocalMatrix, glm::radians(-rotationEuler.x), glm::vec3(1, 0, 0));
         parentToLocalMatrix = glm::rotate(parentToLocalMatrix, glm::radians(-rotationEuler.z), glm::vec3(0, 0, 1));
         parentToLocalMatrix = glm::translate(parentToLocalMatrix, -translation);
+
+        if (scale.x == scale.y && scale.x == scale.z)
+            normalMatrix = glm::mat3(localToParentMatrix);
+        else
+            normalMatrix = glm::transpose(glm::mat3(parentToLocalMatrix));
     }
 }

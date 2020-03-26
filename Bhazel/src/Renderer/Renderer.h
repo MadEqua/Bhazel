@@ -5,10 +5,7 @@ namespace BZ {
 
     class Camera;
     class Transform;
-
-    //TODO
-    class Mesh {
-    };
+    class Mesh;
 
     struct RendererStats {
         uint32 vertexCount;
@@ -23,7 +20,7 @@ namespace BZ {
 
         static void drawCube(const Transform &transform); //TODO: material?
 
-        static void drawMesh(const Mesh &mesh);
+        static void drawMesh(const Mesh &mesh, const Transform &transform);
 
         static const RendererStats& getStats() { return stats; }
 

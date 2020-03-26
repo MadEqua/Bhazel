@@ -3,6 +3,7 @@
 #include "Texture.h"
 
 #include "Graphics/Graphics.h"
+#include "Core/Application.h"
 
 //#include "Platform/D3D11/D3D11Texture.h"
 //#include "Platform/OpenGL/OpenGLTexture.h"
@@ -155,11 +156,11 @@ namespace BZ {
     }
 
 
-    Ref<Texture2D> Texture2D::create(const std::string &path, TextureFormat format, bool generateMipmaps) {
+    Ref<Texture2D> Texture2D::create(const char* path, TextureFormat format, bool generateMipmaps) {
         auto &assetsPath = Application::getInstance().getAssetsPath();
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTexture2D>(assetsPath + path, format, generateMipmaps);
+            return MakeRef<VulkanTexture2D>((assetsPath + path).c_str(), format, generateMipmaps);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

@@ -29,6 +29,7 @@
 #include "Renderer/Renderer2D.h"
 #include "Renderer/Camera.h"
 #include "Renderer/ParticleSystem2D.h"
+#include "Renderer/Mesh.h"
 #include "Entities/CameraController.h"
 
 #include "Collisions/AABB.h"

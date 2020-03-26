@@ -194,7 +194,7 @@ namespace BZ {
         memset(&stats, 0, sizeof(stats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getViewMatrix(), camera.getProjectionMatrix());
+        Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getTransform().getTranslation(), camera.getViewMatrix(), camera.getProjectionMatrix());
     }
 
     void Renderer2D::endScene() {

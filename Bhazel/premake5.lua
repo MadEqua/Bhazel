@@ -23,6 +23,7 @@ project "Bhazel"
         "vendor/glm",
         "vendor/stb_image",
         "vendor/VulkanMemoryAllocator",
+        "vendor/tinyobjloader",
         "%{VULKAN_SDK_DIR}/Include"
     }
 

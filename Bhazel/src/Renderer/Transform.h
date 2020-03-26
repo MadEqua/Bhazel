@@ -28,6 +28,7 @@ namespace BZ {
 
         const glm::mat4& getLocalToParentMatrix() const { return localToParentMatrix; }
         const glm::mat4& getParentToLocalMatrix() const { return parentToLocalMatrix; }
+        const glm::mat3& getNormalMatrix() const { return normalMatrix; }
 
     private:
         glm::vec3 translation = {};
@@ -36,6 +37,7 @@ namespace BZ {
 
         glm::mat4 localToParentMatrix;
         glm::mat4 parentToLocalMatrix;
+        glm::mat3 normalMatrix;
 
         void computeMatrices();
     };

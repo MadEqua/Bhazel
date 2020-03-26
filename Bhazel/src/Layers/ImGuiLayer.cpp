@@ -159,7 +159,7 @@ namespace BZ {
         projMatrix[3][0] = -1.0f;
         projMatrix[3][1] = 1.0f;
 
-        Graphics::beginScene(commandBufferId, pipelineState, glm::mat4(1.0f), projMatrix);
+        Graphics::beginScene(commandBufferId, pipelineState, glm::vec3(0.0f), glm::mat4(1.0f), projMatrix);
 
         Graphics::bindPipelineState(commandBufferId, pipelineState);
         Graphics::bindDescriptorSet(commandBufferId, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);

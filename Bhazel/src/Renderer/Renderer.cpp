@@ -4,6 +4,7 @@
 
 #include "Camera.h"
 #include "Transform.h"
+#include "Mesh.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/DescriptorSet.h"
 #include "Core/Application.h"
@@ -13,10 +14,18 @@ namespace BZ {
 
     RendererStats Renderer::stats;
 
+    //TODO
+    //static DataLayout vertexLayout = {
+    //    { DataType::Int16, DataElements::Vec3, "POSITION", true },
+    //    { DataType::Int16, DataElements::Vec3, "NORMAL", true },
+    //    { DataType::Int16, DataElements::Vec3, "TANGENT", true },
+    //    { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
+    //};
+
     static DataLayout vertexLayout = {
-        { DataType::Int16, DataElements::Vec3, "POSITION", true },
-        { DataType::Int16, DataElements::Vec3, "NORMAL", true },
-        { DataType::Int16, DataElements::Vec3, "TANGENT", true },
+        { DataType::Float32, DataElements::Vec3, "POSITION" },
+        { DataType::Float32, DataElements::Vec3, "NORMAL" },
+        { DataType::Float32, DataElements::Vec3, "TANGENT" },
         { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
     };
 
@@ -121,7 +130,8 @@ namespace BZ {
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::SampledTexture, flagsToMask(ShaderStageFlags::Fragment), 1);
         rendererData.descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-        auto testTexture = Texture2D::create("Sandbox/textures/test.jpg", TextureFormat::R8G8B8A8_SRGB, true);
+        //TODO: doesn't belong here
+        auto testTexture = Texture2D::create("Sandbox/textures/castle.jpg", TextureFormat::R8G8B8A8_SRGB, true);
         rendererData.testTextureView = TextureView::create(testTexture);
         rendererData.descriptorSet = DescriptorSet::create(rendererData.descriptorSetLayout);
         rendererData.descriptorSet->setSampler(rendererData.sampler, 0);
@@ -183,7 +193,7 @@ namespace BZ {
         memset(&stats, 0, sizeof(stats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getViewMatrix(), camera.getProjectionMatrix());
+        Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getTransform().getTranslation(), camera.getViewMatrix(), camera.getProjectionMatrix());
     }
 
     void Renderer::endScene() {
@@ -198,19 +208,25 @@ namespace BZ {
     void Renderer::drawCube(const Transform &transform) {
         BZ_PROFILE_FUNCTION();
 
-        Graphics::beginObject(rendererData.commandBufferId, rendererData.pipelineState, transform.getLocalToParentMatrix());
+        Graphics::beginObject(rendererData.commandBufferId, rendererData.pipelineState, transform.getLocalToParentMatrix(), transform.getNormalMatrix());
 
         Graphics::bindBuffer(rendererData.commandBufferId, rendererData.cubeVertexBuffer, 0);
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
-
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
         Graphics::draw(rendererData.commandBufferId, CUBE_VERTEX_COUNT, 1, 0, 0);
     }
 
-    void Renderer::drawMesh(const Mesh &mesh) {
+    void Renderer::drawMesh(const Mesh &mesh, const Transform &transform) {
         BZ_PROFILE_FUNCTION();
 
-        //TODO
+        Graphics::beginObject(rendererData.commandBufferId, rendererData.pipelineState, transform.getLocalToParentMatrix(), transform.getNormalMatrix());
+
+        Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer() , 0);
+        Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer() , 0);
+        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+
+        Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
     }
 }

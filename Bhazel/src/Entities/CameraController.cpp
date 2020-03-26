@@ -168,8 +168,9 @@ namespace BZ {
     }
 
 
-    RotateCameraController::RotateCameraController(PerspectiveCamera &camera) :
+    RotateCameraController::RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed) :
         CameraController(camera),
+        cameraMoveSpeed(cameraMoveSpeed),
         originalParameters(camera.getParameters()) {
 
         const glm::vec3 &position = camera.getTransform().getTranslation();
@@ -228,7 +229,7 @@ namespace BZ {
         }
 
         if (changes) {
-            camPosCilindrical[2] += zMovement * cameraMovSpeed * frameStats.lastFrameTime.asSeconds();
+            camPosCilindrical[2] += zMovement * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
 
             glm::vec3 cameraPosition = { camPosCilindrical[0] * glm::sin(camPosCilindrical[1]),
                 camPosCilindrical[2],
