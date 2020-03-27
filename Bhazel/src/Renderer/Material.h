@@ -9,8 +9,10 @@ namespace BZ {
     class Material {
     public:
         Material() = default;
-        Material(Ref<Texture2D> &albedoTexture);
-        Material(const char *albedoTexturePath);
+        explicit Material(Ref<Texture2D> &albedoTexture);
+        explicit Material(const char *albedoTexturePath);
+
+        bool isValid() const { return static_cast<bool>(descriptorSet); }
 
         const Ref<TextureView>& getAlbedoTextureView() const { return albedoTextureView; }
         const Ref<DescriptorSet>& getDescriptorSet() const { return descriptorSet; }

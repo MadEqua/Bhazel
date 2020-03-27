@@ -1,6 +1,7 @@
 #include "bzpch.h"
 
 #include "Mesh.h"
+#include "Renderer.h"
 #include "Core/Application.h"
 #include "Core/Utils.h"
 
@@ -10,17 +11,67 @@
 
 namespace BZ {
 
-    static DataLayout vertexLayout = {
-        { DataType::Float32, DataElements::Vec3, "POSITION" },
-        { DataType::Float32, DataElements::Vec3, "NORMAL" },
-        { DataType::Float32, DataElements::Vec3, "TANGENT" },
-        { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
-    };
+    Mesh Mesh::createUnitCube(const Material &material) {
+        constexpr uint32 CUBE_VERTEX_COUNT = 36;
 
-    static DataLayout indexLayout = {
-        { DataType::Uint32, DataElements::Scalar, "" }
-    };
+        constexpr float NEG_ONE_F = -1.0f;
+        constexpr float ONE_F = 1.0f;
 
+        constexpr uint16 ZERO = 0;
+        constexpr uint16 ONE_UI = 0xffff - 1;
+
+        Mesh::Vertex cubeVertices[CUBE_VERTEX_COUNT] = {
+            //Front
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+
+            //Right
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
+
+            //Left
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
+
+            //Back
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+
+            //Bottom
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+
+            //Top
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+        };
+
+        return Mesh(cubeVertices, CUBE_VERTEX_COUNT, material);
+    }
 
     Mesh::Mesh(const char *path) {
         tinyobj::attrib_t attrib;
@@ -39,6 +90,8 @@ namespace BZ {
             BZ_LOG_CORE_WARN("Mesh with path: {}. Warning: {}", path, warn);
         }
 
+        std::vector<Vertex> vertices;
+        std::vector<uint32> indices;
         std::unordered_map<Vertex, uint32_t> uniqueVertices;
 
         for (const auto& shape : shapes) {
@@ -80,10 +133,28 @@ namespace BZ {
             this->material = Material((pathWithoutFileName + material.diffuse_texname).c_str());
         }
 
-        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * static_cast<uint32>(vertices.size()), MemoryType::GpuOnly, vertexLayout);
-        indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * static_cast<uint32>(indices.size()), MemoryType::GpuOnly, indexLayout);
+        vertexCount = static_cast<uint32>(vertices.size());
+        indexCount = static_cast<uint32>(indices.size());
 
-        vertexBuffer->setData(vertices.data(), sizeof(Vertex) * static_cast<uint32>(vertices.size()), 0);
-        indexBuffer->setData(indices.data(), sizeof(uint32) * static_cast<uint32>(indices.size()), 0);
+        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
+        indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
+
+        vertexBuffer->setData(vertices.data(), sizeof(Vertex) * vertexCount, 0);
+        indexBuffer->setData(indices.data(), sizeof(uint32) * indexCount, 0);
+    }
+
+    Mesh::Mesh(Vertex vertices[], uint32 vertexCount, const Material &material) :
+        vertexCount(vertexCount), indexCount(0), material(material) {
+        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
+        vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
+    }
+
+    Mesh::Mesh(Vertex vertices[], uint32 vertexCount, uint32 indices[], uint32 indexCount, const Material &material) :
+        vertexCount(vertexCount), indexCount(indexCount), material(material) {
+        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
+        indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
+
+        vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
+        indexBuffer->setData(indices, sizeof(uint32) * indexCount, 0);
     }
 }

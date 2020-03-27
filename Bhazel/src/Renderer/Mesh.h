@@ -13,19 +13,6 @@ namespace BZ {
     class Mesh {
 
     public:
-        Mesh() = default;
-        Mesh(const char *path);
-
-        //TODO: methods for adding vertices and indices
-
-        const Ref<Buffer>& getVertexBuffer() const { return vertexBuffer; }
-        const Ref<Buffer>& getIndexBuffer() const { return indexBuffer; }
-
-        uint32 getVertexCount() const { return static_cast<uint32>(vertices.size()); }
-        uint32 getIndexCount() const { return static_cast<uint32>(indices.size()); }
-
-        const Material& getMaterial() const { return material; }
-
         struct Vertex {
             glm::vec3 position;
             glm::vec3 normal;
@@ -37,9 +24,27 @@ namespace BZ {
             }
         };
 
+        static Mesh createUnitCube(const Material &material = Material());
+
+        Mesh() = default;
+        explicit Mesh(const char *path);
+        Mesh(Vertex vertices[], uint32 vertexCount, const Material &material = Material());
+        Mesh(Vertex vertices[], uint32 vertexCount, uint32 indices[], uint32 indexCount, const Material &material = Material());
+
+        const Ref<Buffer>& getVertexBuffer() const { return vertexBuffer; }
+        const Ref<Buffer>& getIndexBuffer() const { return indexBuffer; }
+
+        uint32 getVertexCount() const { return vertexCount; }
+        uint32 getIndexCount() const { return indexCount; }
+
+        bool isValid() const { return vertexCount > 0 && static_cast<bool>(vertexBuffer); }
+        bool hasIndices() const { return indexCount > 0; }
+
+        const Material& getMaterial() const { return material; }
+
     private:
-        std::vector<Vertex> vertices;
-        std::vector<uint32> indices;
+        uint32 vertexCount;
+        uint32 indexCount;
 
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;

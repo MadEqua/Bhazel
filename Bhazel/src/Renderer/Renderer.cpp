@@ -7,105 +7,33 @@
 #include "Camera.h"
 #include "Transform.h"
 #include "Mesh.h"
+#include "Material.h"
 
 
 namespace BZ {
 
-    RendererStats Renderer::stats;
-
-    //TODO
-    //static DataLayout vertexLayout = {
-    //    { DataType::Int16, DataElements::Vec3, "POSITION", true },
-    //    { DataType::Int16, DataElements::Vec3, "NORMAL", true },
-    //    { DataType::Int16, DataElements::Vec3, "TANGENT", true },
-    //    { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
-    //};
-
-    static DataLayout vertexLayout = {
+    static DataLayout vertexDataLayout = {
         { DataType::Float32, DataElements::Vec3, "POSITION" },
         { DataType::Float32, DataElements::Vec3, "NORMAL" },
         { DataType::Float32, DataElements::Vec3, "TANGENT" },
         { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
     };
 
-    static DataLayout indexLayout = {
-        {DataType::Uint32, DataElements::Scalar, ""},
+    static DataLayout indexDataLayout = {
+        { DataType::Uint32, DataElements::Scalar, "" }
     };
 
-    struct Vertex {
-        int16 pos[3];
-        int16 normal[3];
-        int16 tangent[3];
-        uint16 texCoord[2];
-    };
-
-    constexpr int CUBE_VERTEX_COUNT = 36;
-    
-    constexpr int16 NEG_ONE_I = 0x8001;
-    constexpr int16 ONE_I = 0x7fff - 1;
-
-    constexpr uint16 ZERO = 0;
-    constexpr uint16 ONE_UI = 0xffff - 1;
-
-    Vertex cubeVertices[CUBE_VERTEX_COUNT] = {
-        //Front
-        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { ONE_I, NEG_ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
-        { { ONE_I, ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { ONE_I, ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, ONE_I, ONE_I }, { ZERO, ZERO, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
-
-        //Right
-        { { ONE_I, NEG_ONE_I, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ZERO, ZERO } },
-        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ONE_UI, ZERO } },
-        { { ONE_I, ONE_I, NEG_ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ONE_UI, ONE_UI } },
-        { { ONE_I, NEG_ONE_I, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ZERO, ZERO } },
-        { { ONE_I, ONE_I, NEG_ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ONE_UI, ONE_UI } },
-        { { ONE_I, ONE_I, ONE_I }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_I }, { ZERO, ONE_UI } },
-
-        //Left
-        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ZERO, ZERO } },
-        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ONE_UI, ZERO } },
-        { { NEG_ONE_I, ONE_I, ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ZERO, ZERO } },
-        { { NEG_ONE_I, ONE_I, ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO, ONE_I }, { ZERO, ONE_UI } },
-
-        //Back
-        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
-        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ZERO, NEG_ONE_I }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
-
-        //Bottom
-        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
-        { { ONE_I, NEG_ONE_I, ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, NEG_ONE_I, NEG_ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { ONE_I, NEG_ONE_I, ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, NEG_ONE_I, ONE_I }, { ZERO, NEG_ONE_I, ZERO }, { NEG_ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
-
-        //Top
-        { { NEG_ONE_I, ONE_I, ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { ONE_I, ONE_I, ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ONE_UI, ZERO } },
-        { { ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, ONE_I, ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ZERO, ZERO } },
-        { { ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-        { { NEG_ONE_I, ONE_I, NEG_ONE_I }, { ZERO, ONE_I, ZERO }, { ONE_I, ZERO, ZERO }, { ZERO, ONE_UI } },
-    };
+    RendererStats Renderer::stats;
 
     static struct RendererData {
         uint32 commandBufferId;
-
-        Ref<Buffer> cubeVertexBuffer;
 
         Ref<DescriptorSetLayout> materialDescriptorSetLayout;
         Ref<Sampler> defaultSampler;
 
         Ref<PipelineState> pipelineState;
+
+        Ref<Mesh> cubeMesh;
     } rendererData;
 
 
@@ -113,9 +41,6 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         rendererData.commandBufferId = -1;
-
-        rendererData.cubeVertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * CUBE_VERTEX_COUNT, MemoryType::GpuOnly, vertexLayout);
-        rendererData.cubeVertexBuffer->setData(cubeVertices, sizeof(cubeVertices), 0);
 
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
@@ -154,17 +79,19 @@ namespace BZ {
         const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
         const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
 
-        pipelineStateData.dataLayout = vertexLayout;
+        pipelineStateData.dataLayout = vertexDataLayout;
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
+
+        rendererData.cubeMesh = MakeRef<Mesh>(Mesh::createUnitCube());
     }
 
     void Renderer::destroy() {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.cubeVertexBuffer.reset();
+        rendererData.cubeMesh.reset();
         rendererData.defaultSampler.reset();
         rendererData.materialDescriptorSetLayout.reset();
 
@@ -191,29 +118,38 @@ namespace BZ {
         rendererData.commandBufferId = -1;
     }
 
-    void Renderer::drawCube(const Transform &transform) {
+    void Renderer::drawCube(const Transform &transform, const Material &material) {
         BZ_PROFILE_FUNCTION();
-
-        Graphics::beginObject(rendererData.commandBufferId, rendererData.pipelineState, transform.getLocalToParentMatrix(), transform.getNormalMatrix());
-
-        Graphics::bindBuffer(rendererData.commandBufferId, rendererData.cubeVertexBuffer, 0);
-        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
-        //Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
-
-        Graphics::draw(rendererData.commandBufferId, CUBE_VERTEX_COUNT, 1, 0, 0);
+        drawMesh(*rendererData.cubeMesh, transform, material);
     }
 
     void Renderer::drawMesh(const Mesh &mesh, const Transform &transform) {
         BZ_PROFILE_FUNCTION();
+        Renderer::drawMesh(mesh, transform, Material());
+    }
+
+    void Renderer::drawMesh(const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial) {
+        BZ_PROFILE_FUNCTION();
+
+        BZ_ASSERT_CORE(mesh.isValid(), "Trying to draw a invalid/uninitialized Mesh!");
+        BZ_ASSERT_CORE(mesh.getMaterial().isValid() || fallbackMaterial.isValid(), "Trying to draw a Mesh with no valid/initialized Material!");
 
         Graphics::beginObject(rendererData.commandBufferId, rendererData.pipelineState, transform.getLocalToParentMatrix(), transform.getNormalMatrix());
 
-        Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer() , 0);
-        Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer() , 0);
-        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, mesh.getMaterial().getDescriptorSet(), rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+        Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer(), 0);
 
-        Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
+        if (mesh.hasIndices())
+            Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer(), 0);
+
+        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
+
+        const Material &materialToUse = mesh.getMaterial().isValid() ? mesh.getMaterial() : fallbackMaterial;
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, materialToUse.getDescriptorSet(), rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+
+        if (mesh.hasIndices())
+            Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
+        else
+            Graphics::draw(rendererData.commandBufferId, mesh.getVertexCount(), 1, 0, 0);
     }
 
     Ref<DescriptorSetLayout>& Renderer::getMaterialDescriptorSetLayout() {
@@ -222,5 +158,13 @@ namespace BZ {
 
     Ref<Sampler>& Renderer::getDefaultSampler() {
         return rendererData.defaultSampler;
+    }
+
+    DataLayout& Renderer::getVertexDataLayout() {
+        return vertexDataLayout;
+    }
+
+    DataLayout& Renderer::getIndexDataLayout() {
+        return indexDataLayout;
     }
 }
