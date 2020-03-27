@@ -4,8 +4,7 @@
 //    vec4 tintAndAlpha;
 //} pushConstants;
 
-layout(set = 3, binding = 0) uniform sampler uTexSampler;
-layout(set = 3, binding = 1) uniform texture2D uTex;
+layout(set = 3, binding = 0) uniform sampler2D uTexSampler;
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 1) flat in uint inColorPacked;
@@ -22,6 +21,6 @@ vec4 unpackColorInt(uint color) {
 }
 
 void main() {
-    //outColor = texture(sampler2D(uTex, uTexSampler), inTexCoord) * pushConstants.tintAndAlpha;
-    outColor = texture(sampler2D(uTex, uTexSampler), inTexCoord) * unpackColorInt(inColorPacked);
+    //outColor = texture(uTexSampler, inTexCoord) * pushConstants.tintAndAlpha;
+    outColor = texture(uTexSampler, inTexCoord) * unpackColorInt(inColorPacked);
 }

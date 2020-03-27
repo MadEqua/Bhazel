@@ -48,8 +48,8 @@ namespace BZ {
 
         //Always add the main descriptor set layouts for the engine.
         //Frame, Scene and Object.
-        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDescriptorSetLayout());
-        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDescriptorSetLayout());
-        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDescriptorSetLayout());
+        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
+        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
+        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
     }
 }

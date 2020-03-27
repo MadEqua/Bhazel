@@ -60,7 +60,7 @@ namespace BZ {
 
         static void waitForDevice();
 
-        static Ref<DescriptorSetLayout> getDescriptorSetLayout();
+        static Ref<DescriptorSetLayout>& getDefaultDescriptorSetLayout();
 
         static API api;
 

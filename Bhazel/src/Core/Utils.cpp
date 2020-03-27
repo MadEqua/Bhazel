@@ -23,6 +23,11 @@ namespace BZ::Utils {
         return removeExtensionFromFileName(nameAndExt);
     }
 
+    std::string removeFileNameFromPath(const std::string &path) {
+        size_t lastSeparatorPos = path.find_last_of("/\\");
+        return path.substr(0, lastSeparatorPos + 1);
+    }
+
     std::string removeExtensionFromFileName(const std::string &fileName) {
         size_t dotPos = fileName.find_last_of('.');
         if(dotPos != std::string::npos) {

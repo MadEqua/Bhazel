@@ -48,7 +48,7 @@ namespace BZ {
         Ref<DescriptorSet> objectDescriptorSet;
 
         //Same layout for all DescriptorSets.
-        Ref<DescriptorSetLayout> descriptorSetLayout;
+        Ref<DescriptorSetLayout> defaultDescriptorSetLayout;
 
         GraphicsContext* graphicsContext;
 
@@ -74,15 +74,15 @@ namespace BZ {
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
-        data.descriptorSetLayout = descriptorSetLayoutBuilder.build();
+        data.defaultDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
-        data.frameDescriptorSet = DescriptorSet::create(data.descriptorSetLayout);
+        data.frameDescriptorSet = DescriptorSet::create(data.defaultDescriptorSetLayout);
         data.frameDescriptorSet->setConstantBuffer(data.constantBuffer, 0, FRAME_CONSTANT_BUFFER_OFFSET, sizeof(FrameConstantBufferData));
 
-        data.sceneDescriptorSet = DescriptorSet::create(data.descriptorSetLayout);
+        data.sceneDescriptorSet = DescriptorSet::create(data.defaultDescriptorSetLayout);
         data.sceneDescriptorSet->setConstantBuffer(data.constantBuffer, 0, SCENE_CONSTANT_BUFFER_OFFSET, sizeof(SceneConstantBufferData));
 
-        data.objectDescriptorSet = DescriptorSet::create(data.descriptorSetLayout);
+        data.objectDescriptorSet = DescriptorSet::create(data.defaultDescriptorSetLayout);
         data.objectDescriptorSet->setConstantBuffer(data.constantBuffer, 0, OBJECT_CONSTANT_BUFFER_OFFSET, sizeof(ObjectConstantBufferData));
     }
 
@@ -98,7 +98,7 @@ namespace BZ {
         data.sceneDescriptorSet.reset();
         data.objectDescriptorSet.reset();
 
-        data.descriptorSetLayout.reset();
+        data.defaultDescriptorSetLayout.reset();
     }
 
     uint32 Graphics::beginCommandBuffer() {
@@ -359,8 +359,8 @@ namespace BZ {
         data.graphicsContext->waitForDevice();
     }
 
-    Ref<DescriptorSetLayout> Graphics::getDescriptorSetLayout() {
-        return data.descriptorSetLayout;
+    Ref<DescriptorSetLayout>& Graphics::getDefaultDescriptorSetLayout() {
+        return data.defaultDescriptorSetLayout;
     }
 
     void Graphics::beginFrame() {

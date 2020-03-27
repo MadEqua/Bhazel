@@ -2,6 +2,7 @@
 
 #include "Mesh.h"
 #include "Core/Application.h"
+#include "Core/Utils.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -27,9 +28,10 @@ namespace BZ {
         std::vector<tinyobj::material_t> materials;
         std::string warn, err;
 
-        auto &assetsPath = Application::getInstance().getAssetsPath();
+        std::string fullPath = Application::getInstance().getAssetsPath() + path;
+        auto fullPathWithoutFileName = Utils::removeFileNameFromPath(fullPath);
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (assetsPath + path).c_str())) {
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, fullPath.c_str(), fullPathWithoutFileName.c_str())) {
             BZ_CRITICAL_ERROR_ALWAYS("Error loading mesh with path: {}. Error: {}", path, err);
         }
 
@@ -73,10 +75,15 @@ namespace BZ {
             }
         }
 
-        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertices.size(), MemoryType::GpuOnly, vertexLayout);
-        indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * indices.size(), MemoryType::GpuOnly, indexLayout);
+        auto pathWithoutFileName = Utils::removeFileNameFromPath(path);
+        for (auto &material : materials) {
+            this->material = Material((pathWithoutFileName + material.diffuse_texname).c_str());
+        }
 
-        vertexBuffer->setData(vertices.data(), sizeof(Vertex) * vertices.size(), 0);
-        indexBuffer->setData(indices.data(), sizeof(uint32) * indices.size(), 0);
+        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * static_cast<uint32>(vertices.size()), MemoryType::GpuOnly, vertexLayout);
+        indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * static_cast<uint32>(indices.size()), MemoryType::GpuOnly, indexLayout);
+
+        vertexBuffer->setData(vertices.data(), sizeof(Vertex) * static_cast<uint32>(vertices.size()), 0);
+        indexBuffer->setData(indices.data(), sizeof(uint32) * static_cast<uint32>(indices.size()), 0);
     }
 }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Graphics/DescriptorSet.h"
+#include "Graphics/Texture.h"
+
 
 namespace BZ {
 
@@ -23,6 +26,9 @@ namespace BZ {
         static void drawMesh(const Mesh &mesh, const Transform &transform);
 
         static const RendererStats& getStats() { return stats; }
+
+        static Ref<DescriptorSetLayout>& getMaterialDescriptorSetLayout();
+        static Ref<Sampler>& getDefaultSampler();
 
     private:
         friend class Application;

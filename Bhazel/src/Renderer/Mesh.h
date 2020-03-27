@@ -5,13 +5,14 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
+#include "Material.h"
+
 
 namespace BZ {
 
     class Mesh {
 
     public:
-        //TODO: create method that returns a Ref?
         Mesh() = default;
         Mesh(const char *path);
 
@@ -22,6 +23,8 @@ namespace BZ {
 
         uint32 getVertexCount() const { return static_cast<uint32>(vertices.size()); }
         uint32 getIndexCount() const { return static_cast<uint32>(indices.size()); }
+
+        const Material& getMaterial() const { return material; }
 
         struct Vertex {
             glm::vec3 position;
@@ -40,6 +43,8 @@ namespace BZ {
 
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
+
+        Material material;
     };
 }
 

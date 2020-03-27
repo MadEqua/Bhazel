@@ -2,12 +2,11 @@
 
 #include "Renderer.h"
 
+#include "Graphics/Graphics.h"
+#include "Core/Application.h"
 #include "Camera.h"
 #include "Transform.h"
 #include "Mesh.h"
-#include "Graphics/Graphics.h"
-#include "Graphics/DescriptorSet.h"
-#include "Core/Application.h"
 
 
 namespace BZ {
@@ -103,11 +102,8 @@ namespace BZ {
 
         Ref<Buffer> cubeVertexBuffer;
 
-        Ref<TextureView> testTextureView;
-        Ref<Sampler> sampler;
-
-        Ref<DescriptorSetLayout> descriptorSetLayout;
-        Ref<DescriptorSet> descriptorSet;
+        Ref<DescriptorSetLayout> materialDescriptorSetLayout;
+        Ref<Sampler> defaultSampler;
 
         Ref<PipelineState> pipelineState;
     } rendererData;
@@ -123,20 +119,12 @@ namespace BZ {
 
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
-        rendererData.sampler = samplerBuilder.build();
-
+        rendererData.defaultSampler = samplerBuilder.build();
+        
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::Sampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::SampledTexture, flagsToMask(ShaderStageFlags::Fragment), 1);
-        rendererData.descriptorSetLayout = descriptorSetLayoutBuilder.build();
-
-        //TODO: doesn't belong here
-        auto testTexture = Texture2D::create("Sandbox/textures/castle.jpg", TextureFormat::R8G8B8A8_SRGB, true);
-        rendererData.testTextureView = TextureView::create(testTexture);
-        rendererData.descriptorSet = DescriptorSet::create(rendererData.descriptorSetLayout);
-        rendererData.descriptorSet->setSampler(rendererData.sampler, 0);
-        rendererData.descriptorSet->setSampledTexture(rendererData.testTextureView, 1);
-
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("Renderer");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/DefaultVert.spv");
@@ -145,7 +133,7 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();
 
-        pipelineStateData.descriptorSetLayouts = { rendererData.descriptorSetLayout };
+        pipelineStateData.descriptorSetLayouts = { rendererData.materialDescriptorSetLayout };
 
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
@@ -177,10 +165,8 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         rendererData.cubeVertexBuffer.reset();
-        rendererData.testTextureView.reset();
-        rendererData.sampler.reset();
-        rendererData.descriptorSetLayout.reset();
-        rendererData.descriptorSet.reset();
+        rendererData.defaultSampler.reset();
+        rendererData.materialDescriptorSetLayout.reset();
 
         rendererData.pipelineState.reset();
     }
@@ -212,7 +198,7 @@ namespace BZ {
 
         Graphics::bindBuffer(rendererData.commandBufferId, rendererData.cubeVertexBuffer, 0);
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+        //Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
         Graphics::draw(rendererData.commandBufferId, CUBE_VERTEX_COUNT, 1, 0, 0);
     }
@@ -225,8 +211,16 @@ namespace BZ {
         Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer() , 0);
         Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer() , 0);
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, mesh.getMaterial().getDescriptorSet(), rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
         Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
+    }
+
+    Ref<DescriptorSetLayout>& Renderer::getMaterialDescriptorSetLayout() {
+        return rendererData.materialDescriptorSetLayout;
+    }
+
+    Ref<Sampler>& Renderer::getDefaultSampler() {
+        return rendererData.defaultSampler;
     }
 }

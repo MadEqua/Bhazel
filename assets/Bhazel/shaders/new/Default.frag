@@ -11,8 +11,7 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     vec3 cameraPosition;
 } uSceneConstants;
 
-layout(set = 3, binding = 0) uniform sampler uTexSampler;
-layout(set = 3, binding = 1) uniform texture2D uTex;
+layout(set = 3, binding = 0) uniform sampler2D uTexSampler;
 
 layout(location = 0) out vec4 outColor;
 
@@ -29,7 +28,7 @@ void main() {
     float diffuse = max(0.0, dot(L, N));
     float spec = pow(max(0.0, dot(H, N)), 100.0);
 
-    vec3 col = amb + (diffuse * texture(sampler2D(uTex, uTexSampler), inTexCoord).rgb) + (spec * vec3(1.0));
+    vec3 col = amb + (diffuse * texture(uTexSampler, inTexCoord).rgb) + (spec * vec3(1.0));
 
     outColor = vec4(col, 1.0);
     //outColor = vec4(N, 1.0);

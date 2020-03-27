@@ -98,8 +98,7 @@ namespace BZ {
         if (rendererData.texDataStorage.find(hash) == rendererData.texDataStorage.end()) {
             auto texViewRef = TextureView::create(texture);
             auto descSetRef = DescriptorSet::create(rendererData.descriptorSetLayout);
-            descSetRef->setSampler(rendererData.sampler, 0);
-            descSetRef->setSampledTexture(texViewRef, 1);
+            descSetRef->setCombinedTextureSampler(texViewRef, rendererData.sampler, 0);
             rendererData.texDataStorage.emplace(hash, TexData{ texViewRef, descSetRef });
         }
         return hash;
@@ -132,8 +131,7 @@ namespace BZ {
         rendererData.whiteTexture = Texture2D::create(whiteTextureData, sizeof(whiteTextureData), 1, 1, TextureFormat::R8G8B8A8, false);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::Sampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::SampledTexture, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         rendererData.descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
