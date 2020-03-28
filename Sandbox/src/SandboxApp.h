@@ -37,12 +37,7 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    BZ::Mesh mesh;
-
-    BZ::Transform transform;
-    BZ::Transform transform2;
-    BZ::Transform transform3;
-    BZ::Transform transform4;
+    BZ::Scene scene;
 
     BZ::PerspectiveCamera camera;
     BZ::RotateCameraController cameraController;

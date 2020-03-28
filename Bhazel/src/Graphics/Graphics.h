@@ -13,6 +13,7 @@ namespace BZ {
 
     class WindowResizedEvent;
     class GraphicsContext;
+    class Scene;
 
     /*
     * Low level Graphics API.
@@ -36,7 +37,8 @@ namespace BZ {
         static void clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue);
         static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
 
-        static void beginScene(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::vec3 &cameraPosition, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix);
+        static void beginScene(uint32 commandBufferId, const Ref<PipelineState>& pipelineState, const glm::vec3 &cameraPosition, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix);
+        static void beginScene(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const Scene &scene);
         static void beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix, const glm::mat3 &normalMatrix);
 
         //Vertex or index buffer

@@ -1,0 +1,43 @@
+#pragma once
+
+#include "Mesh.h"
+#include "Camera.h"
+#include "Transform.h"
+
+
+namespace BZ {
+
+    struct DirectionalLight {
+        glm::vec3 direction;
+        glm::vec3 color;
+    };
+
+    struct Entity {
+        Mesh mesh;
+        Transform transform;
+    };
+
+    class Scene {
+    public:
+        Scene() = default;
+        Scene(Camera &camera);
+
+        void addEntity(Mesh &mesh, Transform &transform);
+        void addDirectionalLight(DirectionalLight &light);
+        void setCamera(Camera &camera);
+
+        std::vector<Entity>& getEntities() { return entities; }
+        const std::vector<Entity>& getEntities() const { return entities; }
+
+        std::vector<DirectionalLight>& getDirectionalLights() { return lights; }
+        const std::vector<DirectionalLight>& getDirectionalLights() const { return lights; }
+
+        Camera& getCamera() { return *camera; }
+        const Camera& getCamera() const { return *camera; }
+
+    private:
+        std::vector<Entity> entities;
+        std::vector<DirectionalLight> lights;
+        Camera *camera = nullptr;
+    };
+}

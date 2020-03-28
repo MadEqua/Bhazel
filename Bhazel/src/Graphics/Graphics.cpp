@@ -5,9 +5,10 @@
 #include "Constants.h"
 #include "Core/Application.h"
 #include "Graphics/GraphicsContext.h"
+#include "Renderer/Scene.h"
 
 
-namespace BZ {
+namespace BZ {  
 
     struct alignas(256) FrameConstantBufferData { //TODO: check this align value
         glm::vec2 timeAndDelta;
@@ -18,6 +19,9 @@ namespace BZ {
         glm::mat4 projectionMatrix;
         glm::mat4 viewProjectionMatrix;
         glm::vec3 cameraPosition;
+        alignas(16) glm::vec3 dirLightsDirections[MAX_DIR_LIGHTS_PER_SCENE];
+        alignas(16) glm::vec3 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE];
+        alignas(16) uint32 dirLightsCount;
     };
 
     struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
@@ -182,6 +186,44 @@ namespace BZ {
         sceneConstantBufferData.projectionMatrix = projectionMatrix;
         sceneConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
         sceneConstantBufferData.cameraPosition = cameraPosition;
+        sceneConstantBufferData.dirLightsCount = 0;
+
+        uint32 sceneOffset = data.currentSceneIndex * sizeof(SceneConstantBufferData);
+        memcpy(data.sceneConstantBufferPtr + sceneOffset, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
+
+        //TODO: don't really want to bind this every frame, but ImGui shader does not use engine descriptor sets and "unbinds" them when used.
+        auto &commandBuffer = data.commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
+        command.bindDescriptorSetData.descriptorSet = data.sceneDescriptorSet.get();
+        command.bindDescriptorSetData.pipelineState = pipelineState.get();
+        command.bindDescriptorSetData.setIndex = BHAZEL_SCENE_DESCRIPTOR_SET_IDX;
+        command.bindDescriptorSetData.dynamicBufferOffsets[0] = data.constantBuffer->getCurrentBaseOfReplicaOffset() + sceneOffset; //SCENE_CONSTANT_BUFFER_OFFSET is added on the static offset part 
+        command.bindDescriptorSetData.dynamicBufferCount = 1;
+
+        data.currentSceneIndex++;
+    }
+
+    void Graphics::beginScene(uint32 commandBufferId, const Ref<PipelineState>& pipelineState, const Scene &scene) {
+        BZ_PROFILE_FUNCTION();
+
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+        BZ_ASSERT_CORE(data.currentSceneIndex < MAX_SCENES_PER_FRAME, "currentSceneIndex exceeded MAX_SCENES_PER_FRAME!");
+
+        const Camera &camera = scene.getCamera();
+
+        SceneConstantBufferData sceneConstantBufferData;
+        sceneConstantBufferData.viewMatrix = camera.getViewMatrix();
+        sceneConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
+        sceneConstantBufferData.viewProjectionMatrix = sceneConstantBufferData.projectionMatrix * sceneConstantBufferData.viewMatrix;
+        sceneConstantBufferData.cameraPosition = camera.getTransform().getTranslation();
+        
+        int i = 0;
+        for (const auto &dirLight : scene.getDirectionalLights()) {
+            sceneConstantBufferData.dirLightsDirections[i] = dirLight.direction;
+            sceneConstantBufferData.dirLightsColors[i] = dirLight.color;
+            i++;
+        }
+        sceneConstantBufferData.dirLightsCount = i;
 
         uint32 sceneOffset = data.currentSceneIndex * sizeof(SceneConstantBufferData);
         memcpy(data.sceneConstantBufferPtr + sceneOffset, &sceneConstantBufferData, sizeof(SceneConstantBufferData));

@@ -9,26 +9,29 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
     vec3 cameraPosition;
+    vec3 dirLightDirections[2];
+    vec3 dirLightColors[2];
+    int dirLightsCount;
 } uSceneConstants;
 
 layout(set = 3, binding = 0) uniform sampler2D uTexSampler;
 
 layout(location = 0) out vec4 outColor;
 
-vec3 LIGHT_DIR = vec3(-0.5, -1.0, 0.0);
-
 void main() {
+    vec3 col = vec3(0.0);
+    for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
+        vec3 L = -normalize(uSceneConstants.dirLightDirections[i]);
+        vec3 N = normalize(inNormal);
+        vec3 V = normalize(uSceneConstants.cameraPosition - inPosition);
+        vec3 H = normalize(L + V);
 
-    vec3 L = -normalize(LIGHT_DIR);
-    vec3 N = normalize(inNormal);
-    vec3 V = normalize(uSceneConstants.cameraPosition - inPosition);
-    vec3 H = normalize(L + V);
+        vec3 amb = vec3(0.02);
+        float diffuse = max(0.0, dot(L, N));
+        float spec = pow(max(0.0, dot(H, N)), 100.0);
 
-    vec3 amb = vec3(0.02);
-    float diffuse = max(0.0, dot(L, N));
-    float spec = pow(max(0.0, dot(H, N)), 100.0);
-
-    vec3 col = amb + (diffuse * texture(uTexSampler, inTexCoord).rgb) + (spec * vec3(1.0));
+        col += amb + (diffuse * texture(uTexSampler, inTexCoord).rgb * uSceneConstants.dirLightColors[i]) + (spec * vec3(1.0));
+    }
 
     outColor = vec4(col, 1.0);
     //outColor = vec4(N, 1.0);

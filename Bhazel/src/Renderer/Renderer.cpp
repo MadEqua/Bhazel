@@ -8,6 +8,7 @@
 #include "Transform.h"
 #include "Mesh.h"
 #include "Material.h"
+#include "Scene.h"
 
 
 namespace BZ {
@@ -98,25 +99,42 @@ namespace BZ {
         rendererData.pipelineState.reset();
     }
 
-    void Renderer::beginScene(const Camera &camera) {
+    void Renderer::drawScene(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
-
-        BZ_ASSERT_CORE(rendererData.commandBufferId == -1, "There's already an unended Scene!");
 
         memset(&stats, 0, sizeof(stats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getTransform().getTranslation(), camera.getViewMatrix(), camera.getProjectionMatrix());
-    }
 
-    void Renderer::endScene() {
-        BZ_PROFILE_FUNCTION();
+        const Camera &camera = scene.getCamera();
+        Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, scene);
 
-        BZ_ASSERT_CORE(rendererData.commandBufferId != -1, "There's not a started Scene!");
+        for (const auto &entity : scene.getEntities()) {
+            drawMesh(entity.mesh, entity.transform);
+        }
 
         Graphics::endCommandBuffer(rendererData.commandBufferId);
-        rendererData.commandBufferId = -1;
     }
+
+    //void Renderer::beginScene(const Camera &camera) {
+    //    BZ_PROFILE_FUNCTION();
+    //
+    //    BZ_ASSERT_CORE(rendererData.commandBufferId == -1, "There's already an unended Scene!");
+    //
+    //    memset(&stats, 0, sizeof(stats));
+    //
+    //    rendererData.commandBufferId = Graphics::beginCommandBuffer();
+    //    Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getTransform().getTranslation(), camera.getViewMatrix(), camera.getProjectionMatrix());
+    //}
+    //
+    //void Renderer::endScene() {
+    //    BZ_PROFILE_FUNCTION();
+    //
+    //    BZ_ASSERT_CORE(rendererData.commandBufferId != -1, "There's not a started Scene!");
+    //
+    //    Graphics::endCommandBuffer(rendererData.commandBufferId);
+    //    rendererData.commandBufferId = -1;
+    //}
 
     void Renderer::drawCube(const Transform &transform, const Material &material) {
         BZ_PROFILE_FUNCTION();

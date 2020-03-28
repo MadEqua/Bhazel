@@ -11,6 +11,7 @@ namespace BZ {
     class Transform;
     class Mesh;
     class Material;
+    class Scene;
 
     struct RendererStats {
         uint32 vertexCount;
@@ -20,13 +21,7 @@ namespace BZ {
 
     class Renderer {
     public:
-        static void beginScene(const Camera &camera);
-        static void endScene();
-
-        static void drawCube(const Transform &transform, const Material &material);
-
-        static void drawMesh(const Mesh &mesh, const Transform &transform);
-        static void drawMesh(const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial);
+        static void drawScene(const Scene &scene);
 
         static const RendererStats& getStats() { return stats; }
 
@@ -41,6 +36,14 @@ namespace BZ {
 
         static void init();
         static void destroy();
+
+        //TODO
+        //static void drawEntity();
+
+        static void drawCube(const Transform &transform, const Material &material);
+
+        static void drawMesh(const Mesh &mesh, const Transform &transform);
+        static void drawMesh(const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial);
 
         static RendererStats stats;
     };

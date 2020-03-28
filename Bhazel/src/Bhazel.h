@@ -31,6 +31,7 @@
 #include "Renderer/ParticleSystem2D.h"
 #include "Renderer/Mesh.h"
 #include "Renderer/Material.h"
+#include "Renderer/Scene.h"
 #include "Entities/CameraController.h"
 
 #include "Collisions/AABB.h"

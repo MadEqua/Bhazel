@@ -82,38 +82,47 @@ Layer3D::Layer3D() :
 }
 
 void Layer3D::onAttach() {
-    mesh = BZ::Mesh("Sandbox/meshes/castle.obj");
-    transform.setScale(0.06f, 0.06f, 0.06f);
-
-    transform2.setScale(0.006f, 0.006f, 0.006f);
-    transform2.setTranslation(-8.0f, 21.0f, 0.0f);
-
-    transform3.setScale(0.006f, 0.006f, 0.006f);
-    transform3.setTranslation(7.0f, 21.0f, 7.0f);
-
-    transform4.setScale(0.006f, 0.006f, 0.006f);
-    transform4.setTranslation(7.0f, 21.0f, -7.0f);
 }
 
 void Layer3D::onGraphicsContextCreated() {
     camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 200.0f);
     camera.getTransform().setTranslation({ 0.0f, 50.0f, 50.0f });
+    scene.setCamera(camera);
+    
     cameraController = BZ::RotateCameraController(camera, 70.0f);
+
+    BZ::Mesh mesh("Sandbox/meshes/castle.obj");
+    BZ::Transform transform;
+    BZ::Transform transform2;
+    BZ::Transform transform3;
+    BZ::Transform transform4;
+
+    transform.setScale(0.06f, 0.06f, 0.06f);
+    scene.addEntity(mesh, transform);
+
+    transform2.setScale(0.006f, 0.006f, 0.006f);
+    transform2.setTranslation(-8.0f, 21.0f, 0.0f);
+    scene.addEntity(mesh, transform2);
+
+    transform3.setScale(0.006f, 0.006f, 0.006f);
+    transform3.setTranslation(7.0f, 21.0f, 7.0f);
+    scene.addEntity(mesh, transform3);
+
+    transform4.setScale(0.006f, 0.006f, 0.006f);
+    transform4.setTranslation(7.0f, 21.0f, -7.0f);
+    scene.addEntity(mesh, transform4);
+
+    BZ::DirectionalLight dirLight;
+    dirLight.direction = { 1.0f, -1.0f, 0.0f };
+    dirLight.color = { 1.0f, 1.0f, 1.0f };
+    scene.addDirectionalLight(dirLight);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 
-    //auto WINDOW_DIMS = application.getWindow().getDimensions();
-
     cameraController.onUpdate(frameStats);
-
-    BZ::Renderer::beginScene(cameraController.getCamera());
-    BZ::Renderer::drawMesh(mesh, transform);
-    BZ::Renderer::drawMesh(mesh, transform2);
-    BZ::Renderer::drawMesh(mesh, transform3);
-    BZ::Renderer::drawMesh(mesh, transform4);
-    BZ::Renderer::endScene();
+    BZ::Renderer::drawScene(scene);
 }
 
 void Layer3D::onEvent(BZ::Event &event) {
@@ -123,19 +132,34 @@ void Layer3D::onEvent(BZ::Event &event) {
 void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 
-    auto translation = transform.getTranslation();
-    auto rot = transform.getRotationEuler();
-    auto scale = transform.getScale();
+    BZ::Entity &entity = scene.getEntities()[0];
 
     if (ImGui::Begin("Transform")) {
+        auto translation = entity.transform.getTranslation();
+        auto rot = entity.transform.getRotationEuler();
+        auto scale = entity.transform.getScale();
+
         if (ImGui::DragFloat3("Translation", &translation[0], 0.1f, -100.0f, 100.0f)) {
-            transform.setTranslation(translation);
+            entity.transform.setTranslation(translation);
         }
         if (ImGui::DragFloat3("Rot", &rot[0], 1.0f, -359.0f, 359.0f)) {
-            transform.setRotationEuler(rot);
+            entity.transform.setRotationEuler(rot);
         }
         if (ImGui::DragFloat3("Scale", &scale[0], 0.05f, 0.0f, 100.0f)) {
-            transform.setScale(scale);
+            entity.transform.setScale(scale);
+        }
+    }
+    ImGui::End();
+
+    if (ImGui::Begin("DirLight")) {
+        auto dir = scene.getDirectionalLights()[0].direction;
+        auto col = scene.getDirectionalLights()[0].color;
+
+        if (ImGui::DragFloat3("Direction", &dir[0], 0.05f, -1.0f, 1.0f)) {
+            scene.getDirectionalLights()[0].direction = dir;
+        }
+        if (ImGui::DragFloat3("Color", &col[0], 0.05f, 0.0f, 1.0f)) {
+            scene.getDirectionalLights()[0].color = col;
         }
     }
     ImGui::End();
