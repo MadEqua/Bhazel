@@ -127,15 +127,16 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     auto rot = transform.getRotationEuler();
     auto scale = transform.getScale();
 
-    ImGui::Begin("Transform");
-    if (ImGui::DragFloat3("Translation", &translation[0], 0.1f, -100.0f, 100.0f)) {
-        transform.setTranslation(translation);
-    }
-    if (ImGui::DragFloat3("Rot", &rot[0], 1.0f, -359.0f, 359.0f)) {
-        transform.setRotationEuler(rot);
-    }
-    if (ImGui::DragFloat3("Scale", &scale[0], 0.05f, 0.0f, 100.0f)) {
-        transform.setScale(scale);
+    if (ImGui::Begin("Transform")) {
+        if (ImGui::DragFloat3("Translation", &translation[0], 0.1f, -100.0f, 100.0f)) {
+            transform.setTranslation(translation);
+        }
+        if (ImGui::DragFloat3("Rot", &rot[0], 1.0f, -359.0f, 359.0f)) {
+            transform.setRotationEuler(rot);
+        }
+        if (ImGui::DragFloat3("Scale", &scale[0], 0.05f, 0.0f, 100.0f)) {
+            transform.setScale(scale);
+        }
     }
     ImGui::End();
 }

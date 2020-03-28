@@ -11,6 +11,7 @@
 #include "Layers/ImGuiLayer.h"
 #include "Layers/FrameStatsLayer.h"
 #include "Layers/Renderer2DStatsLayer.h"
+#include "Layers/RendererStatsLayer.h"
 
 
 namespace BZ {
@@ -58,6 +59,7 @@ namespace BZ {
 
         pushOverlay(new FrameStatsLayer(*this));
         pushOverlay(new Renderer2DStatsLayer());
+        pushOverlay(new RendererStatsLayer());
     }
 
     Application::~Application() {

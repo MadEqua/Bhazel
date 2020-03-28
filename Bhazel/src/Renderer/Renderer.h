@@ -14,8 +14,8 @@ namespace BZ {
 
     struct RendererStats {
         uint32 vertexCount;
+        uint32 triangleCount;
         uint32 drawCallCount;
-        uint32 descriptorSetBindCount;
     };
 
     class Renderer {

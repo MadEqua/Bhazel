@@ -150,6 +150,10 @@ namespace BZ {
             Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
         else
             Graphics::draw(rendererData.commandBufferId, mesh.getVertexCount(), 1, 0, 0);
+
+        stats.drawCallCount++;
+        stats.vertexCount += mesh.getVertexCount();
+        stats.triangleCount += mesh.getIndexCount() / 3;
     }
 
     Ref<DescriptorSetLayout>& Renderer::getMaterialDescriptorSetLayout() {
