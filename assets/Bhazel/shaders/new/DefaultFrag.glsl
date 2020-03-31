@@ -1,4 +1,5 @@
 #version 450 core
+#pragma shader_stage(fragment)
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -26,7 +27,7 @@ void main() {
         vec3 V = normalize(uSceneConstants.cameraPosition - inPosition);
         vec3 H = normalize(L + V);
 
-        vec3 amb = vec3(0.02);
+        vec3 amb = vec3(0.01);
         float diffuse = max(0.0, dot(L, N));
         float spec = pow(max(0.0, dot(H, N)), 100.0);
 

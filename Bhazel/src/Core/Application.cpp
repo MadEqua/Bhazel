@@ -60,6 +60,10 @@ namespace BZ {
         pushOverlay(new FrameStatsLayer(*this));
         pushOverlay(new Renderer2DStatsLayer());
         pushOverlay(new RendererStatsLayer());
+
+#ifdef BZ_HOT_RELOAD_SHADERS
+        fileWatcher.startWatching();
+#endif
     }
 
     Application::~Application() {
@@ -100,6 +104,13 @@ namespace BZ {
                 frameStats.lastFrameTime = frameDuration;
                 frameStats.runningTime += frameDuration;
                 frameStats.frameCount++;
+
+#ifdef BZ_HOT_RELOAD_SHADERS
+                if (fileWatcher.hasPipelineStatesToReload()) {
+                    Graphics::waitForDevice();
+                    fileWatcher.performReloads();
+                }
+#endif
             }
             frameTimer.reset();
         }

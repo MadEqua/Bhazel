@@ -19,5 +19,9 @@ namespace BZ {
     public:
         VulkanPipelineState(PipelineStateData &inData);
         virtual ~VulkanPipelineState() override;
+
+    private:
+        void init() override;
+        void destroy() override;
     };
 }

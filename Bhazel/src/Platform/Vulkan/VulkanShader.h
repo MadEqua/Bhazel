@@ -18,6 +18,9 @@ namespace BZ {
         ~VulkanShader() override;
 
     private:
+        void init(const Builder &builder) override;
+        void destroy() override;
+
         VkShaderModule createShaderModuleFromBinaryBlob(const std::vector<char> &binaryBlob);
     };
 }

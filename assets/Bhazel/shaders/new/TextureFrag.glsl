@@ -1,4 +1,5 @@
 #version 450 core
+#pragma shader_stage(fragment)
 
 //layout(push_constant) uniform PushConstants {
 //    vec4 tintAndAlpha;

@@ -7,22 +7,38 @@ namespace BZ {
 
     VulkanShader::VulkanShader(const Builder &builder) :
         Shader(builder) {
-
-        if(builder.useBinaryBlob) {
-            for(int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-                if(stages[i])
-                    nativeHandle.modules[i] = createShaderModuleFromBinaryBlob(builder.binaryBlobs[i]);
-                else
-                    nativeHandle.modules[i] = VK_NULL_HANDLE;
-            }
-        }
-        else {
-            BZ_ASSERT_ALWAYS("Not implemented!");
-        }
+        init(builder);
     }
 
     VulkanShader::~VulkanShader() {
-        for(int i = 0; i < SHADER_STAGES_COUNT; ++i)
+        destroy();
+    }
+
+    void VulkanShader::init(const Builder &builder) {
+        //if (builder.useBinaryBlob) {
+        //    for (int i = 0; i < SHADER_STAGES_COUNT; ++i) {
+        //        if (stages[i])
+        //            nativeHandle.modules[i] = createShaderModuleFromBinaryBlob(builder.binaryBlobs[i]);
+        //        else
+        //            nativeHandle.modules[i] = VK_NULL_HANDLE;
+        //    }
+        //}
+        //else {
+        //    BZ_ASSERT_ALWAYS("Not implemented!");
+        //}
+
+        Shader::init(builder);
+
+        for (int i = 0; i < SHADER_STAGES_COUNT; ++i) {
+            if (stages[i])
+                nativeHandle.modules[i] = createShaderModuleFromBinaryBlob(builder.binaryBlobs[i]);
+            else
+                nativeHandle.modules[i] = VK_NULL_HANDLE;
+        }
+    }
+
+    void VulkanShader::destroy() {
+        for (int i = 0; i < SHADER_STAGES_COUNT; ++i)
             vkDestroyShaderModule(getDevice(), nativeHandle.modules[i], nullptr);
     }
 

@@ -1,4 +1,6 @@
 #version 450 core
+#pragma shader_stage(vertex)
+
 layout(location = 0) in vec2 aPos;
 layout(location = 1) in vec2 aUV;
 layout(location = 2) in vec4 aColor;

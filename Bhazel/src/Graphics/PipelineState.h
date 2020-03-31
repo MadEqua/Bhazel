@@ -210,13 +210,19 @@ namespace BZ {
 
     class PipelineState {
     public:
-        static Ref<PipelineState> create(PipelineStateData& data);
+        static Ref<PipelineState> create(PipelineStateData &data);
 
         const PipelineStateData& getData() const { return data; }
+
+        //Used with the FileWatcher for Shader hot-reloading.
+        void reload();
 
     protected:
         explicit PipelineState(PipelineStateData &inData);
         virtual ~PipelineState() = default;
+
+        virtual void init() = 0;
+        virtual void destroy() = 0;
 
     protected:
         PipelineStateData data;

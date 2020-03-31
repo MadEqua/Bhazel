@@ -5,6 +5,7 @@
 #ifndef BZ_DIST
     #define BZ_ASSERTS
     #define BZ_FULL_LOGGER
+    #define BZ_HOT_RELOAD_SHADERS
 
     #if ENABLE_PROFILER
         #define BZ_PROFILER

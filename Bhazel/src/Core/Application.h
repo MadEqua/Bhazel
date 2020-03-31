@@ -6,6 +6,7 @@
 #include "Layers/LayerStack.h"
 #include "Core/Ini/IniParser.h"
 #include "Core/Timer.h"
+#include "FileWatcher/FileWatcher.h"
 
 
 namespace BZ {
@@ -40,7 +41,10 @@ namespace BZ {
 
         const FrameStats& getFrameStats() const { return frameStats; }
         const std::string& getAssetsPath() const { return assetsPath; }
-        
+
+#ifdef BZ_HOT_RELOAD_SHADERS
+        FileWatcher& getFileWatcher() { return fileWatcher; }
+#endif      
         static Application& getInstance() { return *instance; }
 
     private:
@@ -56,6 +60,10 @@ namespace BZ {
 
         ImGuiLayer* imGuiLayer;
         std::string assetsPath;
+
+#ifdef BZ_HOT_RELOAD_SHADERS
+        FileWatcher fileWatcher;
+#endif
 
         static Application *instance;
     };

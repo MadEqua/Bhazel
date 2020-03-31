@@ -29,27 +29,37 @@ namespace BZ {
 
     PipelineState::PipelineState(PipelineStateData &inData) :
         data(inData) {
+
         BZ_ASSERT_CORE(data.shader, "PipelineState needs a shader!");
         BZ_ASSERT_CORE(std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Viewport) != data.dynamicStates.end() ||
-                       !data.viewports.empty(),
-                       "PipelineState with no dynamic Viewport, needs at least one Viewport!");
+            !data.viewports.empty(),
+            "PipelineState with no dynamic Viewport, needs at least one Viewport!");
 
         BZ_ASSERT_CORE(std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Scissor) != data.dynamicStates.end() ||
-                       std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Viewport) != data.dynamicStates.end() ||
-                       data.scissorRects.size() == data.viewports.size(),
-                       "With non-dynamic Scissor and Viewports the number of Viewports must match the number of ScissorsRects!");
+            std::find(data.dynamicStates.begin(), data.dynamicStates.end(), DynamicState::Viewport) != data.dynamicStates.end() ||
+            data.scissorRects.size() == data.viewports.size(),
+            "With non-dynamic Scissor and Viewports the number of Viewports must match the number of ScissorsRects!");
 
-        if(!data.framebuffer)
+        if (!data.framebuffer)
             data.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
 
         BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(),
-                       "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
-
+            "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
 
         //Always add the main descriptor set layouts for the engine.
         //Frame, Scene and Object.
         data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
         data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
         data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
+
+#ifdef BZ_HOT_RELOAD_SHADERS
+        Application::getInstance().getFileWatcher().registerPipelineState(*this);
+#endif
+    }
+
+    void PipelineState::reload() {
+        destroy();
+        data.shader->reload();
+        init();
     }
 }

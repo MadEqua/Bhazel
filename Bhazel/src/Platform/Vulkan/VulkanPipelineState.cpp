@@ -12,12 +12,20 @@ namespace BZ {
 
     VulkanPipelineState::VulkanPipelineState(PipelineStateData &inData) :
         PipelineState(inData) {
+        init();
+    }
+
+    VulkanPipelineState::~VulkanPipelineState() {
+        destroy();
+    }
+
+    void VulkanPipelineState::init() {
 
         //Vertex input data format
         std::vector<VkVertexInputBindingDescription> bindingDescriptions;
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
-        if(data.dataLayout.getElementCount() > 0) {
+        if (data.dataLayout.getElementCount() > 0) {
             VkVertexInputBindingDescription bindingDescription = {};
             bindingDescription.binding = 0;
             bindingDescription.stride = data.dataLayout.getSizeBytes();
@@ -25,7 +33,7 @@ namespace BZ {
             bindingDescriptions.emplace_back(bindingDescription);
 
             uint32 elementIndex = 0;
-            for(const auto &element : data.dataLayout) {
+            for (const auto &element : data.dataLayout) {
                 VkVertexInputAttributeDescription attributeDescription = {};
                 attributeDescription.binding = 0;
                 attributeDescription.location = elementIndex;
@@ -53,7 +61,7 @@ namespace BZ {
         //Viewport and scissor setup. This is ignored if the viewport (or scissor) is declared dynamic.
         std::vector<VkViewport> viewports(data.viewports.size());
         uint32 idx = 0;
-        for(const auto &vp : data.viewports) {
+        for (const auto &vp : data.viewports) {
             VkViewport viewport = {};
             viewport.x = vp.rect.left;
             viewport.y = vp.rect.height; //Inverting the space (+y -> up)
@@ -66,7 +74,7 @@ namespace BZ {
 
         std::vector<VkRect2D> scissors(data.scissorRects.size());
         idx = 0;
-        for(const auto &scissorRect : data.scissorRects) {
+        for (const auto &scissorRect : data.scissorRects) {
             VkRect2D scissor = {};
             scissor.offset.x = scissorRect.rect.left;
             scissor.offset.y = scissorRect.rect.top;
@@ -90,7 +98,7 @@ namespace BZ {
         rasterizerState.polygonMode = polygonModeToVk(data.rasterizerState.polygonMode);
         rasterizerState.lineWidth = data.rasterizerState.lineWidth;
         rasterizerState.cullMode = cullModeToVk(data.rasterizerState.cullMode);
-        rasterizerState.frontFace = data.rasterizerState.frontFaceCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE: VK_FRONT_FACE_CLOCKWISE;
+        rasterizerState.frontFace = data.rasterizerState.frontFaceCounterClockwise?VK_FRONT_FACE_COUNTER_CLOCKWISE:VK_FRONT_FACE_CLOCKWISE;
         rasterizerState.depthBiasEnable = data.rasterizerState.enableDepthBias;
         rasterizerState.depthBiasConstantFactor = data.rasterizerState.depthBiasConstantFactor;
         rasterizerState.depthBiasClamp = data.rasterizerState.depthBiasClamp;
@@ -141,7 +149,7 @@ namespace BZ {
         //Blending setup
         std::vector<VkPipelineColorBlendAttachmentState> blendAttachmentStates(data.blendingState.attachmentBlendingStates.size());
         idx = 0;
-        for(const auto& blendState : data.blendingState.attachmentBlendingStates) {
+        for (const auto& blendState : data.blendingState.attachmentBlendingStates) {
             VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
             colorBlendAttachment.blendEnable = blendState.enableBlending;
             colorBlendAttachment.srcColorBlendFactor = blendingFactorToVk(blendState.srcColorBlendingFactor);
@@ -167,7 +175,7 @@ namespace BZ {
         //Descriptor Set Layout setup
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts(data.descriptorSetLayouts.size());
         idx = 0;
-        for(const auto &layout : data.descriptorSetLayouts) {
+        for (const auto &layout : data.descriptorSetLayouts) {
             descriptorSetLayouts[idx++] = static_cast<const VulkanDescriptorSetLayout&>(*layout).getNativeHandle();
         }
 
@@ -196,9 +204,9 @@ namespace BZ {
         std::array<VkPipelineShaderStageCreateInfo, Shader::SHADER_STAGES_COUNT> shaderStagesCreateInfos;
 
         uint32 stageCount = 0;
-        for(int i = 0; i < Shader::SHADER_STAGES_COUNT; ++i) {
+        for (int i = 0; i < Shader::SHADER_STAGES_COUNT; ++i) {
             ShaderStage shaderStage = static_cast<ShaderStage>(i);
-            if(data.shader->isStagePresent(shaderStage)) {
+            if (data.shader->isStagePresent(shaderStage)) {
                 VulkanShader &vulkanShader = static_cast<VulkanShader &>(*data.shader);
                 VkPipelineShaderStageCreateInfo shaderCreateInfo = {};
                 shaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -212,7 +220,7 @@ namespace BZ {
         //Dynamic State
         std::vector<VkDynamicState> vkDynamicStates(data.dynamicStates.size());
         idx = 0;
-        for(auto dynState : data.dynamicStates) {
+        for (auto dynState : data.dynamicStates) {
             vkDynamicStates[idx++] = dynamicStateToVk(dynState);
         }
 
@@ -243,7 +251,7 @@ namespace BZ {
         BZ_ASSERT_VK(vkCreateGraphicsPipelines(getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &nativeHandle.pipeline));
     }
 
-    VulkanPipelineState::~VulkanPipelineState() {
+    void VulkanPipelineState::destroy() {
         vkDestroyPipeline(getDevice(), nativeHandle.pipeline, nullptr);
         vkDestroyPipelineLayout(getDevice(), nativeHandle.pipelineLayout, nullptr);
     }
