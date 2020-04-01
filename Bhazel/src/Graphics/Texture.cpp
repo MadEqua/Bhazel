@@ -192,10 +192,36 @@ namespace BZ {
     }
 
 
-    Ref<TextureView> TextureView::create(const Ref<Texture> &texture) {
+    Ref<TextureCube> TextureCube::create(const char *basePath, const char *fileNames[6], TextureFormat format, bool generateMipmaps) {
+        auto &assetsPath = Application::getInstance().getAssetsPath();
+        switch (Graphics::api) {
+        case Graphics::API::Vulkan:
+            return MakeRef<VulkanTextureCube>((assetsPath + basePath).c_str(), fileNames, format, generateMipmaps);
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return nullptr;
+        }
+    }
+
+    TextureCube::TextureCube(TextureFormat format) :
+        Texture(format) {
+    }
+
+
+    Ref<TextureView> TextureView::create(const Ref<Texture2D> &texture2D) {
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTextureView>(texture);
+            return MakeRef<VulkanTextureView>(texture2D);
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return nullptr;
+        }
+    }
+
+    Ref<TextureView> TextureView::create(const Ref<TextureCube> &textureCube) {
+        switch (Graphics::api) {
+        case Graphics::API::Vulkan:
+            return MakeRef<VulkanTextureView>(textureCube);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

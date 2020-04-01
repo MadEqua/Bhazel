@@ -7,8 +7,7 @@
 namespace BZ {
 
     template<typename HandleT>
-    class VulkanGpuObject {
-    public:
+    struct VulkanGpuObject {
         HandleT getNativeHandle() const {
             return nativeHandle;
         }
@@ -21,7 +20,6 @@ namespace BZ {
             return static_cast<VulkanContext &>(Application::getInstance().getGraphicsContext()).getDevice().getNativeHandle();
         }
 
-    protected:
         HandleT nativeHandle;
     };
 }

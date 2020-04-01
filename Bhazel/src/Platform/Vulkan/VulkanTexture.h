@@ -8,7 +8,14 @@
 
 namespace BZ {
 
-    class VulkanTexture2D : public Texture2D, public VulkanGpuObject<VkImage> {
+    struct VulkanTextureData : public VulkanGpuObject<VkImage> {
+        VmaAllocation allocationHandle;
+        VkBuffer stagingBufferHandle;
+        VmaAllocation stagingBufferAllocationHandle;
+    };
+
+
+    class VulkanTexture2D : public Texture2D {
     public:
         static Ref<VulkanTexture2D> wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
 
@@ -21,32 +28,39 @@ namespace BZ {
 
         ~VulkanTexture2D() override;
 
+        const VulkanTextureData& getVulkanTextureData() const { return textureData; }
+
     private:
-        bool isWrapping;
-
-        VmaAllocation allocationHandle;
-
-        VkBuffer stagingBufferHandle;
-        VmaAllocation stagingBufferAllocationHandle;
-
         void init(const byte *data, uint32 dataSize, uint32 width, uint32 height, bool generateMipmaps);
 
-        void generateMipmaps(VkCommandBuffer commandBuffer);
+        VulkanTextureData textureData;
+        bool isWrapping;
+    };
 
-        void initStagingBuffer(uint32 size);
-        void destroyStagingBuffer();
 
-        VkCommandBuffer beginSingleTimeCommands();
-        void copyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage destImage, uint32 width, uint32 height);
-        void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-        void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+    class VulkanTextureCube : public TextureCube {
+    public:
+        VulkanTextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, bool generateMipmaps);
+        ~VulkanTextureCube() override;
+
+        const VulkanTextureData& getVulkanTextureData() const { return textureData; }
+
+    private:
+        void init(const byte *data[6], uint32 faceDataSize, uint32 width, uint32 height, bool generateMipmaps);
+
+        VulkanTextureData textureData;
     };
 
 
     class VulkanTextureView : public TextureView, public VulkanGpuObject<VkImageView> {
     public:
-        explicit VulkanTextureView(const Ref<Texture> &texture);
+        explicit VulkanTextureView(const Ref<Texture2D> &texture);
+        explicit VulkanTextureView(const Ref<TextureCube> &textureCube);
+
         ~VulkanTextureView() override;
+
+    private:
+        void init(VkImageViewType viewType, VkImage vkImage);
     };
 
 

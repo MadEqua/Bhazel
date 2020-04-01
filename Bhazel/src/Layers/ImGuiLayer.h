@@ -28,7 +28,7 @@ namespace BZ {
         //Ref<Shader> vertexShader;
         //Ref<Shader> fragmentShader;
 
-        Ref<Texture> fontTexture;
+        Ref<Texture2D> fontTexture;
         Ref<TextureView> fontTextureView;
         Ref<Sampler> fontTextureSampler;
 

@@ -116,6 +116,10 @@ void Layer3D::onGraphicsContextCreated() {
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
     dirLight.color = { 1.0f, 1.0f, 1.0f };
     scene.addDirectionalLight(dirLight);
+
+    //Testing TextureCube
+    //const char* fileNames[6] = { "nx.png", "px.png", "ny.png", "py.png", "nz.png", "pz.png" };
+    //static BZ::Ref<BZ::TextureCube> test = BZ::TextureCube::create("Sandbox/textures/cubemap/", fileNames, BZ::TextureFormat::R8G8B8A8_SRGB, true);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {

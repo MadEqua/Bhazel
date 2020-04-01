@@ -50,6 +50,7 @@ namespace BZ {
         uint32 getHeight() const { return dimensions.y; }
         uint32 getDepth() const { return dimensions.z; }
         uint32 getMipLevels() const { return mipLevels; }
+        uint32 getLayers() const { return layers; }
 
     protected:
         explicit Texture(TextureFormat format);
@@ -59,6 +60,7 @@ namespace BZ {
 
         TextureFormatWrapper format;
         glm::ivec3 dimensions = { 1, 1, 1 };
+        uint32 layers = 1;
         uint32 mipLevels = 1;
     };
 
@@ -75,9 +77,20 @@ namespace BZ {
     };
 
 
+    class TextureCube : public Texture {
+    public:
+        //fileNames -> -x, +x, -y, +y, -z, +z
+        static Ref<TextureCube> create(const char* basePath, const char* fileNames[6], TextureFormat format, bool generateMipmaps);
+
+    protected:
+        explicit TextureCube(TextureFormat format);
+    };
+
+
     class TextureView {
     public:
-        static Ref<TextureView> create(const Ref<Texture> &texture);
+        static Ref<TextureView> create(const Ref<Texture2D> &texture2D);
+        static Ref<TextureView> create(const Ref<TextureCube> &textureCube);
 
         //TextureFormat getFormat() const { return texture->getFormat(); } TODO: TextureView own format
         const TextureFormatWrapper& getTextureFormat() const { return texture->getFormat(); }
