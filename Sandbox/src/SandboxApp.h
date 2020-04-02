@@ -40,7 +40,9 @@ private:
     BZ::Scene scene;
 
     BZ::PerspectiveCamera camera;
-    BZ::RotateCameraController cameraController;
+    BZ::RotateCameraController rotateCameraController;
+    BZ::FreeCameraController freeCameraController;
+    bool useFreeCamera = false;
 };
 
 

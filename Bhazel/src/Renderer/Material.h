@@ -10,6 +10,7 @@ namespace BZ {
     public:
         Material() = default;
         explicit Material(Ref<Texture2D> &albedoTexture);
+        explicit Material(Ref<TextureCube> &albedoTexture);
         explicit Material(const char *albedoTexturePath);
 
         bool isValid() const { return static_cast<bool>(descriptorSet); }

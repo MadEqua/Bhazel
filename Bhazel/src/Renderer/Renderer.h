@@ -12,6 +12,8 @@ namespace BZ {
     class Mesh;
     class Material;
     class Scene;
+    struct SkyBox;
+    class PipelineState;
 
     struct RendererStats {
         uint32 vertexCount;
@@ -42,8 +44,10 @@ namespace BZ {
 
         static void drawCube(const Transform &transform, const Material &material);
 
-        static void drawMesh(const Mesh &mesh, const Transform &transform);
-        static void drawMesh(const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial);
+        static void drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform);
+        static void drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial);
+
+        //static void drawSkyBox(const SkyBox &skyBox);
 
         static RendererStats stats;
     };

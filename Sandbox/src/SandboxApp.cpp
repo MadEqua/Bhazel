@@ -85,11 +85,12 @@ void Layer3D::onAttach() {
 }
 
 void Layer3D::onGraphicsContextCreated() {
-    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 200.0f);
+    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 300.0f);
     camera.getTransform().setTranslation({ 0.0f, 50.0f, 50.0f });
     scene.setCamera(camera);
     
-    cameraController = BZ::RotateCameraController(camera, 70.0f);
+    rotateCameraController = BZ::RotateCameraController(camera, 70.0f);
+    freeCameraController = BZ::FreeCameraController(camera);
 
     BZ::Mesh mesh("Sandbox/meshes/castle.obj");
     BZ::Transform transform;
@@ -117,20 +118,26 @@ void Layer3D::onGraphicsContextCreated() {
     dirLight.color = { 1.0f, 1.0f, 1.0f };
     scene.addDirectionalLight(dirLight);
 
-    //Testing TextureCube
-    //const char* fileNames[6] = { "nx.png", "px.png", "ny.png", "py.png", "nz.png", "pz.png" };
-    //static BZ::Ref<BZ::TextureCube> test = BZ::TextureCube::create("Sandbox/textures/cubemap/", fileNames, BZ::TextureFormat::R8G8B8A8_SRGB, true);
+    const char* fileNames[6] = { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
+    scene.enableSkyBox("Sandbox/textures/cubemap/", fileNames, BZ::TextureFormat::R8G8B8A8_SRGB);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 
-    cameraController.onUpdate(frameStats);
+    if(useFreeCamera)
+        freeCameraController.onUpdate(frameStats);
+    else
+        rotateCameraController.onUpdate(frameStats);
+
     BZ::Renderer::drawScene(scene);
 }
 
 void Layer3D::onEvent(BZ::Event &event) {
-    cameraController.onEvent(event);
+    if(useFreeCamera)
+        freeCameraController.onEvent(event);
+    else
+        rotateCameraController.onEvent(event);
 }
 
 void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
@@ -165,6 +172,11 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
         if (ImGui::DragFloat3("Color", &col[0], 0.05f, 0.0f, 1.0f)) {
             scene.getDirectionalLights()[0].color = col;
         }
+    }
+    ImGui::End();
+
+    if (ImGui::Begin("Camera")) {
+        ImGui::Checkbox("Use Free Camera", &useFreeCamera);
     }
     ImGui::End();
 }

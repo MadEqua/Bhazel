@@ -321,9 +321,12 @@ namespace BZ {
         std::string basePathStr(basePath);
         const byte *datas[6];
 
+        //Flip Y axis images because in Vulkan convention +Y is down.
+        std::swap(datas[2], datas[3]);
+
         for (int i = 0; i < 6; ++i) {
             std::string fullPath = basePathStr + fileNames[i];
-            datas[i] = loadFile(fullPath.c_str(), true, width, height);
+            datas[i] = loadFile(fullPath.c_str(), false, width, height);
         }
 
         init(datas, width * height * 4, width, height, generateMipmaps);

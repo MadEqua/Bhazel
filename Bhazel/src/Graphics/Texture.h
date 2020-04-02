@@ -79,7 +79,7 @@ namespace BZ {
 
     class TextureCube : public Texture {
     public:
-        //fileNames -> -x, +x, -y, +y, -z, +z
+        //fileNames -> +x, -x, +y, -y, +z, -z
         static Ref<TextureCube> create(const char* basePath, const char* fileNames[6], TextureFormat format, bool generateMipmaps);
 
     protected:

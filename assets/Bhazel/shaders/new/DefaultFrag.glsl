@@ -35,6 +35,7 @@ void main() {
     }
 
     outColor = vec4(col, 1.0);
-    //outColor = vec4(N, 1.0);
-    //outColor = vec4(inTexCoord, 0.0, 1.0);
+    //outColor = vec4(normalize(inNormal), 1.0);
+    //outColor = vec4(inTexCoord, 0.0, 1.0).yyyy;
+    //outColor = texture(uTexSampler, inTexCoord);
 }

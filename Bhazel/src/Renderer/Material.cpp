@@ -11,6 +11,11 @@ namespace BZ {
         init();
     }
 
+    Material::Material(Ref<TextureCube> &albedoTexture):
+        albedoTextureView(TextureView::create(albedoTexture)) {
+        init();
+    }
+
     Material::Material(const char *albedoTexturePath) {
         auto albedoTexture = Texture2D::create(albedoTexturePath, TextureFormat::R8G8B8A8_SRGB, true);
         albedoTextureView = TextureView::create(albedoTexture);

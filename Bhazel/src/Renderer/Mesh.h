@@ -25,6 +25,7 @@ namespace BZ {
         };
 
         static Mesh createUnitCube(const Material &material = Material());
+        static Mesh createUnitCubeInsides(const Material &material = Material());
 
         Mesh() = default;
         explicit Mesh(const char *path);

@@ -73,6 +73,68 @@ namespace BZ {
         return Mesh(cubeVertices, CUBE_VERTEX_COUNT, material);
     }
 
+    Mesh Mesh::createUnitCubeInsides(const Material &material) {
+        constexpr uint32 CUBE_VERTEX_COUNT = 36;
+
+        constexpr float NEG_ONE_F = -1.0f;
+        constexpr float ONE_F = 1.0f;
+
+        constexpr uint16 ZERO = 0;
+        constexpr uint16 ONE_UI = 0xffff - 1;
+
+        Mesh::Vertex cubeVertices[CUBE_VERTEX_COUNT] = {
+            //Front
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, {  NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+
+            //Right
+            { { ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
+
+            //Left
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
+
+            //Back
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+
+            //Bottom
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+
+            //Top
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO} },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+        };
+
+        return Mesh(cubeVertices, CUBE_VERTEX_COUNT, material);
+    }
+
     Mesh::Mesh(const char *path) {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;

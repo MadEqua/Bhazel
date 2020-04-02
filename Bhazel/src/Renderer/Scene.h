@@ -17,6 +17,10 @@ namespace BZ {
         Transform transform;
     };
 
+    struct SkyBox {
+        Mesh mesh;
+    };
+
     class Scene {
     public:
         Scene() = default;
@@ -24,6 +28,7 @@ namespace BZ {
 
         void addEntity(Mesh &mesh, Transform &transform);
         void addDirectionalLight(DirectionalLight &light);
+        void enableSkyBox(const char *cubeTextureBasePath, const char *CubeTextureFileNames[6], TextureFormat format);
         void setCamera(Camera &camera);
 
         std::vector<Entity>& getEntities() { return entities; }
@@ -32,6 +37,9 @@ namespace BZ {
         std::vector<DirectionalLight>& getDirectionalLights() { return lights; }
         const std::vector<DirectionalLight>& getDirectionalLights() const { return lights; }
 
+        bool hasSkyBox() const { return skyBox.mesh.isValid(); }
+        const SkyBox& getSkyBox() const { return skyBox; }
+
         Camera& getCamera() { return *camera; }
         const Camera& getCamera() const { return *camera; }
 
@@ -39,5 +47,6 @@ namespace BZ {
         std::vector<Entity> entities;
         std::vector<DirectionalLight> lights;
         Camera *camera = nullptr;
+        SkyBox skyBox;
     };
 }
