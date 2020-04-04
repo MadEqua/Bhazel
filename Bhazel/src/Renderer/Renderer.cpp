@@ -17,6 +17,7 @@ namespace BZ {
         { DataType::Float32, DataElements::Vec3, "POSITION" },
         { DataType::Float32, DataElements::Vec3, "NORMAL" },
         { DataType::Float32, DataElements::Vec3, "TANGENT" },
+        { DataType::Float32, DataElements::Vec3, "BITANGENT" },
         { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
     };
 
@@ -50,6 +51,10 @@ namespace BZ {
 
         //DefaultPipelineState
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+        //Albedo, Normal, Metallic and Roughness textures
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder.build();
         

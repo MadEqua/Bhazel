@@ -22,52 +22,52 @@ namespace BZ {
 
         Mesh::Vertex cubeVertices[CUBE_VERTEX_COUNT] = {
             //Front
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
 
             //Right
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
-            { { ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
 
             //Left
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO } },
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, {}, { ZERO, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
 
             //Back
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
 
             //Bottom
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, {ZERO, ZERO, ONE_F}, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
 
             //Top
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
         };
 
         return Mesh(cubeVertices, CUBE_VERTEX_COUNT, material);
@@ -84,58 +84,59 @@ namespace BZ {
 
         Mesh::Vertex cubeVertices[CUBE_VERTEX_COUNT] = {
             //Front
-            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, {  NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, {  NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ZERO, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
 
             //Right
-            { { ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
-            { { ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
 
             //Left
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
 
             //Back
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, {}, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ZERO, ONE_F }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_F, ZERO }, { ONE_UI, ZERO } },
 
             //Bottom
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
-            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO } },
-            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, NEG_ONE_F, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, NEG_ONE_F, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
 
             //Top
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
-            { { ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ONE_UI } },
-            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ZERO, ZERO} },
-            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { NEG_ONE_F, ZERO, ZERO }, { ONE_UI, ZERO } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ONE_UI } },
+            { { NEG_ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ZERO, ZERO} },
+            { { ONE_F, ONE_F, NEG_ONE_F }, { ZERO, NEG_ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, ONE_F }, { ONE_UI, ZERO } },
         };
 
         return Mesh(cubeVertices, CUBE_VERTEX_COUNT, material);
     }
 
-    Mesh::Mesh(const char *path) {
+    Mesh::Mesh(const char *path, const Material &material) :
+        material(material) {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;
@@ -171,14 +172,10 @@ namespace BZ {
                     vertex.normal = glm::normalize(vertex.normal);
                 }
 
-                //vertex.tangent[0] = attrib.tangents[3 * index.tangent_index + 0];
-                //vertex.tangent[1] = attrib.tangents[3 * index.tangent_index + 1];
-                //vertex.tangent[2] = attrib.tangents[3 * index.tangent_index + 2];
-
                 if (!attrib.texcoords.empty()) {
-                    constexpr float MAX = static_cast<float>(0xffff);
-                    vertex.texCoord[0] = static_cast<uint16>(attrib.texcoords[2 * index.texcoord_index + 0] * MAX);
-                    vertex.texCoord[1] = static_cast<uint16>(attrib.texcoords[2 * index.texcoord_index + 1] * MAX);
+                    constexpr float SHORT_MAX_FLOAT = static_cast<float>(0xffff);
+                    vertex.texCoord[0] = static_cast<uint16>(attrib.texcoords[2 * index.texcoord_index + 0] * SHORT_MAX_FLOAT);
+                    vertex.texCoord[1] = static_cast<uint16>(attrib.texcoords[2 * index.texcoord_index + 1] * SHORT_MAX_FLOAT);
                 }
 
                 if (uniqueVertices.count(vertex) == 0) {
@@ -190,13 +187,21 @@ namespace BZ {
             }
         }
 
-        auto pathWithoutFileName = Utils::removeFileNameFromPath(path);
-        for (auto &material : materials) {
-            this->material = Material((pathWithoutFileName + material.diffuse_texname).c_str());
-        }
-
         vertexCount = static_cast<uint32>(vertices.size());
         indexCount = static_cast<uint32>(indices.size());
+
+        //Only compute tangents if texcoords are present
+        if (!attrib.texcoords.empty()) {
+            computeTangents(vertices, indices);
+        }
+
+        auto pathWithoutFileName = Utils::removeFileNameFromPath(path);
+        for (auto &material : materials) {
+            this->material = Material((pathWithoutFileName + material.diffuse_texname).c_str(),
+                                      (pathWithoutFileName + material.normal_texname).c_str(),
+                                      (pathWithoutFileName + material.metallic_texname).c_str(),
+                                      (pathWithoutFileName + material.roughness_texname).c_str());
+        }
 
         vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
         indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
@@ -218,5 +223,56 @@ namespace BZ {
 
         vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
         indexBuffer->setData(indices, sizeof(uint32) * indexCount, 0);
+    }
+
+    void Mesh::computeTangents(std::vector<Vertex> &vertices, const std::vector<uint32> &indices) {
+        BZ_ASSERT(!vertices.empty() && !indices.empty(), "Vertices and Indices are needed to compute tangents!");
+
+        std::vector<glm::vec3> tempTangents;
+        std::vector<glm::vec3> tempBitangents;
+        tempTangents.resize(vertexCount, { 0.0f, 0.0f, 0.0f });
+        tempBitangents.resize(vertexCount, { 0.0f, 0.0f, 0.0f });
+
+        for (int i = 0; i < indices.size(); i += 3) {
+            Vertex &vertex1 = vertices[indices[i + 0]];
+            Vertex &vertex2 = vertices[indices[i + 1]];
+            Vertex &vertex3 = vertices[indices[i + 2]];
+
+            glm::vec3 edge1 = vertex2.position - vertex1.position;
+            glm::vec3 edge2 = vertex3.position - vertex1.position;
+
+            constexpr float SHORT_MAX_FLOAT = static_cast<float>(0xffff);
+            glm::vec2 deltaUV1 = (glm::vec2(vertex2.texCoord[0], vertex2.texCoord[1]) - glm::vec2(vertex1.texCoord[0], vertex1.texCoord[1])) / SHORT_MAX_FLOAT;
+            glm::vec2 deltaUV2 = (glm::vec2(vertex3.texCoord[0], vertex3.texCoord[1]) - glm::vec2(vertex1.texCoord[0], vertex1.texCoord[1])) / SHORT_MAX_FLOAT;
+
+            glm::vec3 tangent = deltaUV2.t * edge1 - deltaUV1.t * edge2;
+            tangent = glm::normalize(tangent);
+
+            glm::vec3 bitangent = -deltaUV2.s * edge1 + deltaUV1.s * edge2;
+            bitangent = glm::normalize(bitangent);
+
+            tempTangents[indices[i + 0]] += tangent;
+            tempTangents[indices[i + 1]] += tangent;
+            tempTangents[indices[i + 2]] += tangent;
+
+            tempBitangents[indices[i + 0]] += bitangent;
+            tempBitangents[indices[i + 1]] += bitangent;
+            tempBitangents[indices[i + 2]] += bitangent;
+        }
+
+        for (int i = 0; i < vertexCount; ++i) {
+            Vertex &v = vertices[i];
+            glm::vec3 tangent = tempTangents[i];
+            glm::vec3 bitangent = tempBitangents[i];
+
+            //Ensure tangent is perpendicular to normal (Gram-Schmidt).
+            tangent -= v.normal * glm::dot(tangent, v.normal);
+            v.tangent = glm::normalize(tangent);
+
+            //Ensure bitangent is perpendicular to tangent and normal (Gram-Schmidt).
+            bitangent -= v.normal * glm::dot(bitangent, v.normal);
+            bitangent -= v.tangent * glm::dot(bitangent, v.tangent);
+            v.bitangent = glm::normalize(bitangent);
+        }
     }
 }
