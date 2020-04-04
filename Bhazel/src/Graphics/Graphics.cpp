@@ -21,7 +21,8 @@ namespace BZ {
         glm::vec3 cameraPosition;
         alignas(16) glm::vec3 dirLightsDirections[MAX_DIR_LIGHTS_PER_SCENE];
         alignas(16) glm::vec3 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE];
-        alignas(16) uint32 dirLightsCount;
+        alignas(16) float dirLightsIntensities[MAX_DIR_LIGHTS_PER_SCENE];
+        uint32 dirLightsCount;
     };
 
     struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
@@ -221,6 +222,7 @@ namespace BZ {
         for (const auto &dirLight : scene.getDirectionalLights()) {
             sceneConstantBufferData.dirLightsDirections[i] = dirLight.direction;
             sceneConstantBufferData.dirLightsColors[i] = dirLight.color;
+            sceneConstantBufferData.dirLightsIntensities[i] = dirLight.intensity;
             i++;
         }
         sceneConstantBufferData.dirLightsCount = i;

@@ -92,30 +92,21 @@ void Layer3D::onGraphicsContextCreated() {
     rotateCameraController = BZ::RotateCameraController(camera, 70.0f);
     freeCameraController = BZ::FreeCameraController(camera);
 
-    BZ::Mesh mesh("Sandbox/meshes/castle.obj");
+    BZ::Material material("Sandbox/meshes/fireHydrant/BaseColor.png", "Sandbox/meshes/fireHydrant/Normal.png", "Sandbox/meshes/fireHydrant/Metallic.png", "Sandbox/meshes/fireHydrant/Roughness.png");
+    BZ::Mesh mesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", material);
+
+    //BZ::Material material("Sandbox/textures/152.JPG", "Sandbox/textures/152_norm.JPG");
+    //BZ::Mesh mesh = BZ::Mesh::createUnitCube(material);
+    
     BZ::Transform transform;
-    BZ::Transform transform2;
-    BZ::Transform transform3;
-    BZ::Transform transform4;
-
-    transform.setScale(0.06f, 0.06f, 0.06f);
+    transform.setScale(0.5f, 0.5f, 0.5f);
+    transform.setTranslation(0.0f, -25.0f, 0.0f);
     scene.addEntity(mesh, transform);
-
-    transform2.setScale(0.006f, 0.006f, 0.006f);
-    transform2.setTranslation(-8.0f, 21.0f, 0.0f);
-    scene.addEntity(mesh, transform2);
-
-    transform3.setScale(0.006f, 0.006f, 0.006f);
-    transform3.setTranslation(7.0f, 21.0f, 7.0f);
-    scene.addEntity(mesh, transform3);
-
-    transform4.setScale(0.006f, 0.006f, 0.006f);
-    transform4.setTranslation(7.0f, 21.0f, -7.0f);
-    scene.addEntity(mesh, transform4);
 
     BZ::DirectionalLight dirLight;
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
     dirLight.color = { 1.0f, 1.0f, 1.0f };
+    dirLight.intensity = 1.0f;
     scene.addDirectionalLight(dirLight);
 
     const char* fileNames[6] = { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
@@ -165,12 +156,16 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     if (ImGui::Begin("DirLight")) {
         auto dir = scene.getDirectionalLights()[0].direction;
         auto col = scene.getDirectionalLights()[0].color;
+        auto intensity = scene.getDirectionalLights()[0].intensity;
 
         if (ImGui::DragFloat3("Direction", &dir[0], 0.05f, -1.0f, 1.0f)) {
             scene.getDirectionalLights()[0].direction = dir;
         }
         if (ImGui::DragFloat3("Color", &col[0], 0.05f, 0.0f, 1.0f)) {
             scene.getDirectionalLights()[0].color = col;
+        }
+        if (ImGui::DragFloat("Intensity", &intensity, 0.05f, 0.0f, 10.0f)) {
+            scene.getDirectionalLights()[0].intensity = intensity;
         }
     }
     ImGui::End();

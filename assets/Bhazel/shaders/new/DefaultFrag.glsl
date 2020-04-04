@@ -8,6 +8,7 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     vec3 cameraPosition;
     vec3 dirLightDirections[2];
     vec3 dirLightColors[2];
+    float dirLightIntensities[2];
     int dirLightsCount;
 } uSceneConstants;
 
@@ -24,21 +25,74 @@ layout(set = 3, binding = 3) uniform sampler2D uRoughnessTexSampler;
 
 layout(location = 0) out vec4 outColor;
 
+#define PI 3.14159265359
+
+
+vec3 fresnelSchlick(float HdotV, vec3 F0) {
+    return F0 + (1.0 - F0) * pow(1.0 - HdotV, 5.0);
+}
+
+float distributionGGX(float NdotH, float roughness) {
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH2 = NdotH * NdotH;
+    
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+    return a2 / denom;
+}
+
+float geometrySchlickGGX(float NdotV, float roughness) {
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+    float denom = NdotV * (1.0 - k) + k;
+    return NdotV / denom;
+}
+
+float geometrySmith(float NdotV, float NdotL, float roughness) {
+    float ggx2  = geometrySchlickGGX(NdotV, roughness);
+    float ggx1  = geometrySchlickGGX(NdotL, roughness);
+    return ggx1 * ggx2;
+}
+
+vec3 cookTorrance(vec3 N, vec3 L, vec3 V, vec3 lightRadiance) {
+    vec3 H = normalize(V + L);
+        
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float HdotV = max(dot(H, V), 0.0);
+    float NdotH = max(dot(N, H), 0.0);
+
+    vec3 albedo = texture(uAlbedoTexSampler, inData.texCoord).rgb;
+    float metallic = texture(uMetallicTexSampler, inData.texCoord).r;
+    float roughness = texture(uRoughnessTexSampler, inData.texCoord).r;
+
+    vec3 F0 = mix(vec3(0.04), albedo, metallic); //Hardcoded reflectance for dielectrics
+    vec3 F = fresnelSchlick(HdotV, F0);
+
+    float G = geometrySmith(NdotV, NdotL, roughness);
+    float NDF = distributionGGX(NdotH, roughness);
+        
+    vec3 specular = (NDF * G * F) / max((4.0 * NdotV * NdotL), 0.001);
+    vec3 kS = F;
+    vec3 kD = (vec3(1.0) - kS) * (vec3(1.0) - metallic);
+    return (kD * albedo / PI + specular) * lightRadiance * NdotL;
+}
+
 void main() {
     vec3 col = vec3(0.0);
     mat3 TBN = mat3(normalize(inData.tbnMatrix[0]), normalize(inData.tbnMatrix[1]), normalize(inData.tbnMatrix[2]));
 
+    vec3 N = TBN * normalize((texture(uNormalTexSampler, inData.texCoord).rgb * 2.0 - 1.0));
+    vec3 V = normalize(uSceneConstants.cameraPosition - inData.position);
+
     for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
         vec3 L = -normalize(uSceneConstants.dirLightDirections[i]);
-        vec3 N = TBN * normalize((texture(uNormalTexSampler, inData.texCoord).rgb * 2.0 - 1.0));
-        vec3 V = normalize(uSceneConstants.cameraPosition - inData.position);
-        vec3 H = normalize(L + V);
 
+        //May apply ambient occlusion here.
         vec3 amb = vec3(0.01);
-        float diffuse = max(0.0, dot(L, N));
-        float spec = pow(max(0.0, dot(H, N)), 10.0);
 
-        col += amb + (diffuse * texture(uAlbedoTexSampler, inData.texCoord).rgb * uSceneConstants.dirLightColors[i]) + (spec * vec3(1.0));
+        col += amb + cookTorrance(N, L, V, uSceneConstants.dirLightColors[i] * uSceneConstants.dirLightIntensities[i]);
         //col = vec3(diffuse, diffuse, diffuse);
         //col = vec3(spec, spec, spec);
         //col = inData.tbnMatrix[2] *0.5+0.5;
