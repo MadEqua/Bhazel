@@ -24,6 +24,9 @@ namespace BZ {
         bool isStencil() const;
         bool isDepthStencil() const;
         bool isDepthOnly() const;
+        bool isSRGB() const;
+
+        int getChannelCount() const;
     };
 
     enum class FilterMode {
@@ -55,7 +58,7 @@ namespace BZ {
     protected:
         explicit Texture(TextureFormat format);
 
-        static const byte* loadFile(const char* path, bool flip, int &widthOut, int &heightOut);
+        static const byte* loadFile(const char* path, int desiredChannels, bool flip, int &widthOut, int &heightOut);
         static void freeData(const byte *data);
 
         TextureFormatWrapper format;

@@ -6,9 +6,8 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
     vec3 cameraPosition;
-    vec3 dirLightDirections[2];
+    vec4 dirLightsDirectionsAndIntensities[2];
     vec3 dirLightColors[2];
-    float dirLightIntensities[2];
     int dirLightsCount;
 } uSceneConstants;
 
@@ -87,22 +86,23 @@ void main() {
     vec3 V = normalize(uSceneConstants.cameraPosition - inData.position);
 
     for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
-        vec3 L = -normalize(uSceneConstants.dirLightDirections[i]);
+        vec3 L = -normalize(uSceneConstants.dirLightsDirectionsAndIntensities[i].xyz);
 
         //May apply ambient occlusion here.
         vec3 amb = vec3(0.01);
 
-        col += amb + cookTorrance(N, L, V, uSceneConstants.dirLightColors[i] * uSceneConstants.dirLightIntensities[i]);
+        col += amb + cookTorrance(N, L, V, uSceneConstants.dirLightColors[i] * uSceneConstants.dirLightsDirectionsAndIntensities[i].w);
         //col = vec3(diffuse, diffuse, diffuse);
         //col = vec3(spec, spec, spec);
         //col = inData.tbnMatrix[2] *0.5+0.5;
         //col = N *0.5+0.5;
-        //col = vec3(inData.texCoord.x, 0.0, 0.0);
+        //col = vec3(inData.texCoord, 0.0);
         //col = texture(uNormalTexSampler, inData.texCoord).rgb;
+        //col = vec3(1,0,0);
     }
 
     outColor = vec4(col, 1.0);
-    //outColor = vec4(normalize(inNormal), 1.0);
+    //outColor = vec4(1.0,0.0,0.0, 1.0);
     //outColor = vec4(inTexCoord, 0.0, 1.0).yyyy;
     //outColor = texture(uTexSampler, inTexCoord);
 }

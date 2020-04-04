@@ -17,8 +17,8 @@ namespace BZ {
         lights.push_back(light);
     }
 
-    void Scene::enableSkyBox(const char *cubeTextureBasePath, const char *CubeTextureFileNames[6], TextureFormat format) {
-        auto textureCubeRef = BZ::TextureCube::create(cubeTextureBasePath, CubeTextureFileNames, format, true);
+    void Scene::enableSkyBox(const char *cubeTextureBasePath, const char *CubeTextureFileNames[6]) {
+        auto textureCubeRef = BZ::TextureCube::create(cubeTextureBasePath, CubeTextureFileNames, TextureFormat::R8G8B8A8_SRGB, true);
         skyBox.mesh = Mesh::createUnitCubeInsides(Material(textureCubeRef));
     }
 

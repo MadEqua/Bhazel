@@ -110,7 +110,7 @@ void Layer3D::onGraphicsContextCreated() {
     scene.addDirectionalLight(dirLight);
 
     const char* fileNames[6] = { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
-    scene.enableSkyBox("Sandbox/textures/cubemap/", fileNames, BZ::TextureFormat::R8G8B8A8_SRGB);
+    scene.enableSkyBox("Sandbox/textures/cubemap/", fileNames);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {

@@ -138,15 +138,68 @@ namespace BZ {
         };
     }
 
+    bool TextureFormatWrapper::isSRGB() const {
+        switch (format) {
+        case TextureFormat::Undefined:
+        case TextureFormat::R8:
+        case TextureFormat::R8G8:
+        case TextureFormat::R8G8B8:
+        case TextureFormat::R8G8B8A8:
+        case TextureFormat::B8G8R8A8:
+        case TextureFormat::D16S8:
+        case TextureFormat::D24S8:
+        case TextureFormat::D32:
+            return false;
+        case TextureFormat::R8_SRGB:
+        case TextureFormat::R8G8_SRGB:
+        case TextureFormat::R8G8B8_SRGB:
+        case TextureFormat::R8G8B8A8_SRGB:
+        case TextureFormat::B8G8R8A8_SRGB:
+            return true;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            return false;
+        };
+    }
+
+    int TextureFormatWrapper::getChannelCount() const {
+        switch (format) {
+        case TextureFormat::Undefined:
+            return 0;
+        case TextureFormat::R8:
+        case TextureFormat::R8_SRGB:
+            return 1;
+        case TextureFormat::R8G8:
+        case TextureFormat::R8G8_SRGB:
+            return 2;
+        case TextureFormat::R8G8B8:
+        case TextureFormat::R8G8B8_SRGB:
+            return 3;
+        case TextureFormat::R8G8B8A8:
+        case TextureFormat::R8G8B8A8_SRGB:
+        case TextureFormat::B8G8R8A8:
+        case TextureFormat::B8G8R8A8_SRGB:
+            return 4;
+        case TextureFormat::D16S8:
+        case TextureFormat::D24S8:
+            return 2;
+        case TextureFormat::D32:
+            return 1;
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            return false;
+        };
+    }
+
 
     Texture::Texture(TextureFormat format) :
         format(format) {
     }
 
-    const byte* Texture::loadFile(const char* path, bool flip, int &widthOut, int &heightOut) {
+    const byte* Texture::loadFile(const char* path, int desiredChannels, bool flip, int &widthOut, int &heightOut) {
         stbi_set_flip_vertically_on_load(flip);
-        int channels;
-        stbi_uc* data = stbi_load(path, &widthOut, &heightOut, &channels, 4);
+        int channelsInFile;
+        stbi_uc* data = stbi_load(path, &widthOut, &heightOut, &channelsInFile, desiredChannels);
         BZ_CRITICAL_ERROR_CORE(data, "Failed to load image '{}'.", path);
         return static_cast<byte*>(data);
     }

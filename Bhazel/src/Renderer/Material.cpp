@@ -32,10 +32,10 @@ namespace BZ {
         auto normalTexture = Texture2D::create(normalTexturePath, TextureFormat::R8G8B8A8, true);
         normalTextureView = TextureView::create(normalTexture);
 
-        auto metallicTexture = Texture2D::create(metallicTexturePath, TextureFormat::R8G8B8A8, true);
+        auto metallicTexture = Texture2D::create(metallicTexturePath, TextureFormat::R8, true);
         metallicTextureView = TextureView::create(metallicTexture);
 
-        auto roughnessTexture = Texture2D::create(roughnessTexturePath, TextureFormat::R8G8B8A8, true);
+        auto roughnessTexture = Texture2D::create(roughnessTexturePath, TextureFormat::R8, true);
         roughnessTextureView = TextureView::create(roughnessTexture);
 
         init();

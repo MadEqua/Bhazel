@@ -18,10 +18,9 @@ namespace BZ {
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
         glm::mat4 viewProjectionMatrix;
-        glm::vec3 cameraPosition;
-        alignas(16) glm::vec3 dirLightsDirections[MAX_DIR_LIGHTS_PER_SCENE];
-        alignas(16) glm::vec3 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE];
-        alignas(16) float dirLightsIntensities[MAX_DIR_LIGHTS_PER_SCENE];
+        glm::vec4 cameraPosition;
+        glm::vec4 dirLightsDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
+        glm::vec4 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE];
         uint32 dirLightsCount;
     };
 
@@ -186,7 +185,9 @@ namespace BZ {
         sceneConstantBufferData.viewMatrix = viewMatrix;
         sceneConstantBufferData.projectionMatrix = projectionMatrix;
         sceneConstantBufferData.viewProjectionMatrix = projectionMatrix * viewMatrix;
-        sceneConstantBufferData.cameraPosition = cameraPosition;
+        sceneConstantBufferData.cameraPosition.x = cameraPosition.x;
+        sceneConstantBufferData.cameraPosition.y = cameraPosition.y;
+        sceneConstantBufferData.cameraPosition.z = cameraPosition.z;
         sceneConstantBufferData.dirLightsCount = 0;
 
         uint32 sceneOffset = data.currentSceneIndex * sizeof(SceneConstantBufferData);
@@ -216,13 +217,20 @@ namespace BZ {
         sceneConstantBufferData.viewMatrix = camera.getViewMatrix();
         sceneConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
         sceneConstantBufferData.viewProjectionMatrix = sceneConstantBufferData.projectionMatrix * sceneConstantBufferData.viewMatrix;
-        sceneConstantBufferData.cameraPosition = camera.getTransform().getTranslation();
+        const glm::vec3 &cameraPosition = camera.getTransform().getTranslation();
+        sceneConstantBufferData.cameraPosition.x = cameraPosition.x;
+        sceneConstantBufferData.cameraPosition.y = cameraPosition.y;
+        sceneConstantBufferData.cameraPosition.z = cameraPosition.z;
         
         int i = 0;
         for (const auto &dirLight : scene.getDirectionalLights()) {
-            sceneConstantBufferData.dirLightsDirections[i] = dirLight.direction;
-            sceneConstantBufferData.dirLightsColors[i] = dirLight.color;
-            sceneConstantBufferData.dirLightsIntensities[i] = dirLight.intensity;
+            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].x = dirLight.direction.x;
+            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].y = dirLight.direction.y;
+            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].z = dirLight.direction.z;
+            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].w = dirLight.intensity;
+            sceneConstantBufferData.dirLightsColors[i].r = dirLight.color.r;
+            sceneConstantBufferData.dirLightsColors[i].g = dirLight.color.g;
+            sceneConstantBufferData.dirLightsColors[i].b = dirLight.color.b;
             i++;
         }
         sceneConstantBufferData.dirLightsCount = i;

@@ -214,9 +214,10 @@ namespace BZ {
         Texture2D(format), isWrapping(false) {
 
         int width, height;
-        const byte *data = loadFile(path, true, width, height);
+        int desiredChannels = this->format.getChannelCount();
+        const byte *data = loadFile(path, desiredChannels, true, width, height);
 
-        init(data, width * height * 4, width, height, generateMipmaps);
+        init(data, width * height * desiredChannels, width, height, generateMipmaps);
         freeData(data);
     }
 
@@ -324,12 +325,13 @@ namespace BZ {
         //Flip Y axis images because in Vulkan convention +Y is down.
         std::swap(datas[2], datas[3]);
 
+        int desiredChannels = this->format.getChannelCount();
         for (int i = 0; i < 6; ++i) {
             std::string fullPath = basePathStr + fileNames[i];
-            datas[i] = loadFile(fullPath.c_str(), false, width, height);
+            datas[i] = loadFile(fullPath.c_str(), desiredChannels, false, width, height);
         }
 
-        init(datas, width * height * 4, width, height, generateMipmaps);
+        init(datas, width * height * desiredChannels, width, height, generateMipmaps);
 
         for (int i = 0; i < 6; ++i) {
             freeData(datas[i]);

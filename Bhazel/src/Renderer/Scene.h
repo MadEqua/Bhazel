@@ -29,7 +29,7 @@ namespace BZ {
 
         void addEntity(Mesh &mesh, Transform &transform);
         void addDirectionalLight(DirectionalLight &light);
-        void enableSkyBox(const char *cubeTextureBasePath, const char *CubeTextureFileNames[6], TextureFormat format);
+        void enableSkyBox(const char *cubeTextureBasePath, const char *CubeTextureFileNames[6]);
         void setCamera(Camera &camera);
 
         std::vector<Entity>& getEntities() { return entities; }
