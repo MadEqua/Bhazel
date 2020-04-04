@@ -51,7 +51,8 @@ namespace BZ {
 
         //DefaultPipelineState
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        //Albedo, Normal, Metallic and Roughness textures
+        //Albedo, Normal, Metallic, Roughness and Height textures
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);

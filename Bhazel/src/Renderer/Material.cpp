@@ -6,11 +6,12 @@
 
 namespace BZ {
 
-    Material::Material(Ref<Texture2D> &albedoTexture, Ref<Texture2D> &normalTexture, Ref<Texture2D> &metallicTexture, Ref<Texture2D> &roughnessTextureView) :
+    Material::Material(Ref<Texture2D> &albedoTexture, Ref<Texture2D> &normalTexture, Ref<Texture2D> &metallicTexture, Ref<Texture2D> &roughnessTextureView, Ref<Texture2D> &heightTextureView) :
         albedoTextureView(TextureView::create(albedoTexture)),
         normalTextureView(TextureView::create(normalTexture)),
         metallicTextureView(TextureView::create(metallicTexture)),
-        roughnessTextureView(TextureView::create(roughnessTextureView)) {
+        roughnessTextureView(TextureView::create(roughnessTextureView)),
+        heightTextureView(TextureView::create(heightTextureView)) {
         init();
     }
 
@@ -25,7 +26,7 @@ namespace BZ {
         init();
     }
 
-    Material::Material(const char *albedoTexturePath, const char *normalTexturePath, const char *metallicTexturePath, const char *roughnessTexturePath) {
+    Material::Material(const char *albedoTexturePath, const char *normalTexturePath, const char *metallicTexturePath, const char *roughnessTexturePath, const char *heightTexturePath) {
         auto albedoTexture = Texture2D::create(albedoTexturePath, TextureFormat::R8G8B8A8_SRGB, true);
         albedoTextureView = TextureView::create(albedoTexture);
 
@@ -37,6 +38,9 @@ namespace BZ {
 
         auto roughnessTexture = Texture2D::create(roughnessTexturePath, TextureFormat::R8, true);
         roughnessTextureView = TextureView::create(roughnessTexture);
+
+        auto heightTexture = Texture2D::create(heightTexturePath, TextureFormat::R8, true);
+        heightTextureView = TextureView::create(heightTexture);
 
         init();
     }
@@ -63,5 +67,8 @@ namespace BZ {
 
         if(roughnessTextureView)
             descriptorSet->setCombinedTextureSampler(roughnessTextureView, Renderer::getDefaultSampler(), 3);
+
+        if (heightTextureView)
+            descriptorSet->setCombinedTextureSampler(heightTextureView, Renderer::getDefaultSampler(), 4);
     }
 }

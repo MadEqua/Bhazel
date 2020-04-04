@@ -200,7 +200,8 @@ namespace BZ {
             this->material = Material((pathWithoutFileName + material.diffuse_texname).c_str(),
                                       (pathWithoutFileName + material.normal_texname).c_str(),
                                       (pathWithoutFileName + material.metallic_texname).c_str(),
-                                      (pathWithoutFileName + material.roughness_texname).c_str());
+                                      (pathWithoutFileName + material.roughness_texname).c_str(),
+                                      (pathWithoutFileName + material.bump_texname).c_str());
         }
 
         vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());

@@ -14,7 +14,7 @@ constexpr static uint32 MAX_COMMAND_BUFFERS = 8;
 constexpr static uint32 MAX_COMMANDS_PER_BUFFER = 1024 * 4;
 constexpr static uint32 MAX_DESCRIPTOR_DYNAMIC_OFFSETS = 8;
 
-constexpr static uint32 MAX_SCENES_PER_FRAME = 8;
+constexpr static uint32 MAX_SCENES_PER_FRAME = 4;
 constexpr static uint32 MAX_OBJECTS_PER_FRAME = 64;
 constexpr static uint32 MAX_DIR_LIGHTS_PER_SCENE = 2;
 

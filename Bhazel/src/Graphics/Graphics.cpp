@@ -18,9 +18,9 @@ namespace BZ {
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
         glm::mat4 viewProjectionMatrix;
-        glm::vec4 cameraPosition;
+        glm::vec4 cameraPosition; //vec4 to simplify alignments
         glm::vec4 dirLightsDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
-        glm::vec4 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE];
+        glm::vec4 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
         uint32 dirLightsCount;
     };
 
