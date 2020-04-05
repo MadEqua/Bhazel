@@ -9,7 +9,7 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
-    vec3 cameraPosition;
+    vec4 cameraPosition;
 } sceneConstants;
 
 out gl_PerVertex { vec4 gl_Position; };

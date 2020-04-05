@@ -14,6 +14,7 @@ namespace BZ {
     class WindowResizedEvent;
     class GraphicsContext;
     class Scene;
+    class Material;
 
     /*
     * Low level Graphics API.
@@ -39,7 +40,7 @@ namespace BZ {
 
         static void beginScene(uint32 commandBufferId, const Ref<PipelineState>& pipelineState, const glm::vec3 &cameraPosition, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix);
         static void beginScene(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const Scene &scene);
-        static void beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix, const glm::mat3 &normalMatrix);
+        static void beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix, const glm::mat3 &normalMatrix, const Material &material);
 
         //Vertex or index buffer
         static void bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset);

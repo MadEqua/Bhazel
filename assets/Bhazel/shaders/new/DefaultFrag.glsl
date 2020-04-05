@@ -5,11 +5,17 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
-    vec3 cameraPosition;
+    vec4 cameraPosition;
     vec4 dirLightsDirectionsAndIntensities[2];
-    vec3 dirLightColors[2];
+    vec4 dirLightColors[2];
     int dirLightsCount;
 } uSceneConstants;
+
+layout (set = 2, binding = 0, std140) uniform ObjectConstants {
+    mat4 modelMatrix;
+    mat4 normalMatrix;
+    float parallaxOcclusionScale;
+} uObjectConstants;
 
 layout(location = 0) in struct {
     //All in tangent space
@@ -81,53 +87,37 @@ vec3 cookTorrance(vec3 N, vec3 L, vec3 V, vec3 lightRadiance, vec2 texCoord) {
     return (kD * albedo / PI + specular) * lightRadiance * NdotL;
 }
 
-vec2 parallaxMap(vec2 texCoord, vec3 viewDirTangentSpace) {
-    //float height = 1-texture(uHeightTexSampler, texCoord).r;
-    //vec2 p = viewDirTangentSpace.xy / viewDirTangentSpace.z * (height * 0.05);
-    //return texCoord - p;
-
-     // number of depth layers
-    const float numLayers = 10;
-    // calculate the size of each layer
-    float layerDepth = 1.0 / numLayers;
-    // depth of current layer
+vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
+    const float LAYERS = 10;
+    float layerDepth = 1.0 / LAYERS;
     float currentLayerDepth = 0.0;
-    // the amount to shift the texture coordinates per layer (from vector P)
-    vec2 P = viewDirTangentSpace.xy * 0.01; 
-    vec2 deltaTexCoords = P / numLayers;
 
-    // get initial values
+    vec2 P = viewDirTangentSpace.xy * uObjectConstants.parallaxOcclusionScale; 
+    vec2 deltaTexCoords = P / LAYERS;
+
     vec2  currentTexCoords = texCoord;
     float currentDepthMapValue = 1.0 - texture(uHeightTexSampler, currentTexCoords).r;
     
     while(currentLayerDepth < currentDepthMapValue) {
-        // shift texture coordinates along direction of P
         currentTexCoords -= deltaTexCoords;
-        // get depthmap value at current texture coordinates
         currentDepthMapValue = 1.0 - texture(uHeightTexSampler, currentTexCoords).r;
-        // get depth of next layer
         currentLayerDepth += layerDepth;
     }
 
-    // get texture coordinates before collision (reverse operations)
     vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
 
-    // get depth after and before collision for linear interpolation
     float afterDepth  = currentDepthMapValue - currentLayerDepth;
     float beforeDepth = (1.0 - texture(uHeightTexSampler, prevTexCoords).r) - currentLayerDepth + layerDepth;
     
-    // interpolation of texture coordinates
     float weight = afterDepth / (afterDepth - beforeDepth);
-    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
-
-    return finalTexCoords;
+    return prevTexCoords * weight + currentTexCoords * (1.0 - weight);
 }
 
 void main() {
     
     vec3 V = normalize(inData.V);
 
-    vec2 texCoord = parallaxMap(inData.texCoord, V);
+    vec2 texCoord = parallaxOcclusionMap(inData.texCoord, V);
     if(texCoord.x > 1.0 || texCoord.y > 1.0 || texCoord.x < 0.0 || texCoord.y < 0.0)
         discard;
 
@@ -140,7 +130,7 @@ void main() {
         //May apply ambient occlusion here.
         vec3 amb = vec3(0.01);
 
-        col += amb + cookTorrance(N, L, V, uSceneConstants.dirLightColors[i] * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);
+        col += amb + cookTorrance(N, L, V, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);
         //col = vec3(diffuse, diffuse, diffuse);
         //col = vec3(spec, spec, spec);
         //col = inData.tbnMatrix[2] *0.5+0.5;

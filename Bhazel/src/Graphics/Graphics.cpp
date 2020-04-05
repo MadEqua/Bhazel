@@ -6,6 +6,7 @@
 #include "Core/Application.h"
 #include "Graphics/GraphicsContext.h"
 #include "Renderer/Scene.h"
+#include "Renderer/Material.h"
 
 
 namespace BZ {  
@@ -26,7 +27,8 @@ namespace BZ {
 
     struct alignas(256) ObjectConstantBufferData { //TODO: check this align value
         glm::mat4 modelMatrix;
-        glm::mat4 normalMatrix; //mat4 to respect std140 mat3 alignment
+        glm::mat4 normalMatrix; //mat4 to simplify alignments
+        float parallaxOcclusionScale;
     };
 
     constexpr uint32 FRAME_CONSTANT_BUFFER_SIZE = sizeof(FrameConstantBufferData);
@@ -250,7 +252,7 @@ namespace BZ {
         data.currentSceneIndex++;
     }
 
-    void Graphics::beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix, const glm::mat3 &normalMatrix) {
+    void Graphics::beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix, const glm::mat3 &normalMatrix, const Material &material) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
@@ -259,6 +261,7 @@ namespace BZ {
         ObjectConstantBufferData objectConstantBufferData;
         objectConstantBufferData.modelMatrix = modelMatrix;
         objectConstantBufferData.normalMatrix = normalMatrix;
+        objectConstantBufferData.parallaxOcclusionScale = material.getParallaxOcclusionScale();
 
         uint32 objectOffset = data.currentObjectIndex * sizeof(ObjectConstantBufferData);
         memcpy(data.objectConstantBufferPtr + objectOffset, &objectConstantBufferData, sizeof(ObjectConstantBufferData));

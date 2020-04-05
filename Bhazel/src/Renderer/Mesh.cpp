@@ -135,6 +135,27 @@ namespace BZ {
         return Mesh(cubeVertices, CUBE_VERTEX_COUNT, material);
     }
 
+    Mesh Mesh::createHorizontalPlane(const Material &material) {
+        constexpr uint32 VERTEX_COUNT = 6;
+
+        constexpr float NEG_ONE_F = -1.0f;
+        constexpr float ONE_F = 1.0f;
+
+        constexpr uint16 ZERO = 0;
+        constexpr uint16 ONE_UI = 0xffff - 1;
+
+        Mesh::Vertex vertices[VERTEX_COUNT] = {
+            { { NEG_ONE_F, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ZERO } },
+            { { ONE_F, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ZERO, ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ZERO } },
+            { { ONE_F, ZERO, NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ONE_UI, ONE_UI } },
+            { { NEG_ONE_F, ZERO , NEG_ONE_F }, { ZERO, ONE_F, ZERO }, { ONE_F, ZERO, ZERO }, { ZERO, ZERO, NEG_ONE_F }, { ZERO, ONE_UI } },
+        };
+
+        return Mesh(vertices, VERTEX_COUNT, material);
+    }
+
     Mesh::Mesh(const char *path, const Material &material) :
         material(material) {
         tinyobj::attrib_t attrib;

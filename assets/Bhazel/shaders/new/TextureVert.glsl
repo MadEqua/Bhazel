@@ -13,9 +13,9 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
-    vec3 cameraPosition;
-    vec3 dirLightsDirectionsAndIntensities[2];
-    vec3 dirLightColors[2];
+    vec4 cameraPosition;
+    vec4 dirLightsDirectionsAndIntensities[2];
+    vec4 dirLightColors[2];
     int dirLightsCount;
 } uSceneConstants;
 

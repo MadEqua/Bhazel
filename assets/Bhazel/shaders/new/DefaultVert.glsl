@@ -15,15 +15,16 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
-    vec3 cameraPosition;
-    vec3 dirLightsDirectionsAndIntensities[2];
-    vec3 dirLightColors[2];
+    vec4 cameraPosition;
+    vec4 dirLightsDirectionsAndIntensities[2];
+    vec4 dirLightColors[2];
     int dirLightsCount;
 } uSceneConstants;
 
 layout (set = 2, binding = 0, std140) uniform ObjectConstants {
     mat4 modelMatrix;
-    mat3 normalMatrix;
+    mat4 normalMatrix;
+    float parallaxOcclusionScale;
 } uObjectConstants;
 
 layout(location = 0) out struct {
@@ -39,7 +40,7 @@ void main() {
     gl_Position = uSceneConstants.viewProjectionMatrix * positionWorld;
 
     //TBN matrix goes from tangent space to world space
-    mat3 TBN = uObjectConstants.normalMatrix * mat3(attrTangent, attrBitangent, attrNormal);
+    mat3 TBN = mat3(uObjectConstants.normalMatrix) * mat3(attrTangent, attrBitangent, attrNormal);
 
     //Multiply on the left is equal to multiply with the transpose (= inverse in this case). So transforming from world to tangent space.
     outData.position = positionWorld.xyz * TBN;
@@ -48,7 +49,7 @@ void main() {
         outData.L[i] = -normalize(uSceneConstants.dirLightsDirectionsAndIntensities[i].xyz * TBN);
     }
 
-    outData.V = normalize((uSceneConstants.cameraPosition - positionWorld.xyz) * TBN);
+    outData.V = normalize((uSceneConstants.cameraPosition.xyz - positionWorld.xyz) * TBN);
     //outData.N = normalize((uObjectConstants.normalMatrix * attrNormal) * TBN);
     outData.texCoord = attrTexCoord;
 }

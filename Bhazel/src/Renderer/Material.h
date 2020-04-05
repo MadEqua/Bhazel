@@ -27,6 +27,9 @@ namespace BZ {
 
         const Ref<DescriptorSet>& getDescriptorSet() const { return descriptorSet; }
 
+        float getParallaxOcclusionScale() const { return parallaxOcclusionScale; }
+        void setParallaxOcclusionScale(float scale) { parallaxOcclusionScale = scale; }
+
     private:
         Ref<TextureView> albedoTextureView;
         Ref<TextureView> normalTextureView;
@@ -35,6 +38,8 @@ namespace BZ {
         Ref<TextureView> heightTextureView;
 
         Ref<DescriptorSet> descriptorSet;
+
+        float parallaxOcclusionScale = 0.05f;
 
         void init();
     };

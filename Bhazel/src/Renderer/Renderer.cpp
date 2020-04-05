@@ -172,8 +172,9 @@ namespace BZ {
 
         BZ_ASSERT_CORE(mesh.isValid(), "Trying to draw a invalid/uninitialized Mesh!");
         BZ_ASSERT_CORE(mesh.getMaterial().isValid() || fallbackMaterial.isValid(), "Trying to draw a Mesh with no valid/initialized Material!");
-
-        Graphics::beginObject(rendererData.commandBufferId, pipelineState, transform.getLocalToParentMatrix(), transform.getNormalMatrix());
+        
+        const Material &materialToUse = mesh.getMaterial().isValid() ? mesh.getMaterial() : fallbackMaterial;
+        Graphics::beginObject(rendererData.commandBufferId, pipelineState, transform.getLocalToParentMatrix(), transform.getNormalMatrix(), materialToUse);
 
         Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer(), 0);
 
@@ -182,7 +183,6 @@ namespace BZ {
 
         Graphics::bindPipelineState(rendererData.commandBufferId, pipelineState);
 
-        const Material &materialToUse = mesh.getMaterial().isValid() ? mesh.getMaterial() : fallbackMaterial;
         Graphics::bindDescriptorSet(rendererData.commandBufferId, materialToUse.getDescriptorSet(), pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
 
         if (mesh.hasIndices())

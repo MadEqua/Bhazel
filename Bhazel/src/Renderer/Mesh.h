@@ -27,6 +27,7 @@ namespace BZ {
 
         static Mesh createUnitCube(const Material &material = Material());
         static Mesh createUnitCubeInsides(const Material &material = Material());
+        static Mesh createHorizontalPlane(const Material &material = Material());
 
         Mesh() = default;
         explicit Mesh(const char *path, const Material &material = Material());
@@ -43,6 +44,7 @@ namespace BZ {
         bool hasIndices() const { return indexCount > 0; }
 
         const Material& getMaterial() const { return material; }
+        Material& getMaterial() { return material; }
 
     private:
         uint32 vertexCount;
