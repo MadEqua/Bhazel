@@ -21,7 +21,7 @@ namespace BZ {
         init();
     }
 
-    Material::Material(Ref<TextureCube> &albedoTexture):
+    Material::Material(Ref<TextureCube> &albedoTexture) :
         albedoTextureView(TextureView::create(albedoTexture)) {
         init();
     }
@@ -56,19 +56,19 @@ namespace BZ {
     }
 
     void Material::init() {
-        descriptorSet = DescriptorSet::create(Renderer::getMaterialDescriptorSetLayout());
-        descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 0);
+        descriptorSet = Renderer::createMaterialDescriptorSet();
+        descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 1);
 
         if(normalTextureView)
-            descriptorSet->setCombinedTextureSampler(normalTextureView, Renderer::getDefaultSampler(), 1);
+            descriptorSet->setCombinedTextureSampler(normalTextureView, Renderer::getDefaultSampler(), 2);
 
         if(metallicTextureView)
-            descriptorSet->setCombinedTextureSampler(metallicTextureView, Renderer::getDefaultSampler(), 2);
+            descriptorSet->setCombinedTextureSampler(metallicTextureView, Renderer::getDefaultSampler(), 3);
 
         if(roughnessTextureView)
-            descriptorSet->setCombinedTextureSampler(roughnessTextureView, Renderer::getDefaultSampler(), 3);
+            descriptorSet->setCombinedTextureSampler(roughnessTextureView, Renderer::getDefaultSampler(), 4);
 
         if (heightTextureView)
-            descriptorSet->setCombinedTextureSampler(heightTextureView, Renderer::getDefaultSampler(), 4);
+            descriptorSet->setCombinedTextureSampler(heightTextureView, Renderer::getDefaultSampler(), 5);
     }
 }

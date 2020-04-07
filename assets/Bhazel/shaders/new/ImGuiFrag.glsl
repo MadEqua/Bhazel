@@ -1,10 +1,15 @@
 #version 450 core
 #pragma shader_stage(fragment)
 
-layout(location = 0) out vec4 fColor;
-layout(set=3, binding=0) uniform sampler2D sTexture;
-layout(location = 0) in struct { vec4 Color; vec2 UV; } In;
-void main()
-{
-    fColor = In.Color * texture(sTexture, In.UV);
+layout(set = 0, binding = 1) uniform sampler2D uFontTexSampler;
+
+layout(location = 0) in struct { 
+    vec4 color;
+    vec2 texCoord; 
+} inData;
+
+layout(location = 0) out vec4 outColor;
+
+void main() {
+    outColor = inData.color * texture(uFontTexSampler, inData.texCoord);
 }

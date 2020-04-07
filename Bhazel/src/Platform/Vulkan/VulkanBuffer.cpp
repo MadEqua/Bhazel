@@ -24,6 +24,9 @@ namespace BZ {
     }
 
     VulkanBuffer::~VulkanBuffer() {
+        if (isMapped)
+            unmap();
+
         vmaDestroyBuffer(getGraphicsContext().getMemoryAllocator(), nativeHandle, allocationHandle);
     }
 

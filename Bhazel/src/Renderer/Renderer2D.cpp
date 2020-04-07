@@ -4,9 +4,16 @@
 
 #include "Graphics/Graphics.h"
 #include "Graphics/DescriptorSet.h"
+#include "Graphics/Texture.h"
+#include "Graphics/Buffer.h"
+#include "Graphics/PipelineState.h"
+#include "Graphics/Shader.h"
+
 #include "Core/Application.h"
 #include "Core/Utils.h"
+
 #include "Renderer/ParticleSystem2D.h"
+
 #include "Camera.h"
 
 
@@ -77,14 +84,19 @@ namespace BZ {
 
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
+        Ref<Buffer> constantBuffer;
 
         BufferPtr vertexBufferPtr;
         BufferPtr indexBufferPtr;
+        BufferPtr constantBufferPtr;
 
         Ref<PipelineState> pipelineState;
         Ref<Texture2D> whiteTexture;
         Ref<Sampler> sampler;
-        Ref<DescriptorSetLayout> descriptorSetLayout;
+
+        Ref<DescriptorSetLayout> constantsDescriptorSetLayout;
+        Ref<DescriptorSetLayout> textureDescriptorSetLayout;
+        Ref<DescriptorSet> constantsDescriptorSet;
 
         std::unordered_map<uint64, TexData> texDataStorage;
 
@@ -97,7 +109,7 @@ namespace BZ {
         uint64 hash = reinterpret_cast<uint64>(texture.get()); //TODO: something better
         if (rendererData.texDataStorage.find(hash) == rendererData.texDataStorage.end()) {
             auto texViewRef = TextureView::create(texture);
-            auto descSetRef = DescriptorSet::create(rendererData.descriptorSetLayout);
+            auto descSetRef = DescriptorSet::create(rendererData.textureDescriptorSetLayout);
             descSetRef->setCombinedTextureSampler(texViewRef, rendererData.sampler, 0);
             rendererData.texDataStorage.emplace(hash, TexData{ texViewRef, descSetRef });
         }
@@ -131,8 +143,12 @@ namespace BZ {
         rendererData.whiteTexture = Texture2D::create(whiteTextureData, sizeof(whiteTextureData), 1, 1, TextureFormat::R8G8B8A8, false);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        rendererData.descriptorSetLayout = descriptorSetLayoutBuilder.build();
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
+        rendererData.constantsDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder2;
+        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        rendererData.textureDescriptorSetLayout = descriptorSetLayoutBuilder2.build();
 
         const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
         const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
@@ -157,32 +173,40 @@ namespace BZ {
         //pushConstantDesc.shaderStageMask = flagsToMask(ShaderStageFlags::Fragment);
 
         //pipelineStateData.pushConstantDescs = { pushConstantDesc };
+
         pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
         pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
-        pipelineStateData.descriptorSetLayouts = { rendererData.descriptorSetLayout };
+        pipelineStateData.descriptorSetLayouts = { rendererData.constantsDescriptorSetLayout, rendererData.textureDescriptorSetLayout };
         pipelineStateData.blendingState = blendingState;
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
+
+        rendererData.constantBuffer = Buffer::create(BufferType::Constant, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
+        rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
+
+        rendererData.constantsDescriptorSet = DescriptorSet::create(rendererData.constantsDescriptorSetLayout);
+        rendererData.constantsDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, 0, sizeof(glm::mat4));
     }
 
     void Renderer2D::destroy() {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.vertexBuffer->unmap();
-        rendererData.indexBuffer->unmap();
-
         rendererData.vertexBuffer.reset();
         rendererData.indexBuffer.reset();
+        rendererData.constantBuffer.reset();
 
         rendererData.texDataStorage.clear();
 
         rendererData.pipelineState.reset();
         rendererData.sampler.reset();
         rendererData.whiteTexture.reset();
-        rendererData.descriptorSetLayout.reset();
+
+        rendererData.constantsDescriptorSet.reset();
+        rendererData.constantsDescriptorSetLayout.reset();
+        rendererData.textureDescriptorSetLayout.reset();
     }
 
-    void Renderer2D::beginScene(const OrthographicCamera &camera) {
+    void Renderer2D::begin(const OrthographicCamera &camera) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(rendererData.commandBufferId == -1, "There's already an unended Scene!");
@@ -192,10 +216,13 @@ namespace BZ {
         memset(&stats, 0, sizeof(stats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginScene(rendererData.commandBufferId, rendererData.pipelineState, camera.getTransform().getTranslation(), camera.getViewMatrix(), camera.getProjectionMatrix());
+
+        glm::mat4 viewProjMatrix = camera.getProjectionMatrix() * camera.getViewMatrix();
+        memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0], sizeof(glm::mat4));
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.constantsDescriptorSet, rendererData.pipelineState, 0, nullptr, 0);
     }
 
-    void Renderer2D::endScene() {
+    void Renderer2D::end() {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(rendererData.commandBufferId != -1, "There's not a started Scene!");
@@ -259,7 +286,7 @@ namespace BZ {
                 if (texChanged  || isLastIteration) {
                     if (currentBoundTexHash != currentBatchTexHash) {
                         const TexData& texData = rendererData.texDataStorage[currentBatchTexHash];
-                        Graphics::bindDescriptorSet(rendererData.commandBufferId, texData.descriptorSet, rendererData.pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+                        Graphics::bindDescriptorSet(rendererData.commandBufferId, texData.descriptorSet, rendererData.pipelineState, 1, nullptr, 0);
                         currentBoundTexHash = currentBatchTexHash;
                         stats.descriptorSetBindCount++;
                     }

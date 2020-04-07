@@ -1,23 +1,21 @@
 #version 450 core
 #pragma shader_stage(vertex)
 
-layout(location = 0) in vec2 aPos;
-layout(location = 1) in vec2 aUV;
-layout(location = 2) in vec4 aColor;
+layout(location = 0) in vec2 attrPos;
+layout(location = 1) in vec2 attrTexCoord;
+layout(location = 2) in vec4 attrColor;
 
-layout (set = 1, binding = 0, std140) uniform SceneConstants {
-    mat4 viewMatrix;
+layout (set = 0, binding = 0, std140) uniform Constants {
     mat4 projectionMatrix;
-    mat4 viewProjectionMatrix;
-    vec4 cameraPosition;
-} sceneConstants;
+} uConstants;
 
-out gl_PerVertex { vec4 gl_Position; };
-layout(location = 0) out struct { vec4 Color; vec2 UV; } Out;
+layout(location = 0) out struct { 
+    vec4 color;
+    vec2 texCoord; 
+} outData;
 
-void main()
-{
-    Out.Color = aColor;
-    Out.UV = aUV;
-    gl_Position = sceneConstants.viewProjectionMatrix * vec4(aPos, 0.0, 1.0);
+void main() {
+    outData.color = attrColor;
+    outData.texCoord = attrTexCoord;
+    gl_Position = uConstants.projectionMatrix * vec4(attrPos, 0.0, 1.0);
 }

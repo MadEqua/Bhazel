@@ -5,7 +5,7 @@
 //    vec4 tintAndAlpha;
 //} pushConstants;
 
-layout(set = 3, binding = 0) uniform sampler2D uTexSampler;
+layout(set = 1, binding = 0) uniform sampler2D uTexSampler;
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 1) flat in uint inColorPacked;

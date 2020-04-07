@@ -131,11 +131,6 @@ namespace BZ {
         }
     }
 
-    Buffer::~Buffer() {
-        if(isMapped)
-            unmap();
-    }
-
     /*void Buffer::initBufferData(const void *data) {
         if(data) {
             if(isDynamic())

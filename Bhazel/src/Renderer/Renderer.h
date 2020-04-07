@@ -1,19 +1,19 @@
 #pragma once
 
-#include "Graphics/DescriptorSet.h"
-#include "Graphics/Texture.h"
-#include "Graphics/Buffer.h"
-
 
 namespace BZ {
 
-    class Camera;
     class Transform;
     class Mesh;
     class Material;
     class Scene;
-    struct SkyBox;
     class PipelineState;
+    class DataLayout;
+    class DescriptorSetLayout;
+    class Buffer;
+    class Entity;
+    class DescriptorSet;
+    class Sampler;
 
     struct RendererStats {
         uint32 vertexCount;
@@ -30,8 +30,11 @@ namespace BZ {
         static DataLayout& getVertexDataLayout();
         static DataLayout& getIndexDataLayout();
 
-        static Ref<DescriptorSetLayout>& getMaterialDescriptorSetLayout();
-        static Ref<Sampler>& getDefaultSampler();
+        //Pre-filled DescriptorSets to be used on Scenes and Materials. They will fill the remaining bindings.
+        static Ref<DescriptorSet> createSceneDescriptorSet();
+        static Ref<DescriptorSet> createMaterialDescriptorSet();
+
+        static Ref<Sampler> getDefaultSampler();
 
     private:
         friend class Application;
@@ -39,15 +42,14 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        //TODO
-        //static void drawEntity();
-
-        static void drawCube(const Transform &transform, const Material &material);
+        static void drawEntity(const Entity &entity, uint32 index);
 
         static void drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform);
-        static void drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial);
+        //static void drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial);
 
         //static void drawSkyBox(const SkyBox &skyBox);
+
+        static void handleMaterial(const Material &material, uint32 index);
 
         static RendererStats stats;
     };

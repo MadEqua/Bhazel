@@ -5,6 +5,7 @@
 #include "Graphics/GraphicsContext.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/Framebuffer.h"
+#include "Graphics/Shader.h"
 
 //#include "Platform/OpenGL/OpenGLPipelineState.h"
 //#include "Platform/D3D11/D3D11PipelineState.h"
@@ -45,12 +46,6 @@ namespace BZ {
 
         BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(),
             "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
-
-        //Always add the main descriptor set layouts for the engine.
-        //Frame, Scene and Object.
-        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
-        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
-        data.descriptorSetLayouts.insert(data.descriptorSetLayouts.begin(), Graphics::getDefaultDescriptorSetLayout());
 
 #ifdef BZ_HOT_RELOAD_SHADERS
         Application::getInstance().getFileWatcher().registerPipelineState(*this);

@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Graphics/Texture.h"
-
 
 namespace BZ {
 
     class ParticleSystem2D;
     class OrthographicCamera;
+    class Texture2D;
 
     struct Sprite {
         glm::vec2 position;
@@ -28,8 +27,8 @@ namespace BZ {
     */
     class Renderer2D {
     public:
-        static void beginScene(const OrthographicCamera &camera);
-        static void endScene();
+        static void begin(const OrthographicCamera &camera);
+        static void end();
 
         static void drawSprite(const Sprite &sprite);
 

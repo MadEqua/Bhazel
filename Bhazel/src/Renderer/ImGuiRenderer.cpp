@@ -1,24 +1,44 @@
 #include "bzpch.h"
 
-#include "ImGuiLayer.h"
+#include "ImGuiRenderer.h"
+
+#include "Graphics/Graphics.h"
+#include "Graphics/Buffer.h"
+#include "Graphics/Texture.h"
+#include "Graphics/Shader.h"
+#include "Graphics/PipelineState.h"
+#include "Graphics/DescriptorSet.h"
 
 #include "Core/Application.h"
 #include "Core/Input.h"
+#include "Core/KeyCodes.h"
 
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
-#include "Core/KeyCodes.h"
 
 #include <imgui.h>
 
 
 namespace BZ {
 
-    ImGuiLayer::ImGuiLayer() :
-        Layer("ImGuiLayer") {
-    }
+    static struct ImGuiRendererData {
+        Ref<Buffer> vertexBuffer;
+        Ref<Buffer> indexBuffer;
+        Ref<Buffer> constantBuffer;
 
-    void ImGuiLayer::onGraphicsContextCreated() {
+        BufferPtr vertexBufferPtr;
+        BufferPtr indexBufferPtr;
+        BufferPtr constantBufferPtr;
+
+        Ref<TextureView> fontTextureView;
+        Ref<Sampler> fontTextureSampler;
+
+        Ref<PipelineState> pipelineState;
+        Ref<DescriptorSet> descriptorSet;
+    } rendererData;
+
+
+    void ImGuiRenderer::init() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
@@ -34,16 +54,22 @@ namespace BZ {
         initGraphics();
     }
 
-    void ImGuiLayer::onDetach() {
+    void ImGuiRenderer::destroy() {
+
+        rendererData.vertexBuffer.reset();
+        rendererData.indexBuffer.reset();
+        rendererData.constantBuffer.reset();
+
+        rendererData.fontTextureView.reset();
+        rendererData.fontTextureSampler.reset();
+
+        rendererData.pipelineState.reset();
+        rendererData.descriptorSet.reset();
+
         ImGui::DestroyContext();
-        vertexBuffer->unmap();
-        indexBuffer->unmap();
     }
 
-    void ImGuiLayer::onImGuiRender(const FrameStats &frameStats) {
-    }
-
-    void ImGuiLayer::onEvent(Event &event) {
+    void ImGuiRenderer::onEvent(Event &event) {
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<KeyPressedEvent>([](const KeyPressedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
@@ -87,7 +113,7 @@ namespace BZ {
             return false;
             });
 
-        Window &window = application.getWindow();
+        Window &window = Application::getInstance().getWindow();
         dispatcher.dispatch<MouseMovedEvent>([&window](const MouseMovedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseHoveredViewport = 0;
@@ -114,7 +140,7 @@ namespace BZ {
             });
     }
 
-    void ImGuiLayer::begin() {
+    void ImGuiRenderer::begin() {
         ImGuiIO &io = ImGui::GetIO();
         Window &window = Application::getInstance().getWindow();
         io.DisplaySize = ImVec2(static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()));
@@ -122,7 +148,7 @@ namespace BZ {
         ImGui::NewFrame();
     }
 
-    void ImGuiLayer::end() {
+    void ImGuiRenderer::end() {
         ImGui::Render();
 
         ImDrawData *imDrawData = ImGui::GetDrawData();
@@ -130,8 +156,8 @@ namespace BZ {
         uint32 vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
         uint32 indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 
-        if((vertexBufferSize == 0) || (indexBufferSize == 0)) {
-            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Bailing out.",  vertexBufferSize, indexBufferSize);
+        if ((vertexBufferSize == 0) || (indexBufferSize == 0)) {
+            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Bailing out.", vertexBufferSize, indexBufferSize);
             return;
         }
 
@@ -140,9 +166,9 @@ namespace BZ {
             return;
         }
 
-        byte *vtxDst = vertexBufferPtr;
-        byte *idxDst = indexBufferPtr;
-        for(int n = 0; n < imDrawData->CmdListsCount; n++) {
+        byte *vtxDst = rendererData.vertexBufferPtr;
+        byte *idxDst = rendererData.indexBufferPtr;
+        for (int n = 0; n < imDrawData->CmdListsCount; n++) {
             const ImDrawList *drawList = imDrawData->CmdLists[n];
             memcpy(vtxDst, drawList->VtxBuffer.Data, drawList->VtxBuffer.Size * sizeof(ImDrawVert));
             memcpy(idxDst, drawList->IdxBuffer.Data, drawList->IdxBuffer.Size * sizeof(ImDrawIdx));
@@ -159,16 +185,16 @@ namespace BZ {
         projMatrix[3][0] = -1.0f;
         projMatrix[3][1] = 1.0f;
 
-        Graphics::beginScene(commandBufferId, pipelineState, glm::vec3(0.0f), glm::mat4(1.0f), projMatrix);
+        memcpy(rendererData.constantBufferPtr, &projMatrix[0], sizeof(glm::mat4));
 
-        Graphics::bindPipelineState(commandBufferId, pipelineState);
-        Graphics::bindDescriptorSet(commandBufferId, descriptorSet, pipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
+        Graphics::bindPipelineState(commandBufferId, rendererData.pipelineState);
+        Graphics::bindDescriptorSet(commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
 
         int vertexOffset = 0;
         int indexOffset = 0;
 
-        Graphics::bindBuffer(commandBufferId, vertexBuffer, 0);
-        Graphics::bindBuffer(commandBufferId, indexBuffer, 0);
+        Graphics::bindBuffer(commandBufferId, rendererData.vertexBuffer, 0);
+        Graphics::bindBuffer(commandBufferId, rendererData.indexBuffer, 0);
 
         for(int i = 0; i < imDrawData->CmdListsCount; ++i) {
             const ImDrawList *cmdList = imDrawData->CmdLists[i];
@@ -189,7 +215,7 @@ namespace BZ {
         Graphics::endCommandBuffer(commandBufferId);
     }
 
-    void ImGuiLayer::initInput() {
+    void ImGuiRenderer::initInput() {
         // Setup back-end capabilities flags
         ImGuiIO &io = ImGui::GetIO();
         io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
@@ -235,7 +261,7 @@ namespace BZ {
         //g_MouseCursors[ImGuiMouseCursor_Hand] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
     }
 
-    void ImGuiLayer::initGraphics() {
+    void ImGuiRenderer::initGraphics() {
         ImGuiIO &io = ImGui::GetIO();
 
         // Setup Dear ImGui style
@@ -253,9 +279,9 @@ namespace BZ {
         unsigned char *fontData;
         int texWidth, texHeight;
         io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
-        fontTexture = Texture2D::create(fontData, texWidth * texHeight * 4, texWidth, texHeight, TextureFormat::R8G8B8A8, false);
-        fontTextureView = TextureView::create(fontTexture);
-        fontTextureSampler = Sampler::Builder().build();
+        auto fontTextureRef = Texture2D::create(fontData, texWidth * texHeight * 4, texWidth, texHeight, TextureFormat::R8G8B8A8, false);
+        rendererData.fontTextureView = TextureView::create(fontTextureRef);
+        rendererData.fontTextureSampler = Sampler::Builder().build();
 
         //VertexLayout
         DataLayout vertexLayout = {
@@ -266,10 +292,11 @@ namespace BZ {
 
         //Buffers
         const uint32 MAX_INDICES = 1 << (sizeof(ImDrawIdx) * 8);
-        vertexBuffer = Buffer::create(BufferType::Vertex, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
-        indexBuffer = Buffer::create(BufferType::Index, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { {DataType::Uint16, DataElements::Scalar, ""} });
-        vertexBufferPtr = vertexBuffer->map(0);
-        indexBufferPtr = indexBuffer->map(0);
+        rendererData.vertexBuffer = Buffer::create(BufferType::Vertex, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
+        rendererData.indexBuffer = Buffer::create(BufferType::Index, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { {DataType::Uint16, DataElements::Scalar, ""} });
+        
+        rendererData.vertexBufferPtr = rendererData.vertexBuffer->map(0);
+        rendererData.indexBufferPtr = rendererData.indexBuffer->map(0);
 
         //Shaders
         Shader::Builder shaderBuilder;
@@ -279,11 +306,9 @@ namespace BZ {
 
         //DescriptorSetLayout
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         Ref<DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
-
-        descriptorSet = DescriptorSet::create(descriptorSetLayout);
-        descriptorSet->setCombinedTextureSampler(fontTextureView, fontTextureSampler, 0);
 
         Window &window = Application::getInstance().getWindow();
 
@@ -308,6 +333,15 @@ namespace BZ {
         pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { DynamicState::Scissor };
-        pipelineState = PipelineState::create(pipelineStateData);
+        rendererData.pipelineState = PipelineState::create(pipelineStateData);
+
+        //Constant Buffer
+        rendererData.constantBuffer = Buffer::create(BufferType::Constant, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
+        rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
+
+        //DescriptorSet
+        rendererData.descriptorSet = DescriptorSet::create(descriptorSetLayout);
+        rendererData.descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, 0, sizeof(glm::mat4));
+        rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler, 1);
     }
 }

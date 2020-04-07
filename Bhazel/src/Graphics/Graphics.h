@@ -1,20 +1,18 @@
 #pragma once
 
-#include "Graphics/Buffer.h"
-#include "Graphics/Framebuffer.h"
-#include "Graphics/PipelineState.h"
-#include "Graphics/DescriptorSet.h"
-#include "Graphics/Shader.h"
-#include "Graphics/Color.h"
-#include "Graphics/CommandBuffer.h"
-
 
 namespace BZ {
 
+    class Buffer;
+    class Framebuffer;
+    class PipelineState;
+    class DescriptorSet;
+    union ClearValues;
+    struct Viewport;
+    struct ScissorRect;
+    
     class WindowResizedEvent;
     class GraphicsContext;
-    class Scene;
-    class Material;
 
     /*
     * Low level Graphics API.
@@ -38,10 +36,6 @@ namespace BZ {
         static void clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue);
         static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
 
-        static void beginScene(uint32 commandBufferId, const Ref<PipelineState>& pipelineState, const glm::vec3 &cameraPosition, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix);
-        static void beginScene(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const Scene &scene);
-        static void beginObject(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, const glm::mat4 &modelMatrix, const glm::mat3 &normalMatrix, const Material &material);
-
         //Vertex or index buffer
         static void bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset);
         
@@ -62,8 +56,6 @@ namespace BZ {
         static void setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount);
 
         static void waitForDevice();
-
-        static Ref<DescriptorSetLayout>& getDefaultDescriptorSetLayout();
 
         static API api;
 

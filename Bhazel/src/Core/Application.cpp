@@ -8,7 +8,7 @@
 #include "Graphics/Graphics.h"
 #include "Renderer/Renderer2D.h"
 #include "Renderer/Renderer.h"
-#include "Layers/ImGuiLayer.h"
+#include "Renderer/ImGuiRenderer.h"
 #include "Layers/FrameStatsLayer.h"
 #include "Layers/Renderer2DStatsLayer.h"
 #include "Layers/RendererStatsLayer.h"
@@ -51,11 +51,9 @@ namespace BZ {
         input = std::unique_ptr<Input>(Input::create(window->getNativeHandle()));
 
         Graphics::init();
-        Renderer::init();
+        ImGuiRenderer::init();
         Renderer2D::init();
-
-        imGuiLayer = new ImGuiLayer();
-        pushOverlay(imGuiLayer);
+        Renderer::init();
 
         pushOverlay(new FrameStatsLayer(*this));
         pushOverlay(new Renderer2DStatsLayer());
@@ -70,8 +68,9 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         Graphics::waitForDevice();
-        Renderer2D::destroy();
         Renderer::destroy();
+        Renderer2D::destroy();
+        ImGuiRenderer::destroy();
         Graphics::destroy();
     }
 
@@ -94,9 +93,9 @@ namespace BZ {
 
                 layerStack.onUpdate(frameStats);
 
-                imGuiLayer->begin();
+                ImGuiRenderer::begin();
                 layerStack.onImGuiRender(frameStats);
-                imGuiLayer->end();
+                ImGuiRenderer::end();
 
                 Graphics::endFrame();
 
@@ -117,8 +116,9 @@ namespace BZ {
     }
 
     void Application::onEvent(Event &e) {
-        //if(!e.isInCategory(EventCategory::EventCategoryMouse))
-        //    BZ_LOG_CORE_TRACE(e);
+        //BZ_LOG_CORE_TRACE(e);
+
+        ImGuiRenderer::onEvent(e);
 
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(Application::onWindowResized));

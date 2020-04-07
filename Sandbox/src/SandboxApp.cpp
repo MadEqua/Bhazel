@@ -61,10 +61,10 @@ void ParticleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     pos.y = (sin(pos.x * 0.02f) * 0.5f + 0.5f) * (WINDOW_DIMS.y * 0.75f) + (WINDOW_DIMS.y * 0.125f);
     particleSystem.setPosition(pos);
 
-    BZ::Renderer2D::beginScene(cameraController.getCamera());
+    BZ::Renderer2D::begin(cameraController.getCamera());
     particleSystem.onUpdate(frameStats);
     BZ::Renderer2D::drawParticleSystem2D(particleSystem);
-    BZ::Renderer2D::endScene();
+    BZ::Renderer2D::end();
 }
 
 void ParticleLayer::onEvent(BZ::Event &event) {
@@ -123,8 +123,9 @@ void Layer3D::onGraphicsContextCreated() {
     dirLight.intensity = 5.0f;
     scene.addDirectionalLight(dirLight);
 
-    const char* fileNames[6] = { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
-    scene.enableSkyBox("Sandbox/textures/cubemap/", fileNames);
+    const char* cubeFileNames[6] = { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
+    const char* cubeFileNames2[6] = { "px.tga", "nx.tga", "py.tga", "ny.tga", "pz.tga", "nz.tga" };
+    scene.enableSkyBox("Sandbox/textures/cubeMap/", cubeFileNames, "Sandbox/textures/irradianceMap/", cubeFileNames2);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {

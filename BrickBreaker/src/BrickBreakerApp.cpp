@@ -232,13 +232,13 @@ void MainLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     cameraController.onUpdate(frameStats);
 
-    BZ::Renderer2D::beginScene(cameraController.getCamera());
-
+    BZ::Renderer2D::begin(cameraController.getCamera());
+    
     brickMap.onUpdate(frameStats);
     paddle.onUpdate(frameStats);
     ball.onUpdate(frameStats, brickMap, paddle);
-
-    BZ::Renderer2D::endScene();
+    
+    BZ::Renderer2D::end();
 }
 
 void MainLayer::onEvent(BZ::Event &event) {

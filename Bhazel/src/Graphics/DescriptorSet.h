@@ -78,10 +78,9 @@ namespace BZ {
         void setSampler(const Ref<Sampler>& sampler, uint32 binding);
 
         struct DynBufferData {
-            DynBufferData(uint32 binding, Ref<Buffer> buffer, bool isAutoAddedByEngine) : binding(binding), buffer(buffer), isAutoAddedByEngine(isAutoAddedByEngine) {}
+            DynBufferData(uint32 binding, Ref<Buffer> buffer) : binding(binding), buffer(buffer) {}
             uint32 binding;
             Ref<Buffer> buffer;
-            bool isAutoAddedByEngine;
         };
         const DynBufferData* getDynamicBufferDataByBinding(uint32 binding) const;
 

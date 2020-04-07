@@ -1,7 +1,7 @@
 #version 450 core
 #pragma shader_stage(fragment)
 
-layout (set = 1, binding = 0, std140) uniform SceneConstants {
+layout (set = 0, binding = 0, std140) uniform SceneConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
@@ -11,11 +11,17 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     int dirLightsCount;
 } uSceneConstants;
 
-layout (set = 2, binding = 0, std140) uniform ObjectConstants {
-    mat4 modelMatrix;
-    mat4 normalMatrix;
-    float parallaxOcclusionScale;
-} uObjectConstants;
+layout(set = 0, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
+
+layout (set = 2, binding = 0, std140) uniform MaterialConstants {
+     float parallaxOcclusionScale;
+} uMaterialConstants;
+
+layout(set = 2, binding = 1) uniform sampler2D uAlbedoTexSampler;
+layout(set = 2, binding = 2) uniform sampler2D uNormalTexSampler;
+layout(set = 2, binding = 3) uniform sampler2D uMetallicTexSampler;
+layout(set = 2, binding = 4) uniform sampler2D uRoughnessTexSampler;
+layout(set = 2, binding = 5) uniform sampler2D uHeightTexSampler;
 
 layout(location = 0) in struct {
     //All in tangent space
@@ -24,12 +30,6 @@ layout(location = 0) in struct {
     vec3 V;
     vec2 texCoord;
 } inData;
-
-layout(set = 3, binding = 0) uniform sampler2D uAlbedoTexSampler;
-layout(set = 3, binding = 1) uniform sampler2D uNormalTexSampler;
-layout(set = 3, binding = 2) uniform sampler2D uMetallicTexSampler;
-layout(set = 3, binding = 3) uniform sampler2D uRoughnessTexSampler;
-layout(set = 3, binding = 4) uniform sampler2D uHeightTexSampler;
 
 layout(location = 0) out vec4 outColor;
 
@@ -82,9 +82,13 @@ vec3 cookTorrance(vec3 N, vec3 L, vec3 V, vec3 lightRadiance, vec2 texCoord) {
     float NDF = distributionGGX(NdotH, roughness);
         
     vec3 specular = (NDF * G * F) / max((4.0 * NdotV * NdotL), 0.001);
-    vec3 kS = F;
-    vec3 kD = (vec3(1.0) - kS) * (vec3(1.0) - metallic);
-    return (kD * albedo / PI + specular) * lightRadiance * NdotL;
+
+    vec3 kS = fresnelSchlick(NdotV, F0);
+    vec3 kD = 1.0 - kS;
+    vec3 irradiance = texture(uIrradianceMapTexSampler, N).rgb;
+    vec3 ambient = (kD * irradiance * albedo);// * ao; 
+
+    return ambient + (kD * albedo / PI + specular) * lightRadiance * NdotL;
 }
 
 vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
@@ -92,7 +96,7 @@ vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
     float layerDepth = 1.0 / LAYERS;
     float currentLayerDepth = 0.0;
 
-    vec2 P = viewDirTangentSpace.xy * uObjectConstants.parallaxOcclusionScale; 
+    vec2 P = viewDirTangentSpace.xy * uMaterialConstants.parallaxOcclusionScale; 
     vec2 deltaTexCoords = P / LAYERS;
 
     vec2  currentTexCoords = texCoord;
@@ -127,10 +131,7 @@ void main() {
     for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
         vec3 L = normalize(inData.L[i]);
 
-        //May apply ambient occlusion here.
-        vec3 amb = vec3(0.01);
-
-        col += amb + cookTorrance(N, L, V, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);
+        col += cookTorrance(N, L, V, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);
         //col = vec3(diffuse, diffuse, diffuse);
         //col = vec3(spec, spec, spec);
         //col = inData.tbnMatrix[2] *0.5+0.5;
@@ -138,6 +139,7 @@ void main() {
         //col = vec3(inData.texCoord, 0.0);
         //col = texture(uNormalTexSampler, inData.texCoord).rgb;
         //col = vec3(1,0,0);
+        //col = amb;
     }
 
     outColor = vec4(col, 1.0);

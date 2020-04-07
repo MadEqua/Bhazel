@@ -47,18 +47,10 @@ namespace BZ {
                        layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBufferDynamic,
                        "Binding {} is not of type ConstantBuffer!", binding);
         BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
+        BZ_ASSERT_CORE(!buffer->isDynamic() || (buffer->isDynamic() && layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBufferDynamic),
+            "The buffer is effectively \"dynamic\" (there are internally created replicas because of memory type), so the type on the layout needs to be DescriptorType::ConstantBufferDynamic.");
 
-        if(buffer->isDynamic()) {
-            //If the buffer is "dynamic" then the engine will internally create replicas for each frame in flight, so we need a dynamic descriptor set behind the scenes.
-            if(layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBuffer) {
-                layout->getDescriptorDescs()[binding].type = DescriptorType::ConstantBufferDynamic;
-                dynamicBuffers.emplace_back(binding, buffer, true);
-            }
-            else {
-                dynamicBuffers.emplace_back(binding, buffer, false);
-            }
-        }
-
+        dynamicBuffers.emplace_back(binding, buffer);
         internalSetConstantBuffer(buffer, binding, offset, size);
     }
 
