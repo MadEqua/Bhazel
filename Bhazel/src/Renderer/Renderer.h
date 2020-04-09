@@ -19,6 +19,7 @@ namespace BZ {
         uint32 vertexCount;
         uint32 triangleCount;
         uint32 drawCallCount;
+        uint32 materialCount;
     };
 
     class Renderer {

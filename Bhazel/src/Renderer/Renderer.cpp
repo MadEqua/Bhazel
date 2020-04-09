@@ -33,7 +33,6 @@ namespace BZ {
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) EntityConstantBufferData {
         glm::mat4 modelMatrix;
         glm::mat4 normalMatrix; //mat4 to simplify alignments
-        float parallaxOcclusionScale;
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
@@ -80,6 +79,8 @@ namespace BZ {
 
         Ref<PipelineState> defaultPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
+
+        std::unordered_set<Material> materialSet;
     } rendererData;
 
 
@@ -178,12 +179,14 @@ namespace BZ {
         rendererData.skyBoxPipelineState.reset();
 
         rendererData.defaultSampler.reset();
+        rendererData.materialSet.clear();
     }
 
     void Renderer::drawScene(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
         memset(&stats, 0, sizeof(stats));
+        rendererData.materialSet.clear();
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
 
@@ -215,25 +218,13 @@ namespace BZ {
         Graphics::bindDescriptorSet(rendererData.commandBufferId, scene.getDescriptorSet(), 
             rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
 
-        //Find unique Scene Materials
-        //TODO: actually do it
-        //std::set<const Material*> sceneMaterials;
-        //for (const auto &entity : scene.getEntities()) {
-        //    const Material &mat = entity.mesh.getMaterial();
-        //    if (mat.isValid()) {
-        //        sceneMaterials.insert(&mat);
-        //    }
-        //}
-
         if (scene.hasSkyBox()) {
-            //TODO: Material handling belongs here?
             handleMaterial(scene.getSkyBox().mesh.getMaterial(), 0);
             drawMesh(rendererData.skyBoxPipelineState, scene.getSkyBox().mesh, Transform());
         }
 
         uint32 entityIndex = scene.hasSkyBox() ? 1 : 0;
         for (const auto &entity : scene.getEntities()) {
-            //TODO: Material handling belongs here?
             handleMaterial(entity.mesh.getMaterial(), entityIndex);
             drawEntity(entity, entityIndex++);
         }
@@ -272,21 +263,29 @@ namespace BZ {
 
         stats.drawCallCount++;
         stats.vertexCount += mesh.getVertexCount();
-        stats.triangleCount += (mesh.hasIndices()?mesh.getIndexCount():mesh.getVertexCount()) / 3;
+        stats.triangleCount += (mesh.hasIndices() ? mesh.getIndexCount() : mesh.getVertexCount()) / 3;
     }
 
+    //TODO: There's no need to call this every frame, like it's being done now.
     void Renderer::handleMaterial(const Material &material, uint32 index) {
-        BZ_ASSERT_CORE(material.isValid(), "Trying to draw a Mesh with no valid/initialized Material!");
+        BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/initialized Material!");
 
-        //TODO: properly set material data. this will lead to lots of repetitions
-        MaterialConstantBufferData materialConstantBufferData;
-        materialConstantBufferData.parallaxOcclusionScale = material.getParallaxOcclusionScale();
-        
-        uint32 materialOffset = index * sizeof(EntityConstantBufferData);
-        memcpy(rendererData.materialConstantBufferPtr + materialOffset, &materialConstantBufferData, sizeof(MaterialConstantBufferData));
+        const auto storedMaterial = rendererData.materialSet.find(material);
 
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, material.getDescriptorSet(),
-            rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
+        //If it's the first time this Material is used on a Scene set the data and bind the DescriptorSet.
+        if (storedMaterial == rendererData.materialSet.end()) {
+            stats.materialCount++;
+            rendererData.materialSet.insert(material);
+
+            MaterialConstantBufferData materialConstantBufferData;
+            materialConstantBufferData.parallaxOcclusionScale = material.getParallaxOcclusionScale();
+
+            uint32 materialOffset = index * sizeof(EntityConstantBufferData);
+            memcpy(rendererData.materialConstantBufferPtr + materialOffset, &materialConstantBufferData, sizeof(MaterialConstantBufferData));
+
+            Graphics::bindDescriptorSet(rendererData.commandBufferId, material.getDescriptorSet(),
+                rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
+        }
     }
 
     /*void Renderer::drawSkyBox(const SkyBox &skyBox) {

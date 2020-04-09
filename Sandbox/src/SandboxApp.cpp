@@ -104,6 +104,16 @@ void Layer3D::onGraphicsContextCreated() {
     transform.setTranslation(0.0f, -1.0f, 0.0f);
     scene.addEntity(mesh, transform);
 
+    BZ::Transform transform2;
+    transform2.setScale(0.5f, 0.5f, 0.5f);
+    transform2.setTranslation(30.0f, -1.0f, 0.0f);
+    scene.addEntity(mesh, transform2);
+
+    BZ::Transform transform3;
+    transform3.setScale(0.5f, 0.5f, 0.5f);
+    transform3.setTranslation(-30.0f, -1.0f, 0.0f);
+    scene.addEntity(mesh, transform3);
+
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
                                 "Sandbox/textures/steppingstones/steppingstones1_normal.png",
                                 "Sandbox/textures/steppingstones/steppingstones1_metallic.png",

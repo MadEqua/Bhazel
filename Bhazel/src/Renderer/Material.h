@@ -30,6 +30,8 @@ namespace BZ {
         float getParallaxOcclusionScale() const { return parallaxOcclusionScale; }
         void setParallaxOcclusionScale(float scale) { parallaxOcclusionScale = scale; }
 
+        bool operator==(const Material &other) const;
+
     private:
         Ref<TextureView> albedoTextureView;
         Ref<TextureView> normalTextureView;
@@ -44,3 +46,15 @@ namespace BZ {
         void init();
     };
 }
+
+template<>
+struct std::hash<BZ::Material> {
+    size_t operator()(const BZ::Material &mat) const {
+        return (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAlbedoTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getNormalTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getMetallicTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getRoughnessTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getHeightTextureView())) ^
+            std::hash<float>()(mat.getParallaxOcclusionScale());
+    }
+};

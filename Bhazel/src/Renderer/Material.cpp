@@ -71,4 +71,13 @@ namespace BZ {
         if (heightTextureView)
             descriptorSet->setCombinedTextureSampler(heightTextureView, Renderer::getDefaultSampler(), 5);
     }
+
+    bool Material::operator==(const Material &other) const {
+        return albedoTextureView == other.albedoTextureView &&
+            normalTextureView == other.normalTextureView &&
+            metallicTextureView == other.metallicTextureView &&
+            roughnessTextureView == other.roughnessTextureView &&
+            heightTextureView == other.heightTextureView &&
+            parallaxOcclusionScale == other.parallaxOcclusionScale;
+    }
 }

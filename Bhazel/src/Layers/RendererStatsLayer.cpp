@@ -25,6 +25,7 @@ namespace BZ {
             ImGui::Text("Vertex Count: %d", visibleFrameStats.vertexCount);
             ImGui::Text("Triangle Count: %d", visibleFrameStats.triangleCount);
             ImGui::Text("Draw Calls: %d", visibleFrameStats.drawCallCount);
+            ImGui::Text("Material Count: %d", visibleFrameStats.materialCount);
             ImGui::Separator();
             ImGui::NewLine();
             ImGui::SliderInt("Refresh period ns", reinterpret_cast<int*>(&refreshPeriodNs), 0, 1000000000);

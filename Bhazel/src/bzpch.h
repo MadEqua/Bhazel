@@ -13,6 +13,7 @@
 #include <string>
 #include <optional>
 #include <set>
+#include <unordered_set>
 #include <bitset>
 #include <any>
 
