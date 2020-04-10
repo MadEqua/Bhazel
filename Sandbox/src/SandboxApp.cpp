@@ -101,17 +101,17 @@ void Layer3D::onGraphicsContextCreated() {
     BZ::Mesh mesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", material);
     BZ::Transform transform;
     transform.setScale(0.5f, 0.5f, 0.5f);
-    transform.setTranslation(0.0f, -1.0f, 0.0f);
+    transform.setTranslation(0.0f, -25.0f, 0.0f);
     scene.addEntity(mesh, transform);
 
     BZ::Transform transform2;
     transform2.setScale(0.5f, 0.5f, 0.5f);
-    transform2.setTranslation(30.0f, -1.0f, 0.0f);
+    transform2.setTranslation(30.0f, -25.0f, 0.0f);
     scene.addEntity(mesh, transform2);
 
     BZ::Transform transform3;
     transform3.setScale(0.5f, 0.5f, 0.5f);
-    transform3.setTranslation(-30.0f, -1.0f, 0.0f);
+    transform3.setTranslation(-30.0f, -25.0f, 0.0f);
     scene.addEntity(mesh, transform3);
 
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
@@ -123,6 +123,7 @@ void Layer3D::onGraphicsContextCreated() {
     //BZ::Mesh groundMesh = BZ::Mesh::createUnitCube(groundMaterial);
     BZ::Mesh groundMesh = BZ::Mesh::createHorizontalPlane(groundMaterial);
     BZ::Transform groundTransform;
+    groundTransform.setTranslation(0.0f, -25.0f, 0.0f);
     groundTransform.setScale(20.0f, 1.0f, 20.0f);
     //groundTransform.setScale(20.0f, 20.0f, 20.0f);
     scene.addEntity(groundMesh, groundTransform);

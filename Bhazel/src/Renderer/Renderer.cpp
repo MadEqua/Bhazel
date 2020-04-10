@@ -80,7 +80,7 @@ namespace BZ {
         Ref<PipelineState> defaultPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
 
-        std::unordered_set<Material> materialSet;
+        std::unordered_map<Material, uint32> materialOffsetMap;
     } rendererData;
 
 
@@ -179,14 +179,14 @@ namespace BZ {
         rendererData.skyBoxPipelineState.reset();
 
         rendererData.defaultSampler.reset();
-        rendererData.materialSet.clear();
+        rendererData.materialOffsetMap.clear();
     }
 
     void Renderer::drawScene(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
         memset(&stats, 0, sizeof(stats));
-        rendererData.materialSet.clear();
+        rendererData.materialOffsetMap.clear();
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
 
@@ -219,15 +219,16 @@ namespace BZ {
             rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
 
         if (scene.hasSkyBox()) {
-            handleMaterial(scene.getSkyBox().mesh.getMaterial(), 0);
+            handleMaterial(scene.getSkyBox().mesh.getMaterial());
             drawMesh(rendererData.skyBoxPipelineState, scene.getSkyBox().mesh, Transform());
         }
 
-        uint32 entityIndex = scene.hasSkyBox() ? 1 : 0;
+        uint32 entityIndex = 0;
         for (const auto &entity : scene.getEntities()) {
-            handleMaterial(entity.mesh.getMaterial(), entityIndex);
+            handleMaterial(entity.mesh.getMaterial());
             drawEntity(entity, entityIndex++);
         }
+        stats.materialCount = static_cast<uint32>(rendererData.materialOffsetMap.size());
 
         Graphics::endCommandBuffer(rendererData.commandBufferId);
     }
@@ -267,25 +268,28 @@ namespace BZ {
     }
 
     //TODO: There's no need to call this every frame, like it's being done now.
-    void Renderer::handleMaterial(const Material &material, uint32 index) {
+    void Renderer::handleMaterial(const Material &material) {
         BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/initialized Material!");
 
-        const auto storedMaterial = rendererData.materialSet.find(material);
+        const auto storedMaterialIt = rendererData.materialOffsetMap.find(material);
+        uint32 materialOffset;
 
-        //If it's the first time this Material is used on a Scene set the data and bind the DescriptorSet.
-        if (storedMaterial == rendererData.materialSet.end()) {
-            stats.materialCount++;
-            rendererData.materialSet.insert(material);
-
+        //If it's the first time this Material is used on a Scene set the correspondent data.
+        if (storedMaterialIt == rendererData.materialOffsetMap.end()) {
             MaterialConstantBufferData materialConstantBufferData;
             materialConstantBufferData.parallaxOcclusionScale = material.getParallaxOcclusionScale();
 
-            uint32 materialOffset = index * sizeof(EntityConstantBufferData);
+            materialOffset = rendererData.materialOffsetMap.size() * sizeof(EntityConstantBufferData);
             memcpy(rendererData.materialConstantBufferPtr + materialOffset, &materialConstantBufferData, sizeof(MaterialConstantBufferData));
 
-            Graphics::bindDescriptorSet(rendererData.commandBufferId, material.getDescriptorSet(),
-                rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
+            rendererData.materialOffsetMap[material] = materialOffset;
         }
+        else {
+            materialOffset = storedMaterialIt->second;
+        }
+
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, material.getDescriptorSet(),
+            rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
     }
 
     /*void Renderer::drawSkyBox(const SkyBox &skyBox) {

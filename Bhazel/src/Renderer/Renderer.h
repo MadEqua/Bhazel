@@ -50,7 +50,7 @@ namespace BZ {
 
         //static void drawSkyBox(const SkyBox &skyBox);
 
-        static void handleMaterial(const Material &material, uint32 index);
+        static void handleMaterial(const Material &material);
 
         static RendererStats stats;
     };
