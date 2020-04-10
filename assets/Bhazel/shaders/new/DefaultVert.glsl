@@ -23,11 +23,13 @@ layout (set = 1, binding = 0, std140) uniform EntityConstants {
 } uEntityConstants;
 
 layout(location = 0) out struct {
-    //All in tangent space
+    vec3 worldN;
+    vec2 texCoord;
+
+    //From here, all in tangent space
     vec3 position;
     vec3 L[2];
     vec3 V;
-    vec2 texCoord;
 } outData;
 
 void main() {
@@ -37,6 +39,9 @@ void main() {
     //TBN matrix goes from tangent space to world space
     mat3 TBN = mat3(uEntityConstants.normalMatrix) * mat3(attrTangent, attrBitangent, attrNormal);
 
+    outData.worldN = normalize(mat3(uEntityConstants.normalMatrix) * attrNormal);
+    outData.texCoord = attrTexCoord;
+
     //Multiply on the left is equal to multiply with the transpose (= inverse in this case). So transforming from world to tangent space.
     outData.position = positionWorld.xyz * TBN;
 
@@ -45,6 +50,4 @@ void main() {
     }
 
     outData.V = normalize((uSceneConstants.cameraPosition.xyz - positionWorld.xyz) * TBN);
-    //outData.N = normalize((uEntityConstants.normalMatrix * attrNormal) * TBN);
-    outData.texCoord = attrTexCoord;
 }

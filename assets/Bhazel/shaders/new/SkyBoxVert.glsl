@@ -17,8 +17,9 @@ layout(location = 0) out vec3 outCubeMapDirection;
 
 void main() {
     outCubeMapDirection = attrPosition;
+    outCubeMapDirection.x = -outCubeMapDirection.x;
 
-    //Ignore camera position, meaning the box will always be surronding the camera.
+    //Ignore camera position, meaning the box will always be surrounding the camera.
     mat3 rotView = mat3(uSceneConstants.viewMatrix);
     vec3 pos = rotView * attrPosition;
 

@@ -134,9 +134,8 @@ void Layer3D::onGraphicsContextCreated() {
     dirLight.intensity = 5.0f;
     scene.addDirectionalLight(dirLight);
 
-    const char* cubeFileNames[6] = { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
-    const char* cubeFileNames2[6] = { "px.tga", "nx.tga", "py.tga", "ny.tga", "pz.tga", "nz.tga" };
-    scene.enableSkyBox("Sandbox/textures/cubeMap/", cubeFileNames, "Sandbox/textures/irradianceMap/", cubeFileNames2);
+    const char* cubeFileNames[6] = { "px.tga", "nx.tga", "py.tga", "ny.tga", "pz.tga", "nz.tga" };
+    scene.enableSkyBox("Sandbox/textures/lobby/", cubeFileNames, "Sandbox/textures/lobbyIrradiance/", cubeFileNames);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {

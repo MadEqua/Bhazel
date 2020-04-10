@@ -24,11 +24,13 @@ layout(set = 2, binding = 4) uniform sampler2D uRoughnessTexSampler;
 layout(set = 2, binding = 5) uniform sampler2D uHeightTexSampler;
 
 layout(location = 0) in struct {
-    //All in tangent space
+    vec3 worldN;
+    vec2 texCoord;
+
+    //From here, all in tangent space
     vec3 position;
     vec3 L[2];
     vec3 V;
-    vec2 texCoord;
 } inData;
 
 layout(location = 0) out vec4 outColor;
@@ -63,32 +65,50 @@ float geometrySmith(float NdotV, float NdotL, float roughness) {
     return ggx1 * ggx2;
 }
 
-vec3 cookTorrance(vec3 N, vec3 L, vec3 V, vec3 lightRadiance, vec2 texCoord) {
+//Cook-Torrance
+vec3 directLight(vec3 N, vec3 V, vec3 L, vec3 albedo, vec3 F0, float roughness, vec3 lightRadiance, vec2 texCoord) {
     vec3 H = normalize(V + L);
-        
+
     float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
     float HdotV = max(dot(H, V), 0.0);
     float NdotH = max(dot(N, H), 0.0);
 
+    vec3 F = fresnelSchlick(HdotV, F0);
+
+    float G = geometrySmith(NdotV, NdotL, roughness);
+    float NDF = distributionGGX(NdotH, roughness);
+
+    vec3 specular = (NDF * G * F) / max((4.0 * NdotV * NdotL), 0.001);
+
+    vec3 kDiffuse = 1.0 - F;
+    return (kDiffuse * albedo / PI + specular) * lightRadiance * NdotL;
+}
+
+vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo) {
+    vec3 kSpecular = fresnelSchlick(max(dot(N, V), 0.0), F0);
+    vec3 kDiffuse = 1.0 - kSpecular;
+
+    vec3 cubeDirection = normalize(inData.worldN);
+    cubeDirection.x = -cubeDirection.x;
+
+    vec3 irradiance = texture(uIrradianceMapTexSampler, cubeDirection).rgb;
+    return (kDiffuse * albedo * irradiance);// * ao; 
+}
+
+vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     vec3 albedo = texture(uAlbedoTexSampler, texCoord).rgb;
     float metallic = texture(uMetallicTexSampler, texCoord).r;
     float roughness = texture(uRoughnessTexSampler, texCoord).r;
 
     vec3 F0 = mix(vec3(0.04), albedo, metallic); //Hardcoded reflectance for dielectrics
-    vec3 F = fresnelSchlick(HdotV, F0);
 
-    float G = geometrySmith(NdotV, NdotL, roughness);
-    float NDF = distributionGGX(NdotH, roughness);
-        
-    vec3 specular = (NDF * G * F) / max((4.0 * NdotV * NdotL), 0.001);
-
-    vec3 kS = fresnelSchlick(NdotV, F0);
-    vec3 kD = 1.0 - kS;
-    vec3 irradiance = texture(uIrradianceMapTexSampler, N).rgb;
-    vec3 ambient = (kD * irradiance * albedo);// * ao; 
-
-    return ambient + (kD * albedo / PI + specular) * lightRadiance * NdotL;
+    vec3 col = indirectLight(N, V, F0, albedo);
+    for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
+        vec3 L = normalize(inData.L[i]);
+        col += directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);
+    }
+    return col;
 }
 
 vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
@@ -118,7 +138,6 @@ vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
 }
 
 void main() {
-    
     vec3 V = normalize(inData.V);
 
     vec2 texCoord = parallaxOcclusionMap(inData.texCoord, V);
@@ -127,24 +146,6 @@ void main() {
 
     vec3 N = normalize(texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0);
 
-    vec3 col = vec3(0.0);
-    for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
-        vec3 L = normalize(inData.L[i]);
-
-        col += cookTorrance(N, L, V, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);
-        //col = vec3(diffuse, diffuse, diffuse);
-        //col = vec3(spec, spec, spec);
-        //col = inData.tbnMatrix[2] *0.5+0.5;
-        //col = N *0.5+0.5;
-        //col = vec3(inData.texCoord, 0.0);
-        //col = texture(uNormalTexSampler, inData.texCoord).rgb;
-        //col = vec3(1,0,0);
-        //col = amb;
-    }
-
+    vec3 col = lighting(N, V, texCoord);
     outColor = vec4(col, 1.0);
-    //outColor = texture(uDepthTexSampler, inData.texCoord).rrrr;
-    //outColor = vec4(1.0,0.0,0.0, 1.0);
-    //outColor = vec4(inTexCoord, 0.0, 1.0).yyyy;
-    //outColor = texture(uTexSampler, inTexCoord);
 }

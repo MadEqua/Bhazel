@@ -322,9 +322,6 @@ namespace BZ {
         std::string basePathStr(basePath);
         const byte *datas[6];
 
-        //Flip Y axis images because in Vulkan convention +Y is down.
-        std::swap(datas[2], datas[3]);
-
         int desiredChannels = this->format.getChannelCount();
         for (int i = 0; i < 6; ++i) {
             std::string fullPath = basePathStr + fileNames[i];
