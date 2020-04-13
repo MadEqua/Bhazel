@@ -39,7 +39,7 @@ namespace BZ {
 
                     for (auto &pair : pipelineStateRegistry) {
                         if (pathString.find(pair.first) != std::wstring::npos) {
-                            //BZ_LOG_CORE_INFO("FileWatcher detected dhader change: {}.", path);
+                            //BZ_LOG_CORE_INFO("FileWatcher detected shader change: {}.", path);
                             pipelinesToReload.insert(pair.second);
                         }
                     }

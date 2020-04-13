@@ -97,6 +97,7 @@ namespace BZ {
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder2;
@@ -319,11 +320,11 @@ namespace BZ {
         stats.triangleCount += (mesh.hasIndices()?mesh.getIndexCount():mesh.getVertexCount()) / 3;
     }*/
 
-    DataLayout& Renderer::getVertexDataLayout() {
+    const DataLayout& Renderer::getVertexDataLayout() {
         return vertexDataLayout;
     }
 
-    DataLayout& Renderer::getIndexDataLayout() {
+    const DataLayout& Renderer::getIndexDataLayout() {
         return indexDataLayout;
     }
 

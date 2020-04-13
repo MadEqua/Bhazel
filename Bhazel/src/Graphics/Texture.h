@@ -29,18 +29,18 @@ namespace BZ {
         int getChannelCount() const;
     };
 
-    enum class FilterMode {
-        Nearest, Linear
-    };
 
-    enum class AddressMode {
-        Repeat, 
-        MirroredRepeat,
-        ClampToEdge,
-        ClampToBorder,
-        MirrorClampToEdge
-    };
+    struct MipmapData {
+        enum class Options {
+            Generate, Load, DoNothing
+        };
 
+        MipmapData(Options option) : option(option), mipLevels(0) {}
+        MipmapData(Options option, uint32 mipLevels) : option(option), mipLevels(mipLevels) {}
+
+        Options option;
+        uint32 mipLevels; //Used when FromData is the option.
+    };
 
     class Texture {
     public:
@@ -58,8 +58,13 @@ namespace BZ {
     protected:
         explicit Texture(TextureFormat format);
 
-        static const byte* loadFile(const char* path, int desiredChannels, bool flip, int &widthOut, int &heightOut);
-        static void freeData(const byte *data);
+        struct FileData {
+            const byte *data;
+            uint32 width, height;
+        };
+
+        static FileData loadFile(const char* path, int desiredChannels, bool flip);
+        static void freeData(const FileData &fileData);
 
         TextureFormatWrapper format;
         glm::ivec3 dimensions = { 1, 1, 1 };
@@ -70,8 +75,8 @@ namespace BZ {
 
     class Texture2D : public Texture {
     public:
-        static Ref<Texture2D> create(const char* path, TextureFormat format, bool generateMipmaps);
-        static Ref<Texture2D> create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
+        static Ref<Texture2D> create(const char *path, TextureFormat format, MipmapData mipmapData);
+        static Ref<Texture2D> create(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
         
         static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, TextureFormat format);
 
@@ -83,8 +88,8 @@ namespace BZ {
     class TextureCube : public Texture {
     public:
         //fileNames -> +x, -x, +y, -y, +z, -z
-        static Ref<TextureCube> create(const char* basePath, const char* fileNames[6], TextureFormat format, bool generateMipmaps);
-
+        static Ref<TextureCube> create(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData);
+ 
     protected:
         explicit TextureCube(TextureFormat format);
     };
@@ -106,6 +111,18 @@ namespace BZ {
         Ref<Texture> texture;
     };
 
+
+    enum class FilterMode {
+        Nearest, Linear
+    };
+
+    enum class AddressMode {
+        Repeat,
+        MirroredRepeat,
+        ClampToEdge,
+        ClampToBorder,
+        MirrorClampToEdge
+    };
 
     class Sampler {
     public:

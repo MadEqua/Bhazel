@@ -26,6 +26,7 @@ namespace BZ {
     struct SkyBox {
         Mesh mesh;
         Ref<TextureView> irradianceMapView;
+        Ref<TextureView> radianceMapView;
     };
 
     class Scene {
@@ -35,7 +36,9 @@ namespace BZ {
 
         void addEntity(Mesh &mesh, Transform &transform);
         void addDirectionalLight(DirectionalLight &light);
-        void enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6], const char *irradianceMapBasePath, const char *irradianceMapFileNames[6]);
+        void enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],
+                          const char *irradianceMapBasePath, const char *irradianceMapFileNames[6],
+                          const char *radianceMapBasePath, const char *radianceMapFileNames[6], uint32 radianceMipmapCount);
         void setCamera(Camera &camera);
 
         std::vector<Entity>& getEntities() { return entities; }

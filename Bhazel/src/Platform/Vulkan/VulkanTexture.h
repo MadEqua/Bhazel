@@ -8,19 +8,21 @@
 
 namespace BZ {
 
-    struct VulkanTextureData : public VulkanGpuObject<VkImage> {
+    struct VulkanTextureData {
+        VkImage imageHandle;
         VmaAllocation allocationHandle;
+
         VkBuffer stagingBufferHandle;
         VmaAllocation stagingBufferAllocationHandle;
     };
 
 
-    class VulkanTexture2D : public Texture2D {
+    class VulkanTexture2D : public Texture2D, public VulkanGpuObject<VulkanTextureData> {
     public:
         static Ref<VulkanTexture2D> wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
 
-        VulkanTexture2D(const char* path, TextureFormat format, bool generateMipmaps);
-        VulkanTexture2D(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps);
+        VulkanTexture2D(const char *path, TextureFormat format, MipmapData mipmapData);
+        VulkanTexture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
         VulkanTexture2D(uint32 width, uint32 height, TextureFormat format);
         
         //Coming from an already existent VkImage. Used on the swapchain images.
@@ -28,27 +30,20 @@ namespace BZ {
 
         ~VulkanTexture2D() override;
 
-        const VulkanTextureData& getVulkanTextureData() const { return textureData; }
-
     private:
-        void init(const byte *data, uint32 dataSize, uint32 width, uint32 height, bool generateMipmaps);
-
-        VulkanTextureData textureData;
+        void createImage(bool hasData, MipmapData mipmapData);
         bool isWrapping;
     };
 
 
-    class VulkanTextureCube : public TextureCube {
+    class VulkanTextureCube : public TextureCube, public VulkanGpuObject<VulkanTextureData> {
     public:
-        VulkanTextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, bool generateMipmaps);
+        VulkanTextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData);
+
         ~VulkanTextureCube() override;
 
-        const VulkanTextureData& getVulkanTextureData() const { return textureData; }
-
     private:
-        void init(const byte *data[6], uint32 faceDataSize, uint32 width, uint32 height, bool generateMipmaps);
-
-        VulkanTextureData textureData;
+        void createImage(bool hasData, MipmapData mipmapData);
     };
 
 

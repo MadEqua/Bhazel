@@ -1,6 +1,11 @@
 #include "bzpch.h"
 
 #include "VulkanTexture.h"
+
+#include "Core/Application.h"
+#include "Core/Utils.h"
+
+#include "Platform/Vulkan/VulkanContext.h"
 #include "Platform/Vulkan/Internal/VulkanConversions.h"
 
 #include <stb_image.h>
@@ -8,10 +13,12 @@
 
 namespace BZ {
 
-    static void generateMipmaps(const Texture &texture, const VulkanTextureData &vulkanTextureData, VkCommandBuffer commandBuffer) {
+    static void generateMipmaps(const Texture &texture, VkImage vkImage, VkCommandBuffer commandBuffer) {
+        auto &graphicsContext = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
+
         // Check if image format supports linear blitting
         VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(vulkanTextureData.getGraphicsContext().getDevice().getPhysicalDevice().getNativeHandle(),
+        vkGetPhysicalDeviceFormatProperties(graphicsContext.getDevice().getPhysicalDevice().getNativeHandle(),
             textureFormatToVk(texture.getFormat().format), &formatProperties);
 
         BZ_CRITICAL_ERROR(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT,
@@ -19,7 +26,7 @@ namespace BZ {
 
         VkImageMemoryBarrier barrier = {};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.image = vulkanTextureData.getNativeHandle();
+        barrier.image = vkImage;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -58,8 +65,8 @@ namespace BZ {
             blit.dstSubresource.layerCount = texture.getLayers();
 
             vkCmdBlitImage(commandBuffer,
-                vulkanTextureData.getNativeHandle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                vulkanTextureData.getNativeHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 1, &blit,
                 VK_FILTER_LINEAR);
 
@@ -91,7 +98,9 @@ namespace BZ {
             1, &barrier);
     }
 
-    static void initStagingBuffer(uint32 size, VulkanTextureData &vulkanTextureData) {
+    static void initStagingBuffer(uint32 size, VkBuffer *vkBuffer, VmaAllocation *vmaAllocation) {
+        auto &graphicsContext = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
+
         VkBufferCreateInfo bufferInfo = {};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.size = size;
@@ -101,24 +110,26 @@ namespace BZ {
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = memoryTypeToRequiredFlagsVk(MemoryType::CpuToGpu);
         allocInfo.preferredFlags = memoryTypeToPreferredFlagsVk(MemoryType::CpuToGpu);
-        BZ_ASSERT_VK(vmaCreateBuffer(vulkanTextureData.getGraphicsContext().getMemoryAllocator(), &bufferInfo, &allocInfo, &vulkanTextureData.stagingBufferHandle, &vulkanTextureData.stagingBufferAllocationHandle, nullptr));
+        BZ_ASSERT_VK(vmaCreateBuffer(graphicsContext.getMemoryAllocator(), &bufferInfo, &allocInfo, vkBuffer, vmaAllocation, nullptr));
     }
 
-    static void destroyStagingBuffer(VulkanTextureData &vulkanTextureData) {
-        vmaDestroyBuffer(vulkanTextureData.getGraphicsContext().getMemoryAllocator(), vulkanTextureData.stagingBufferHandle, vulkanTextureData.stagingBufferAllocationHandle);
+    static void destroyStagingBuffer(VkBuffer vkBuffer, VmaAllocation vmaAllocation) {
+        auto &graphicsContext = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
+        vmaDestroyBuffer(graphicsContext.getMemoryAllocator(), vkBuffer, vmaAllocation);
     }
 
-    static VkCommandBuffer beginSingleTimeCommands(VulkanTextureData &vulkanTextureData) {
+    static VkCommandBuffer beginCommandBuffer() {
+        auto &graphicsContext = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
 
         //Graphics queue (and not transfer) because of the layout transition operations.
         VkCommandBufferAllocateInfo commandBufferAllocInfo = {};
         commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         commandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocInfo.commandPool = vulkanTextureData.getGraphicsContext().getCurrentFrameCommandPool(QueueProperty::Graphics, false).getNativeHandle();
+        commandBufferAllocInfo.commandPool = graphicsContext.getCurrentFrameCommandPool(QueueProperty::Graphics, false).getNativeHandle();
         commandBufferAllocInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(vulkanTextureData.getGraphicsContext().getDevice().getNativeHandle(), &commandBufferAllocInfo, &commandBuffer);
+        vkAllocateCommandBuffers(graphicsContext.getDevice().getNativeHandle(), &commandBufferAllocInfo, &commandBuffer);
 
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -128,19 +139,19 @@ namespace BZ {
         return commandBuffer;
     }
 
-    static void copyBufferToImage(const Texture &texture, VulkanTextureData &vulkanTextureData, VkCommandBuffer commandBuffer, uint32 width, uint32 height) {
+    static void copyBufferToImage(const Texture &texture, VkBuffer vkBuffer, VkImage vkImage, VkCommandBuffer commandBuffer, uint32 bufferOffset, uint32 width, uint32 height, uint32 mipLevel) {
         VkBufferImageCopy region = {};
-        region.bufferOffset = 0;
+        region.bufferOffset = bufferOffset;
         region.bufferRowLength = 0;
         region.bufferImageHeight = 0;
         region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.mipLevel = mipLevel;
         region.imageSubresource.baseArrayLayer = 0;
         region.imageSubresource.layerCount = texture.getLayers();
         region.imageOffset = { 0, 0, 0 };
         region.imageExtent = { width, height, 1 };
 
-        vkCmdCopyBufferToImage(commandBuffer, vulkanTextureData.stagingBufferHandle, vulkanTextureData.getNativeHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        vkCmdCopyBufferToImage(commandBuffer, vkBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
 
     static void transitionImageLayout(const Texture &texture, VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
@@ -189,7 +200,9 @@ namespace BZ {
             );
     }
 
-    static void endSingleTimeCommands(VulkanTextureData &vulkanTextureData, VkCommandBuffer commandBuffer) {
+    static void submitCommandBuffer(VkCommandBuffer commandBuffer) {
+        auto &graphicsContext = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
+
         vkEndCommandBuffer(commandBuffer);
 
         VkSubmitInfo submitInfo = {};
@@ -197,12 +210,12 @@ namespace BZ {
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffer;
 
-        auto queueHandle = vulkanTextureData.getGraphicsContext().getDevice().getQueueContainerExclusive().graphics.getNativeHandle();
+        auto queueHandle = graphicsContext.getDevice().getQueueContainerExclusive().graphics.getNativeHandle();
         vkQueueSubmit(queueHandle, 1, &submitInfo, VK_NULL_HANDLE);
         vkQueueWaitIdle(queueHandle);
 
-        VkCommandPool cmdPool = vulkanTextureData.getGraphicsContext().getCurrentFrameCommandPool(QueueProperty::Graphics, false).getNativeHandle();
-        vkFreeCommandBuffers(vulkanTextureData.getDevice(), cmdPool, 1, &commandBuffer);
+        VkCommandPool cmdPool = graphicsContext.getCurrentFrameCommandPool(QueueProperty::Graphics, false).getNativeHandle();
+        vkFreeCommandBuffers(graphicsContext.getDevice().getNativeHandle(), cmdPool, 1, &commandBuffer);
     }
 
 
@@ -210,60 +223,193 @@ namespace BZ {
         return MakeRef<VulkanTexture2D>(vkImage, width, height, vkFormat);
     }
 
-    VulkanTexture2D::VulkanTexture2D(const char* path, TextureFormat format, bool generateMipmaps) :
+    VulkanTexture2D::VulkanTexture2D(const char *path, TextureFormat format, MipmapData mipmapData) :
         Texture2D(format), isWrapping(false) {
 
-        int width, height;
         int desiredChannels = this->format.getChannelCount();
-        const byte *data = loadFile(path, desiredChannels, true, width, height);
 
-        init(data, width * height * desiredChannels, width, height, generateMipmaps);
-        freeData(data);
+        VkCommandBuffer commBuffer = beginCommandBuffer();
+        byte *stagingPtr;
+
+        if (mipmapData.option == MipmapData::Options::Load) {
+            mipLevels = mipmapData.mipLevels;
+
+            std::vector<FileData> fileDatas(mipLevels);
+            uint32 totalSize = 0;
+            for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
+                std::string mipName = "_mip" + std::to_string(mipIdx);
+                std::string fullPath = Utils::appendToFileName(path, mipName);
+                
+                const FileData fileData = loadFile(fullPath.c_str(), desiredChannels, true);
+                fileDatas[mipIdx] = fileData;
+                totalSize += fileData.width * fileData.height * desiredChannels;
+            }
+
+            dimensions.x = fileDatas[0].width;
+            dimensions.y = fileDatas[0].height;
+
+            createImage(true, mipmapData);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            initStagingBuffer(totalSize, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+
+            uint32 stagingOffset = 0;
+            for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
+                uint32 dataSize = fileDatas[mipIdx].width * fileDatas[mipIdx].height * desiredChannels;
+                memcpy(stagingPtr + stagingOffset, fileDatas[mipIdx].data, dataSize);
+                freeData(fileDatas[mipIdx]);
+                copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, stagingOffset, fileDatas[mipIdx].width, fileDatas[mipIdx].height, mipIdx);
+                stagingOffset += dataSize;
+            }
+
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            submitCommandBuffer(commBuffer);
+            destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
+        }
+        else {
+            const FileData fileData = loadFile(path, desiredChannels, true);
+
+            dimensions.x = fileData.width;
+            dimensions.y = fileData.height;
+            if (mipmapData.option == MipmapData::Options::Generate) {
+                mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimensions.x, dimensions.y)))) + 1;
+            }
+            else {
+                mipLevels = 1;
+            }
+
+            createImage(true, mipmapData);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            uint32 dataSize = dimensions.x * dimensions.y * desiredChannels;
+            initStagingBuffer(dataSize, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
+
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            memcpy(stagingPtr, fileData.data, dataSize);
+            freeData(fileData);
+            copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, 0, fileData.width, fileData.height, 0);
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle);
+
+            if (mipmapData.option == MipmapData::Options::Generate) {
+                generateMipmaps(*this, nativeHandle.imageHandle, commBuffer);
+            }
+            else {
+                //Mipmap generation already does the transition.
+                transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
+            submitCommandBuffer(commBuffer);
+            destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
+        }
     }
 
-    VulkanTexture2D::VulkanTexture2D(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps) :
+    VulkanTexture2D::VulkanTexture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData) :
         Texture2D(format), isWrapping(false) {
-        init(data, dataSize, width, height, generateMipmaps);
+
+        int channels = this->format.getChannelCount();
+
+        VkCommandBuffer commBuffer = beginCommandBuffer();
+        byte *stagingPtr;
+
+        dimensions.x = width;
+        dimensions.y = height;
+
+        if (mipmapData.option == MipmapData::Options::Load) {
+            mipLevels = mipmapData.mipLevels;
+
+            std::vector<FileData> datas(mipLevels);
+            uint32 totalSize = 0;
+            for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
+                datas[mipIdx].data = data + totalSize;
+                datas[mipIdx].width = dimensions.x >> mipIdx;
+                datas[mipIdx].height = dimensions.y >> mipIdx;
+                totalSize += datas[mipIdx].width * datas[mipIdx].height * channels;
+            }
+
+            createImage(true, mipmapData);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            initStagingBuffer(totalSize, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+
+            uint32 stagingOffset = 0;
+            for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
+                uint32 dataSize = datas[mipIdx].width * datas[mipIdx].height * channels;
+                memcpy(stagingPtr + stagingOffset, datas[mipIdx].data, dataSize);
+                copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, stagingOffset, datas[mipIdx].width, datas[mipIdx].height, mipIdx);
+                stagingOffset += dataSize;
+            }
+
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            submitCommandBuffer(commBuffer);
+            destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
+        }
+        else {
+            if (mipmapData.option == MipmapData::Options::Generate) {
+                mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimensions.x, dimensions.y)))) + 1;
+            }
+            else {
+                mipLevels = 1;
+            }
+
+            createImage(true, mipmapData);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            uint32 dataSize = dimensions.x * dimensions.y * channels;
+            initStagingBuffer(dataSize, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
+
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            memcpy(stagingPtr, data, dataSize);
+            copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, 0, dimensions.x, dimensions.y, 0);
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle);
+
+            if (mipmapData.option == MipmapData::Options::Generate) {
+                generateMipmaps(*this, nativeHandle.imageHandle, commBuffer);
+            }
+            else {
+                //Mipmap generation already does the transition.
+                transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
+            submitCommandBuffer(commBuffer);
+            destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
+        }
     }
 
     VulkanTexture2D::VulkanTexture2D(uint32 width, uint32 height, TextureFormat format):
         Texture2D(format), isWrapping(false) {
-        init(nullptr, 0, width, height, false);
+
+        dimensions.x = width;
+        dimensions.y = height;
+        mipLevels = 1;
+        createImage(false, MipmapData::Options::DoNothing);
     }
 
     VulkanTexture2D::VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) :
         Texture2D(vkFormatToTextureFormat(vkFormat)), isWrapping(true) {
 
         BZ_ASSERT_CORE(vkImage != VK_NULL_HANDLE, "Invalid VkImage!");
-        textureData.nativeHandle = vkImage;
+        nativeHandle.imageHandle = vkImage;
 
         dimensions.x = width;
         dimensions.y = height;
-
         mipLevels = 1;
     }
 
     VulkanTexture2D::~VulkanTexture2D() {
         if(!isWrapping)
-            vmaDestroyImage(textureData.getGraphicsContext().getMemoryAllocator(), textureData.nativeHandle, textureData.allocationHandle);
+            vmaDestroyImage(getGraphicsContext().getMemoryAllocator(), nativeHandle.imageHandle, nativeHandle.allocationHandle);
     }
 
-    void VulkanTexture2D::init(const byte *data, uint32 dataSize, uint32 width, uint32 height, bool generateMipmaps) {
-        dimensions.x = width;
-        dimensions.y = height;
-
-        if (generateMipmaps)
-            mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
-        else
-            mipLevels = 1;
-
+    void VulkanTexture2D::createImage(bool hasData, MipmapData mipmapData) {
         VkFormat vkFormat = textureFormatToVk(format.format);
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent.width = static_cast<uint32_t>(width);
-        imageInfo.extent.height = static_cast<uint32_t>(height);
+        imageInfo.extent.width = static_cast<uint32_t>(dimensions.x);
+        imageInfo.extent.height = static_cast<uint32_t>(dimensions.y);
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = mipLevels;
         imageInfo.arrayLayers = 1;
@@ -274,88 +420,139 @@ namespace BZ {
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.flags = 0;
 
-        if (data == nullptr) {
-            imageInfo.usage = format.isColor() ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        }
-        else {
+        if (hasData) {
             imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-            if (generateMipmaps) {
+            if (mipmapData.option == MipmapData::Options::Generate) {
                 imageInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             }
+        }
+        else {
+            imageInfo.usage = format.isColor() ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         }
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = memoryTypeToRequiredFlagsVk(MemoryType::GpuOnly);
         allocInfo.preferredFlags = memoryTypeToPreferredFlagsVk(MemoryType::GpuOnly);
-        BZ_ASSERT_VK(vmaCreateImage(textureData.getGraphicsContext().getMemoryAllocator(), &imageInfo, &allocInfo, &textureData.nativeHandle, &textureData.allocationHandle, nullptr));
-
-        if (data != nullptr) {
-            initStagingBuffer(dataSize, textureData);
-
-            void *ptr;
-            BZ_ASSERT_VK(vmaMapMemory(textureData.getGraphicsContext().getMemoryAllocator(), textureData.stagingBufferAllocationHandle, &ptr));
-            memcpy(ptr, data, dataSize);
-            vmaUnmapMemory(textureData.getGraphicsContext().getMemoryAllocator(), textureData.stagingBufferAllocationHandle);
-
-            //Transfer from staging buffer to device local image.
-            VkCommandBuffer commBuffer = beginSingleTimeCommands(textureData);
-            transitionImageLayout(*this, commBuffer, textureData.nativeHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-            copyBufferToImage(*this, textureData, commBuffer, width, height);
-
-            if (generateMipmaps)
-                BZ::generateMipmaps(*this, textureData, commBuffer);
-            else
-                transitionImageLayout(*this, commBuffer, textureData.nativeHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-            endSingleTimeCommands(textureData, commBuffer);
-
-            destroyStagingBuffer(textureData);
-        }
+        BZ_ASSERT_VK(vmaCreateImage(getGraphicsContext().getMemoryAllocator(), &imageInfo, &allocInfo, &nativeHandle.imageHandle, &nativeHandle.allocationHandle, nullptr));
     }
 
 
-    VulkanTextureCube::VulkanTextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, bool generateMipmaps) :
+    VulkanTextureCube::VulkanTextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData) :
         TextureCube(format) {
 
-        int width, height;
-        std::string basePathStr(basePath);
-        const byte *datas[6];
+        layers = 6;
 
         int desiredChannels = this->format.getChannelCount();
-        for (int i = 0; i < 6; ++i) {
-            std::string fullPath = basePathStr + fileNames[i];
-            datas[i] = loadFile(fullPath.c_str(), desiredChannels, false, width, height);
+
+        VkCommandBuffer commBuffer = beginCommandBuffer();
+        byte *stagingPtr;
+
+        if (mipmapData.option == MipmapData::Options::Load) {
+            mipLevels = mipmapData.mipLevels;
+
+            //Mip0 (6 faces), Mip1 (6 faces), etc...
+            std::vector<FileData> fileDatas(mipLevels * 6);
+            uint32 totalSize = 0;
+            for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
+                std::string mipName = "_mip" + std::to_string(mipIdx);
+                
+                for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
+                    std::string fullPath = basePath + Utils::appendToFileName(fileNames[faceIdx], mipName);
+                    const FileData fileData = loadFile(fullPath.c_str(), desiredChannels, false);
+                    fileDatas[mipIdx * 6 + faceIdx] = fileData;
+                    totalSize += fileData.width * fileData.height * desiredChannels;
+                }
+            }
+
+            dimensions.x = fileDatas[0].width;
+            dimensions.y = fileDatas[0].height;
+
+            createImage(true, mipmapData);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            initStagingBuffer(totalSize, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+
+            uint32 faceOffset = 0;
+            uint32 copyOffset = 0;
+            for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
+                uint32 faceSize = fileDatas[mipIdx * 6].width * fileDatas[mipIdx * 6].height * desiredChannels;
+
+                for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
+                    uint32 fileDatasIdx = mipIdx * 6 + faceIdx;
+                    memcpy(stagingPtr + faceOffset, fileDatas[fileDatasIdx].data, faceSize);
+                    freeData(fileDatas[fileDatasIdx]);
+                    faceOffset += faceSize;
+                }
+
+                copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, copyOffset, fileDatas[mipIdx * 6].width, fileDatas[mipIdx * 6].height, mipIdx);
+                copyOffset = faceOffset;
+            }
+
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            submitCommandBuffer(commBuffer);
+            destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
         }
+        else {
+            std::vector<FileData> fileDatas(6);
+            for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
+                std::string fullPath = std::string(basePath) + fileNames[faceIdx];
+                fileDatas[faceIdx] = loadFile(fullPath.c_str(), desiredChannels, false);
+            }
 
-        init(datas, width * height * desiredChannels, width, height, generateMipmaps);
+            dimensions.x = fileDatas[0].width;
+            dimensions.y = fileDatas[0].height;
 
-        for (int i = 0; i < 6; ++i) {
-            freeData(datas[i]);
+            if (mipmapData.option == MipmapData::Options::Generate) {
+                mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(dimensions.x, dimensions.y)))) + 1;
+            }
+            else {
+                mipLevels = 1;
+            }
+
+            createImage(true, mipmapData);
+            transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            uint32 faceDataSize = dimensions.x * dimensions.y * desiredChannels;
+            initStagingBuffer(faceDataSize * 6, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
+
+            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+
+            uint32 stagingOffset = 0;
+            for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
+                memcpy(stagingPtr + stagingOffset, fileDatas[faceIdx].data, faceDataSize);
+                freeData(fileDatas[faceIdx]);
+                stagingOffset += faceDataSize;
+            }
+            copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, 0, dimensions.x, dimensions.y, 0);
+
+            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle);
+
+            if (mipmapData.option == MipmapData::Options::Generate) {
+                generateMipmaps(*this, nativeHandle.imageHandle, commBuffer);
+            }
+            else {
+                //Mipmap generation already does the transition.
+                transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
+            submitCommandBuffer(commBuffer);
+            destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
         }
     }
 
     VulkanTextureCube::~VulkanTextureCube() {
-        vmaDestroyImage(textureData.getGraphicsContext().getMemoryAllocator(), textureData.nativeHandle, textureData.allocationHandle);
+        vmaDestroyImage(getGraphicsContext().getMemoryAllocator(), nativeHandle.imageHandle, nativeHandle.allocationHandle);
     }
 
-    void VulkanTextureCube::init(const byte *datas[6], uint32 faceDataSize, uint32 width, uint32 height, bool generateMipmaps) {
-        dimensions.x = width;
-        dimensions.y = height;
-        layers = 6;
-
-        if (generateMipmaps)
-            mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
-        else
-            mipLevels = 1;
-
+    void VulkanTextureCube::createImage(bool hasData, MipmapData mipmapData) {
         VkFormat vkFormat = textureFormatToVk(format.format);
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent.width = static_cast<uint32_t>(width);
-        imageInfo.extent.height = static_cast<uint32_t>(height);
+        imageInfo.extent.width = static_cast<uint32_t>(dimensions.x);
+        imageInfo.extent.height = static_cast<uint32_t>(dimensions.y);
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = mipLevels;
         imageInfo.arrayLayers = 6;
@@ -366,59 +563,31 @@ namespace BZ {
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
-        //If one of the faces has no data, we assume none of them have.
-        if (datas[0] == nullptr) {
-            imageInfo.usage = format.isColor() ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        }
-        else {
+        if (hasData) {
             imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-            if (generateMipmaps) {
+            if (mipmapData.option == MipmapData::Options::Generate) {
                 imageInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             }
+        }
+        else {
+            imageInfo.usage = format.isColor() ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         }
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = memoryTypeToRequiredFlagsVk(MemoryType::GpuOnly);
         allocInfo.preferredFlags = memoryTypeToPreferredFlagsVk(MemoryType::GpuOnly);
-        BZ_ASSERT_VK(vmaCreateImage(textureData.getGraphicsContext().getMemoryAllocator(), &imageInfo, &allocInfo, &textureData.nativeHandle, &textureData.allocationHandle, nullptr));
-
-        if (datas[0] != nullptr) {
-            initStagingBuffer(faceDataSize * 6, textureData);
-            
-            byte *stagingPtr;
-            BZ_ASSERT_VK(vmaMapMemory(textureData.getGraphicsContext().getMemoryAllocator(), textureData.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
-            for (int i = 0; i < 6; ++i) {
-                memcpy(stagingPtr + (faceDataSize * i), datas[i], faceDataSize);
-            }
-            vmaUnmapMemory(textureData.getGraphicsContext().getMemoryAllocator(), textureData.stagingBufferAllocationHandle);
-            
-            //Transfer from staging buffer to device local image.
-            VkCommandBuffer commBuffer = beginSingleTimeCommands(textureData);
-            transitionImageLayout(*this, commBuffer, textureData.nativeHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-            copyBufferToImage(*this, textureData, commBuffer, width, height);
-
-            if (generateMipmaps)
-                BZ::generateMipmaps(*this, textureData, commBuffer);
-            else
-                transitionImageLayout(*this, commBuffer, textureData.nativeHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-            endSingleTimeCommands(textureData, commBuffer);
-
-            destroyStagingBuffer(textureData);
-        }
+        BZ_ASSERT_VK(vmaCreateImage(getGraphicsContext().getMemoryAllocator(), &imageInfo, &allocInfo, &nativeHandle.imageHandle, &nativeHandle.allocationHandle, nullptr));
     }
 
 
     VulkanTextureView::VulkanTextureView(const Ref<Texture2D> &texture2D) :
         TextureView(texture2D) {
-        init(VK_IMAGE_VIEW_TYPE_2D, static_cast<VulkanTexture2D &>(*texture2D).getVulkanTextureData().getNativeHandle());
-
+        init(VK_IMAGE_VIEW_TYPE_2D, static_cast<VulkanTexture2D &>(*texture2D).getNativeHandle().imageHandle);
     }
 
     VulkanTextureView::VulkanTextureView(const Ref<TextureCube> &textureCube) :
         TextureView(textureCube) {
-        init(VK_IMAGE_VIEW_TYPE_CUBE, static_cast<VulkanTextureCube &>(*textureCube).getVulkanTextureData().getNativeHandle());
+        init(VK_IMAGE_VIEW_TYPE_CUBE, static_cast<VulkanTextureCube &>(*textureCube).getNativeHandle().imageHandle);
     }
 
     VulkanTextureView::~VulkanTextureView() {

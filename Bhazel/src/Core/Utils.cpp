@@ -18,14 +18,18 @@ namespace BZ::Utils {
     std::string getFileNameFromPath(const std::string &path) {
         size_t lastSeparatorPos = path.find_last_of("/\\");
         size_t subStrStart = lastSeparatorPos == std::string::npos ? 0 : lastSeparatorPos + 1;
-
-        std::string nameAndExt = path.substr(subStrStart);
-        return removeExtensionFromFileName(nameAndExt);
+        return path.substr(subStrStart);
     }
 
     std::string removeFileNameFromPath(const std::string &path) {
         size_t lastSeparatorPos = path.find_last_of("/\\");
         return path.substr(0, lastSeparatorPos + 1);
+    }
+
+    std::string getExtensionFromFileName(const std::string &fileName) {
+        size_t dotPos = fileName.find_last_of('.');
+        size_t subStrStart = dotPos == std::string::npos ? 0 : dotPos + 1;
+        return fileName.substr(subStrStart);
     }
 
     std::string removeExtensionFromFileName(const std::string &fileName) {
@@ -34,6 +38,16 @@ namespace BZ::Utils {
             return fileName.substr(0, dotPos);
         }
         return fileName;
+    }
+
+    std::string appendToFileName(const std::string &pathWithFilename, const std::string &toAppend) {
+        size_t dotPos = pathWithFilename.find_last_of('.');
+        if (dotPos != std::string::npos) {
+            return pathWithFilename.substr(0, dotPos) + toAppend + pathWithFilename.substr(dotPos, pathWithFilename.size());
+        }
+        else {
+            return pathWithFilename + toAppend;
+        }
     }
 
     glm::mat4 ortho(float left, float right, float bottom, float top, float near, float far) {

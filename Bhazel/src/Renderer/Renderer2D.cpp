@@ -140,7 +140,7 @@ namespace BZ {
         rendererData.sampler = samplerBuilder.build();
 
         byte whiteTextureData[] = {255, 255, 255, 255};
-        rendererData.whiteTexture = Texture2D::create(whiteTextureData, sizeof(whiteTextureData), 1, 1, TextureFormat::R8G8B8A8, false);
+        rendererData.whiteTexture = Texture2D::create(whiteTextureData, 1, 1, TextureFormat::R8G8B8A8, BZ::MipmapData::Options::DoNothing);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);

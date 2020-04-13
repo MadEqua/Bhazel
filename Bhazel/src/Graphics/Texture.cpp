@@ -196,34 +196,39 @@ namespace BZ {
         format(format) {
     }
 
-    const byte* Texture::loadFile(const char* path, int desiredChannels, bool flip, int &widthOut, int &heightOut) {
+    Texture::FileData Texture::loadFile(const char* path, int desiredChannels, bool flip) {
         stbi_set_flip_vertically_on_load(flip);
-        int channelsInFile;
-        stbi_uc* data = stbi_load(path, &widthOut, &heightOut, &channelsInFile, desiredChannels);
+        int channelsInFile, width, height;
+        stbi_uc* data = stbi_load(path, &width, &height, &channelsInFile, desiredChannels);
         BZ_CRITICAL_ERROR_CORE(data, "Failed to load image '{}'.", path);
-        return static_cast<byte*>(data);
+
+        FileData ret;
+        ret.data = static_cast<byte*>(data);
+        ret.width = width;
+        ret.height = height;
+        return ret;
     }
 
-    void Texture::freeData(const byte *data) {
-        stbi_image_free((void*)data);
+    void Texture::freeData(const FileData &fileData) {
+        stbi_image_free((void*)fileData.data);
     }
 
 
-    Ref<Texture2D> Texture2D::create(const char* path, TextureFormat format, bool generateMipmaps) {
+    Ref<Texture2D> Texture2D::create(const char *path, TextureFormat format, MipmapData mipmapData) {
         auto &assetsPath = Application::getInstance().getAssetsPath();
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTexture2D>((assetsPath + path).c_str(), format, generateMipmaps);
+            return MakeRef<VulkanTexture2D>((assetsPath + path).c_str(), format, mipmapData);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Ref<Texture2D> Texture2D::create(const byte *data, uint32 dataSize, uint32 width, uint32 height, TextureFormat format, bool generateMipmaps) {
+    Ref<Texture2D> Texture2D::create(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData) {
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTexture2D>(data, dataSize, width, height, format, generateMipmaps);
+            return MakeRef<VulkanTexture2D>(data, width, height, format, mipmapData);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
@@ -245,11 +250,11 @@ namespace BZ {
     }
 
 
-    Ref<TextureCube> TextureCube::create(const char *basePath, const char *fileNames[6], TextureFormat format, bool generateMipmaps) {
+    Ref<TextureCube> TextureCube::create(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData) {
         auto &assetsPath = Application::getInstance().getAssetsPath();
         switch (Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTextureCube>((assetsPath + basePath).c_str(), fileNames, format, generateMipmaps);
+            return MakeRef<VulkanTextureCube>((assetsPath + basePath).c_str(), fileNames, format, mipmapData);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

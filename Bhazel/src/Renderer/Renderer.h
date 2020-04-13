@@ -28,8 +28,8 @@ namespace BZ {
 
         static const RendererStats& getStats() { return stats; }
 
-        static DataLayout& getVertexDataLayout();
-        static DataLayout& getIndexDataLayout();
+        static const DataLayout& getVertexDataLayout();
+        static const DataLayout& getIndexDataLayout();
 
         //Pre-filled DescriptorSets to be used on Scenes and Materials. They will fill the remaining bindings.
         static Ref<DescriptorSet> createSceneDescriptorSet();

@@ -6,9 +6,14 @@
 namespace BZ::Utils {
 
     std::string trim(const std::string &in);
+
     std::string getFileNameFromPath(const std::string &path);
     std::string removeFileNameFromPath(const std::string &path);
+
+    std::string getExtensionFromFileName(const std::string &fileName);
     std::string removeExtensionFromFileName(const std::string &fileName);
+
+    std::string appendToFileName(const std::string &pathWithFilename, const std::string &toAppend);
 
     glm::mat4 ortho(float left, float right, float bottom, float top, float near, float far);
     glm::mat4 frustum(float left, float right, float bottom, float top, float near, float far);
