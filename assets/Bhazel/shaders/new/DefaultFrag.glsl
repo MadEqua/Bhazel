@@ -12,6 +12,7 @@ layout (set = 0, binding = 0, std140) uniform SceneConstants {
 } uSceneConstants;
 
 layout(set = 0, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
+layout(set = 0, binding = 2) uniform samplerCube uRadianceMapTexSampler;
 
 layout (set = 2, binding = 0, std140) uniform MaterialConstants {
      float parallaxOcclusionScale;
@@ -22,9 +23,10 @@ layout(set = 2, binding = 2) uniform sampler2D uNormalTexSampler;
 layout(set = 2, binding = 3) uniform sampler2D uMetallicTexSampler;
 layout(set = 2, binding = 4) uniform sampler2D uRoughnessTexSampler;
 layout(set = 2, binding = 5) uniform sampler2D uHeightTexSampler;
+layout(set = 2, binding = 6) uniform sampler2D uBrdfLookupTexture; //TODO: this doesn't belong to the Material DescriptorSet
 
 layout(location = 0) in struct {
-    vec3 worldN;
+    mat3 TBN; //TBN matrix goes from tangent space to world space
     vec2 texCoord;
 
     //From here, all in tangent space
@@ -85,15 +87,29 @@ vec3 directLight(vec3 N, vec3 V, vec3 L, vec3 albedo, vec3 F0, float roughness, 
     return (kDiffuse * albedo / PI + specular) * lightRadiance * NdotL;
 }
 
-vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo) {
-    vec3 kSpecular = fresnelSchlick(max(dot(N, V), 0.0), F0);
+vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness) {
+    float NdotV = max(dot(N, V), 0.0);
+
+    vec3 F = fresnelSchlick(NdotV, F0);
+    vec3 kSpecular = F;
     vec3 kDiffuse = 1.0 - kSpecular;
 
-    vec3 cubeDirection = normalize(inData.worldN);
+    vec3 cubeDirection = normalize(inData.TBN * N);
     cubeDirection.x = -cubeDirection.x;
 
     vec3 irradiance = texture(uIrradianceMapTexSampler, cubeDirection).rgb;
-    return (kDiffuse * albedo * irradiance);// * ao; 
+    vec3 diffuse = albedo * irradiance;
+
+    const float MAX_REFLECTION_LOD = 7.0; //TODO: not harcoded
+    vec3 R = reflect(-V, N);
+    vec3 worldR = normalize(inData.TBN * R);
+    worldR.x = -worldR.x;
+
+    vec3 prefilteredColor = textureLod(uRadianceMapTexSampler, worldR, roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 envBRDF = texture(uBrdfLookupTexture, vec2(NdotV, roughness)).rg;
+    vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+
+    return (kDiffuse * diffuse + specular);// * ao; 
 }
 
 vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
@@ -103,7 +119,7 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
 
     vec3 F0 = mix(vec3(0.04), albedo, metallic); //Hardcoded reflectance for dielectrics
 
-    vec3 col = indirectLight(N, V, F0, albedo);
+    vec3 col = indirectLight(N, V, F0, albedo, roughness);
     for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
         vec3 L = normalize(inData.L[i]);
         col += directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);

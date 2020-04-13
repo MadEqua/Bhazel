@@ -80,6 +80,8 @@ namespace BZ {
         Ref<PipelineState> defaultPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
 
+        Ref<TextureView> brdfLookupTexture;
+
         std::unordered_map<Material, uint32> materialOffsetMap;
     } rendererData;
 
@@ -110,6 +112,7 @@ namespace BZ {
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Fragment), 1);
 
         //Albedo, Normal, Metallic, Roughness and Height textures
+        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
@@ -163,6 +166,9 @@ namespace BZ {
 
         Sampler::Builder builder;
         rendererData.defaultSampler = builder.build();
+
+        auto brdfTex = Texture2D::create("Bhazel/textures/ibl_brdf_lut.png", TextureFormat::R8G8B8A8, MipmapData::Options::DoNothing);
+        rendererData.brdfLookupTexture = TextureView::create(brdfTex);
     }
 
     void Renderer::destroy() {
@@ -181,6 +187,8 @@ namespace BZ {
 
         rendererData.defaultSampler.reset();
         rendererData.materialOffsetMap.clear();
+
+        rendererData.brdfLookupTexture.reset();
     }
 
     void Renderer::drawScene(const Scene &scene) {
@@ -337,6 +345,7 @@ namespace BZ {
     Ref<DescriptorSet> Renderer::createMaterialDescriptorSet() {
         auto descriptorSet = DescriptorSet::create(rendererData.materialDescriptorSetLayout);
         descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, MATERIAL_CONSTANT_BUFFER_OFFSET, sizeof(MaterialConstantBufferData));
+        descriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.defaultSampler, 6);
         return descriptorSet;
     }
 

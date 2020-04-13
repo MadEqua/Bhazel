@@ -92,22 +92,22 @@ void Layer3D::onGraphicsContextCreated() {
     rotateCameraController = BZ::RotateCameraController(camera, 70.0f);
     freeCameraController = BZ::FreeCameraController(camera);
 
-    //BZ::Material material("Sandbox/meshes/fireHydrant/BaseColor.png", 
-    //                      "Sandbox/meshes/fireHydrant/Normal.png",
-    //                      "Sandbox/meshes/fireHydrant/Metallic.png",
-    //                      "Sandbox/meshes/fireHydrant/Roughness.png",
-    //                      "Sandbox/meshes/fireHydrant/Height.png");
-    //material.setParallaxOcclusionScale(0.01);
-    //BZ::Mesh mesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", material);
-    //BZ::Transform transform;
-    //transform.setScale(0.5f, 0.5f, 0.5f);
-    //transform.setTranslation(0.0f, -25.0f, 0.0f);
-    //scene.addEntity(mesh, transform);
+    BZ::Material material("Sandbox/meshes/fireHydrant/BaseColor.png", 
+                          "Sandbox/meshes/fireHydrant/Normal.png",
+                          "Sandbox/meshes/fireHydrant/Metallic.png",
+                          "Sandbox/meshes/fireHydrant/Roughness.png",
+                          "Sandbox/meshes/fireHydrant/Height.png");
+    material.setParallaxOcclusionScale(0.01);
+    BZ::Mesh mesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", material);
+    BZ::Transform transform;
+    transform.setScale(0.5f, 0.5f, 0.5f);
+    transform.setTranslation(0.0f, -25.0f, 0.0f);
+    scene.addEntity(mesh, transform);
     
-    //BZ::Transform transform2;
-    //transform2.setScale(0.5f, 0.5f, 0.5f);
-    //transform2.setTranslation(30.0f, -25.0f, 0.0f);
-    //scene.addEntity(mesh, transform2);
+    BZ::Transform transform2;
+    transform2.setScale(0.5f, 0.5f, 0.5f);
+    transform2.setTranslation(30.0f, -25.0f, 0.0f);
+    scene.addEntity(mesh, transform2);
     
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
                                 "Sandbox/textures/steppingstones/steppingstones1_normal.png",
@@ -130,6 +130,7 @@ void Layer3D::onGraphicsContextCreated() {
     scene.addDirectionalLight(dirLight);
 
     const char* cubeFileNames[6] = { "px.tga", "nx.tga", "py.tga", "ny.tga", "pz.tga", "nz.tga" };
+    //const char* cubeFileNames2[6] = { "px_mip0.tga", "nx_mip0.tga", "py_mip0.tga", "ny_mip0.tga", "pz_mip0.tga", "nz_mip0.tga" };
     scene.enableSkyBox("Sandbox/textures/lobby/", cubeFileNames,
                        "Sandbox/textures/lobbyIrradiance/", cubeFileNames,
                        "Sandbox/textures/lobbyRadiance/", cubeFileNames, 7);
