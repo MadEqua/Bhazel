@@ -87,61 +87,95 @@ void Layer3D::onAttach() {
 void Layer3D::onGraphicsContextCreated() {
     camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 300.0f);
     camera.getTransform().setTranslation({ 0.0f, 50.0f, 50.0f });
-    scene.setCamera(camera);
+    scenes[0].setCamera(camera);
+    scenes[1].setCamera(camera);
+    scenes[2].setCamera(camera);
     
-    rotateCameraController = BZ::RotateCameraController(camera, 2.0f);
+    rotateCameraController = BZ::RotateCameraController(camera, 1.0f);
     freeCameraController = BZ::FreeCameraController(camera);
 
-    //BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
-    //                             "Sandbox/meshes/fireHydrant/Normal.png",
-    //                             "Sandbox/meshes/fireHydrant/Metallic.png",
-    //                             "Sandbox/meshes/fireHydrant/Roughness.png",
-    //                             "Sandbox/meshes/fireHydrant/Height.png");
-    //hydrantMaterial.setParallaxOcclusionScale(0.01);
-    //BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
-    //BZ::Transform hydrantTransform;
-    //hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
-    //hydrantTransform.setTranslation(0.0f, -25.0f, 0.0f);
-    //scene.addEntity(hydrantMesh, hydrantTransform);
+    BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
+                                 "Sandbox/meshes/fireHydrant/Normal.png",
+                                 "Sandbox/meshes/fireHydrant/Metallic.png",
+                                 "Sandbox/meshes/fireHydrant/Roughness.png",
+                                 "Sandbox/meshes/fireHydrant/Height.png");
+    hydrantMaterial.setParallaxOcclusionScale(0.001f);
+    BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
+    BZ::Transform hydrantTransform;
+    hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
+    hydrantTransform.setTranslation(0.0f, -25.0f, 0.0f);
+    scenes[0].addEntity(hydrantMesh, hydrantTransform);
+    scenes[1].addEntity(hydrantMesh, hydrantTransform);
+    scenes[2].addEntity(hydrantMesh, hydrantTransform);
 
     BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
                                 "Sandbox/meshes/wrench/normal.png",
                                 "Sandbox/meshes/wrench/metallic.jpg",
                                 "Sandbox/meshes/wrench/roughness.jpg",
                                 "Sandbox/meshes/wrench/height.png");
-    wrenchMaterial.setParallaxOcclusionScale(0.01);
+    wrenchMaterial.setParallaxOcclusionScale(0.01f);
     BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
     BZ::Transform wrenchTransform;
-    wrenchTransform.setTranslation(30.0f, 0.0f, 0.0f);
-    wrenchTransform.setRotationEuler(0.0f, 90.0f, 0.0f);
-    scene.addEntity(wrenchMesh, wrenchTransform);
+    wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f);
+    wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f);
+    scenes[0].addEntity(wrenchMesh, wrenchTransform);
+    scenes[1].addEntity(wrenchMesh, wrenchTransform);
+    scenes[2].addEntity(wrenchMesh, wrenchTransform);
     
-    BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
-                                "Sandbox/textures/steppingstones/steppingstones1_normal.png",
-                                "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
-                                "Sandbox/textures/steppingstones/steppingstones1_roughness.png",
-                                "Sandbox/textures/steppingstones/steppingstones1_height.png");
-    groundMaterial.setParallaxOcclusionScale(0.15f);
-    //BZ::Mesh groundMesh = BZ::Mesh::createUnitCube(groundMaterial);
-    //BZ::Mesh groundMesh = BZ::Mesh::createHorizontalPlane(groundMaterial);
-    BZ::Mesh sphere("Sandbox/meshes/sphere.obj", groundMaterial);
-    BZ::Transform sphereTransform;
-    sphereTransform.setTranslation(-30.0f, 0.0f, 0.0f);
-    sphereTransform.setScale(10.0f, 10.0f, 10.0f);
-    scene.addEntity(sphere, sphereTransform);
+    //BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
+    //                            "Sandbox/textures/steppingstones/steppingstones1_normal.png",
+    //                            "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
+    //                            "Sandbox/textures/steppingstones/steppingstones1_roughness.png",
+    //                            "Sandbox/textures/steppingstones/steppingstones1_height.png");
+    //groundMaterial.setParallaxOcclusionScale(0.15f);
+    ////BZ::Mesh groundMesh = BZ::Mesh::createUnitCube(groundMaterial);
+    ////BZ::Mesh groundMesh = BZ::Mesh::createHorizontalPlane(groundMaterial);
+    //BZ::Mesh sphere("Sandbox/meshes/sphere.obj", groundMaterial);
+    //BZ::Transform sphereTransform;
+    //sphereTransform.setTranslation(-30.0f, 0.0f, 0.0f);
+    //sphereTransform.setScale(10.0f, 10.0f, 10.0f);
+    //scenes[0].addEntity(sphere, sphereTransform);
+    //scenes[1].addEntity(sphere, sphereTransform);
+    //scenes[2].addEntity(sphere, sphereTransform);
+
+    BZ::Material gunMaterial("Sandbox/meshes/cerberus/albedo.png",
+                             "Sandbox/meshes/cerberus/normal.png",
+                             "Sandbox/meshes/cerberus/metallic.png",
+                             "Sandbox/meshes/cerberus/roughness.png",
+                             "Sandbox/meshes/cerberus/height.png");
+    gunMaterial.setParallaxOcclusionScale(0.0f);
+    BZ::Mesh gunMesh("Sandbox/meshes/cerberus/cerberus.obj", gunMaterial);
+    BZ::Transform gunTransform;
+    gunTransform.setScale(9.0f, 9.0f, 9.0f);
+    gunTransform.setTranslation(-25.0f, 0.0f, 0.0f);
+    gunTransform.setRotationEuler(0.0f, 90.0f, -45.0f);
+    scenes[0].addEntity(gunMesh, gunTransform);
+    scenes[1].addEntity(gunMesh, gunTransform);
+    scenes[2].addEntity(gunMesh, gunTransform);
     
     BZ::DirectionalLight dirLight;
     dirLight.direction = { 1.0f, -1.0f, 0.0f };
     dirLight.color = { 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 5.0f;
-    scene.addDirectionalLight(dirLight);
+    dirLight.intensity = 2.0f;
+    scenes[0].addDirectionalLight(dirLight);
+    scenes[1].addDirectionalLight(dirLight);
+    scenes[2].addDirectionalLight(dirLight);
 
     const char* cubeFileNames[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga", 
                                      "output_skybox_posy.tga", "output_skybox_negy.tga",
                                      "output_skybox_posz.tga", "output_skybox_negz.tga" };
-    scene.enableSkyBox("Sandbox/textures/lobby/", cubeFileNames,
-                       "Sandbox/textures/lobbyIrradiance/", cubeFileNames,
-                       "Sandbox/textures/lobbyRadiance/", cubeFileNames, 5);
+
+    scenes[0].enableSkyBox("Sandbox/textures/lobby/", cubeFileNames,
+                           "Sandbox/textures/lobbyIrradiance/", cubeFileNames,
+                           "Sandbox/textures/lobbyRadiance/", cubeFileNames, 5);
+
+    scenes[1].enableSkyBox("Sandbox/textures/theater/", cubeFileNames,
+                           "Sandbox/textures/theaterIrradiance/", cubeFileNames,
+                           "Sandbox/textures/theaterRadiance/", cubeFileNames, 5);
+
+    scenes[2].enableSkyBox("Sandbox/textures/sky/", cubeFileNames,
+                           "Sandbox/textures/skyIrradiance/", cubeFileNames,
+                           "Sandbox/textures/skyRadiance/", cubeFileNames, 5);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
@@ -152,7 +186,7 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     else
         rotateCameraController.onUpdate(frameStats);
 
-    BZ::Renderer::drawScene(scene);
+    BZ::Renderer::drawScene(scenes[activeScene]);
 }
 
 void Layer3D::onEvent(BZ::Event &event) {
@@ -165,9 +199,18 @@ void Layer3D::onEvent(BZ::Event &event) {
 void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 
-    BZ::Entity &entity = scene.getEntities()[0];
+    if (ImGui::Begin("Scene Picker")) {
+        const char * const items[] = { "Scene1", "Scene2", "Scene3" };
+        if (ImGui::ListBox("", &activeScene, items, sizeof(items)/sizeof(char*))) {
+        }
+    }
+    ImGui::End();
+
+    BZ::Scene &scene = scenes[activeScene];
 
     if (ImGui::Begin("Transform")) {
+        BZ::Entity &entity = scene.getEntities()[0];
+
         auto translation = entity.transform.getTranslation();
         auto rot = entity.transform.getRotationEuler();
         auto scale = entity.transform.getScale();
@@ -211,7 +254,7 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
             BZ::Material &mat = scene.getEntities()[i].mesh.getMaterial();
             float scale = mat.getParallaxOcclusionScale();
             ImGui::PushID(i);
-            if (ImGui::DragFloat("Scale", &scale, 0.05f, 0.0f, 3.0f)) {
+            if (ImGui::DragFloat("Scale", &scale, 0.001f, 0.0f, 2.0f)) {
                 mat.setParallaxOcclusionScale(scale);
             }
             ImGui::PopID();

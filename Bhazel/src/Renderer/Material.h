@@ -41,7 +41,7 @@ namespace BZ {
 
         Ref<DescriptorSet> descriptorSet;
 
-        float parallaxOcclusionScale = 0.05f;
+        float parallaxOcclusionScale = 0.0f;
 
         void init();
     };

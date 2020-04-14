@@ -37,7 +37,8 @@ public:
     void onImGuiRender(const BZ::FrameStats &frameStats) override;
 
 private:
-    BZ::Scene scene;
+    BZ::Scene scenes[3];
+    int activeScene = 0;
 
     BZ::PerspectiveCamera camera;
     BZ::RotateCameraController rotateCameraController;
