@@ -235,7 +235,7 @@ namespace BZ {
             std::vector<FileData> fileDatas(mipLevels);
             uint32 totalSize = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
-                std::string mipName = "_mip" + std::to_string(mipIdx);
+                std::string mipName = "_" + std::to_string(mipIdx);
                 std::string fullPath = Utils::appendToFileName(path, mipName);
                 
                 const FileData fileData = loadFile(fullPath.c_str(), desiredChannels, true);
@@ -452,7 +452,7 @@ namespace BZ {
             std::vector<FileData> fileDatas(mipLevels * 6);
             uint32 totalSize = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
-                std::string mipName = "_mip" + std::to_string(mipIdx);
+                std::string mipName = "_" + std::to_string(mipIdx);
                 
                 for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
                     std::string fullPath = basePath + Utils::appendToFileName(fileNames[faceIdx], mipName);

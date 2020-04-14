@@ -91,7 +91,7 @@ namespace BZ {
     class RotateCameraController : public CameraController<PerspectiveCamera> {
     public:
         RotateCameraController() = default;
-        RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed = 10.0f);
+        RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed = 1.0f);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -100,6 +100,8 @@ namespace BZ {
         bool onWindowResized(const WindowResizedEvent &e) override;
 
         PerspectiveCamera::Parameters originalParameters;
+
+        void recompute();
 
         /*
         * (r, theta, z)
@@ -111,6 +113,9 @@ namespace BZ {
 
         float thetaAccel = 0.0f;
         float thetaVelocity = 0.0f;
+
+        float zAccel = 0.0f;
+        float zVelocity = 0.0f;
 
         float cameraMoveSpeed;
 

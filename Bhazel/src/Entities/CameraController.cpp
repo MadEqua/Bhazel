@@ -188,14 +188,20 @@ namespace BZ {
         const auto windowSize = Application::getInstance().getWindow().getDimensions();
 
         thetaAccel = 0.0f;
+        zAccel = 0.0f;
 
         if (mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if (lastMousePosition.x != -1 && lastMousePosition.y != -1) {
 
                 auto dif = mousePosition - lastMousePosition;
 
-                if (input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
-                    thetaAccel = dif.x * 0.1f;
+                if (input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT)) {
+                    if (dif.x != 0.0f) {
+                        thetaAccel = dif.x * 0.1f;
+                    }
+                    if (dif.y != 0.0f) {
+                        zAccel = dif.y * cameraMoveSpeed;
+                    }
                 }
             }
             lastMousePosition = mousePosition;
@@ -205,50 +211,47 @@ namespace BZ {
 
 
         bool changes = false;
+
+        //Acceleration
         thetaVelocity += thetaAccel;
         thetaVelocity = glm::clamp(thetaVelocity, -8.0f, 8.0f);
 
+        zVelocity += zAccel;
+        zVelocity = glm::clamp(zVelocity, -100.0f, 100.0f);
+
+        //Velocity
         if (glm::abs(thetaVelocity) > 0.0f) {
             camPosCilindrical[1] += thetaVelocity * frameStats.lastFrameTime.asSeconds();
             changes = true;
         }
 
+        if (glm::abs(zVelocity) > 0.0f) {
+            camPosCilindrical[2] += zVelocity * frameStats.lastFrameTime.asSeconds();
+            changes = true;
+        }
+
+        //Drag
         thetaVelocity *= glm::pow(0.001f, frameStats.lastFrameTime.asSeconds());
         if (glm::abs(thetaVelocity) < 0.01f) {
             thetaVelocity = 0.0f;
         }
 
-        float zMovement = 0.0f;
-        if (input.isKeyPressed(BZ_KEY_W)) {
-            zMovement += 1.0f;
-            changes = true;
-        }
-        if (input.isKeyPressed(BZ_KEY_S)) {
-            zMovement -= 1.0f;
-            changes = true;
+        zVelocity *= glm::pow(0.001f, frameStats.lastFrameTime.asSeconds());
+        if (glm::abs(zVelocity) < 0.01f) {
+            zVelocity = 0.0f;
         }
 
         if (changes) {
-            camPosCilindrical[2] += zMovement * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
-
-            glm::vec3 cameraPosition = { camPosCilindrical[0] * glm::sin(camPosCilindrical[1]),
-                camPosCilindrical[2],
-                camPosCilindrical[0] * glm::cos(camPosCilindrical[1]) };
-
-            camera->getTransform().setTranslation(cameraPosition);
-            camera->getTransform().lookAt(glm::vec3(0.0f));
+            recompute();
         }
     }
 
     bool RotateCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
-        zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
-
-        PerspectiveCamera::Parameters params;
-        params.fovy = originalParameters.fovy * zoom;
-        params.aspectRatio = originalParameters.aspectRatio;
-        params.near = originalParameters.near;
-        params.far = originalParameters.far;
-        camera->setParameters(params);
+        camPosCilindrical[0] -= e.getYOffset() * cameraMoveSpeed;
+        if (camPosCilindrical[0] < 0.05f) {
+            camPosCilindrical[0] = 0.05f;
+        }
+        recompute();
         return false;
     }
 
@@ -260,5 +263,14 @@ namespace BZ {
         params.far = originalParameters.far;
         camera->setParameters(params);
         return false;
+    }
+
+    void RotateCameraController::recompute() {
+        glm::vec3 cameraPosition = { camPosCilindrical[0] * glm::sin(camPosCilindrical[1]),
+            camPosCilindrical[2],
+            camPosCilindrical[0] * glm::cos(camPosCilindrical[1]) };
+
+        camera->getTransform().setTranslation(cameraPosition);
+        camera->getTransform().lookAt(glm::vec3(0.0f));
     }
 }

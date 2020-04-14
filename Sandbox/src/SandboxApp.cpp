@@ -89,25 +89,32 @@ void Layer3D::onGraphicsContextCreated() {
     camera.getTransform().setTranslation({ 0.0f, 50.0f, 50.0f });
     scene.setCamera(camera);
     
-    rotateCameraController = BZ::RotateCameraController(camera, 70.0f);
+    rotateCameraController = BZ::RotateCameraController(camera, 2.0f);
     freeCameraController = BZ::FreeCameraController(camera);
 
-    BZ::Material material("Sandbox/meshes/fireHydrant/BaseColor.png", 
-                          "Sandbox/meshes/fireHydrant/Normal.png",
-                          "Sandbox/meshes/fireHydrant/Metallic.png",
-                          "Sandbox/meshes/fireHydrant/Roughness.png",
-                          "Sandbox/meshes/fireHydrant/Height.png");
-    material.setParallaxOcclusionScale(0.01);
-    BZ::Mesh mesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", material);
-    BZ::Transform transform;
-    transform.setScale(0.5f, 0.5f, 0.5f);
-    transform.setTranslation(0.0f, -25.0f, 0.0f);
-    scene.addEntity(mesh, transform);
-    
-    BZ::Transform transform2;
-    transform2.setScale(0.5f, 0.5f, 0.5f);
-    transform2.setTranslation(30.0f, -25.0f, 0.0f);
-    scene.addEntity(mesh, transform2);
+    //BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
+    //                             "Sandbox/meshes/fireHydrant/Normal.png",
+    //                             "Sandbox/meshes/fireHydrant/Metallic.png",
+    //                             "Sandbox/meshes/fireHydrant/Roughness.png",
+    //                             "Sandbox/meshes/fireHydrant/Height.png");
+    //hydrantMaterial.setParallaxOcclusionScale(0.01);
+    //BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
+    //BZ::Transform hydrantTransform;
+    //hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
+    //hydrantTransform.setTranslation(0.0f, -25.0f, 0.0f);
+    //scene.addEntity(hydrantMesh, hydrantTransform);
+
+    BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
+                                "Sandbox/meshes/wrench/normal.png",
+                                "Sandbox/meshes/wrench/metallic.jpg",
+                                "Sandbox/meshes/wrench/roughness.jpg",
+                                "Sandbox/meshes/wrench/height.png");
+    wrenchMaterial.setParallaxOcclusionScale(0.01);
+    BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
+    BZ::Transform wrenchTransform;
+    wrenchTransform.setTranslation(30.0f, 0.0f, 0.0f);
+    wrenchTransform.setRotationEuler(0.0f, 90.0f, 0.0f);
+    scene.addEntity(wrenchMesh, wrenchTransform);
     
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
                                 "Sandbox/textures/steppingstones/steppingstones1_normal.png",
@@ -129,11 +136,12 @@ void Layer3D::onGraphicsContextCreated() {
     dirLight.intensity = 5.0f;
     scene.addDirectionalLight(dirLight);
 
-    const char* cubeFileNames[6] = { "px.tga", "nx.tga", "py.tga", "ny.tga", "pz.tga", "nz.tga" };
-    //const char* cubeFileNames2[6] = { "px_mip0.tga", "nx_mip0.tga", "py_mip0.tga", "ny_mip0.tga", "pz_mip0.tga", "nz_mip0.tga" };
+    const char* cubeFileNames[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga", 
+                                     "output_skybox_posy.tga", "output_skybox_negy.tga",
+                                     "output_skybox_posz.tga", "output_skybox_negz.tga" };
     scene.enableSkyBox("Sandbox/textures/lobby/", cubeFileNames,
                        "Sandbox/textures/lobbyIrradiance/", cubeFileNames,
-                       "Sandbox/textures/lobbyRadiance/", cubeFileNames, 7);
+                       "Sandbox/textures/lobbyRadiance/", cubeFileNames, 5);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {

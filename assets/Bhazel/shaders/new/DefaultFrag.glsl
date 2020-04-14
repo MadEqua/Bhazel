@@ -105,7 +105,7 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness) {
     vec3 worldR = normalize(inData.TBN * R);
     worldR.x = -worldR.x;
 
-    vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * uSceneConstants.radianceMapMips.y).rgb;
+    vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * uSceneConstants.radianceMapMips).rgb;
     vec2 envBRDF = texture(uBrdfLookupTexture, vec2(NdotV, roughness)).rg;
     vec3 specular = radiance * (F * envBRDF.x + envBRDF.y);
 
