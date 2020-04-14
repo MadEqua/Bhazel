@@ -24,10 +24,10 @@ namespace BZ {
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
         glm::mat4 viewProjectionMatrix;
-        glm::vec4 cameraPosition; //vec4 to simplify alignments
+        glm::vec4 cameraPositionAndDirLightCount;
         glm::vec4 dirLightsDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
         glm::vec4 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
-        uint32 dirLightsCount;
+        float radianceMapMips;
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) EntityConstantBufferData {
@@ -69,10 +69,12 @@ namespace BZ {
         BufferPtr entityConstantBufferPtr;
         BufferPtr materialConstantBufferPtr;
 
+        Ref<DescriptorSetLayout> globalDescriptorSetLayout;
         Ref<DescriptorSetLayout> sceneDescriptorSetLayout;
         Ref<DescriptorSetLayout> entityDescriptorSetLayout;
         Ref<DescriptorSetLayout> materialDescriptorSetLayout;
 
+        Ref<DescriptorSet> globalDescriptorSet;
         Ref<DescriptorSet> entityDescriptorSet;
 
         Ref<Sampler> defaultSampler;
@@ -97,30 +99,33 @@ namespace BZ {
         rendererData.materialConstantBufferPtr = rendererData.sceneConstantBufferPtr + MATERIAL_CONSTANT_BUFFER_OFFSET;
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.globalDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder2;
-        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
-        rendererData.entityDescriptorSetLayout = descriptorSetLayoutBuilder2.build();
+        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
+        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder2.build();
+
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder3;
+        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
+        rendererData.entityDescriptorSetLayout = descriptorSetLayoutBuilder3.build();
         rendererData.entityDescriptorSet = DescriptorSet::create(rendererData.entityDescriptorSetLayout);
         rendererData.entityDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, ENTITY_CONSTANT_BUFFER_OFFSET, sizeof(EntityConstantBufferData));
 
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder3;
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Fragment), 1);
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder4;
+        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Fragment), 1);
 
         //Albedo, Normal, Metallic, Roughness and Height textures
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder3.build();
+        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder4.build();
 
-        //DefaultPipelineState   
+        //DefaultPipelineState
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("DefaultRenderer");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/DefaultVert.spv");
@@ -129,7 +134,8 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();
 
-        pipelineStateData.descriptorSetLayouts = { rendererData.sceneDescriptorSetLayout, rendererData.entityDescriptorSetLayout, rendererData.materialDescriptorSetLayout };
+        pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout, 
+                                                   rendererData.entityDescriptorSetLayout, rendererData.materialDescriptorSetLayout };
 
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
@@ -167,8 +173,12 @@ namespace BZ {
         Sampler::Builder builder;
         rendererData.defaultSampler = builder.build();
 
+        //The ideal 2 Channels (RG) are not supported by stbi. 3 channels is badly supported by Vulkan implementations. So 4 channels...
         auto brdfTex = Texture2D::create("Bhazel/textures/ibl_brdf_lut.png", TextureFormat::R8G8B8A8, MipmapData::Options::DoNothing);
         rendererData.brdfLookupTexture = TextureView::create(brdfTex);
+
+        rendererData.globalDescriptorSet = DescriptorSet::create(rendererData.globalDescriptorSetLayout);
+        rendererData.globalDescriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.defaultSampler, 0);
     }
 
     void Renderer::destroy() {
@@ -176,10 +186,12 @@ namespace BZ {
 
         rendererData.constantBuffer.reset();
 
+        rendererData.globalDescriptorSetLayout.reset();
         rendererData.sceneDescriptorSetLayout.reset();
         rendererData.entityDescriptorSetLayout.reset();
         rendererData.materialDescriptorSetLayout.reset();
 
+        rendererData.globalDescriptorSet.reset();
         rendererData.entityDescriptorSet.reset();
 
         rendererData.defaultPipelineState.reset();
@@ -205,9 +217,9 @@ namespace BZ {
         sceneConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
         sceneConstantBufferData.viewProjectionMatrix = sceneConstantBufferData.projectionMatrix * sceneConstantBufferData.viewMatrix;
         const glm::vec3 &cameraPosition = camera.getTransform().getTranslation();
-        sceneConstantBufferData.cameraPosition.x = cameraPosition.x;
-        sceneConstantBufferData.cameraPosition.y = cameraPosition.y;
-        sceneConstantBufferData.cameraPosition.z = cameraPosition.z;
+        sceneConstantBufferData.cameraPositionAndDirLightCount.x = cameraPosition.x;
+        sceneConstantBufferData.cameraPositionAndDirLightCount.y = cameraPosition.y;
+        sceneConstantBufferData.cameraPositionAndDirLightCount.z = cameraPosition.z;
 
         int i = 0;
         for (const auto &dirLight : scene.getDirectionalLights()) {
@@ -220,9 +232,12 @@ namespace BZ {
             sceneConstantBufferData.dirLightsColors[i].b = dirLight.color.b;
             i++;
         }
-        sceneConstantBufferData.dirLightsCount = i;
-
+        sceneConstantBufferData.cameraPositionAndDirLightCount.w = static_cast<float>(i);
+        sceneConstantBufferData.radianceMapMips = scene.hasSkyBox() ? scene.getSkyBox().radianceMapView->getTexture()->getMipLevels() : 0.0f;
         memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
+
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.globalDescriptorSet,
+            rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
 
         Graphics::bindDescriptorSet(rendererData.commandBufferId, scene.getDescriptorSet(), 
             rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
@@ -345,7 +360,6 @@ namespace BZ {
     Ref<DescriptorSet> Renderer::createMaterialDescriptorSet() {
         auto descriptorSet = DescriptorSet::create(rendererData.materialDescriptorSetLayout);
         descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, MATERIAL_CONSTANT_BUFFER_OFFSET, sizeof(MaterialConstantBufferData));
-        descriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.defaultSampler, 6);
         return descriptorSet;
     }
 

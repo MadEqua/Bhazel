@@ -9,6 +9,7 @@
 //#include "Platform/OpenGL/OpenGLTexture.h"
 #include "Platform/Vulkan/VulkanTexture.h"
 
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 
@@ -200,7 +201,7 @@ namespace BZ {
         stbi_set_flip_vertically_on_load(flip);
         int channelsInFile, width, height;
         stbi_uc* data = stbi_load(path, &width, &height, &channelsInFile, desiredChannels);
-        BZ_CRITICAL_ERROR_CORE(data, "Failed to load image '{}'.", path);
+        BZ_CRITICAL_ERROR_CORE(data, "Failed to load image '{}'. Reason: {}.", path, stbi_failure_reason());
 
         FileData ret;
         ret.data = static_cast<byte*>(data);

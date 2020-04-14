@@ -3,14 +3,14 @@
 
 layout(location = 0) in vec3 attrPosition;
 
-layout (set = 0, binding = 0, std140) uniform SceneConstants {
+layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
-    vec4 cameraPosition;
+    vec4 cameraPositionAndDirLightCount;
     vec4 dirLightsDirectionsAndIntensities[2];
     vec4 dirLightColors[2];
-    int dirLightsCount;
+    float radianceMapMips;
 } uSceneConstants;
 
 layout(location = 0) out vec3 outCubeMapDirection;

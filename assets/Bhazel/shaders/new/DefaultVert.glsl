@@ -7,17 +7,17 @@ layout(location = 2) in vec3 attrTangent;
 layout(location = 3) in vec3 attrBitangent;
 layout(location = 4) in vec2 attrTexCoord;
 
-layout (set = 0, binding = 0, std140) uniform SceneConstants {
+layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
-    vec4 cameraPosition;
+    vec4 cameraPositionAndDirLightCount;
     vec4 dirLightsDirectionsAndIntensities[2];
     vec4 dirLightColors[2];
-    int dirLightsCount;
+    float radianceMapMips;
 } uSceneConstants;
 
-layout (set = 1, binding = 0, std140) uniform EntityConstants {
+layout (set = 2, binding = 0, std140) uniform EntityConstants {
     mat4 modelMatrix;
     mat4 normalMatrix;
 } uEntityConstants;
@@ -42,9 +42,9 @@ void main() {
     //Multiply on the left is equal to multiply with the transpose (= inverse in this case). So transforming from world to tangent space.
     outData.position = positionWorld.xyz * outData.TBN;
 
-    for(int i = 0; i < uSceneConstants.dirLightsCount; ++i) {
+    for(int i = 0; i < uSceneConstants.cameraPositionAndDirLightCount.w; ++i) {
         outData.L[i] = -normalize(uSceneConstants.dirLightsDirectionsAndIntensities[i].xyz * outData.TBN);
     }
 
-    outData.V = normalize((uSceneConstants.cameraPosition.xyz - positionWorld.xyz) * outData.TBN);
+    outData.V = normalize((uSceneConstants.cameraPositionAndDirLightCount.xyz - positionWorld.xyz) * outData.TBN);
 }

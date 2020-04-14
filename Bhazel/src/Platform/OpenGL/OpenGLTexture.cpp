@@ -2,7 +2,6 @@
 
 #include "OpenGLTexture.h"
 #include "OpenGLIncludes.h"
-#include <stb_image.h>
 
 
 namespace BZ {

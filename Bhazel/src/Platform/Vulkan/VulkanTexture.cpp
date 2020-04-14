@@ -8,8 +8,6 @@
 #include "Platform/Vulkan/VulkanContext.h"
 #include "Platform/Vulkan/Internal/VulkanConversions.h"
 
-#include <stb_image.h>
-
 
 namespace BZ {
 
