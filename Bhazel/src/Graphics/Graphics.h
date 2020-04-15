@@ -16,7 +16,6 @@ namespace BZ {
 
     /*
     * Low level Graphics API.
-    * Also manages data related to engine ConstantBuffers.
     */
     class Graphics {
     public:
@@ -30,6 +29,10 @@ namespace BZ {
         //Start recording getting a CommandBuffer from the CommandPool reserved to the current frame.
         static uint32 beginCommandBuffer();
         static void endCommandBuffer(uint32 commandBufferId);
+
+        static void beginRenderPass(uint32 commandBufferId);
+        static void beginRenderPass(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer);
+        static void endRenderPass(uint32 commandBufferId);
 
         static void clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor);
         static void clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor);

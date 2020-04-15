@@ -21,6 +21,8 @@ namespace BZ {
         uint32 nextCommandBufferIndex;
 
         GraphicsContext* graphicsContext;
+
+        std::set<Ref<Framebuffer>> clearedFramebuffers;
     } data;
 
     Graphics::API Graphics::api = API::Unknown;
@@ -34,6 +36,8 @@ namespace BZ {
 
     void Graphics::destroy() {
         BZ_PROFILE_FUNCTION();
+
+        data.clearedFramebuffers.clear();
     }
 
     uint32 Graphics::beginCommandBuffer() {
@@ -42,12 +46,6 @@ namespace BZ {
         auto &commandBuffer = data.graphicsContext->getCurrentFrameCommandBuffer();
         commandBuffer->resetIndex();
         data.commandBuffers[data.nextCommandBufferIndex] = commandBuffer;
-
-        //Auto add a BeginRenderPass Command with a force clear RenderPass on the first Command of the frame.
-        auto &command = commandBuffer->addCommand(CommandType::BeginRenderPass);
-        command.beginRenderPassData.framebuffer = data.graphicsContext->getCurrentFrameFramebuffer().get();
-        command.beginRenderPassData.forceClearAttachments = data.nextCommandBufferIndex == 0;
-
         return data.nextCommandBufferIndex++;
     }
 
@@ -55,11 +53,31 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+        data.commandBuffers[commandBufferId]->optimizeAndGenerate();
+    }
 
-        //Auto add an EndRenderPass Command.
+    void Graphics::beginRenderPass(uint32 commandBufferId) {
+        BZ_PROFILE_FUNCTION();
+
+        beginRenderPass(commandBufferId, data.graphicsContext->getCurrentFrameFramebuffer());
+    }
+
+    void Graphics::beginRenderPass(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer) {
+        BZ_PROFILE_FUNCTION();
+
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::EndRenderPass);
-        commandBuffer->optimizeAndGenerate();
+        auto &command = commandBuffer->addCommand(CommandType::BeginRenderPass);
+        command.beginRenderPassData.framebuffer = framebuffer.get();
+        command.beginRenderPassData.forceClearAttachments = data.clearedFramebuffers.find(framebuffer) == data.clearedFramebuffers.end();
+
+        data.clearedFramebuffers.emplace(framebuffer);
+    }
+
+    void Graphics::endRenderPass(uint32 commandBufferId) {
+        auto &commandBuffer = data.commandBuffers[commandBufferId];
+        commandBuffer->addCommand(CommandType::EndRenderPass);
     }
 
     void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {
@@ -154,8 +172,8 @@ namespace BZ {
                 if(userIndex < dynamicBufferCount) {
                     finalDynamicBufferOffsets[index] += dynamicBufferOffsets[userIndex++];
                 }
-                else {
-
+                else if(dynamicBufferCount > 0) {
+                    BZ_LOG_CORE_WARN("Graphics::bindDescriptorSet(): there are more dynamic buffers on the DescriptorSet than the number of offsets sent to the bind function. Might be an error.");
                 }
                 index++;
             }
@@ -251,6 +269,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         data.nextCommandBufferIndex = 0;
+        data.clearedFramebuffers.clear();
     }
 
     void Graphics::endFrame() {

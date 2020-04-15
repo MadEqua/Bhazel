@@ -3,8 +3,9 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Transform.h"
+
 #include "Graphics/DescriptorSet.h"
-#include "Graphics/Texture.h"
+#include "Graphics/Framebuffer.h"
 
 
 namespace BZ {
@@ -47,6 +48,8 @@ namespace BZ {
         std::vector<DirectionalLight>& getDirectionalLights() { return lights; }
         const std::vector<DirectionalLight>& getDirectionalLights() const { return lights; }
 
+        const std::vector< Ref<Framebuffer>>& getShadowMapFramebuffers() const { return shadowMapFramebuffers; }
+
         bool hasSkyBox() const { return skyBox.mesh.isValid(); }
         const SkyBox& getSkyBox() const { return skyBox; }
 
@@ -57,7 +60,10 @@ namespace BZ {
 
     private:
         std::vector<Entity> entities;
+
         std::vector<DirectionalLight> lights;
+        std::vector<Ref<Framebuffer>> shadowMapFramebuffers;
+
         Camera *camera = nullptr;
         SkyBox skyBox;
 

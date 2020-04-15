@@ -43,13 +43,14 @@ namespace BZ {
         static void init();
         static void destroy();
 
+        static void shadowPass(const Scene &scene);
+        static void colorPass(const Scene &scene);
+
         static void drawEntity(const Entity &entity, uint32 index);
+        static void drawMesh(const Mesh &mesh, const Transform &transform);
 
-        static void drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform);
-        //static void drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform, const Material &fallbackMaterial);
-
-        //static void drawSkyBox(const SkyBox &skyBox);
-
+        static void handleEntities(const Scene &scene);
+        static void handleMaterials(const Scene &scene);
         static void handleMaterial(const Material &material);
 
         static RendererStats stats;

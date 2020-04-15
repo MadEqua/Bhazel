@@ -177,6 +177,7 @@ namespace BZ {
         }
 
         auto commandBufferId = Graphics::beginCommandBuffer();
+        Graphics::beginRenderPass(commandBufferId);
 
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
@@ -212,6 +213,8 @@ namespace BZ {
             }
             vertexOffset += cmdList->VtxBuffer.Size;
         }
+
+        Graphics::endRenderPass(commandBufferId);
         Graphics::endCommandBuffer(commandBufferId);
     }
 

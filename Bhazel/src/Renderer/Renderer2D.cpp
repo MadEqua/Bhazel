@@ -216,6 +216,7 @@ namespace BZ {
         memset(&stats, 0, sizeof(stats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
+        Graphics::beginRenderPass(rendererData.commandBufferId);
 
         glm::mat4 viewProjMatrix = camera.getProjectionMatrix() * camera.getViewMatrix();
         memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0], sizeof(glm::mat4));
@@ -310,6 +311,7 @@ namespace BZ {
             }
         }
 
+        Graphics::endRenderPass(rendererData.commandBufferId);
         Graphics::endCommandBuffer(rendererData.commandBufferId);
         rendererData.commandBufferId = -1;
     }

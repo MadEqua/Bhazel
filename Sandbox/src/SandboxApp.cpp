@@ -94,19 +94,19 @@ void Layer3D::onGraphicsContextCreated() {
     rotateCameraController = BZ::RotateCameraController(camera, 1.0f);
     freeCameraController = BZ::FreeCameraController(camera);
 
-    BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
-                                 "Sandbox/meshes/fireHydrant/Normal.png",
-                                 "Sandbox/meshes/fireHydrant/Metallic.png",
-                                 "Sandbox/meshes/fireHydrant/Roughness.png",
-                                 "Sandbox/meshes/fireHydrant/Height.png");
-    hydrantMaterial.setParallaxOcclusionScale(0.001f);
-    BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
-    BZ::Transform hydrantTransform;
-    hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
-    hydrantTransform.setTranslation(0.0f, -25.0f, 0.0f);
-    scenes[0].addEntity(hydrantMesh, hydrantTransform);
-    scenes[1].addEntity(hydrantMesh, hydrantTransform);
-    scenes[2].addEntity(hydrantMesh, hydrantTransform);
+    //BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
+    //                             "Sandbox/meshes/fireHydrant/Normal.png",
+    //                             "Sandbox/meshes/fireHydrant/Metallic.png",
+    //                             "Sandbox/meshes/fireHydrant/Roughness.png",
+    //                             "Sandbox/meshes/fireHydrant/Height.png");
+    //hydrantMaterial.setParallaxOcclusionScale(0.001f);
+    //BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
+    //BZ::Transform hydrantTransform;
+    //hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
+    //hydrantTransform.setTranslation(0.0f, -25.0f, 0.0f);
+    //scenes[0].addEntity(hydrantMesh, hydrantTransform);
+    //scenes[1].addEntity(hydrantMesh, hydrantTransform);
+    //scenes[2].addEntity(hydrantMesh, hydrantTransform);
 
     BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
                                 "Sandbox/meshes/wrench/normal.png",

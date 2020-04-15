@@ -3,28 +3,24 @@
 
 layout(set = 0, binding = 0) uniform sampler2D uBrdfLookupTexture;
 
-layout (set = 1, binding = 0, std140) uniform SceneConstants {
-    mat4 viewMatrix;
-    mat4 projectionMatrix;
-    mat4 viewProjectionMatrix;
-    vec4 cameraPositionAndDirLightCount;
-    vec4 dirLightsDirectionsAndIntensities[2];
+layout (set = 2, binding = 0, std140) uniform SceneConstants {
+    vec4 dirLightDirectionsAndIntensities[2];
     vec4 dirLightColors[2];
-    float radianceMapMips;
+    vec2 dirLightCountAndRadianceMapMips;
 } uSceneConstants;
 
-layout(set = 1, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
-layout(set = 1, binding = 2) uniform samplerCube uRadianceMapTexSampler;
+layout(set = 2, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
+layout(set = 2, binding = 2) uniform samplerCube uRadianceMapTexSampler;
 
-layout (set = 3, binding = 0, std140) uniform MaterialConstants {
+layout (set = 4, binding = 0, std140) uniform MaterialConstants {
      float parallaxOcclusionScale;
 } uMaterialConstants;
 
-layout(set = 3, binding = 1) uniform sampler2D uAlbedoTexSampler;
-layout(set = 3, binding = 2) uniform sampler2D uNormalTexSampler;
-layout(set = 3, binding = 3) uniform sampler2D uMetallicTexSampler;
-layout(set = 3, binding = 4) uniform sampler2D uRoughnessTexSampler;
-layout(set = 3, binding = 5) uniform sampler2D uHeightTexSampler;
+layout(set = 4, binding = 1) uniform sampler2D uAlbedoTexSampler;
+layout(set = 4, binding = 2) uniform sampler2D uNormalTexSampler;
+layout(set = 4, binding = 3) uniform sampler2D uMetallicTexSampler;
+layout(set = 4, binding = 4) uniform sampler2D uRoughnessTexSampler;
+layout(set = 4, binding = 5) uniform sampler2D uHeightTexSampler;
 
 layout(location = 0) in struct {
     mat3 TBN; //TBN matrix goes from tangent space to world space
@@ -105,7 +101,7 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness) {
     vec3 worldR = normalize(inData.TBN * R);
     worldR.x = -worldR.x;
 
-    vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * uSceneConstants.radianceMapMips).rgb;
+    vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * uSceneConstants.dirLightCountAndRadianceMapMips.y).rgb;
     vec2 envBRDF = texture(uBrdfLookupTexture, vec2(NdotV, roughness)).rg;
     vec3 specular = radiance * (F * envBRDF.x + envBRDF.y);
 
@@ -120,9 +116,9 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     vec3 F0 = mix(vec3(0.04), albedo, metallic); //Hardcoded reflectance for dielectrics
 
     vec3 col = indirectLight(N, V, F0, albedo, roughness);
-    for(int i = 0; i < int(uSceneConstants.cameraPositionAndDirLightCount.w); ++i) {
+    for(int i = 0; i < int(uSceneConstants.dirLightCountAndRadianceMapMips.x); ++i) {
         vec3 L = normalize(inData.L[i]);
-        col += directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightsDirectionsAndIntensities[i].w, texCoord);
+        col += directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightDirectionsAndIntensities[i].w, texCoord);
     }
     return col;
 }

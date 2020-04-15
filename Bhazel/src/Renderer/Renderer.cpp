@@ -20,14 +20,17 @@
 
 namespace BZ {
 
-    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) SceneConstantBufferData {
+    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) PassConstantBufferData {
         glm::mat4 viewMatrix;
         glm::mat4 projectionMatrix;
         glm::mat4 viewProjectionMatrix;
-        glm::vec4 cameraPositionAndDirLightCount;
-        glm::vec4 dirLightsDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
-        glm::vec4 dirLightsColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
-        float radianceMapMips;
+        glm::vec4 cameraPosition; //mat4 to simplify alignments
+    };
+
+    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) SceneConstantBufferData {
+        glm::vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
+        glm::vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
+        glm::vec2 dirLightCountAndRadianceMapMips;
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) EntityConstantBufferData {
@@ -39,13 +42,15 @@ namespace BZ {
         float parallaxOcclusionScale;
     };
 
+    constexpr uint32 PASS_CONSTANT_BUFFER_SIZE = sizeof(PassConstantBufferData) * MAX_PASSES_PER_FRAME;
     constexpr uint32 SCENE_CONSTANT_BUFFER_SIZE = sizeof(SceneConstantBufferData);
-    constexpr uint32 ENTITY_CONSTANT_BUFFER_SIZE = sizeof(EntityConstantBufferData) * MAX_ENTITIES_PER_FRAME;
-    constexpr uint32 MATERIAL_CONSTANT_BUFFER_SIZE = sizeof(MaterialConstantBufferData) * MAX_MATERIALS_PER_FRAME;
+    constexpr uint32 ENTITY_CONSTANT_BUFFER_SIZE = sizeof(EntityConstantBufferData) * MAX_ENTITIES_PER_SCENE;
+    constexpr uint32 MATERIAL_CONSTANT_BUFFER_SIZE = sizeof(MaterialConstantBufferData) * MAX_MATERIALS_PER_SCENE;
 
-    constexpr uint32 SCENE_CONSTANT_BUFFER_OFFSET = 0;
-    constexpr uint32 ENTITY_CONSTANT_BUFFER_OFFSET = SCENE_CONSTANT_BUFFER_SIZE;
-    constexpr uint32 MATERIAL_CONSTANT_BUFFER_OFFSET = SCENE_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE;
+    constexpr uint32 PASS_CONSTANT_BUFFER_OFFSET = 0;
+    constexpr uint32 SCENE_CONSTANT_BUFFER_OFFSET = PASS_CONSTANT_BUFFER_SIZE;
+    constexpr uint32 ENTITY_CONSTANT_BUFFER_OFFSET = SCENE_CONSTANT_BUFFER_OFFSET + SCENE_CONSTANT_BUFFER_SIZE;
+    constexpr uint32 MATERIAL_CONSTANT_BUFFER_OFFSET = ENTITY_CONSTANT_BUFFER_OFFSET + ENTITY_CONSTANT_BUFFER_SIZE;
 
     static DataLayout vertexDataLayout = {
         { DataType::Float32, DataElements::Vec3, "POSITION" },
@@ -65,22 +70,26 @@ namespace BZ {
         uint32 commandBufferId;
 
         Ref<Buffer> constantBuffer;
+        BufferPtr passConstantBufferPtr;
         BufferPtr sceneConstantBufferPtr;
         BufferPtr entityConstantBufferPtr;
         BufferPtr materialConstantBufferPtr;
 
         Ref<DescriptorSetLayout> globalDescriptorSetLayout;
+        Ref<DescriptorSetLayout> passDescriptorSetLayout;
         Ref<DescriptorSetLayout> sceneDescriptorSetLayout;
         Ref<DescriptorSetLayout> entityDescriptorSetLayout;
         Ref<DescriptorSetLayout> materialDescriptorSetLayout;
 
         Ref<DescriptorSet> globalDescriptorSet;
+        Ref<DescriptorSet> passDescriptorSet;
         Ref<DescriptorSet> entityDescriptorSet;
 
         Ref<Sampler> defaultSampler;
 
         Ref<PipelineState> defaultPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
+        Ref<PipelineState> shadowPassPipelineState;
 
         Ref<TextureView> brdfLookupTexture;
 
@@ -93,37 +102,43 @@ namespace BZ {
 
         rendererData.commandBufferId = -1;
 
-        rendererData.constantBuffer = Buffer::create(BufferType::Constant, SCENE_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE + MATERIAL_CONSTANT_BUFFER_SIZE, MemoryType::CpuToGpu);
-        rendererData.sceneConstantBufferPtr = rendererData.constantBuffer->map(0);
-        rendererData.entityConstantBufferPtr = rendererData.sceneConstantBufferPtr + ENTITY_CONSTANT_BUFFER_OFFSET;
-        rendererData.materialConstantBufferPtr = rendererData.sceneConstantBufferPtr + MATERIAL_CONSTANT_BUFFER_OFFSET;
+        rendererData.constantBuffer = Buffer::create(BufferType::Constant, 
+            PASS_CONSTANT_BUFFER_SIZE + SCENE_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE + MATERIAL_CONSTANT_BUFFER_SIZE,
+            MemoryType::CpuToGpu);
+
+        rendererData.passConstantBufferPtr = rendererData.constantBuffer->map(0);
+        rendererData.sceneConstantBufferPtr = rendererData.passConstantBufferPtr + SCENE_CONSTANT_BUFFER_OFFSET;
+        rendererData.entityConstantBufferPtr = rendererData.passConstantBufferPtr + ENTITY_CONSTANT_BUFFER_OFFSET;
+        rendererData.materialConstantBufferPtr = rendererData.passConstantBufferPtr + MATERIAL_CONSTANT_BUFFER_OFFSET;
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         rendererData.globalDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder2;
-        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
-        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder2.build();
+        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
+        rendererData.passDescriptorSetLayout = descriptorSetLayoutBuilder2.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder3;
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
-        rendererData.entityDescriptorSetLayout = descriptorSetLayoutBuilder3.build();
-        rendererData.entityDescriptorSet = DescriptorSet::create(rendererData.entityDescriptorSetLayout);
-        rendererData.entityDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, ENTITY_CONSTANT_BUFFER_OFFSET, sizeof(EntityConstantBufferData));
+        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
+        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder3.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder4;
-        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
+        rendererData.entityDescriptorSetLayout = descriptorSetLayoutBuilder4.build();
+
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder5;
+        descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Fragment), 1);
 
         //Albedo, Normal, Metallic, Roughness and Height textures
-        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder4.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder4.build();
+        descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder5.build();
 
         //DefaultPipelineState
         Shader::Builder shaderBuilder;
@@ -134,8 +149,9 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();
 
-        pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout, 
-                                                   rendererData.entityDescriptorSetLayout, rendererData.materialDescriptorSetLayout };
+        pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.passDescriptorSetLayout,
+                                                   rendererData.sceneDescriptorSetLayout, rendererData.entityDescriptorSetLayout,
+                                                   rendererData.materialDescriptorSetLayout };
 
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
@@ -166,9 +182,17 @@ namespace BZ {
         shaderBuilder.setName("SkyBox");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/SkyBoxVert.spv");
         shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/SkyBoxFrag.spv");
-
         pipelineStateData.shader = shaderBuilder.build();
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
+
+        //ShadowPassPipelineState
+        shaderBuilder.setName("ShadowPass");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ShadowPassVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/ShadowPassFrag.spv");
+        pipelineStateData.shader = shaderBuilder.build();
+
+        //pipelineStateData.framebuffer = ; TODO
+        rendererData.shadowPassPipelineState = PipelineState::create(pipelineStateData);
 
         Sampler::Builder builder;
         rendererData.defaultSampler = builder.build();
@@ -179,6 +203,12 @@ namespace BZ {
 
         rendererData.globalDescriptorSet = DescriptorSet::create(rendererData.globalDescriptorSetLayout);
         rendererData.globalDescriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.defaultSampler, 0);
+
+        rendererData.passDescriptorSet = DescriptorSet::create(rendererData.passDescriptorSetLayout);
+        rendererData.passDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, PASS_CONSTANT_BUFFER_OFFSET, sizeof(PassConstantBufferData));
+
+        rendererData.entityDescriptorSet = DescriptorSet::create(rendererData.entityDescriptorSetLayout);
+        rendererData.entityDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, ENTITY_CONSTANT_BUFFER_OFFSET, sizeof(EntityConstantBufferData));
     }
 
     void Renderer::destroy() {
@@ -187,15 +217,18 @@ namespace BZ {
         rendererData.constantBuffer.reset();
 
         rendererData.globalDescriptorSetLayout.reset();
+        rendererData.passDescriptorSetLayout.reset();
         rendererData.sceneDescriptorSetLayout.reset();
         rendererData.entityDescriptorSetLayout.reset();
         rendererData.materialDescriptorSetLayout.reset();
 
         rendererData.globalDescriptorSet.reset();
+        rendererData.passDescriptorSet.reset();
         rendererData.entityDescriptorSet.reset();
 
         rendererData.defaultPipelineState.reset();
         rendererData.skyBoxPipelineState.reset();
+        rendererData.shadowPassPipelineState.reset();
 
         rendererData.defaultSampler.reset();
         rendererData.materialOffsetMap.clear();
@@ -207,79 +240,119 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         memset(&stats, 0, sizeof(stats));
-        rendererData.materialOffsetMap.clear();
+ 
+        //Fill respective ConstantBuffer data.
+        handleMaterials(scene);
+        handleEntities(scene);
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
 
-        const Camera &camera = scene.getCamera();
-        SceneConstantBufferData sceneConstantBufferData;
-        sceneConstantBufferData.viewMatrix = camera.getViewMatrix();
-        sceneConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
-        sceneConstantBufferData.viewProjectionMatrix = sceneConstantBufferData.projectionMatrix * sceneConstantBufferData.viewMatrix;
-        const glm::vec3 &cameraPosition = camera.getTransform().getTranslation();
-        sceneConstantBufferData.cameraPositionAndDirLightCount.x = cameraPosition.x;
-        sceneConstantBufferData.cameraPositionAndDirLightCount.y = cameraPosition.y;
-        sceneConstantBufferData.cameraPositionAndDirLightCount.z = cameraPosition.z;
-
-        int i = 0;
-        for (const auto &dirLight : scene.getDirectionalLights()) {
-            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].x = dirLight.direction.x;
-            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].y = dirLight.direction.y;
-            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].z = dirLight.direction.z;
-            sceneConstantBufferData.dirLightsDirectionsAndIntensities[i].w = dirLight.intensity;
-            sceneConstantBufferData.dirLightsColors[i].r = dirLight.color.r;
-            sceneConstantBufferData.dirLightsColors[i].g = dirLight.color.g;
-            sceneConstantBufferData.dirLightsColors[i].b = dirLight.color.b;
-            i++;
-        }
-        sceneConstantBufferData.cameraPositionAndDirLightCount.w = static_cast<float>(i);
-        sceneConstantBufferData.radianceMapMips = scene.hasSkyBox() ? scene.getSkyBox().radianceMapView->getTexture()->getMipLevels() : 0.0f;
-        memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
-
+        //Bind stuff that will not change, no matter the PipelineState (All of them have the same layout so the bindings will not be lost with changes).
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.globalDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
 
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, scene.getDescriptorSet(), 
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, scene.getDescriptorSet(),
             rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
 
-        if (scene.hasSkyBox()) {
-            handleMaterial(scene.getSkyBox().mesh.getMaterial());
-            drawMesh(rendererData.skyBoxPipelineState, scene.getSkyBox().mesh, Transform());
-        }
-
-        uint32 entityIndex = 0;
-        for (const auto &entity : scene.getEntities()) {
-            handleMaterial(entity.mesh.getMaterial());
-            drawEntity(entity, entityIndex++);
-        }
-        stats.materialCount = static_cast<uint32>(rendererData.materialOffsetMap.size());
+        //shadowPass(scene);
+        colorPass(scene);
 
         Graphics::endCommandBuffer(rendererData.commandBufferId);
     }
 
-    void Renderer::drawEntity(const Entity &entity, uint32 index) {
-        EntityConstantBufferData entityConstantBufferData;
-        entityConstantBufferData.modelMatrix = entity.transform.getLocalToParentMatrix();
-        entityConstantBufferData.normalMatrix = entity.transform.getNormalMatrix();
+    void Renderer::shadowPass(const Scene &scene) {
+        const Camera &camera = scene.getCamera(); //TODO: get light camera
+        PassConstantBufferData passConstantBufferData;
+        passConstantBufferData.viewMatrix = camera.getViewMatrix();
+        passConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
+        passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
+        memcpy(rendererData.sceneConstantBufferPtr, &passConstantBufferData, sizeof(glm::mat4) * 3);
 
-        uint32 entityOffset = index * sizeof(EntityConstantBufferData);
-        memcpy(rendererData.entityConstantBufferPtr + entityOffset, &entityConstantBufferData, sizeof(EntityConstantBufferData));
+        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.shadowPassPipelineState);
 
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.entityDescriptorSet,
-            rendererData.defaultPipelineState, RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
+        //Depth pass is pass #0
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
+            rendererData.shadowPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, 0, 0);
 
-        drawMesh(rendererData.defaultPipelineState, entity.mesh, entity.transform);
+        for (auto &framebuffer : scene.getShadowMapFramebuffers()) {
+            Graphics::beginRenderPass(rendererData.commandBufferId, framebuffer);
+
+            uint32 entityIndex = 0;
+            for (const auto &entity : scene.getEntities()) {
+                drawEntity(entity, entityIndex++);
+            }
+
+            Graphics::endRenderPass(rendererData.commandBufferId);
+        }
     }
 
-    void Renderer::drawMesh(const Ref<PipelineState> &pipelineState, const Mesh &mesh, const Transform &transform) {
+    void Renderer::colorPass(const Scene &scene) {
+        const Camera &camera = scene.getCamera();
+        PassConstantBufferData passConstantBufferData;
+        passConstantBufferData.viewMatrix = camera.getViewMatrix();
+        passConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
+        passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
+        const glm::vec3 &cameraPosition = camera.getTransform().getTranslation();
+        passConstantBufferData.cameraPosition.x = cameraPosition.x;
+        passConstantBufferData.cameraPosition.y = cameraPosition.y;
+        passConstantBufferData.cameraPosition.z = cameraPosition.z;
+
+        uint32 passOffset = sizeof(PassConstantBufferData); //Color pass is pass #1
+        memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
+
+        SceneConstantBufferData sceneConstantBufferData;
+        int i = 0;
+        for (const auto &dirLight : scene.getDirectionalLights()) {
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].x = dirLight.direction.x;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].y = dirLight.direction.y;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].z = dirLight.direction.z;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].w = dirLight.intensity;
+            sceneConstantBufferData.dirLightColors[i].r = dirLight.color.r;
+            sceneConstantBufferData.dirLightColors[i].g = dirLight.color.g;
+            sceneConstantBufferData.dirLightColors[i].b = dirLight.color.b;
+            i++;
+        }
+        sceneConstantBufferData.dirLightCountAndRadianceMapMips.x = static_cast<float>(i);
+        sceneConstantBufferData.dirLightCountAndRadianceMapMips.y = scene.hasSkyBox() ? scene.getSkyBox().radianceMapView->getTexture()->getMipLevels() : 0.0f;
+        memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
+
+        Graphics::beginRenderPass(rendererData.commandBufferId);
+
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
+            rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &passOffset, 1);
+
+        if (scene.hasSkyBox()) {
+            Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.skyBoxPipelineState);
+            drawMesh(scene.getSkyBox().mesh, Transform());
+        }
+
+        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.defaultPipelineState);
+        uint32 entityIndex = 0;
+        for (const auto &entity : scene.getEntities()) {
+            drawEntity(entity, entityIndex++);
+        }
+
+        Graphics::endRenderPass(rendererData.commandBufferId);
+    }
+
+    void Renderer::drawEntity(const Entity &entity, uint32 index) {
+        uint32 entityOffset = index * sizeof(EntityConstantBufferData);
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.entityDescriptorSet,
+            rendererData.defaultPipelineState, RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
+        drawMesh(entity.mesh, entity.transform);
+    }
+
+    void Renderer::drawMesh(const Mesh &mesh, const Transform &transform) {
         BZ_PROFILE_FUNCTION();
+
+        uint32 materialOffset = rendererData.materialOffsetMap[mesh.getMaterial()];
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, mesh.getMaterial().getDescriptorSet(),
+            rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
 
         Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer(), 0);
 
         if (mesh.hasIndices())
             Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer(), 0);
-
-        Graphics::bindPipelineState(rendererData.commandBufferId, pipelineState);
 
         if (mesh.hasIndices())
             Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
@@ -291,7 +364,37 @@ namespace BZ {
         stats.triangleCount += (mesh.hasIndices() ? mesh.getIndexCount() : mesh.getVertexCount()) / 3;
     }
 
+    void Renderer::handleEntities(const Scene &scene) {
+        uint32 entityIndex = 0;
+        for (const auto &entity : scene.getEntities()) {
+            EntityConstantBufferData entityConstantBufferData;
+            entityConstantBufferData.modelMatrix = entity.transform.getLocalToParentMatrix();
+            entityConstantBufferData.normalMatrix = entity.transform.getNormalMatrix();
+
+            uint32 entityOffset = entityIndex * sizeof(EntityConstantBufferData);
+            memcpy(rendererData.entityConstantBufferPtr + entityOffset, &entityConstantBufferData, sizeof(EntityConstantBufferData));
+            entityIndex++;
+        }
+        BZ_ASSERT_CORE(entityIndex <= MAX_ENTITIES_PER_SCENE, "Reached the max number of Entities!");
+    }
+
     //TODO: There's no need to call this every frame, like it's being done now.
+    void Renderer::handleMaterials(const Scene &scene) {
+        rendererData.materialOffsetMap.clear();
+
+        if (scene.hasSkyBox()) {
+            handleMaterial(scene.getSkyBox().mesh.getMaterial());
+        }
+
+        for (const auto &entity : scene.getEntities()) {
+            handleMaterial(entity.mesh.getMaterial());
+        }
+
+        uint32 materialCount = static_cast<uint32>(rendererData.materialOffsetMap.size());
+        stats.materialCount = materialCount;
+        BZ_ASSERT_CORE(materialCount <= MAX_MATERIALS_PER_SCENE, "Reached the max number of Materials!");
+    }
+
     void Renderer::handleMaterial(const Material &material) {
         BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/initialized Material!");
 
@@ -311,37 +414,7 @@ namespace BZ {
         else {
             materialOffset = storedMaterialIt->second;
         }
-
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, material.getDescriptorSet(),
-            rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
     }
-
-    /*void Renderer::drawSkyBox(const SkyBox &skyBox) {
-        BZ_PROFILE_FUNCTION();
-
-        BZ_ASSERT_CORE(skyBox.mesh.isValid(), "Trying to draw a invalid/uninitialized SkyBox Mesh!");
-
-        Graphics::beginEntity(rendererData.commandBufferId, rendererData.defaultPipelineState, glm::mat4(1.0f), glm::mat3(1.0f)));
-
-        Graphics::bindBuffer(rendererData.commandBufferId, skyBox.mesh.getVertexBuffer(), 0);
-
-        if (skyBox.mesh.hasIndices())
-            Graphics::bindBuffer(rendererData.commandBufferId, skyBox.mesh.getIndexBuffer(), 0);
-
-        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.skyBoxPipelineState);
-
-        const Material &materialToUse = mesh.getMaterial().isValid()?mesh.getMaterial():fallbackMaterial;
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, materialToUse.getDescriptorSet(), rendererData.defaultPipelineState, APP_FIRST_DESCRIPTOR_SET_IDX, nullptr, 0);
-
-        if (mesh.hasIndices())
-            Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
-        else
-            Graphics::draw(rendererData.commandBufferId, mesh.getVertexCount(), 1, 0, 0);
-
-        stats.drawCallCount++;
-        stats.vertexCount += mesh.getVertexCount();
-        stats.triangleCount += (mesh.hasIndices()?mesh.getIndexCount():mesh.getVertexCount()) / 3;
-    }*/
 
     const DataLayout& Renderer::getVertexDataLayout() {
         return vertexDataLayout;
