@@ -8,7 +8,7 @@
 
 namespace BZ {
 
-    VulkanFramebuffer::VulkanFramebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, glm::ivec3 &dimensions) :
+    VulkanFramebuffer::VulkanFramebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions) :
         Framebuffer(renderPass, textureViews, dimensions) {
 
         std::vector<VkImageView> vkImageViews(textureViews.size());

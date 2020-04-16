@@ -15,7 +15,7 @@ namespace BZ {
             if (att.format.isColor()) {
                 colorAttachmentDescs.push_back(att);
             }
-            else if (att.format.isDepthStencil()) {
+            else if (att.format.isDepth()) {
                 BZ_ASSERT_CORE(!depthStencilAttachmentDesc, "Adding more than one DepthStencilAttachment!");
                 depthStencilAttachmentDesc.emplace(att);
             }

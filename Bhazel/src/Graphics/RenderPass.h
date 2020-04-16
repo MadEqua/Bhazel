@@ -34,7 +34,7 @@ namespace BZ {
     };
 
     struct AttachmentDescription {
-        TextureFormatWrapper format = TextureFormat::R8G8B8;
+        TextureFormatWrapper format = TextureFormat::B8G8R8A8;
         uint32 samples = 1;
         LoadOperation loadOperatorColorAndDepth = LoadOperation::DontCare;
         StoreOperation storeOperatorColorAndDepth = StoreOperation::Store;
@@ -63,6 +63,8 @@ namespace BZ {
 
     protected:
         std::vector<AttachmentDescription> colorAttachmentDescs;
+
+        //Can be Depth only or DepthStencil
         std::optional<AttachmentDescription> depthStencilAttachmentDesc;
     };
 

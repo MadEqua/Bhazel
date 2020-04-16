@@ -10,7 +10,7 @@
 
 namespace BZ {
 
-    Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, glm::ivec3 &dimensions) {
+    Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions) {
         switch (Graphics::api) {
         case Graphics::API::Vulkan:
             return MakeRef<VulkanFramebuffer>(renderPass, textureViews, dimensions);
@@ -20,7 +20,7 @@ namespace BZ {
         }
     }
 
-    Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, glm::ivec3 &dimensions) :
+    Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions) :
         renderPass(renderPass), dimensions(dimensions) {
 
         BZ_ASSERT_CORE(textureViews.size() == renderPass->getAttachmentCount(), "The number of TextureViews must match the number of Attachments declared on the RenderPass!");
@@ -33,7 +33,7 @@ namespace BZ {
                 colorTextureViews.push_back(texView);
                 colorIndex++;
             }
-            else if (texView->getTextureFormat().isDepthStencil()) {
+            else if (texView->getTextureFormat().isDepth()) {
                 BZ_ASSERT_CORE(!depthStencilTextureView, "Can't have more than one DepthStencil TextureView!");
                 BZ_ASSERT_CORE(renderPass->hasDepthStencilAttachment(), "The RenderPass doesn't declare any DepthStencil Attachment!");
                 const auto desc = renderPass->getDepthStencilAttachmentDescription();

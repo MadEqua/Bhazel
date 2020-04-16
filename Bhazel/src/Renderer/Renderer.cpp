@@ -12,6 +12,7 @@
 #include "Graphics/Framebuffer.h"
 
 #include "Core/Application.h"
+#include "Core/Window.h"
 
 #include "Camera.h"
 #include "Transform.h"
@@ -191,7 +192,7 @@ namespace BZ {
 
         //DepthPassPipelineState
         AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = TextureFormat::D24S8;
+        depthStencilAttachmentDesc.format = TextureFormat::D32;
         depthStencilAttachmentDesc.samples = 1;
         depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
         depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
@@ -458,11 +459,10 @@ namespace BZ {
     }
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
-        constexpr uint32 SIZE = 1024;
-
-        //TODO: depth only format
-        auto shadowMapRef = Texture2D::createRenderTarget(SIZE, SIZE, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
-        return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, glm::ivec3(SIZE, SIZE, 1));
+        //TODO: better size handling
+        auto &size = Application::getInstance().getWindow().getDimensions();
+        auto shadowMapRef = Texture2D::createRenderTarget(size.x, size.y, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
+        return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, shadowMapRef->getDimensions());
     }
 
     const Ref<Sampler>& Renderer::getDefaultSampler() {
