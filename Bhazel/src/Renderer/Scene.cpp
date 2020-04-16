@@ -7,9 +7,22 @@
 
 namespace BZ {
 
+    DirectionalLight::DirectionalLight() :
+        camera(-20, 20, -20, 20, 0.1f, 100.0f) {
+        shadowMapFramebuffer = Renderer::createShadowMapFramebuffer();
+    }
+
+    void DirectionalLight::setDirection(const glm::vec3 &direction) {
+        this->direction = direction;
+        camera.getTransform().setTranslation(-direction);
+        camera.getTransform().lookAt(glm::vec3(0.0f));
+    }
+
+
     Entity::Entity(Mesh &mesh, Transform &transform) :
         mesh(mesh), transform(transform) {
     }
+
 
     Scene::Scene() {
         descriptorSet = Renderer::createSceneDescriptorSet();
@@ -26,7 +39,6 @@ namespace BZ {
 
     void Scene::addDirectionalLight(DirectionalLight &light) {
         lights.push_back(light);
-        shadowMapFramebuffers.push_back(Renderer::createShadowMapFramebuffer());
     }
 
     void Scene::enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],

@@ -32,7 +32,7 @@ namespace BZ {
             attachmentDesc.loadOp = forceClear ? VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR : loadOperationToVk(attDesc.loadOperatorColorAndDepth);
             attachmentDesc.storeOp = storeOperationToVk(attDesc.storeOperatorColorAndDepth);
             attachmentDesc.stencilLoadOp = loadOperationToVk(attDesc.loadOperatorStencil);
-            attachmentDesc.stencilStoreOp = storeOperationToVk(attDesc.storeOperatorStencil);;
+            attachmentDesc.stencilStoreOp = storeOperationToVk(attDesc.storeOperatorStencil);
             attachmentDesc.initialLayout = textureLayoutToVk(attDesc.initialLayout);
             attachmentDesc.finalLayout = textureLayoutToVk(attDesc.finalLayout);
             attachmentDescriptions[i] = attachmentDesc;
@@ -52,7 +52,7 @@ namespace BZ {
             attachmentDesc.loadOp = forceClear ? VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR : loadOperationToVk(depthStencilAttachmentDesc->loadOperatorColorAndDepth);
             attachmentDesc.storeOp = storeOperationToVk(depthStencilAttachmentDesc->storeOperatorColorAndDepth);
             attachmentDesc.stencilLoadOp = loadOperationToVk(depthStencilAttachmentDesc->loadOperatorStencil);
-            attachmentDesc.stencilStoreOp = storeOperationToVk(depthStencilAttachmentDesc->storeOperatorStencil);;
+            attachmentDesc.stencilStoreOp = storeOperationToVk(depthStencilAttachmentDesc->storeOperatorStencil);
             attachmentDesc.initialLayout = textureLayoutToVk(depthStencilAttachmentDesc->initialLayout);
             attachmentDesc.finalLayout = textureLayoutToVk(depthStencilAttachmentDesc->finalLayout);
             attachmentDescriptions[i] = attachmentDesc;
@@ -73,7 +73,6 @@ namespace BZ {
         subpassDesc.pDepthStencilAttachment = hasDepthStencilAttachment() ? &depthStencilAttachmentRef : nullptr;
         subpassDesc.preserveAttachmentCount = 0;
         subpassDesc.pPreserveAttachments = nullptr;
-
 
         //Create render pass
         VkRenderPassCreateInfo renderPassInfo = {};

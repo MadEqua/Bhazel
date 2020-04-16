@@ -16,10 +16,10 @@ constexpr static uint32 MAX_COMMAND_BUFFERS = 8;
 constexpr static uint32 MAX_COMMANDS_PER_BUFFER = 1024 * 4;
 constexpr static uint32 MAX_DESCRIPTOR_DYNAMIC_OFFSETS = 4;
 
-constexpr static uint32 MAX_PASSES_PER_FRAME = 2;
+constexpr static uint32 MAX_DIR_LIGHTS_PER_SCENE = 2;
+constexpr static uint32 MAX_PASSES_PER_FRAME = MAX_DIR_LIGHTS_PER_SCENE + 1; //Depth Passes + Color Pass
 constexpr static uint32 MAX_ENTITIES_PER_SCENE = 64;
 constexpr static uint32 MAX_MATERIALS_PER_SCENE = 16;
-constexpr static uint32 MAX_DIR_LIGHTS_PER_SCENE = 2;
 
 constexpr static uint32 MAX_PUSH_CONSTANT_SIZE = 128;
 constexpr static uint32 MIN_UNIFORM_BUFFER_OFFSET_ALIGN = 256;

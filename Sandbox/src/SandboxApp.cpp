@@ -85,7 +85,11 @@ void Layer3D::onAttach() {
 }
 
 void Layer3D::onGraphicsContextCreated() {
-    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 300.0f);
+    const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
+    const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
+    orthoCamera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
+
+    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 200.0f);
     camera.getTransform().setTranslation({ 0.0f, 50.0f, 50.0f });
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
@@ -108,19 +112,19 @@ void Layer3D::onGraphicsContextCreated() {
     //scenes[1].addEntity(hydrantMesh, hydrantTransform);
     //scenes[2].addEntity(hydrantMesh, hydrantTransform);
 
-    BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
-                                "Sandbox/meshes/wrench/normal.png",
-                                "Sandbox/meshes/wrench/metallic.jpg",
-                                "Sandbox/meshes/wrench/roughness.jpg",
-                                "Sandbox/meshes/wrench/height.png");
-    wrenchMaterial.setParallaxOcclusionScale(0.01f);
-    BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
-    BZ::Transform wrenchTransform;
-    wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f);
-    wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f);
-    scenes[0].addEntity(wrenchMesh, wrenchTransform);
-    scenes[1].addEntity(wrenchMesh, wrenchTransform);
-    scenes[2].addEntity(wrenchMesh, wrenchTransform);
+    //BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
+    //                            "Sandbox/meshes/wrench/normal.png",
+    //                            "Sandbox/meshes/wrench/metallic.jpg",
+    //                            "Sandbox/meshes/wrench/roughness.jpg",
+    //                            "Sandbox/meshes/wrench/height.png");
+    //wrenchMaterial.setParallaxOcclusionScale(0.01f);
+    //BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
+    //BZ::Transform wrenchTransform;
+    //wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f);
+    //wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f);
+    //scenes[0].addEntity(wrenchMesh, wrenchTransform);
+    //scenes[1].addEntity(wrenchMesh, wrenchTransform);
+    //scenes[2].addEntity(wrenchMesh, wrenchTransform);
     
     //BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
     //                            "Sandbox/textures/steppingstones/steppingstones1_normal.png",
@@ -154,7 +158,7 @@ void Layer3D::onGraphicsContextCreated() {
     scenes[2].addEntity(gunMesh, gunTransform);
     
     BZ::DirectionalLight dirLight;
-    dirLight.direction = { 1.0f, -1.0f, 0.0f };
+    dirLight.setDirection({ 1.0f, -1.0f, 0.0f });
     dirLight.color = { 1.0f, 1.0f, 1.0f };
     dirLight.intensity = 2.0f;
     scenes[0].addDirectionalLight(dirLight);
@@ -187,6 +191,17 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
         rotateCameraController.onUpdate(frameStats);
 
     BZ::Renderer::drawScene(scenes[activeScene]);
+
+    BZ::Renderer2D::begin(orthoCamera);
+    //BZ::Renderer2D::drawQuad(glm::vec2(100.0f, 0.0f), glm::vec2(200.0f, 200.0f), 0.0f, glm::vec4(1, 1, 1, 1));
+
+    const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
+    const glm::vec2 SIZE = WINDOW_DIMS * 0.25f * 0.5f;
+    const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
+    BZ::Renderer2D::drawQuad(-WINDOW_HALF_DIMS + SIZE, SIZE, 0.0f,
+        std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[0].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
+        glm::vec4(1, 1, 1, 1));
+    BZ::Renderer2D::end();
 }
 
 void Layer3D::onEvent(BZ::Event &event) {
@@ -228,12 +243,12 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     ImGui::End();
 
     if (ImGui::Begin("DirLight")) {
-        auto dir = scene.getDirectionalLights()[0].direction;
+        auto dir = scene.getDirectionalLights()[0].getDirection();
         auto col = scene.getDirectionalLights()[0].color;
         auto intensity = scene.getDirectionalLights()[0].intensity;
 
         if (ImGui::DragFloat3("Direction", &dir[0], 0.05f, -1.0f, 1.0f)) {
-            scene.getDirectionalLights()[0].direction = dir;
+            scene.getDirectionalLights()[0].setDirection(dir);
         }
         if (ImGui::DragFloat3("Color", &col[0], 0.05f, 0.0f, 1.0f)) {
             scene.getDirectionalLights()[0].color = col;

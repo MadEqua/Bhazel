@@ -51,6 +51,7 @@ namespace BZ {
         static void drawEntity(const Entity &entity, uint32 index);
         static void drawMesh(const Mesh &mesh, const Transform &transform);
 
+        static void handleScene(const Scene &scene);
         static void handleEntities(const Scene &scene);
         static void handleMaterials(const Scene &scene);
         static void handleMaterial(const Material &material);

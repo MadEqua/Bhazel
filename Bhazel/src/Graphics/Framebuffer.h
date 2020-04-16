@@ -13,6 +13,8 @@ namespace BZ {
         const glm::ivec3& getDimensions() const { return dimensions; }
         const Ref<RenderPass>& getRenderPass() const { return renderPass; }
 
+        const Ref<TextureView>& getDepthStencilTextureView() const { return depthStencilTextureView; }
+
     protected:
         explicit Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions);
         virtual ~Framebuffer() = default;

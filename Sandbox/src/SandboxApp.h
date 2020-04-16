@@ -44,6 +44,8 @@ private:
     BZ::RotateCameraController rotateCameraController;
     BZ::FreeCameraController freeCameraController;
     bool useFreeCamera = false;
+
+    BZ::OrthographicCamera orthoCamera;
 };
 
 

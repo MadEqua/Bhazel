@@ -10,10 +10,21 @@
 
 namespace BZ {
 
-    struct DirectionalLight {
-        glm::vec3 direction;
+    class DirectionalLight {
+    public:
+        DirectionalLight();
+
         glm::vec3 color;
         float intensity;
+
+        const glm::vec3& getDirection() const { return direction; }
+        void setDirection(const glm::vec3 &direction);
+
+        Ref<Framebuffer> shadowMapFramebuffer;
+        OrthographicCamera camera;
+
+    private:
+        glm::vec3 direction;
     };
 
     class Entity {
@@ -48,8 +59,6 @@ namespace BZ {
         std::vector<DirectionalLight>& getDirectionalLights() { return lights; }
         const std::vector<DirectionalLight>& getDirectionalLights() const { return lights; }
 
-        const std::vector<Ref<Framebuffer>>& getShadowMapFramebuffers() const { return shadowMapFramebuffers; }
-
         bool hasSkyBox() const { return skyBox.mesh.isValid(); }
         const SkyBox& getSkyBox() const { return skyBox; }
 
@@ -60,9 +69,7 @@ namespace BZ {
 
     private:
         std::vector<Entity> entities;
-
         std::vector<DirectionalLight> lights;
-        std::vector<Ref<Framebuffer>> shadowMapFramebuffers;
 
         Camera *camera = nullptr;
         SkyBox skyBox;

@@ -128,6 +128,7 @@ namespace BZ {
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        //descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), MAX_DIR_LIGHTS_PER_SCENE);
         rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder3.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder4;
@@ -197,9 +198,9 @@ namespace BZ {
         depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
         depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
         depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
-        depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::Store;
+        depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
         depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
+        depthStencilAttachmentDesc.finalLayout = TextureLayout::ShaderReadOnlyOptimal; //TODO: decide on the layout and transitions
         depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
         depthStencilAttachmentDesc.clearValues.integer.y = 0;
         rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc });
@@ -264,6 +265,7 @@ namespace BZ {
         memset(&stats, 0, sizeof(stats));
  
         //Fill respective ConstantBuffer data.
+        handleScene(scene);
         handleMaterials(scene);
         handleEntities(scene);
 
@@ -283,21 +285,22 @@ namespace BZ {
     }
 
     void Renderer::depthPass(const Scene &scene) {
-        const Camera &camera = scene.getCamera(); //TODO: get light camera
-        PassConstantBufferData passConstantBufferData;
-        passConstantBufferData.viewMatrix = camera.getViewMatrix();
-        passConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
-        passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
-        memcpy(rendererData.passConstantBufferPtr, &passConstantBufferData, sizeof(glm::mat4) * 3);
-
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.depthPassPipelineState);
 
-        //Depth pass is pass #0
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
-            rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, 0, 0);
+        uint32 index = 0;
+        for (auto &dirLight : scene.getDirectionalLights()) {
+            uint32 passOffset = index * sizeof(PassConstantBufferData);
 
-        for (auto &framebuffer : scene.getShadowMapFramebuffers()) {
-            Graphics::beginRenderPass(rendererData.commandBufferId, framebuffer);
+            PassConstantBufferData passConstantBufferData;
+            passConstantBufferData.viewMatrix = dirLight.camera.getViewMatrix();
+            passConstantBufferData.projectionMatrix = dirLight.camera.getProjectionMatrix();
+            passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
+            memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(glm::mat4) * 3);
+
+            Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
+                rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &passOffset, 1);
+
+            Graphics::beginRenderPass(rendererData.commandBufferId, dirLight.shadowMapFramebuffer);
 
             uint32 entityIndex = 0;
             for (const auto &entity : scene.getEntities()) {
@@ -319,29 +322,13 @@ namespace BZ {
         passConstantBufferData.cameraPosition.y = cameraPosition.y;
         passConstantBufferData.cameraPosition.z = cameraPosition.z;
 
-        uint32 passOffset = sizeof(PassConstantBufferData); //Color pass is pass #1
-        memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
-
-        SceneConstantBufferData sceneConstantBufferData;
-        int i = 0;
-        for (const auto &dirLight : scene.getDirectionalLights()) {
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].x = dirLight.direction.x;
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].y = dirLight.direction.y;
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].z = dirLight.direction.z;
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].w = dirLight.intensity;
-            sceneConstantBufferData.dirLightColors[i].r = dirLight.color.r;
-            sceneConstantBufferData.dirLightColors[i].g = dirLight.color.g;
-            sceneConstantBufferData.dirLightColors[i].b = dirLight.color.b;
-            i++;
-        }
-        sceneConstantBufferData.dirLightCountAndRadianceMapMips.x = static_cast<float>(i);
-        sceneConstantBufferData.dirLightCountAndRadianceMapMips.y = scene.hasSkyBox() ? scene.getSkyBox().radianceMapView->getTexture()->getMipLevels() : 0.0f;
-        memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
-
-        Graphics::beginRenderPass(rendererData.commandBufferId);
+        uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
+        memcpy(rendererData.passConstantBufferPtr + colorPassOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
 
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
-            rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &passOffset, 1);
+            rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
+
+        Graphics::beginRenderPass(rendererData.commandBufferId);
 
         if (scene.hasSkyBox()) {
             Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.skyBoxPipelineState);
@@ -384,6 +371,25 @@ namespace BZ {
         stats.drawCallCount++;
         stats.vertexCount += mesh.getVertexCount();
         stats.triangleCount += (mesh.hasIndices() ? mesh.getIndexCount() : mesh.getVertexCount()) / 3;
+    }
+
+    void Renderer::handleScene(const Scene &scene) {
+        SceneConstantBufferData sceneConstantBufferData;
+        int i = 0;
+        for (const auto &dirLight : scene.getDirectionalLights()) {
+            const auto &dir = dirLight.getDirection();
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].x = dir.x;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].y = dir.y;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].z = dir.z;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].w = dirLight.intensity;
+            sceneConstantBufferData.dirLightColors[i].r = dirLight.color.r;
+            sceneConstantBufferData.dirLightColors[i].g = dirLight.color.g;
+            sceneConstantBufferData.dirLightColors[i].b = dirLight.color.b;
+            i++;
+        }
+        sceneConstantBufferData.dirLightCountAndRadianceMapMips.x = static_cast<float>(i);
+        sceneConstantBufferData.dirLightCountAndRadianceMapMips.y = scene.hasSkyBox()?scene.getSkyBox().radianceMapView->getTexture()->getMipLevels():0.0f;
+        memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
     }
 
     void Renderer::handleEntities(const Scene &scene) {
