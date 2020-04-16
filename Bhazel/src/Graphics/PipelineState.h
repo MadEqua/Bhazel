@@ -183,7 +183,7 @@ namespace BZ {
     };
 
     class Shader;
-    class Framebuffer;
+    class RenderPass;
     class DescriptorSetLayout;
 
     struct PipelineStateData {
@@ -203,9 +203,8 @@ namespace BZ {
         BlendingState blendingState;
         std::vector<DynamicState> dynamicStates;
 
-        //Used on Vulkan only to get the RenderPass. 
-        //If absent, it's assumed to be a swapchain framebuffer (the current frame one), which is fine becaues all of them have a similar RenderPass.
-        Ref<Framebuffer> framebuffer;
+        //If absent, it's assumed to be a swapchain framebuffer (the current frame one), which is fine becaues all of are similar.
+        Ref<RenderPass> renderPass;
     };
 
     class PipelineState {

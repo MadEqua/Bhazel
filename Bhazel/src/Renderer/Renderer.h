@@ -13,6 +13,7 @@ namespace BZ {
     class Buffer;
     class Entity;
     class DescriptorSet;
+    class Framebuffer;
     class Sampler;
 
     struct RendererStats {
@@ -34,8 +35,9 @@ namespace BZ {
         //Pre-filled DescriptorSets to be used on Scenes and Materials. They will fill the remaining bindings.
         static Ref<DescriptorSet> createSceneDescriptorSet();
         static Ref<DescriptorSet> createMaterialDescriptorSet();
+        static Ref<Framebuffer> createShadowMapFramebuffer();
 
-        static Ref<Sampler> getDefaultSampler();
+        static const Ref<Sampler>& getDefaultSampler();
 
     private:
         friend class Application;
@@ -43,7 +45,7 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        static void shadowPass(const Scene &scene);
+        static void depthPass(const Scene &scene);
         static void colorPass(const Scene &scene);
 
         static void drawEntity(const Entity &entity, uint32 index);

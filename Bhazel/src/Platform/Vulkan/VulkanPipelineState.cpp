@@ -3,7 +3,7 @@
 #include "VulkanPipelineState.h"
 
 #include "Platform/Vulkan/VulkanShader.h"
-#include "Platform/Vulkan/VulkanFramebuffer.h"
+#include "Platform/Vulkan/VulkanRenderPass.h"
 #include "Platform/Vulkan/VulkanDescriptorSet.h"
 #include "Platform/Vulkan/Internal/VulkanConversions.h"
 
@@ -243,7 +243,7 @@ namespace BZ {
         pipelineInfo.pColorBlendState = &colorBlendingState;
         pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = nativeHandle.pipelineLayout;
-        pipelineInfo.renderPass = static_cast<VulkanFramebuffer &>(*data.framebuffer).getOriginalRenderPass().getNativeHandle();
+        pipelineInfo.renderPass = static_cast<VulkanRenderPass &>(*data.renderPass).getNativeHandle().original;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;

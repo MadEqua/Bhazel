@@ -4,7 +4,7 @@
 #include "Core/Application.h"
 #include "Graphics/GraphicsContext.h"
 #include "Graphics/Graphics.h"
-#include "Graphics/Framebuffer.h"
+#include "Graphics/RenderPass.h"
 #include "Graphics/Shader.h"
 
 //#include "Platform/OpenGL/OpenGLPipelineState.h"
@@ -41,10 +41,10 @@ namespace BZ {
             data.scissorRects.size() == data.viewports.size(),
             "With non-dynamic Scissor and Viewports the number of Viewports must match the number of ScissorsRects!");
 
-        if (!data.framebuffer)
-            data.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer();
+        if (!data.renderPass)
+            data.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
 
-        BZ_ASSERT_CORE(data.framebuffer->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(),
+        BZ_ASSERT_CORE(data.renderPass->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(),
             "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
 
 #ifdef BZ_HOT_RELOAD_SHADERS

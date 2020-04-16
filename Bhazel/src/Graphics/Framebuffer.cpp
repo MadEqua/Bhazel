@@ -1,69 +1,45 @@
 #include "bzpch.h"
 
 #include "Framebuffer.h"
-
 #include "Graphics/Graphics.h"
+#include "Graphics/Texture.h"
+#include "Graphics/RenderPass.h"
 
 #include "Platform/Vulkan/VulkanFramebuffer.h"
 
 
 namespace BZ {
 
-    Framebuffer::Builder& Framebuffer::Builder::addColorAttachment(const AttachmentDescription &desc, const Ref<TextureView> &textureView) {
-        BZ_ASSERT_CORE(textureView->getTextureFormat().isColor(), "TextureView needs to have a color format!");
-        attachments.push_back({ desc, textureView });
-        return *this;
-    }
-
-    Framebuffer::Builder& Framebuffer::Builder::addDepthStencilAttachment(const AttachmentDescription &desc, const Ref<TextureView> &textureView) {
-        BZ_ASSERT_CORE(textureView->getTextureFormat().isDepthStencil(), "TextureView needs to have a DepthStencil format!");
-        attachments.push_back({ desc, textureView });
-        return *this;
-    }
-
-    Framebuffer::Builder &Framebuffer::Builder::setDimensions(const glm::ivec3 &dimensions) {
-        this->dimensions = dimensions;
-        return *this;
-    }
-
-    Ref<Framebuffer> Framebuffer::Builder::build() const {
-        switch(Graphics::api) {
-            /*case Graphics::API::OpenGL:
-                return MakeRef<OpenGLTexture2D>(assetsPath + path);
-            case Graphics::API::D3D11:
-                return MakeRef<D3D11Texture2D>(assetsPath + path);*/
+    Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, glm::ivec3 &dimensions) {
+        switch (Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanFramebuffer>(*this);
+            return MakeRef<VulkanFramebuffer>(renderPass, textureViews, dimensions);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
+    Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, glm::ivec3 &dimensions) :
+        renderPass(renderPass), dimensions(dimensions) {
 
-    Framebuffer::Framebuffer(const Builder &builder) :
-        dimensions(builder.dimensions) {
-        BZ_ASSERT_CORE(!builder.attachments.empty(), "Creating a Framebuffer with no attachments!");
-
-        for(const auto &att : builder.attachments) {
-            if(att.textureView->getTextureFormat().isColor()) {
-                colorAttachments.push_back(att);
+        BZ_ASSERT_CORE(textureViews.size() == renderPass->getAttachmentCount(), "The number of TextureViews must match the number of Attachments declared on the RenderPass!");
+        
+        uint32 colorIndex = 0;
+        for (const auto &texView : textureViews) {
+            if (texView->getTextureFormat().isColor()) {
+                const auto &desc = renderPass->getColorAttachmentDescription(colorIndex);
+                BZ_ASSERT_CORE(texView->getTextureFormat() == desc.format, "TextureView format is not compatible with RenderPass!");
+                colorTextureViews.push_back(texView);
+                colorIndex++;
             }
-            else if(att.textureView->getTextureFormat().isDepthStencil()) {
-                BZ_ASSERT_CORE(!depthStencilAttachment, "Adding more than one DepthStencilAttachment!");
-                depthStencilAttachment.emplace(att);
+            else if (texView->getTextureFormat().isDepthStencil()) {
+                BZ_ASSERT_CORE(!depthStencilTextureView, "Can't have more than one DepthStencil TextureView!");
+                BZ_ASSERT_CORE(renderPass->hasDepthStencilAttachment(), "The RenderPass doesn't declare any DepthStencil Attachment!");
+                const auto desc = renderPass->getDepthStencilAttachmentDescription();
+                BZ_ASSERT_CORE(texView->getTextureFormat() == desc->format, "TextureView format is not compatible with RenderPass!");
+                depthStencilTextureView = texView;
             }
         }
-    }
-
-    const Framebuffer::Attachment& Framebuffer::getColorAttachment(uint32 index) const {
-        BZ_ASSERT_CORE(index < getColorAttachmentCount(), "Index {} is out of range!", index)
-        return colorAttachments[index];
-    }
-
-    const Framebuffer::Attachment* Framebuffer::getDepthStencilAttachment() const {
-        if(depthStencilAttachment.has_value())
-            return &depthStencilAttachment.value();
-        return nullptr;
     }
 }

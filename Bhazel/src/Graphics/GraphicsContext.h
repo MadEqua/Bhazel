@@ -5,6 +5,7 @@ namespace BZ {
 
     class WindowResizedEvent;
     class Framebuffer;
+    class RenderPass;
     class CommandBuffer;
 
     class GraphicsContext {
@@ -21,7 +22,8 @@ namespace BZ {
         bool isVSync() const { return vsync; }
 
         virtual uint32 getCurrentFrameIndex() const = 0;
-        virtual Ref<Framebuffer> getCurrentFrameFramebuffer() = 0;  
+        virtual const Ref<Framebuffer>& getCurrentFrameFramebuffer() const = 0;
+        virtual const Ref<RenderPass>& getSwapchainRenderPass() const = 0;  
         virtual Ref<CommandBuffer> getCurrentFrameCommandBuffer() = 0;
 
         virtual void submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) = 0;

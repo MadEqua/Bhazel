@@ -6,7 +6,7 @@
 #include "Graphics/Texture.h"
 #include "Graphics/PipelineState.h"
 #include "Graphics/Shader.h"
-#include "Graphics/Framebuffer.h"
+#include "Graphics/RenderPass.h"
 #include "Graphics/DescriptorSet.h"
 
 

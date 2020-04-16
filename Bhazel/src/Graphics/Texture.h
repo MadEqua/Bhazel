@@ -27,6 +27,10 @@ namespace BZ {
         bool isSRGB() const;
 
         int getChannelCount() const;
+
+        bool operator==(const TextureFormatWrapper &other) const {
+            return format == other.format;
+        }
     };
 
 

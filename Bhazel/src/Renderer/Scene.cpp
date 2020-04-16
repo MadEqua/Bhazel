@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "Renderer.h"
+#include "Graphics/RenderPass.h"
 
 
 namespace BZ {
@@ -25,24 +26,7 @@ namespace BZ {
 
     void Scene::addDirectionalLight(DirectionalLight &light) {
         lights.push_back(light);
-
-        constexpr uint32 SIZE = 1024;
-        auto shadowMap = Texture2D::createRenderTarget(SIZE, SIZE, TextureFormat::D24S8); //TODO: depth only format
-
-        Framebuffer::Builder framebufferBuilder;
-        AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = shadowMap->getFormat().format;
-        depthStencilAttachmentDesc.samples = 1;
-        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
-        depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
-        depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
-        depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::Store;
-        depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
-        depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
-        depthStencilAttachmentDesc.clearValues.integer.y = 0;
-        framebufferBuilder.addDepthStencilAttachment(depthStencilAttachmentDesc, TextureView::create(shadowMap));
-        shadowMapFramebuffers.push_back(framebufferBuilder.build());
+        shadowMapFramebuffers.push_back(Renderer::createShadowMapFramebuffer());
     }
 
     void Scene::enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],

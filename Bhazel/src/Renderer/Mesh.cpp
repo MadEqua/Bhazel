@@ -282,7 +282,7 @@ namespace BZ {
             tempBitangents[indices[i + 2]] += bitangent;
         }
 
-        for (int i = 0; i < vertexCount; ++i) {
+        for (uint32 i = 0; i < vertexCount; ++i) {
             Vertex &v = vertices[i];
             glm::vec3 tangent = tempTangents[i];
             glm::vec3 bitangent = tempBitangents[i];

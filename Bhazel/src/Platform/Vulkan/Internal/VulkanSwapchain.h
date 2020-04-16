@@ -6,6 +6,7 @@
 namespace BZ {
 
     class Framebuffer;
+    class RenderPass;
     class VulkanDevice;
     class VulkanSurface;
     class VulkanSemaphore;
@@ -33,7 +34,8 @@ namespace BZ {
 
         VkSwapchainKHR getNativeHandle() const { return swapchain; }
 
-        Ref<Framebuffer> getFramebuffer(int frameIndex) { return framebuffers[frameIndex]; }
+        const Ref<Framebuffer>& getFramebuffer(int frameIndex) const { return framebuffers[frameIndex]; }
+        const Ref<RenderPass>& getRenderPass() const { return renderPass; }
         glm::ivec2 getDimensions() const { return { extent.width, extent.height }; }
 
     private:
@@ -41,6 +43,8 @@ namespace BZ {
         const VulkanSurface *surface;
 
         VkSwapchainKHR swapchain;
+
+        Ref<RenderPass> renderPass;
         std::vector<Ref<Framebuffer>> framebuffers;
 
         VkFormat imageFormat;

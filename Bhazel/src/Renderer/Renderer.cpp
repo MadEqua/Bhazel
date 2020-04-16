@@ -8,6 +8,8 @@
 #include "Graphics/Buffer.h"
 #include "Graphics/Shader.h"
 #include "Graphics/PipelineState.h"
+#include "Graphics/RenderPass.h"
+#include "Graphics/Framebuffer.h"
 
 #include "Core/Application.h"
 
@@ -89,11 +91,13 @@ namespace BZ {
 
         Ref<PipelineState> defaultPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
-        Ref<PipelineState> shadowPassPipelineState;
+        Ref<PipelineState> depthPassPipelineState;
 
         Ref<TextureView> brdfLookupTexture;
 
         std::unordered_map<Material, uint32> materialOffsetMap;
+
+        Ref<RenderPass> depthRenderPass;
     } rendererData;
 
 
@@ -185,17 +189,32 @@ namespace BZ {
         pipelineStateData.shader = shaderBuilder.build();
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
 
-        //ShadowPassPipelineState
+        //DepthPassPipelineState
+        AttachmentDescription depthStencilAttachmentDesc;
+        depthStencilAttachmentDesc.format = TextureFormat::D24S8;
+        depthStencilAttachmentDesc.samples = 1;
+        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
+        depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
+        depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
+        depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::Store;
+        depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
+        depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
+        depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
+        depthStencilAttachmentDesc.clearValues.integer.y = 0;
+        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc });
+        pipelineStateData.renderPass = rendererData.depthRenderPass;
+
+        pipelineStateData.blendingState = {};
+
         shaderBuilder.setName("ShadowPass");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ShadowPassVert.spv");
         shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/ShadowPassFrag.spv");
         pipelineStateData.shader = shaderBuilder.build();
 
-        //pipelineStateData.framebuffer = ; TODO
-        rendererData.shadowPassPipelineState = PipelineState::create(pipelineStateData);
+        rendererData.depthPassPipelineState = PipelineState::create(pipelineStateData);
 
-        Sampler::Builder builder;
-        rendererData.defaultSampler = builder.build();
+        Sampler::Builder samplerBuilder;
+        rendererData.defaultSampler = samplerBuilder.build();
 
         //The ideal 2 Channels (RG) are not supported by stbi. 3 channels is badly supported by Vulkan implementations. So 4 channels...
         auto brdfTex = Texture2D::create("Bhazel/textures/ibl_brdf_lut.png", TextureFormat::R8G8B8A8, MipmapData::Options::DoNothing);
@@ -228,12 +247,14 @@ namespace BZ {
 
         rendererData.defaultPipelineState.reset();
         rendererData.skyBoxPipelineState.reset();
-        rendererData.shadowPassPipelineState.reset();
+        rendererData.depthPassPipelineState.reset();
 
         rendererData.defaultSampler.reset();
         rendererData.materialOffsetMap.clear();
 
         rendererData.brdfLookupTexture.reset();
+
+        rendererData.depthRenderPass.reset();
     }
 
     void Renderer::drawScene(const Scene &scene) {
@@ -254,25 +275,25 @@ namespace BZ {
         Graphics::bindDescriptorSet(rendererData.commandBufferId, scene.getDescriptorSet(),
             rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
 
-        //shadowPass(scene);
+        depthPass(scene);
         colorPass(scene);
 
         Graphics::endCommandBuffer(rendererData.commandBufferId);
     }
 
-    void Renderer::shadowPass(const Scene &scene) {
+    void Renderer::depthPass(const Scene &scene) {
         const Camera &camera = scene.getCamera(); //TODO: get light camera
         PassConstantBufferData passConstantBufferData;
         passConstantBufferData.viewMatrix = camera.getViewMatrix();
         passConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
         passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
-        memcpy(rendererData.sceneConstantBufferPtr, &passConstantBufferData, sizeof(glm::mat4) * 3);
+        memcpy(rendererData.passConstantBufferPtr, &passConstantBufferData, sizeof(glm::mat4) * 3);
 
-        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.shadowPassPipelineState);
+        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.depthPassPipelineState);
 
         //Depth pass is pass #0
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
-            rendererData.shadowPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, 0, 0);
+            rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, 0, 0);
 
         for (auto &framebuffer : scene.getShadowMapFramebuffers()) {
             Graphics::beginRenderPass(rendererData.commandBufferId, framebuffer);
@@ -406,7 +427,7 @@ namespace BZ {
             MaterialConstantBufferData materialConstantBufferData;
             materialConstantBufferData.parallaxOcclusionScale = material.getParallaxOcclusionScale();
 
-            materialOffset = rendererData.materialOffsetMap.size() * sizeof(EntityConstantBufferData);
+            materialOffset = static_cast<uint32>(rendererData.materialOffsetMap.size()) * sizeof(EntityConstantBufferData);
             memcpy(rendererData.materialConstantBufferPtr + materialOffset, &materialConstantBufferData, sizeof(MaterialConstantBufferData));
 
             rendererData.materialOffsetMap[material] = materialOffset;
@@ -436,7 +457,15 @@ namespace BZ {
         return descriptorSet;
     }
 
-    Ref<Sampler> Renderer::getDefaultSampler() {
+    Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
+        constexpr uint32 SIZE = 1024;
+
+        //TODO: depth only format
+        auto shadowMapRef = Texture2D::createRenderTarget(SIZE, SIZE, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
+        return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, glm::ivec3(SIZE, SIZE, 1));
+    }
+
+    const Ref<Sampler>& Renderer::getDefaultSampler() {
         return rendererData.defaultSampler;
     }
 }

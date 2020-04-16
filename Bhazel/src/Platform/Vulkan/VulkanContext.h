@@ -34,7 +34,8 @@ namespace BZ {
         void setVSync(bool enabled) override;
 
         uint32 getCurrentFrameIndex() const override { return currentFrameIndex; }
-        Ref<Framebuffer> getCurrentFrameFramebuffer() override { return swapchain.getFramebuffer(currentFrameIndex); }
+        const Ref<Framebuffer>& getCurrentFrameFramebuffer() const override { return swapchain.getFramebuffer(currentFrameIndex); }
+        const Ref<RenderPass>& getSwapchainRenderPass() const override { return swapchain.getRenderPass(); }
         Ref<CommandBuffer> getCurrentFrameCommandBuffer() override;
 
         VulkanDevice& getDevice() { return device; }

@@ -2,32 +2,30 @@
 
 #include "VulkanFramebuffer.h"
 
+#include "Platform/Vulkan/VulkanRenderPass.h"
 #include "Platform/Vulkan/VulkanTexture.h"
-#include "Platform/Vulkan/Internal/VulkanConversions.h"
 
 
 namespace BZ {
 
-    VulkanFramebuffer::VulkanFramebuffer(const Builder &builder) :
-        Framebuffer(builder) {
+    VulkanFramebuffer::VulkanFramebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, glm::ivec3 &dimensions) :
+        Framebuffer(renderPass, textureViews, dimensions) {
 
-        //TODO: this will create identical render passes. have a table?
-        originalrenderPass.init(getDevice(), colorAttachments, depthStencilAttachment, false);
-        clearRenderPass.init(getDevice(), colorAttachments, depthStencilAttachment, true);
-
-        std::vector<VkImageView> vkImageViews(builder.attachments.size());
+        std::vector<VkImageView> vkImageViews(textureViews.size());
 
         //First color attachments, then depthstencil, if applicable.
-        uint32 i;
-        for(i = 0; i < getColorAttachmentCount(); ++i)
-            vkImageViews[i] = static_cast<VulkanTextureView&>(*builder.attachments[i].textureView).getNativeHandle();
+        uint32 i = 0;
+        for (const auto &colorTexView : colorTextureViews) {
+            vkImageViews[i] = static_cast<VulkanTextureView&>(*colorTexView).getNativeHandle();
+            i++;
+        }
         
-        if(hasDepthStencilAttachment())
-            vkImageViews[i] = static_cast<VulkanTextureView &>(*builder.attachments[i].textureView).getNativeHandle();
+        if(depthStencilTextureView)
+            vkImageViews[i] = static_cast<VulkanTextureView &>(*depthStencilTextureView).getNativeHandle();
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = originalrenderPass.getNativeHandle();
+        framebufferInfo.renderPass = static_cast<VulkanRenderPass&>(*renderPass).getNativeHandle().original;
         framebufferInfo.attachmentCount = static_cast<uint32_t>(vkImageViews.size());
         framebufferInfo.pAttachments = vkImageViews.data();
         framebufferInfo.width = dimensions.x;
@@ -39,7 +37,5 @@ namespace BZ {
 
     VulkanFramebuffer::~VulkanFramebuffer() {
         vkDestroyFramebuffer(getDevice(), nativeHandle, nullptr);
-        originalrenderPass.destroy();
-        clearRenderPass.destroy();
     }
 }

@@ -3,6 +3,7 @@
 #include "VulkanCommandBuffer.h"
 
 #include "Platform/Vulkan/VulkanFramebuffer.h"
+#include "Platform/Vulkan/VulkanRenderPass.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include "Platform/Vulkan/VulkanPipelineState.h"
 #include "Platform/Vulkan/VulkanDescriptorSet.h"
@@ -35,21 +36,22 @@ namespace BZ {
 
     void VulkanCommandBuffer::beginRenderPass(const Framebuffer &framebuffer, bool forceClearAttachments) {
         auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(framebuffer);
+        auto &vulkanRenderPass = static_cast<const VulkanRenderPass &>(*framebuffer.getRenderPass());
 
         //We know that the color attachments will be first and then the depthstencil
         VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
         uint32 i;
-        for(i = 0; i < vulkanFramebuffer.getColorAttachmentCount(); ++i) {
-            const auto &att = vulkanFramebuffer.getColorAttachment(i);
-            if(att.description.loadOperatorColorAndDepth == LoadOperation::Clear || forceClearAttachments) {
-                auto &attachmentClearValues = att.description.clearValues;
+        for(i = 0; i < vulkanRenderPass.getColorAttachmentCount(); ++i) {
+            const auto &attDesc = vulkanRenderPass.getColorAttachmentDescription(i);
+            if(attDesc.loadOperatorColorAndDepth == LoadOperation::Clear || forceClearAttachments) {
+                auto &attachmentClearValues = attDesc.clearValues;
                 memcpy(clearValues[i].color.float32, &attachmentClearValues, sizeof(float) * 4);
             }
         }
-        if(vulkanFramebuffer.hasDepthStencilAttachment()) {
-            const auto &att = vulkanFramebuffer.getDepthStencilAttachment();
-            if(att->description.loadOperatorStencil == LoadOperation::Clear || forceClearAttachments) {
-                auto &attachmentClearValues = att->description.clearValues;
+        if(vulkanRenderPass.hasDepthStencilAttachment()) {
+            const auto attDesc = vulkanRenderPass.getDepthStencilAttachmentDescription();
+            if(attDesc->loadOperatorStencil == LoadOperation::Clear || forceClearAttachments) {
+                auto &attachmentClearValues = attDesc->clearValues;
                 clearValues[i].depthStencil.depth = attachmentClearValues.floating.x;
                 clearValues[i].depthStencil.stencil = attachmentClearValues.integer.y;
             }
@@ -57,11 +59,11 @@ namespace BZ {
 
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = forceClearAttachments ? vulkanFramebuffer.getClearRenderPass().getNativeHandle() : vulkanFramebuffer.getOriginalRenderPass().getNativeHandle();
+        renderPassBeginInfo.renderPass = forceClearAttachments ? vulkanRenderPass.getNativeHandle().forceClear : vulkanRenderPass.getNativeHandle().original;
         renderPassBeginInfo.framebuffer = vulkanFramebuffer.getNativeHandle();
         renderPassBeginInfo.renderArea.offset = {};
         renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(vulkanFramebuffer.getDimensions().x), static_cast<uint32_t>(vulkanFramebuffer.getDimensions().y) };
-        renderPassBeginInfo.clearValueCount = vulkanFramebuffer.getAttachmentCount();
+        renderPassBeginInfo.clearValueCount = vulkanRenderPass.getAttachmentCount();
         renderPassBeginInfo.pClearValues = clearValues;
         vkCmdBeginRenderPass(nativeHandle, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
@@ -83,13 +85,14 @@ namespace BZ {
         clearRect.rect = vkRect;
 
         VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
-        for(uint32 i = 0; i < framebuffer.getColorAttachmentCount(); i++) {
+        uint32 i = 0;
+        for(; i < framebuffer.getRenderPass()->getColorAttachmentCount(); i++) {
             vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             vkClearAttchments[i].colorAttachment = i;
             memcpy(vkClearAttchments[i].clearValue.color.float32, &clearColor, sizeof(float) * 4);
         }
 
-        vkCmdClearAttachments(nativeHandle, vulkanFramebuffer.getColorAttachmentCount(), vkClearAttchments, 1, &clearRect);
+        vkCmdClearAttachments(nativeHandle, i, vkClearAttchments, 1, &clearRect);
     }
 
     void VulkanCommandBuffer::clearDepthStencilAttachment(const Framebuffer &framebuffer, const ClearValues &clearValue) {

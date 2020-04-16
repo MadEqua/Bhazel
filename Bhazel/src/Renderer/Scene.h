@@ -48,7 +48,7 @@ namespace BZ {
         std::vector<DirectionalLight>& getDirectionalLights() { return lights; }
         const std::vector<DirectionalLight>& getDirectionalLights() const { return lights; }
 
-        const std::vector< Ref<Framebuffer>>& getShadowMapFramebuffers() const { return shadowMapFramebuffers; }
+        const std::vector<Ref<Framebuffer>>& getShadowMapFramebuffers() const { return shadowMapFramebuffers; }
 
         bool hasSkyBox() const { return skyBox.mesh.isValid(); }
         const SkyBox& getSkyBox() const { return skyBox; }
