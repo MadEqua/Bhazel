@@ -8,19 +8,19 @@
 namespace BZ {
 
     DirectionalLight::DirectionalLight() :
-        camera(-20, 20, -20, 20, 0.1f, 100.0f) {
+        camera(-70, 70, -70, 70, 0.1f, 200.0f) {
         shadowMapFramebuffer = Renderer::createShadowMapFramebuffer();
     }
 
     void DirectionalLight::setDirection(const glm::vec3 &direction) {
-        this->direction = direction;
-        camera.getTransform().setTranslation(-direction);
+        this->direction = glm::normalize(direction);
+        camera.getTransform().setTranslation(-direction * 100.0f);
         camera.getTransform().lookAt(glm::vec3(0.0f));
     }
 
 
-    Entity::Entity(Mesh &mesh, Transform &transform) :
-        mesh(mesh), transform(transform) {
+    Entity::Entity(Mesh &mesh, Transform &transform, bool castShadow) :
+        mesh(mesh), transform(transform), castShadow(castShadow) {
     }
 
 
@@ -33,12 +33,24 @@ namespace BZ {
         descriptorSet = Renderer::createSceneDescriptorSet();
     }
 
-    void Scene::addEntity(Mesh &mesh, Transform &transform) {
-        entities.push_back({ mesh, transform });
+    void Scene::addEntity(Mesh &mesh, Transform &transform, bool castShadow) {
+        BZ_ASSERT_CORE(entities.size() < MAX_ENTITIES_PER_SCENE, "Reached the maximum ammount of Entities!");
+        entities.push_back({ mesh, transform, castShadow });
     }
 
     void Scene::addDirectionalLight(DirectionalLight &light) {
+        BZ_ASSERT_CORE(lights.size() < MAX_DIR_LIGHTS_PER_SCENE, "Reached the maximum ammount of Directional Lights!");
         lights.push_back(light);
+
+        //TODO: this is ugly and bad.
+        std::array<Ref<TextureView>, MAX_DIR_LIGHTS_PER_SCENE> shadowMaps;
+        for (uint32 i = 0; i < MAX_DIR_LIGHTS_PER_SCENE; ++i) {
+            if (i < lights.size())
+                shadowMaps[i] = lights[i].shadowMapFramebuffer->getDepthStencilTextureView();
+            else
+                shadowMaps[i] = Renderer::getDummyTextureView();
+        }
+        descriptorSet->setCombinedTextureSampler(shadowMaps.data(), MAX_DIR_LIGHTS_PER_SCENE, 0, Renderer::getShadowSampler(), 3);
     }
 
     void Scene::enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],

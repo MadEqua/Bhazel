@@ -24,21 +24,22 @@
 namespace BZ {
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) PassConstantBufferData {
-        glm::mat4 viewMatrix;
-        glm::mat4 projectionMatrix;
-        glm::mat4 viewProjectionMatrix;
+        glm::mat4 viewMatrix; //World to camera space
+        glm::mat4 projectionMatrix; //Camera to clip space
+        glm::mat4 viewProjectionMatrix; //World to clip space
         glm::vec4 cameraPosition; //mat4 to simplify alignments
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) SceneConstantBufferData {
+        glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE]; //World to light clip space
         glm::vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
         glm::vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
         glm::vec2 dirLightCountAndRadianceMapMips;
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) EntityConstantBufferData {
-        glm::mat4 modelMatrix;
-        glm::mat4 normalMatrix; //mat4 to simplify alignments
+        glm::mat4 modelMatrix; //Model to world space
+        glm::mat4 normalMatrix; //Model to world space, appropriate to transform vectors, mat4 to simplify alignments
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
@@ -89,6 +90,7 @@ namespace BZ {
         Ref<DescriptorSet> entityDescriptorSet;
 
         Ref<Sampler> defaultSampler;
+        Ref<Sampler> shadowSampler;
 
         Ref<PipelineState> defaultPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
@@ -128,7 +130,7 @@ namespace BZ {
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        //descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), MAX_DIR_LIGHTS_PER_SCENE);
+        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), MAX_DIR_LIGHTS_PER_SCENE);
         rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder3.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder4;
@@ -200,13 +202,17 @@ namespace BZ {
         depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
         depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
         depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        depthStencilAttachmentDesc.finalLayout = TextureLayout::ShaderReadOnlyOptimal; //TODO: decide on the layout and transitions
+        depthStencilAttachmentDesc.finalLayout = TextureLayout::ShaderReadOnlyOptimal; //TODO: This is not optimal for a depth texture, but works. We should pick the optimal layout and then work with layout transitions.
         depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
         depthStencilAttachmentDesc.clearValues.integer.y = 0;
         rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc });
         pipelineStateData.renderPass = rendererData.depthRenderPass;
 
         pipelineStateData.blendingState = {};
+
+        //const glm::vec2 depthTextureSize = WINDOW_DIMS_FLOAT * 0.25f; //TODO: size handling
+        //pipelineStateData.viewports = { { 0.0f, 0.0f, depthTextureSize.x, depthTextureSize.y } };
+        //pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(depthTextureSize.x), static_cast<uint32>(depthTextureSize.y) } };
 
         shaderBuilder.setName("ShadowPass");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ShadowPassVert.spv");
@@ -217,6 +223,10 @@ namespace BZ {
 
         Sampler::Builder samplerBuilder;
         rendererData.defaultSampler = samplerBuilder.build();
+
+        Sampler::Builder samplerBuilder2;
+        samplerBuilder2.setAddressModeAll(AddressMode::ClampToBorder);
+        rendererData.shadowSampler = samplerBuilder2.build();
 
         //The ideal 2 Channels (RG) are not supported by stbi. 3 channels is badly supported by Vulkan implementations. So 4 channels...
         auto brdfTex = Texture2D::create("Bhazel/textures/ibl_brdf_lut.png", TextureFormat::R8G8B8A8, MipmapData::Options::DoNothing);
@@ -252,6 +262,8 @@ namespace BZ {
         rendererData.depthPassPipelineState.reset();
 
         rendererData.defaultSampler.reset();
+        rendererData.shadowSampler.reset();
+
         rendererData.materialOffsetMap.clear();
 
         rendererData.brdfLookupTexture.reset();
@@ -287,9 +299,9 @@ namespace BZ {
     void Renderer::depthPass(const Scene &scene) {
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.depthPassPipelineState);
 
-        uint32 index = 0;
+        uint32 passIndex = 0;
         for (auto &dirLight : scene.getDirectionalLights()) {
-            uint32 passOffset = index * sizeof(PassConstantBufferData);
+            uint32 passOffset = passIndex * sizeof(PassConstantBufferData);
 
             PassConstantBufferData passConstantBufferData;
             passConstantBufferData.viewMatrix = dirLight.camera.getViewMatrix();
@@ -304,10 +316,14 @@ namespace BZ {
 
             uint32 entityIndex = 0;
             for (const auto &entity : scene.getEntities()) {
-                drawEntity(entity, entityIndex++);
+                if (entity.castShadow) {
+                    drawEntity(entity, entityIndex);
+                }
+                entityIndex++;
             }
 
             Graphics::endRenderPass(rendererData.commandBufferId);
+            passIndex++;
         }
     }
 
@@ -377,6 +393,8 @@ namespace BZ {
         SceneConstantBufferData sceneConstantBufferData;
         int i = 0;
         for (const auto &dirLight : scene.getDirectionalLights()) {
+            sceneConstantBufferData.lightMatrices[i] = dirLight.camera.getProjectionMatrix() * dirLight.camera.getViewMatrix();
+
             const auto &dir = dirLight.getDirection();
             sceneConstantBufferData.dirLightDirectionsAndIntensities[i].x = dir.x;
             sceneConstantBufferData.dirLightDirectionsAndIntensities[i].y = dir.y;
@@ -466,12 +484,21 @@ namespace BZ {
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
         //TODO: better size handling
-        auto &size = Application::getInstance().getWindow().getDimensions();
+        auto size = Application::getInstance().getWindow().getDimensionsFloat();// * 0.25f;
         auto shadowMapRef = Texture2D::createRenderTarget(size.x, size.y, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
         return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, shadowMapRef->getDimensions());
     }
 
     const Ref<Sampler>& Renderer::getDefaultSampler() {
         return rendererData.defaultSampler;
+    }
+
+    const Ref<Sampler>& Renderer::getShadowSampler() {
+        return rendererData.shadowSampler;
+    }
+
+    const Ref<TextureView>& Renderer::getDummyTextureView() {
+        //Since this texture is permanentely bound, might as well be the dummy texture.
+        return rendererData.brdfLookupTexture;
     }
 }

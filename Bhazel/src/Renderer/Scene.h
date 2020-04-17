@@ -20,6 +20,7 @@ namespace BZ {
         const glm::vec3& getDirection() const { return direction; }
         void setDirection(const glm::vec3 &direction);
 
+        //TODO: does this belong here?
         Ref<Framebuffer> shadowMapFramebuffer;
         OrthographicCamera camera;
 
@@ -29,10 +30,11 @@ namespace BZ {
 
     class Entity {
     public:
-        Entity(Mesh &mesh, Transform &transform);
+        Entity(Mesh &mesh, Transform &transform, bool castShadow);
 
         Mesh mesh;
         Transform transform;
+        bool castShadow;
     };
 
     struct SkyBox {
@@ -46,7 +48,7 @@ namespace BZ {
         Scene();
         Scene(Camera &camera);
 
-        void addEntity(Mesh &mesh, Transform &transform);
+        void addEntity(Mesh &mesh, Transform &transform, bool castShadow = true);
         void addDirectionalLight(DirectionalLight &light);
         void enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],
                           const char *irradianceMapBasePath, const char *irradianceMapFileNames[6],

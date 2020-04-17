@@ -19,6 +19,7 @@ layout (set = 3, binding = 0, std140) uniform EntityConstants {
     mat4 normalMatrix;
 } uEntityConstants;
 
+
 void main() {
     gl_Position = uPassConstants.viewProjectionMatrix * uEntityConstants.modelMatrix * vec4(attrPosition, 1.0);
 }

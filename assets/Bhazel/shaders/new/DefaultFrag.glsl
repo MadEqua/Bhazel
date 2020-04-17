@@ -1,16 +1,20 @@
 #version 450 core
 #pragma shader_stage(fragment)
 
+#define MAX_DIR_LIGHTS_PER_SCENE 2
+
 layout(set = 0, binding = 0) uniform sampler2D uBrdfLookupTexture;
 
 layout (set = 2, binding = 0, std140) uniform SceneConstants {
-    vec4 dirLightDirectionsAndIntensities[2];
-    vec4 dirLightColors[2];
+    mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE];
+    vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
+    vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE];
     vec2 dirLightCountAndRadianceMapMips;
 } uSceneConstants;
 
 layout(set = 2, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
 layout(set = 2, binding = 2) uniform samplerCube uRadianceMapTexSampler;
+layout(set = 2, binding = 3) uniform sampler2D uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE];
 
 layout (set = 4, binding = 0, std140) uniform MaterialConstants {
      float parallaxOcclusionScale;
@@ -26,16 +30,45 @@ layout(location = 0) in struct {
     mat3 TBN; //TBN matrix goes from tangent space to world space
     vec2 texCoord;
 
+    //Light NDC space
+    vec3 positionsLightNDC[MAX_DIR_LIGHTS_PER_SCENE];
+
     //From here, all in tangent space
-    vec3 position;
-    vec3 L[2];
-    vec3 V;
+    //vec3 positionTan;
+    vec3 LTan[MAX_DIR_LIGHTS_PER_SCENE];
+    vec3 VTan;
 } inData;
 
 layout(location = 0) out vec4 outColor;
 
 #define PI 3.14159265359
 
+
+vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
+    const float LAYERS = 10;
+    float layerDepth = 1.0 / LAYERS;
+    float currentLayerDepth = 0.0;
+
+    vec2 P = viewDirTangentSpace.xy * uMaterialConstants.parallaxOcclusionScale; 
+    vec2 deltaTexCoords = P / LAYERS;
+
+    vec2  currentTexCoords = texCoord;
+    float currentDepthMapValue = 1.0 - texture(uHeightTexSampler, currentTexCoords).r;
+    
+    while(currentLayerDepth < currentDepthMapValue) {
+        currentTexCoords -= deltaTexCoords;
+        currentDepthMapValue = 1.0 - texture(uHeightTexSampler, currentTexCoords).r;
+        currentLayerDepth += layerDepth;
+    }
+
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+    float afterDepth  = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = (1.0 - texture(uHeightTexSampler, prevTexCoords).r) - currentLayerDepth + layerDepth;
+    
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    return prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+}
 
 vec3 fresnelSchlick(float HdotV, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - HdotV, 5.0);
@@ -108,6 +141,23 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness) {
     return (kDiffuse * diffuse + specular);// * ao; 
 }
 
+float shadowMapping(int idx, vec3 N, vec3 L) {
+    if(inData.positionsLightNDC[idx].z > 1.0)
+        return 1.0;
+
+    vec2 shadowMapTexCoord = inData.positionsLightNDC[idx].xy * 0.5 + 0.5;
+    //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
+    shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
+    shadowMapTexCoord = parallaxOcclusionMap(shadowMapTexCoord, normalize(inData.VTan));
+
+    float shadowMapDepth = texture(uShadowMapSamplers[idx], shadowMapTexCoord).r;
+    float currentDepth = inData.positionsLightNDC[idx].z;
+
+    float bias = max(0.01 * (1.0 - dot(N, L)), 0.005);  
+    float shadow = currentDepth - bias > shadowMapDepth ? 0.0 : 1.0;  
+    return shadow;
+}
+
 vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     vec3 albedo = texture(uAlbedoTexSampler, texCoord).rgb;
     float metallic = texture(uMetallicTexSampler, texCoord).r;
@@ -117,40 +167,16 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
 
     vec3 col = indirectLight(N, V, F0, albedo, roughness);
     for(int i = 0; i < int(uSceneConstants.dirLightCountAndRadianceMapMips.x); ++i) {
-        vec3 L = normalize(inData.L[i]);
-        col += directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightDirectionsAndIntensities[i].w, texCoord);
+        vec3 L = normalize(inData.LTan[i]);
+
+        float shadow = shadowMapping(i, N, L);
+        col += shadow * directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightDirectionsAndIntensities[i].w, texCoord);
     }
     return col;
 }
 
-vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
-    const float LAYERS = 10;
-    float layerDepth = 1.0 / LAYERS;
-    float currentLayerDepth = 0.0;
-
-    vec2 P = viewDirTangentSpace.xy * uMaterialConstants.parallaxOcclusionScale; 
-    vec2 deltaTexCoords = P / LAYERS;
-
-    vec2  currentTexCoords = texCoord;
-    float currentDepthMapValue = 1.0 - texture(uHeightTexSampler, currentTexCoords).r;
-    
-    while(currentLayerDepth < currentDepthMapValue) {
-        currentTexCoords -= deltaTexCoords;
-        currentDepthMapValue = 1.0 - texture(uHeightTexSampler, currentTexCoords).r;
-        currentLayerDepth += layerDepth;
-    }
-
-    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
-
-    float afterDepth  = currentDepthMapValue - currentLayerDepth;
-    float beforeDepth = (1.0 - texture(uHeightTexSampler, prevTexCoords).r) - currentLayerDepth + layerDepth;
-    
-    float weight = afterDepth / (afterDepth - beforeDepth);
-    return prevTexCoords * weight + currentTexCoords * (1.0 - weight);
-}
-
 void main() {
-    vec3 V = normalize(inData.V);
+    vec3 V = normalize(inData.VTan);
 
     vec2 texCoord = parallaxOcclusionMap(inData.texCoord, V);
     if(texCoord.x > 1.0 || texCoord.y > 1.0 || texCoord.x < 0.0 || texCoord.y < 0.0)

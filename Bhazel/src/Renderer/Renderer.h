@@ -15,6 +15,7 @@ namespace BZ {
     class DescriptorSet;
     class Framebuffer;
     class Sampler;
+    class TextureView;
 
     struct RendererStats {
         uint32 vertexCount;
@@ -38,6 +39,9 @@ namespace BZ {
         static Ref<Framebuffer> createShadowMapFramebuffer();
 
         static const Ref<Sampler>& getDefaultSampler();
+        static const Ref<Sampler>& getShadowSampler();
+
+        static const Ref<TextureView>& getDummyTextureView();
 
     private:
         friend class Application;

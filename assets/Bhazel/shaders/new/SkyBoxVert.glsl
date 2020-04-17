@@ -10,13 +10,8 @@ layout (set = 1, binding = 0, std140) uniform PassConstants {
     vec4 cameraPosition;
 } uPassConstants;
 
-layout (set = 2, binding = 0, std140) uniform SceneConstants {
-    vec4 dirLightDirectionsAndIntensities[2];
-    vec4 dirLightColors[2];
-    vec2 dirLightCountAndRadianceMapMips;
-} uSceneConstants;
-
 layout(location = 0) out vec3 outCubeMapDirection;
+
 
 void main() {
     outCubeMapDirection = attrPosition;

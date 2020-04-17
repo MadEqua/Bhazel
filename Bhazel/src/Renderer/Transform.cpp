@@ -24,7 +24,13 @@ namespace BZ {
 
     void Transform::lookAt(const glm::vec3 &point) {
         glm::vec3 z = glm::normalize(translation - point);
-        glm::vec3 y(0.0f, 1.0f, 0.0f);
+        glm::vec3 y;
+        if (z.x == 0.0f && glm::abs(z.y) == 1.0f && z.z == 0.0f) {
+            y = glm::vec3(0.0f, 0.0f, -z.y);
+        }
+        else {
+            y = glm::vec3(0.0f, 1.0f, 0.0f);
+        }
         glm::vec3 x = glm::normalize(glm::cross(y, z));
         y = glm::normalize(glm::cross(z, x));
 

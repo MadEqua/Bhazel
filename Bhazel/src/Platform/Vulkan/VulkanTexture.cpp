@@ -419,13 +419,17 @@ namespace BZ {
         imageInfo.flags = 0;
 
         if (hasData) {
-            imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             if (mipmapData.option == MipmapData::Options::Generate) {
                 imageInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             }
         }
         else {
             imageInfo.usage = format.isColor() ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        }
+
+        if (!isWrapping) {
+            imageInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
         }
 
         VmaAllocationCreateInfo allocInfo = {};
@@ -562,7 +566,7 @@ namespace BZ {
         imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
         if (hasData) {
-            imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             if (mipmapData.option == MipmapData::Options::Generate) {
                 imageInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
             }
@@ -570,6 +574,8 @@ namespace BZ {
         else {
             imageInfo.usage = format.isColor() ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         }
+
+        imageInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = memoryTypeToRequiredFlagsVk(MemoryType::GpuOnly);
@@ -634,7 +640,7 @@ namespace BZ {
         samplerInfo.addressModeW = addressModeToVk(builder.addressModeW);
         samplerInfo.anisotropyEnable = 0; 
         samplerInfo.maxAnisotropy = 16;
-        samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
         samplerInfo.unnormalizedCoordinates = builder.unnormalizedCoordinate ? VK_TRUE : VK_FALSE;
         samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
         samplerInfo.mipmapMode = sampleMipmapModeToVk(builder.mipmapFilter);
