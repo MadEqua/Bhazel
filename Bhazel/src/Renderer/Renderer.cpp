@@ -164,7 +164,7 @@ namespace BZ {
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
         depthStencilState.enableDepthWrite = true;
-        depthStencilState.depthTestFunction = TestFunction::Less;
+        depthStencilState.depthCompareFunction = CompareFunction::Less;
         pipelineStateData.depthStencilState = depthStencilState;
 
         RasterizerState rasterizerState;
@@ -208,11 +208,16 @@ namespace BZ {
         rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc });
         pipelineStateData.renderPass = rendererData.depthRenderPass;
 
+        //This can be dynamic if needed
+        pipelineStateData.rasterizerState.enableDepthBias = true;
+        pipelineStateData.rasterizerState.depthBiasConstantFactor = 5.0f;
+        pipelineStateData.rasterizerState.depthBiasSlopeFactor = 10.0f;
+
         pipelineStateData.blendingState = {};
 
-        //const glm::vec2 depthTextureSize = WINDOW_DIMS_FLOAT * 0.25f; //TODO: size handling
-        //pipelineStateData.viewports = { { 0.0f, 0.0f, depthTextureSize.x, depthTextureSize.y } };
-        //pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(depthTextureSize.x), static_cast<uint32>(depthTextureSize.y) } };
+        const glm::vec2 depthTextureSize = WINDOW_DIMS_FLOAT * 0.5f; //TODO: size handling
+        pipelineStateData.viewports = { { 0.0f, 0.0f, depthTextureSize.x, depthTextureSize.y } };
+        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(depthTextureSize.x), static_cast<uint32>(depthTextureSize.y) } };
 
         shaderBuilder.setName("ShadowPass");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ShadowPassVert.spv");
@@ -226,6 +231,7 @@ namespace BZ {
 
         Sampler::Builder samplerBuilder2;
         samplerBuilder2.setAddressModeAll(AddressMode::ClampToBorder);
+        samplerBuilder2.enableCompare(CompareFunction::Less);
         rendererData.shadowSampler = samplerBuilder2.build();
 
         //The ideal 2 Channels (RG) are not supported by stbi. 3 channels is badly supported by Vulkan implementations. So 4 channels...
@@ -484,7 +490,7 @@ namespace BZ {
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
         //TODO: better size handling
-        auto size = Application::getInstance().getWindow().getDimensionsFloat();// * 0.25f;
+        auto size = Application::getInstance().getWindow().getDimensionsFloat() * 0.5f;
         auto shadowMapRef = Texture2D::createRenderTarget(size.x, size.y, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
         return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, shadowMapRef->getDimensions());
     }

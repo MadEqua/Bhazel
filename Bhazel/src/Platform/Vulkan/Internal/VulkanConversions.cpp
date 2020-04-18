@@ -406,23 +406,23 @@ namespace BZ {
         }
     }
 
-    VkCompareOp testFunctionToVk(TestFunction function) {
+    VkCompareOp compareFunctionToVk(CompareFunction function) {
         switch(function) {
-        case TestFunction::Always:
+        case CompareFunction::Always:
             return VK_COMPARE_OP_ALWAYS;
-        case TestFunction::Never:
+        case CompareFunction::Never:
             return VK_COMPARE_OP_NEVER;
-        case TestFunction::Less:
+        case CompareFunction::Less:
             return VK_COMPARE_OP_LESS;
-        case TestFunction::LessOrEqual:
+        case CompareFunction::LessOrEqual:
             return VK_COMPARE_OP_LESS_OR_EQUAL;
-        case TestFunction::Greater:
+        case CompareFunction::Greater:
             return VK_COMPARE_OP_GREATER;
-        case TestFunction::GreaterOrEqual:
+        case CompareFunction::GreaterOrEqual:
             return VK_COMPARE_OP_GREATER_OR_EQUAL;
-        case TestFunction::Equal:
+        case CompareFunction::Equal:
             return VK_COMPARE_OP_EQUAL;
-        case TestFunction::NotEqual:
+        case CompareFunction::NotEqual:
             return VK_COMPARE_OP_EQUAL;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown TestFunction!");

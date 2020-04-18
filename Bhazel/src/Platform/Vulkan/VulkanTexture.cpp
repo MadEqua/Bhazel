@@ -629,24 +629,23 @@ namespace BZ {
 
 
     VulkanSampler::VulkanSampler(const Builder &builder) {
-
-        //TODO: some fields
         VkSamplerCreateInfo samplerInfo = {};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         samplerInfo.minFilter = filterModeToVk(builder.minFilter);
         samplerInfo.magFilter = filterModeToVk(builder.magFilter);
+        samplerInfo.mipmapMode = sampleMipmapModeToVk(builder.mipmapFilter);
         samplerInfo.addressModeU = addressModeToVk(builder.addressModeU);
         samplerInfo.addressModeV = addressModeToVk(builder.addressModeV);
         samplerInfo.addressModeW = addressModeToVk(builder.addressModeW);
-        samplerInfo.anisotropyEnable = 0; 
-        samplerInfo.maxAnisotropy = 16;
-        samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-        samplerInfo.unnormalizedCoordinates = builder.unnormalizedCoordinate ? VK_TRUE : VK_FALSE;
-        samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-        samplerInfo.mipmapMode = sampleMipmapModeToVk(builder.mipmapFilter);
         samplerInfo.mipLodBias = 0.0f;
+        samplerInfo.anisotropyEnable = VK_FALSE; //TODO
+        samplerInfo.maxAnisotropy = 16;
+        samplerInfo.compareEnable = builder.compareEnabled? VK_TRUE : VK_FALSE;
+        samplerInfo.compareOp = compareFunctionToVk(builder.compareFunction);
         samplerInfo.minLod = static_cast<float>(builder.minMipmap);
         samplerInfo.maxLod = static_cast<float>(builder.maxMipmap);
+        samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+        samplerInfo.unnormalizedCoordinates = builder.unnormalizedCoordinate ? VK_TRUE : VK_FALSE;
 
         BZ_ASSERT_VK(vkCreateSampler(getDevice(), &samplerInfo, nullptr, &nativeHandle));
     }

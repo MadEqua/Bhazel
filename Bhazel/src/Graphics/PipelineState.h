@@ -5,7 +5,7 @@
 
 namespace BZ {
 
-    enum class TestFunction {
+    enum class CompareFunction {
         Always, Never,
         Less, LessOrEqual,
         Greater, GreaterOrEqual,
@@ -85,13 +85,13 @@ namespace BZ {
         StencilOperation failOp = StencilOperation::Keep;
         StencilOperation depthFailOp = StencilOperation::Keep;
         StencilOperation passOp = StencilOperation::Keep;
-        TestFunction testFunction = TestFunction::Never;
+        CompareFunction compareFunction = CompareFunction::Never;
     };
 
     struct DepthStencilState {
         bool enableDepthTest = false;
         bool enableDepthWrite = false;
-        TestFunction depthTestFunction = TestFunction::Never;
+        CompareFunction depthCompareFunction = CompareFunction::Never;
         bool enableDepthBoundsTest = false;
         bool enableStencilTest = false;
         StencilOperationState frontStencilOperation;

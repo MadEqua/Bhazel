@@ -93,13 +93,13 @@ namespace BZ {
         //Rasterizer setup
         VkPipelineRasterizationStateCreateInfo rasterizerState = {};
         rasterizerState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterizerState.depthClampEnable = data.rasterizerState.enableDepthClamp;
-        rasterizerState.rasterizerDiscardEnable = data.rasterizerState.enableRasterizerDiscard;
+        rasterizerState.depthClampEnable = data.rasterizerState.enableDepthClamp ? VK_TRUE : VK_FALSE;
+        rasterizerState.rasterizerDiscardEnable = data.rasterizerState.enableRasterizerDiscard ? VK_TRUE : VK_FALSE;
         rasterizerState.polygonMode = polygonModeToVk(data.rasterizerState.polygonMode);
         rasterizerState.lineWidth = data.rasterizerState.lineWidth;
         rasterizerState.cullMode = cullModeToVk(data.rasterizerState.cullMode);
         rasterizerState.frontFace = data.rasterizerState.frontFaceCounterClockwise?VK_FRONT_FACE_COUNTER_CLOCKWISE:VK_FRONT_FACE_CLOCKWISE;
-        rasterizerState.depthBiasEnable = data.rasterizerState.enableDepthBias;
+        rasterizerState.depthBiasEnable = data.rasterizerState.enableDepthBias ? VK_TRUE : VK_FALSE;
         rasterizerState.depthBiasConstantFactor = data.rasterizerState.depthBiasConstantFactor;
         rasterizerState.depthBiasClamp = data.rasterizerState.depthBiasClamp;
         rasterizerState.depthBiasSlopeFactor = data.rasterizerState.depthBiasSlopeFactor;
@@ -107,27 +107,27 @@ namespace BZ {
         //Multisampling setup
         VkPipelineMultisampleStateCreateInfo multisamplingState = {};
         multisamplingState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        multisamplingState.sampleShadingEnable = data.multiSampleState.enableSampleShading;
+        multisamplingState.sampleShadingEnable = data.multiSampleState.enableSampleShading ? VK_TRUE : VK_FALSE;
         multisamplingState.rasterizationSamples = sampleCountToVk(data.multiSampleState.sampleCount);
         multisamplingState.minSampleShading = data.multiSampleState.minSampleShading;
         multisamplingState.pSampleMask = nullptr; //TODO
-        multisamplingState.alphaToCoverageEnable = data.multiSampleState.enableAlphaToCoverage;
-        multisamplingState.alphaToOneEnable = data.multiSampleState.enableAlphaToOne;
+        multisamplingState.alphaToCoverageEnable = data.multiSampleState.enableAlphaToCoverage ? VK_TRUE : VK_FALSE;
+        multisamplingState.alphaToOneEnable = data.multiSampleState.enableAlphaToOne ? VK_TRUE : VK_FALSE;
 
         //Depth Stencil setup
         VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
         depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        depthStencilState.depthTestEnable = data.depthStencilState.enableDepthTest;
-        depthStencilState.depthWriteEnable = data.depthStencilState.enableDepthWrite;
-        depthStencilState.depthCompareOp = testFunctionToVk(data.depthStencilState.depthTestFunction);
+        depthStencilState.depthTestEnable = data.depthStencilState.enableDepthTest ? VK_TRUE : VK_FALSE;
+        depthStencilState.depthWriteEnable = data.depthStencilState.enableDepthWrite ? VK_TRUE : VK_FALSE;
+        depthStencilState.depthCompareOp = compareFunctionToVk(data.depthStencilState.depthCompareFunction);
         depthStencilState.depthBoundsTestEnable = data.depthStencilState.enableDepthBoundsTest;
-        depthStencilState.stencilTestEnable = data.depthStencilState.enableStencilTest;
+        depthStencilState.stencilTestEnable = data.depthStencilState.enableStencilTest ? VK_TRUE : VK_FALSE;
 
         VkStencilOpState stencilFrontState = {};
         depthStencilState.front.failOp = stencilOperationsToVk(data.depthStencilState.frontStencilOperation.failOp);
         depthStencilState.front.passOp = stencilOperationsToVk(data.depthStencilState.frontStencilOperation.passOp);
         depthStencilState.front.depthFailOp = stencilOperationsToVk(data.depthStencilState.frontStencilOperation.depthFailOp);
-        depthStencilState.front.compareOp = testFunctionToVk(data.depthStencilState.frontStencilOperation.testFunction);
+        depthStencilState.front.compareOp = compareFunctionToVk(data.depthStencilState.frontStencilOperation.compareFunction);
         depthStencilState.front.compareMask = 0; //TODO
         depthStencilState.front.writeMask = 0; //TODO
         depthStencilState.front.reference = 0; //TODO
@@ -136,7 +136,7 @@ namespace BZ {
         depthStencilState.back.failOp = stencilOperationsToVk(data.depthStencilState.backStencilOperation.failOp);
         depthStencilState.back.passOp = stencilOperationsToVk(data.depthStencilState.backStencilOperation.passOp);
         depthStencilState.back.depthFailOp = stencilOperationsToVk(data.depthStencilState.backStencilOperation.depthFailOp);
-        depthStencilState.back.compareOp = testFunctionToVk(data.depthStencilState.backStencilOperation.testFunction);
+        depthStencilState.back.compareOp = compareFunctionToVk(data.depthStencilState.backStencilOperation.compareFunction);
         depthStencilState.back.compareMask = 0; //TODO
         depthStencilState.back.writeMask = 0; //TODO
         depthStencilState.back.reference = 0; //TODO
@@ -151,7 +151,7 @@ namespace BZ {
         idx = 0;
         for (const auto& blendState : data.blendingState.attachmentBlendingStates) {
             VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-            colorBlendAttachment.blendEnable = blendState.enableBlending;
+            colorBlendAttachment.blendEnable = blendState.enableBlending ? VK_TRUE : VK_FALSE;
             colorBlendAttachment.srcColorBlendFactor = blendingFactorToVk(blendState.srcColorBlendingFactor);
             colorBlendAttachment.dstColorBlendFactor = blendingFactorToVk(blendState.dstColorBlendingFactor);
             colorBlendAttachment.colorBlendOp = blendingOperationToVk(blendState.colorBlendingOperation);

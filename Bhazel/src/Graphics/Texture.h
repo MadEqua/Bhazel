@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PipelineState.h"
+
 
 namespace BZ {
 
@@ -146,6 +148,8 @@ namespace BZ {
 
             void setUnnormalizedCoordinates(bool enable) { unnormalizedCoordinate = enable; }
 
+            void enableCompare(CompareFunction compareFunction) { compareEnabled = true; this->compareFunction = compareFunction; }
+
             Ref<Sampler> build() const;
 
         private:
@@ -158,6 +162,8 @@ namespace BZ {
             AddressMode addressModeV = AddressMode::Repeat;
             AddressMode addressModeW = AddressMode::Repeat;
             bool unnormalizedCoordinate = false;
+            bool compareEnabled = false;
+            CompareFunction compareFunction = CompareFunction::Always;
 
             friend class VulkanSampler;
         };

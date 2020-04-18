@@ -23,7 +23,7 @@ namespace BZ {
    VkColorComponentFlags colorMaskToVk(uint8 mask);
    VkBlendFactor blendingFactorToVk(BlendingFactor factor);
    VkBlendOp blendingOperationToVk(BlendingOperation operation);
-   VkCompareOp testFunctionToVk(TestFunction function);
+   VkCompareOp compareFunctionToVk(CompareFunction function);
    VkStencilOp stencilOperationsToVk(StencilOperation operation);
    VkAttachmentLoadOp loadOperationToVk(LoadOperation operation);
    VkAttachmentStoreOp storeOperationToVk(StoreOperation operation);

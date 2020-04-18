@@ -14,7 +14,7 @@ layout (set = 2, binding = 0, std140) uniform SceneConstants {
 
 layout(set = 2, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
 layout(set = 2, binding = 2) uniform samplerCube uRadianceMapTexSampler;
-layout(set = 2, binding = 3) uniform sampler2D uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE];
+layout(set = 2, binding = 3) uniform sampler2DShadow uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE];
 
 layout (set = 4, binding = 0, std140) uniform MaterialConstants {
      float parallaxOcclusionScale;
@@ -149,13 +149,9 @@ float shadowMapping(int idx, vec3 N, vec3 L) {
     //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
     shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
     shadowMapTexCoord = parallaxOcclusionMap(shadowMapTexCoord, normalize(inData.VTan));
-
-    float shadowMapDepth = texture(uShadowMapSamplers[idx], shadowMapTexCoord).r;
-    float currentDepth = inData.positionsLightNDC[idx].z;
-
-    float bias = max(0.01 * (1.0 - dot(N, L)), 0.005);  
-    float shadow = currentDepth - bias > shadowMapDepth ? 0.0 : 1.0;  
-    return shadow;
+    
+    vec3 coordAndCompare = vec3(shadowMapTexCoord, inData.positionsLightNDC[idx].z);
+    return texture(uShadowMapSamplers[idx], coordAndCompare);
 }
 
 vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
