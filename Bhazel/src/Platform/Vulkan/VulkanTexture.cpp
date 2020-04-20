@@ -17,7 +17,7 @@ namespace BZ {
         // Check if image format supports linear blitting
         VkFormatProperties formatProperties;
         vkGetPhysicalDeviceFormatProperties(graphicsContext.getDevice().getPhysicalDevice().getNativeHandle(),
-            textureFormatToVk(texture.getFormat().format), &formatProperties);
+            textureFormatToVk(texture.getFormat()), &formatProperties);
 
         BZ_CRITICAL_ERROR(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT,
             "Linear interpolation for blitting is not supported. Cannot generate mipmaps!");
@@ -401,7 +401,7 @@ namespace BZ {
     }
 
     void VulkanTexture2D::createImage(bool hasData, MipmapData mipmapData) {
-        VkFormat vkFormat = textureFormatToVk(format.format);
+        VkFormat vkFormat = textureFormatToVk(format);
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -548,7 +548,7 @@ namespace BZ {
     }
 
     void VulkanTextureCube::createImage(bool hasData, MipmapData mipmapData) {
-        VkFormat vkFormat = textureFormatToVk(format.format);
+        VkFormat vkFormat = textureFormatToVk(format);
 
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -603,7 +603,7 @@ namespace BZ {
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         imageViewCreateInfo.image = vkImage;
         imageViewCreateInfo.viewType = viewType;
-        imageViewCreateInfo.format = textureFormatToVk(texture->getFormat().format);
+        imageViewCreateInfo.format = textureFormatToVk(texture->getFormat());
         imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;

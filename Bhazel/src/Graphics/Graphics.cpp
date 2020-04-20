@@ -43,8 +43,8 @@ namespace BZ {
         GraphicsStats stats;
         GraphicsStats visibleStats;
 
-        uint64 statsRefreshPeriodMs = 250;
-        uint64 statsTimeAcumMs;
+        uint32 statsRefreshPeriodMs = 250;
+        uint32 statsTimeAcumMs;
 
         float frameTimeHistory[FRAME_HISTORY_SIZE] = {};
         uint32 frameTimeHistoryIdx;
@@ -340,7 +340,7 @@ namespace BZ {
 
         data.stats.frameStats = frameStats;
 
-        data.statsTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint64();
+        data.statsTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
         if (data.statsTimeAcumMs >= data.statsRefreshPeriodMs) {
             data.statsTimeAcumMs = 0;
             data.visibleStats = data.stats;

@@ -119,8 +119,8 @@ namespace BZ {
         RendererStats stats;
         RendererStats visibleStats;
 
-        uint64 statsRefreshPeriodMs = 250;
-        uint64 statsRefreshTimeAcumMs;
+        uint32 statsRefreshPeriodMs = 250;
+        uint32 statsRefreshTimeAcumMs;
     } rendererData;
 
 
@@ -215,7 +215,7 @@ namespace BZ {
 
         //DepthPassPipelineState
         AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = TextureFormat::D32;
+        depthStencilAttachmentDesc.format = TextureFormatEnum::D32;
         depthStencilAttachmentDesc.samples = 1;
         depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
         depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
@@ -254,7 +254,7 @@ namespace BZ {
         rendererData.shadowSampler = samplerBuilder2.build();
 
         //The ideal 2 Channels (RG) are not supported by stbi. 3 channels is badly supported by Vulkan implementations. So 4 channels...
-        auto brdfTex = Texture2D::create("Bhazel/textures/ibl_brdf_lut.png", TextureFormat::R8G8B8A8, MipmapData::Options::DoNothing);
+        auto brdfTex = Texture2D::create("Bhazel/textures/ibl_brdf_lut.png", TextureFormatEnum::R8G8B8A8, MipmapData::Options::DoNothing);
         rendererData.brdfLookupTexture = TextureView::create(brdfTex);
 
         rendererData.globalDescriptorSet = DescriptorSet::create(rendererData.globalDescriptorSetLayout);
@@ -569,7 +569,7 @@ namespace BZ {
             ImGui::DragFloat("SlopeFactor", &rendererData.depthBiasData.z, 0.05f, 0.0f, 100.0f);
             ImGui::Separator();
 
-            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asNanoseconds();
+            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
             if (rendererData.statsRefreshTimeAcumMs >= rendererData.statsRefreshPeriodMs) {
                 rendererData.statsRefreshTimeAcumMs = 0;
                 rendererData.visibleStats = rendererData.stats;
@@ -580,6 +580,7 @@ namespace BZ {
             ImGui::Text("Draw Call Count: %d", rendererData.visibleStats.drawCallCount);
             ImGui::Text("Material Count: %d", rendererData.visibleStats.materialCount);
             ImGui::Separator();
+
             ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
@@ -606,7 +607,7 @@ namespace BZ {
     }
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
-        auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
+        auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format);
         return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, shadowMapRef->getDimensions());
     }
 

@@ -15,179 +15,179 @@
 
 namespace BZ {
 
-    TextureFormatWrapper::TextureFormatWrapper(TextureFormat format) :
-        format(format)  {
+    TextureFormat::TextureFormat(TextureFormatEnum formaEnum) :
+        formaEnum(formaEnum)  {
     }
 
-    bool TextureFormatWrapper::isColor() const {
-        switch(format) {
-        case TextureFormat::R8:
-        case TextureFormat::R8_SRGB:
-        case TextureFormat::R8G8:
-        case TextureFormat::R8G8_SRGB:
-        case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_SRGB:
-        case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_SRGB:
-        case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_SRGB:
+    bool TextureFormat::isColor() const {
+        switch(formaEnum) {
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_SRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_SRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
             return true;
-        case TextureFormat::Undefined:
-        case TextureFormat::D32:
-        case TextureFormat::D16S8:
-        case TextureFormat::D24S8:
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::D32:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
             return false;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
             return false;
         };
     }
 
-    bool TextureFormatWrapper::isDepth() const {
-        switch (format) {
-        case TextureFormat::Undefined:
-        case TextureFormat::R8:
-        case TextureFormat::R8_SRGB:
-        case TextureFormat::R8G8:
-        case TextureFormat::R8G8_SRGB:
-        case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_SRGB:
-        case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_SRGB:
-        case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_SRGB:
+    bool TextureFormat::isDepth() const {
+        switch (formaEnum) {
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_SRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_SRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
             return false;
-        case TextureFormat::D32:
-        case TextureFormat::D16S8:
-        case TextureFormat::D24S8:
+        case TextureFormatEnum::D32:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
             return true;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
             return false;
         };
     }
 
-    bool TextureFormatWrapper::isStencil() const {
-        switch (format) {
-        case TextureFormat::Undefined:
-        case TextureFormat::R8:
-        case TextureFormat::R8_SRGB:
-        case TextureFormat::R8G8:
-        case TextureFormat::R8G8_SRGB:
-        case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_SRGB:
-        case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_SRGB:
-        case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_SRGB:
-        case TextureFormat::D32:
+    bool TextureFormat::isStencil() const {
+        switch (formaEnum) {
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_SRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_SRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
+        case TextureFormatEnum::D32:
             return false;
-        case TextureFormat::D16S8:
-        case TextureFormat::D24S8:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
             return true;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
             return false;
         };
     }
 
-    bool TextureFormatWrapper::isDepthStencil() const {
-        switch(format) {
-        case TextureFormat::Undefined:
-        case TextureFormat::R8:
-        case TextureFormat::R8_SRGB:
-        case TextureFormat::R8G8:
-        case TextureFormat::R8G8_SRGB:
-        case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_SRGB:
-        case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_SRGB:
-        case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_SRGB:
-        case TextureFormat::D32:
+    bool TextureFormat::isDepthStencil() const {
+        switch(formaEnum) {
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_SRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_SRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
+        case TextureFormatEnum::D32:
             return false;
-        case TextureFormat::D16S8:
-        case TextureFormat::D24S8:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
             return true;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
             return false;
         };
     }
 
-    bool TextureFormatWrapper::isDepthOnly() const {
-        switch (format) {
-        case TextureFormat::Undefined:
-        case TextureFormat::R8:
-        case TextureFormat::R8_SRGB:
-        case TextureFormat::R8G8:
-        case TextureFormat::R8G8_SRGB:
-        case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_SRGB:
-        case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_SRGB:
-        case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_SRGB:
-        case TextureFormat::D16S8:
-        case TextureFormat::D24S8:
+    bool TextureFormat::isDepthOnly() const {
+        switch (formaEnum) {
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_SRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_SRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
             return false;
-        case TextureFormat::D32:
+        case TextureFormatEnum::D32:
             return true;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
             return false;
         };
     }
 
-    bool TextureFormatWrapper::isSRGB() const {
-        switch (format) {
-        case TextureFormat::Undefined:
-        case TextureFormat::R8:
-        case TextureFormat::R8G8:
-        case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8A8:
-        case TextureFormat::B8G8R8A8:
-        case TextureFormat::D16S8:
-        case TextureFormat::D24S8:
-        case TextureFormat::D32:
+    bool TextureFormat::isSRGB() const {
+        switch (formaEnum) {
+        case TextureFormatEnum::Undefined:
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
+        case TextureFormatEnum::D32:
             return false;
-        case TextureFormat::R8_SRGB:
-        case TextureFormat::R8G8_SRGB:
-        case TextureFormat::R8G8B8_SRGB:
-        case TextureFormat::R8G8B8A8_SRGB:
-        case TextureFormat::B8G8R8A8_SRGB:
+        case TextureFormatEnum::R8_SRGB:
+        case TextureFormatEnum::R8G8_SRGB:
+        case TextureFormatEnum::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
             return true;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
             return false;
         };
     }
 
-    int TextureFormatWrapper::getChannelCount() const {
-        switch (format) {
-        case TextureFormat::Undefined:
+    int TextureFormat::getChannelCount() const {
+        switch (formaEnum) {
+        case TextureFormatEnum::Undefined:
             return 0;
-        case TextureFormat::R8:
-        case TextureFormat::R8_SRGB:
+        case TextureFormatEnum::R8:
+        case TextureFormatEnum::R8_SRGB:
             return 1;
-        case TextureFormat::R8G8:
-        case TextureFormat::R8G8_SRGB:
+        case TextureFormatEnum::R8G8:
+        case TextureFormatEnum::R8G8_SRGB:
             return 2;
-        case TextureFormat::R8G8B8:
-        case TextureFormat::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8:
+        case TextureFormatEnum::R8G8B8_SRGB:
             return 3;
-        case TextureFormat::R8G8B8A8:
-        case TextureFormat::R8G8B8A8_SRGB:
-        case TextureFormat::B8G8R8A8:
-        case TextureFormat::B8G8R8A8_SRGB:
+        case TextureFormatEnum::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
             return 4;
-        case TextureFormat::D16S8:
-        case TextureFormat::D24S8:
+        case TextureFormatEnum::D16S8:
+        case TextureFormatEnum::D24S8:
             return 2;
-        case TextureFormat::D32:
+        case TextureFormatEnum::D32:
             return 1;
         default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
+            BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormatEnum!");
             return false;
         };
     }

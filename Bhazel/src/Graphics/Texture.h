@@ -5,7 +5,7 @@
 
 namespace BZ {
 
-    enum class TextureFormat {
+    enum class TextureFormatEnum {
         Undefined,
         R8, R8_SRGB,
         R8G8, R8G8_SRGB,
@@ -15,10 +15,8 @@ namespace BZ {
         D32, D16S8, D24S8,
     };
 
-    struct TextureFormatWrapper {
-        TextureFormatWrapper(TextureFormat format);
-
-        TextureFormat format;
+    struct TextureFormat {
+        TextureFormat(TextureFormatEnum formaEnum);
 
         //TextureFormat operator()() { return format; }
         bool isColor() const;
@@ -30,9 +28,14 @@ namespace BZ {
 
         int getChannelCount() const;
 
-        bool operator==(const TextureFormatWrapper &other) const {
-            return format == other.format;
+        bool operator==(const TextureFormat &other) const {
+            return formaEnum == other.formaEnum;
         }
+
+        TextureFormatEnum getEnum() const { return formaEnum; }
+
+    private:
+        TextureFormatEnum formaEnum;
     };
 
 
@@ -52,7 +55,7 @@ namespace BZ {
     public:
         virtual ~Texture() = default;
 
-        const TextureFormatWrapper& getFormat() const { return format; }
+        const TextureFormat& getFormat() const { return format; }
 
         const glm::ivec3& getDimensions() const { return dimensions; }
         uint32 getWidth() const { return dimensions.x; }
@@ -72,7 +75,7 @@ namespace BZ {
         static FileData loadFile(const char* path, int desiredChannels, bool flip);
         static void freeData(const FileData &fileData);
 
-        TextureFormatWrapper format;
+        TextureFormat format;
         glm::ivec3 dimensions = { 1, 1, 1 };
         uint32 layers = 1;
         uint32 mipLevels = 1;
@@ -106,8 +109,8 @@ namespace BZ {
         static Ref<TextureView> create(const Ref<Texture2D> &texture2D);
         static Ref<TextureView> create(const Ref<TextureCube> &textureCube);
 
-        //TextureFormat getFormat() const { return texture->getFormat(); } TODO: TextureView own format
-        const TextureFormatWrapper& getTextureFormat() const { return texture->getFormat(); }
+        //const TextureFormat& getFormat() const { return texture->getFormat(); } TODO: TextureView own format
+        const TextureFormat& getTextureFormat() const { return texture->getFormat(); }
         Ref<Texture> getTexture() const { return texture; }
 
     protected:

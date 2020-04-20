@@ -188,34 +188,34 @@ namespace BZ {
     }
 
     VkFormat textureFormatToVk(TextureFormat format) {
-        switch(format) {
-        case TextureFormat::R8:
+        switch(format.getEnum()) {
+        case TextureFormatEnum::R8:
             return VK_FORMAT_R8_UNORM;
-        case TextureFormat::R8_SRGB:
+        case TextureFormatEnum::R8_SRGB:
             return VK_FORMAT_R8_SRGB;
-        case TextureFormat::R8G8:
+        case TextureFormatEnum::R8G8:
             return VK_FORMAT_R8G8_UNORM;
-        case TextureFormat::R8G8_SRGB:
+        case TextureFormatEnum::R8G8_SRGB:
             return VK_FORMAT_R8G8_SRGB;
-        case TextureFormat::R8G8B8:
+        case TextureFormatEnum::R8G8B8:
             return VK_FORMAT_R8G8B8_UNORM;
-        case TextureFormat::R8G8B8_SRGB:
+        case TextureFormatEnum::R8G8B8_SRGB:
             return VK_FORMAT_R8G8B8_SRGB;
-        case TextureFormat::R8G8B8A8:
+        case TextureFormatEnum::R8G8B8A8:
             return VK_FORMAT_R8G8B8A8_UNORM;
-        case TextureFormat::R8G8B8A8_SRGB:
+        case TextureFormatEnum::R8G8B8A8_SRGB:
             return VK_FORMAT_R8G8B8A8_SRGB;
-        case TextureFormat::B8G8R8A8:
+        case TextureFormatEnum::B8G8R8A8:
             return VK_FORMAT_B8G8R8A8_UNORM;
-        case TextureFormat::B8G8R8A8_SRGB:
+        case TextureFormatEnum::B8G8R8A8_SRGB:
             return VK_FORMAT_B8G8R8A8_SRGB;
-        case TextureFormat::D32:
+        case TextureFormatEnum::D32:
             return VK_FORMAT_D32_SFLOAT;
-        case TextureFormat::D16S8:
+        case TextureFormatEnum::D16S8:
             return VK_FORMAT_D16_UNORM_S8_UINT;
-        case TextureFormat::D24S8:
+        case TextureFormatEnum::D24S8:
             return VK_FORMAT_D24_UNORM_S8_UINT;
-        case TextureFormat::Undefined:
+        case TextureFormatEnum::Undefined:
             return VK_FORMAT_UNDEFINED;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown TextureFormat!");
@@ -226,36 +226,36 @@ namespace BZ {
     TextureFormat vkFormatToTextureFormat(VkFormat format) {
         switch(format) {
         case VK_FORMAT_R8_UNORM:
-            return TextureFormat::R8;
+            return TextureFormatEnum::R8;
         case VK_FORMAT_R8_SRGB:
-            return TextureFormat::R8_SRGB;
+            return TextureFormatEnum::R8_SRGB;
         case VK_FORMAT_R8G8_UNORM:
-            return TextureFormat::R8G8;
+            return TextureFormatEnum::R8G8;
         case VK_FORMAT_R8G8_SRGB:
-            return TextureFormat::R8G8_SRGB;
+            return TextureFormatEnum::R8G8_SRGB;
         case VK_FORMAT_R8G8B8_UNORM:
-            return TextureFormat::R8G8B8;
+            return TextureFormatEnum::R8G8B8;
         case VK_FORMAT_R8G8B8_SRGB:
-            return TextureFormat::R8G8B8_SRGB;
+            return TextureFormatEnum::R8G8B8_SRGB;
         case VK_FORMAT_R8G8B8A8_UNORM:
-            return  TextureFormat::R8G8B8A8;
+            return  TextureFormatEnum::R8G8B8A8;
         case VK_FORMAT_R8G8B8A8_SRGB:
-            return TextureFormat::R8G8B8A8_SRGB;
+            return TextureFormatEnum::R8G8B8A8_SRGB;
         case VK_FORMAT_B8G8R8A8_UNORM:
-            return TextureFormat::B8G8R8A8;
+            return TextureFormatEnum::B8G8R8A8;
         case VK_FORMAT_B8G8R8A8_SRGB:
-            return TextureFormat::B8G8R8A8_SRGB;
+            return TextureFormatEnum::B8G8R8A8_SRGB;
         case VK_FORMAT_D32_SFLOAT:
-            return TextureFormat::D32;
+            return TextureFormatEnum::D32;
         case VK_FORMAT_D16_UNORM_S8_UINT:
-            return TextureFormat::D16S8;
+            return TextureFormatEnum::D16S8;
         case VK_FORMAT_D24_UNORM_S8_UINT:
-            return TextureFormat::D24S8;
+            return TextureFormatEnum::D24S8;
         case VK_FORMAT_UNDEFINED:
-            return TextureFormat::Undefined;
+            return TextureFormatEnum::Undefined;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown VkFormat!");
-            return TextureFormat::Undefined;
+            return TextureFormatEnum::Undefined;
         };
     }
 

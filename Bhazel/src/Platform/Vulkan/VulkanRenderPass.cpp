@@ -27,7 +27,7 @@ namespace BZ {
         int i = 0;
         for (const auto &attDesc : colorAttachmentDescs) {
             VkAttachmentDescription attachmentDesc = {};
-            attachmentDesc.format = textureFormatToVk(attDesc.format.format);
+            attachmentDesc.format = textureFormatToVk(attDesc.format);
             attachmentDesc.samples = sampleCountToVk(attDesc.samples);
             attachmentDesc.loadOp = forceClear ? VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR : loadOperationToVk(attDesc.loadOperatorColorAndDepth);
             attachmentDesc.storeOp = storeOperationToVk(attDesc.storeOperatorColorAndDepth);
@@ -47,7 +47,7 @@ namespace BZ {
 
         if (depthStencilAttachmentDesc) {
             VkAttachmentDescription attachmentDesc = {};
-            attachmentDesc.format = textureFormatToVk(depthStencilAttachmentDesc->format.format);
+            attachmentDesc.format = textureFormatToVk(depthStencilAttachmentDesc->format);
             attachmentDesc.samples = sampleCountToVk(depthStencilAttachmentDesc->samples);
             attachmentDesc.loadOp = forceClear ? VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR : loadOperationToVk(depthStencilAttachmentDesc->loadOperatorColorAndDepth);
             attachmentDesc.storeOp = storeOperationToVk(depthStencilAttachmentDesc->storeOperatorColorAndDepth);

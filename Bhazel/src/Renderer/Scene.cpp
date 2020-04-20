@@ -55,13 +55,13 @@ namespace BZ {
                              const char *irradianceMapBasePath, const char *irradianceMapFileNames[6],
                              const char *radianceMapBasePath, const char *radianceMapFileNames[6], uint32 radianceMipmapCount) {
         
-        auto albedoTexRef = TextureCube::create(albedoBasePath, albedoFileNames, TextureFormat::R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        auto albedoTexRef = TextureCube::create(albedoBasePath, albedoFileNames, TextureFormatEnum::R8G8B8A8_SRGB, MipmapData::Options::Generate);
         skyBox.mesh = Mesh::createUnitCubeInsides(Material(albedoTexRef));
 
-        auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames, TextureFormat::R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames, TextureFormatEnum::R8G8B8A8_SRGB, MipmapData::Options::Generate);
         skyBox.irradianceMapView = TextureView::create(irradianceMapTexRef);
 
-        auto radianceMapTexRef = TextureCube::create(radianceMapBasePath, radianceMapFileNames, TextureFormat::R8G8B8A8_SRGB, { MipmapData::Options::Load, radianceMipmapCount });
+        auto radianceMapTexRef = TextureCube::create(radianceMapBasePath, radianceMapFileNames, TextureFormatEnum::R8G8B8A8_SRGB, { MipmapData::Options::Load, radianceMipmapCount });
         skyBox.radianceMapView = TextureView::create(radianceMapTexRef);
 
         descriptorSet->setCombinedTextureSampler(skyBox.irradianceMapView, Renderer::getDefaultSampler(), 1);

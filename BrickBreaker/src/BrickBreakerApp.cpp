@@ -216,11 +216,11 @@ void MainLayer::onGraphicsContextCreated() {
     camera.getTransform().setTranslation({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
     cameraController = BZ::OrthographicCameraController(camera);
 
-    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", BZ::TextureFormat::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", BZ::TextureFormat::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", BZ::TextureFormat::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", BZ::TextureFormat::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", BZ::TextureFormat::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
 
     brickMap.init(brickTexture, brickExplosionTexture);
     paddle.init(paddleTexture);

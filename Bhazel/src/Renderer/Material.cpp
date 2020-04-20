@@ -27,29 +27,29 @@ namespace BZ {
     }
 
     Material::Material(const char *albedoTexturePath, const char *normalTexturePath, const char *metallicTexturePath, const char *roughnessTexturePath, const char *heightTexturePath) {
-        auto albedoTexture = Texture2D::create(albedoTexturePath, TextureFormat::R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        auto albedoTexture = Texture2D::create(albedoTexturePath, TextureFormatEnum::R8G8B8A8_SRGB, MipmapData::Options::Generate);
         albedoTextureView = TextureView::create(albedoTexture);
 
-        auto normalTexture = Texture2D::create(normalTexturePath, TextureFormat::R8G8B8A8, MipmapData::Options::Generate);
+        auto normalTexture = Texture2D::create(normalTexturePath, TextureFormatEnum::R8G8B8A8, MipmapData::Options::Generate);
         normalTextureView = TextureView::create(normalTexture);
 
-        auto metallicTexture = Texture2D::create(metallicTexturePath, TextureFormat::R8, MipmapData::Options::Generate);
+        auto metallicTexture = Texture2D::create(metallicTexturePath, TextureFormatEnum::R8, MipmapData::Options::Generate);
         metallicTextureView = TextureView::create(metallicTexture);
 
-        auto roughnessTexture = Texture2D::create(roughnessTexturePath, TextureFormat::R8, MipmapData::Options::Generate);
+        auto roughnessTexture = Texture2D::create(roughnessTexturePath, TextureFormatEnum::R8, MipmapData::Options::Generate);
         roughnessTextureView = TextureView::create(roughnessTexture);
 
-        auto heightTexture = Texture2D::create(heightTexturePath, TextureFormat::R8, MipmapData::Options::Generate);
+        auto heightTexture = Texture2D::create(heightTexturePath, TextureFormatEnum::R8, MipmapData::Options::Generate);
         heightTextureView = TextureView::create(heightTexture);
 
         init();
     }
 
     Material::Material(const char *albedoTexturePath, const char *normalTexturePath) {
-        auto albedoTexture = Texture2D::create(albedoTexturePath, TextureFormat::R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        auto albedoTexture = Texture2D::create(albedoTexturePath, TextureFormatEnum::R8G8B8A8_SRGB, MipmapData::Options::Generate);
         albedoTextureView = TextureView::create(albedoTexture);
 
-        auto normalTexture = Texture2D::create(normalTexturePath, TextureFormat::R8G8B8A8, MipmapData::Options::Generate);
+        auto normalTexture = Texture2D::create(normalTexturePath, TextureFormatEnum::R8G8B8A8, MipmapData::Options::Generate);
         normalTextureView = TextureView::create(normalTexture);
 
         init();

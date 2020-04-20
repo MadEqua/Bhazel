@@ -3,6 +3,8 @@
 Work in progress game engine written in C++.
 
 # Current features:
+-  Physically-based renderer with image-based indirect lighting.
+-  Shadow mapping and parallax occlusion mapping.
 -  Central event dispatching system for keyboard, mouse and window events.
 -  Input polling facilities.
 -  Layer stack system allowing the application to receive events within a certain order. Layers also have a specified update and render order.

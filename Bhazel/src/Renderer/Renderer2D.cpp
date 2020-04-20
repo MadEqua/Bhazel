@@ -114,8 +114,8 @@ namespace BZ {
         Renderer2DStats stats;
         Renderer2DStats visibleStats;
 
-        uint64 statsRefreshPeriodMs = 250;
-        uint64 statsRefreshTimeAcumMs;
+        uint32 statsRefreshPeriodMs = 250;
+        uint32 statsRefreshTimeAcumMs;
     } rendererData;
 
 
@@ -154,7 +154,7 @@ namespace BZ {
         rendererData.sampler = samplerBuilder.build();
 
         byte whiteTextureData[] = {255, 255, 255, 255};
-        rendererData.whiteTexture = Texture2D::create(whiteTextureData, 1, 1, TextureFormat::R8G8B8A8, MipmapData::Options::DoNothing);
+        rendererData.whiteTexture = Texture2D::create(whiteTextureData, 1, 1, TextureFormatEnum::R8G8B8A8, MipmapData::Options::DoNothing);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
         descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
@@ -378,7 +378,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         if (ImGui::Begin("Renderer2D")) {
-            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asNanoseconds();
+            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
             if (rendererData.statsRefreshTimeAcumMs >= rendererData.statsRefreshPeriodMs) {
                 rendererData.statsRefreshTimeAcumMs = 0;
                 rendererData.visibleStats = rendererData.stats;
@@ -389,6 +389,7 @@ namespace BZ {
             ImGui::Text("Descriptor Set Bind Count: %d", rendererData.visibleStats.descriptorSetBindCount);
             //ImGui::Text("Tint Push Count: %d", visibleFrameStats.tintPushCount);
             ImGui::Separator();
+
             ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();

@@ -34,7 +34,7 @@ namespace BZ {
     };
 
     struct AttachmentDescription {
-        TextureFormatWrapper format = TextureFormat::B8G8R8A8;
+        TextureFormat format = TextureFormatEnum::B8G8R8A8;
         uint32 samples = 1;
         LoadOperation loadOperatorColorAndDepth = LoadOperation::DontCare;
         StoreOperation storeOperatorColorAndDepth = StoreOperation::Store;

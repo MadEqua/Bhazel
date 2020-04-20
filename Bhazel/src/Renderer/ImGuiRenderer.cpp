@@ -282,7 +282,7 @@ namespace BZ {
         unsigned char *fontData;
         int texWidth, texHeight;
         io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
-        auto fontTextureRef = Texture2D::create(fontData, texWidth, texHeight, TextureFormat::R8G8B8A8, MipmapData::Options::DoNothing);
+        auto fontTextureRef = Texture2D::create(fontData, texWidth, texHeight, TextureFormatEnum::R8G8B8A8, MipmapData::Options::DoNothing);
         rendererData.fontTextureView = TextureView::create(fontTextureRef);
         rendererData.fontTextureSampler = Sampler::Builder().build();
 
