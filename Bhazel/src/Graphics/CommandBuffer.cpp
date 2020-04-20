@@ -59,6 +59,9 @@ namespace BZ {
             case CommandType::SetScissorRects:
                 setScissorRects(cmd.setScissorRectsData.firstIndex, cmd.setScissorRectsData.rects, cmd.setScissorRectsData.rectCount);
                 break;
+            case CommandType::SetDepthBias:
+                setDepthBias(cmd.setDepthBiasData.constantFactor, cmd.setDepthBiasData.clamp, cmd.setDepthBiasData.slopeFactor);
+                break;
             default:
                 BZ_ASSERT_ALWAYS("Invalid Command Type!");
                 break;

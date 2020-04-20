@@ -4,18 +4,16 @@
 #include "Renderer.h"
 #include "Graphics/RenderPass.h"
 
+#include "Collisions/AABB.h"
 
 namespace BZ {
 
-    DirectionalLight::DirectionalLight() :
-        camera(-70, 70, -70, 70, 0.1f, 200.0f) {
+    DirectionalLight::DirectionalLight() {
         shadowMapFramebuffer = Renderer::createShadowMapFramebuffer();
     }
 
     void DirectionalLight::setDirection(const glm::vec3 &direction) {
         this->direction = glm::normalize(direction);
-        camera.getTransform().setTranslation(-direction * 100.0f);
-        camera.getTransform().lookAt(glm::vec3(0.0f));
     }
 
 

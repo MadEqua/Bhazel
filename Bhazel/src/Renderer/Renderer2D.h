@@ -6,6 +6,7 @@ namespace BZ {
     class ParticleSystem2D;
     class OrthographicCamera;
     class Texture2D;
+    struct FrameStats;
 
     struct Sprite {
         glm::vec2 position;
@@ -15,12 +16,6 @@ namespace BZ {
         Ref<Texture2D> texture;
     };
 
-    struct Renderer2DStats {
-        uint32 spriteCount;
-        uint32 drawCallCount;
-        uint32 descriptorSetBindCount;
-        //uint32 tintPushCount;
-    };
 
     /*
     * Batch renderer for 2D geometry.
@@ -37,15 +32,13 @@ namespace BZ {
 
         static void drawParticleSystem2D(const ParticleSystem2D &particleSystem);
 
-        static const Renderer2DStats& getStats() { return stats; }
-
     private:
         friend class Application;
 
         static void init();
         static void destroy();
 
-        static Renderer2DStats stats;
+        static void onImGuiRender(const FrameStats &frameStats);
     };
 }
 

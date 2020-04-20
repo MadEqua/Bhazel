@@ -57,6 +57,7 @@ namespace BZ {
         //Pipeline dynamic state changes
         static void setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount);
         static void setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount);
+        static void setDepthBias(uint32 commandBufferId, float constantFactor, float clamp, float slopeFactor);
 
         static void waitForDevice();
 

@@ -38,7 +38,7 @@ namespace BZ {
             float near, far;
         };
 
-        Parameters& getParameters() { return parameters;  }
+        const Parameters& getParameters() const { return parameters;  }
         void setParameters(const Parameters &parameters) { this->parameters = parameters; computeProjectionMatrix(); }
 
     private:
@@ -59,11 +59,15 @@ namespace BZ {
             float near, far;
         };
 
-        Parameters& getParameters() { return parameters; }
+        const Parameters& getParameters() const { return parameters; }
         void setParameters(const Parameters &parameters) { this->parameters = parameters; computeProjectionMatrix(); }
+
+        //Near left bottom, near right bottom, near left top, near right top, ...
+        const glm::vec3* getFrustumCornerPoints() const;
 
     private:
         Parameters parameters;
+        mutable glm::vec3 frustumCornerPoints[8];
 
         void computeProjectionMatrix();
     };

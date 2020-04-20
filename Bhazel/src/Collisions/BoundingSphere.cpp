@@ -16,12 +16,18 @@ namespace BZ {
         radius(other.radius) {
     }
 
-    BoundingSphere::BoundingSphere(const std::vector<glm::vec3> &points) :
+    BoundingSphere::BoundingSphere(const glm::vec3 *points, uint32 count) :
         IBoundingVolume(BoundingVolumeType::Sphere) {
         empty();
 
-        for (auto &point : points)
-            enclose(point);
+        for (uint32 i = 0; i < count; ++i) {
+            center += points[i];
+        }
+        center /= static_cast<float>(count);
+
+        for (uint32 i = 0; i < count; ++i) {
+            enclose(points[i]);
+        }
     }
 
     BoundingSphere::BoundingSphere(const BoundingSphere &other, const glm::mat4 &transform) :

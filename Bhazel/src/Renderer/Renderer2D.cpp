@@ -16,10 +16,17 @@
 
 #include "Camera.h"
 
+#include <imgui.h>
+
 
 namespace BZ {
 
-    Renderer2DStats Renderer2D::stats;
+    struct Renderer2DStats {
+        uint32 spriteCount;
+        uint32 drawCallCount;
+        uint32 descriptorSetBindCount;
+        //uint32 tintPushCount;
+    };
 
     constexpr uint32 MAX_RENDERER2D_SPRITES = 100'000;
 
@@ -102,6 +109,13 @@ namespace BZ {
 
         InternalSprite sprites[MAX_RENDERER2D_SPRITES + 1];
         uint32 nextSprite;
+
+        //Stats
+        Renderer2DStats stats;
+        Renderer2DStats visibleFrameStats;
+
+        uint64 statsRefreshPeriodNs = 250000000;
+        uint64 statsRefreshTimeAcumNs;
     } rendererData;
 
 
@@ -213,7 +227,7 @@ namespace BZ {
 
         rendererData.nextSprite = 0;
 
-        memset(&stats, 0, sizeof(stats));
+        memset(&rendererData.stats, 0, sizeof(Renderer2DStats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
         Graphics::beginRenderPass(rendererData.commandBufferId);
@@ -289,7 +303,7 @@ namespace BZ {
                         const TexData& texData = rendererData.texDataStorage[currentBatchTexHash];
                         Graphics::bindDescriptorSet(rendererData.commandBufferId, texData.descriptorSet, rendererData.pipelineState, 1, nullptr, 0);
                         currentBoundTexHash = currentBatchTexHash;
-                        stats.descriptorSetBindCount++;
+                        rendererData.stats.descriptorSetBindCount++;
                     }
 
                     //if (currentActiveTint != currentBatchTint) {
@@ -305,7 +319,7 @@ namespace BZ {
                     currentBatchTexHash = spr.textureHash;
                     //currentBatchTint = spr.tintAndAlpha;
 
-                    stats.drawCallCount++;
+                    rendererData.stats.drawCallCount++;
                 }
                 spritesInBatch++;
             }
@@ -347,7 +361,7 @@ namespace BZ {
         //spr.sortKey = (spr.textureHash << 32) | (tintHash >> 32);
         spr.sortKey = spr.textureHash;
 
-        stats.spriteCount++;
+        rendererData.stats.spriteCount++;
     }
 
     void Renderer2D::drawParticleSystem2D(const ParticleSystem2D & particleSystem) {
@@ -356,5 +370,23 @@ namespace BZ {
                 drawQuad(particle.position, particle.dimensions, particle.rotationDeg, emitter.texture, particle.tintAndAlpha);
             }
         }
+    }
+
+    void Renderer2D::onImGuiRender(const FrameStats &frameStats) {
+        if (ImGui::Begin("Renderer2D")) {
+            rendererData.statsRefreshTimeAcumNs += frameStats.lastFrameTime.asNanoseconds();
+            if (rendererData.statsRefreshTimeAcumNs >= rendererData.statsRefreshPeriodNs) {
+                rendererData.statsRefreshTimeAcumNs = 0;
+                rendererData.visibleFrameStats = rendererData.stats;
+            }
+            ImGui::Text("Stats:");
+            ImGui::Text("Sprite Count: %d", rendererData.visibleFrameStats.spriteCount);
+            ImGui::Text("Draw Call Count: %d", rendererData.visibleFrameStats.drawCallCount);
+            ImGui::Text("Descriptor Set Bind Count: %d", rendererData.visibleFrameStats.descriptorSetBindCount);
+            //ImGui::Text("Tint Push Count: %d", visibleFrameStats.tintPushCount);
+            ImGui::Separator();
+            ImGui::SliderInt("Refresh period ns", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodNs), 0, 1000000000);
+        }
+        ImGui::End();
     }
 }

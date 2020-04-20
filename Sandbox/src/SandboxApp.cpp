@@ -89,7 +89,7 @@ void Layer3D::onGraphicsContextCreated() {
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     orthoCamera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
 
-    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 200.0f);
+    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 150.0f);
     camera.getTransform().setTranslation({ 0.0f, 50.0f, 50.0f });
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
@@ -111,7 +111,7 @@ void Layer3D::onGraphicsContextCreated() {
     scenes[0].addEntity(hydrantMesh, hydrantTransform);
     scenes[1].addEntity(hydrantMesh, hydrantTransform);
     scenes[2].addEntity(hydrantMesh, hydrantTransform);
-
+    
     BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
                                 "Sandbox/meshes/wrench/normal.png",
                                 "Sandbox/meshes/wrench/metallic.jpg",
@@ -165,13 +165,13 @@ void Layer3D::onGraphicsContextCreated() {
     scenes[1].addDirectionalLight(dirLight);
     scenes[2].addDirectionalLight(dirLight);
 
-    BZ::DirectionalLight dirLight2;
-    dirLight2.setDirection({ 0.0f, -1.0f, -0.5f });
-    dirLight2.color = { 1.0f, 1.0f, 1.0f };
-    dirLight2.intensity = 1.0f;
-    scenes[0].addDirectionalLight(dirLight2);
-    scenes[1].addDirectionalLight(dirLight2);
-    scenes[2].addDirectionalLight(dirLight2);
+    //BZ::DirectionalLight dirLight2;
+    //dirLight2.setDirection({ 0.0f, -1.0f, -0.5f });
+    //dirLight2.color = { 1.0f, 1.0f, 1.0f };
+    //dirLight2.intensity = 1.0f;
+    //scenes[0].addDirectionalLight(dirLight2);
+    //scenes[1].addDirectionalLight(dirLight2);
+    //scenes[2].addDirectionalLight(dirLight2);
 
     const char* cubeFileNames[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga", 
                                      "output_skybox_posy.tga", "output_skybox_negy.tga",
@@ -181,13 +181,13 @@ void Layer3D::onGraphicsContextCreated() {
                            "Sandbox/textures/lobbyIrradiance/", cubeFileNames,
                            "Sandbox/textures/lobbyRadiance/", cubeFileNames, 5);
 
-    scenes[1].enableSkyBox("Sandbox/textures/theater/", cubeFileNames,
-                           "Sandbox/textures/theaterIrradiance/", cubeFileNames,
-                           "Sandbox/textures/theaterRadiance/", cubeFileNames, 5);
-    
-    scenes[2].enableSkyBox("Sandbox/textures/sky/", cubeFileNames,
-                           "Sandbox/textures/skyIrradiance/", cubeFileNames,
-                           "Sandbox/textures/skyRadiance/", cubeFileNames, 5);
+    //scenes[1].enableSkyBox("Sandbox/textures/theater/", cubeFileNames,
+    //                       "Sandbox/textures/theaterIrradiance/", cubeFileNames,
+    //                       "Sandbox/textures/theaterRadiance/", cubeFileNames, 5);
+    //
+    //scenes[2].enableSkyBox("Sandbox/textures/sky/", cubeFileNames,
+    //                       "Sandbox/textures/skyIrradiance/", cubeFileNames,
+    //                       "Sandbox/textures/skyRadiance/", cubeFileNames, 5);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
@@ -204,17 +204,17 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     //BZ::Renderer2D::drawQuad(glm::vec2(100.0f, 0.0f), glm::vec2(200.0f, 200.0f), 0.0f, glm::vec4(1, 1, 1, 1));
 
     const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
-    const glm::vec2 SIZE = WINDOW_DIMS * 0.25f;
+    const glm::vec2 SIZE = { 256, 256 };
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     glm::vec2 pos = -WINDOW_HALF_DIMS + SIZE * 0.5f;
     BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
         std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[0].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
         glm::vec4(1, 1, 1, 1));
 
-    pos.x += SIZE.x + 5.0f;
-    BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
-        std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[1].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
-        glm::vec4(1, 1, 1, 1));
+    //pos.x += SIZE.x + 5.0f;
+    //BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
+    //    std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[1].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
+    //    glm::vec4(1, 1, 1, 1));
 
     BZ::Renderer2D::end();
 }

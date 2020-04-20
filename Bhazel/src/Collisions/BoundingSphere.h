@@ -11,7 +11,7 @@ namespace BZ {
         BoundingSphere(const BoundingSphere &other);
 
         //Will enclose all points.
-        explicit BoundingSphere(const std::vector<glm::vec3> &points);
+        explicit BoundingSphere(const glm::vec3 *points, uint32 count);
 
         //Will enclose the other transformed BoundingSphere.
         BoundingSphere(const BoundingSphere &other, const glm::mat4 &transform);

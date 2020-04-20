@@ -22,7 +22,6 @@ namespace BZ {
 
         //TODO: does this belong here?
         Ref<Framebuffer> shadowMapFramebuffer;
-        OrthographicCamera camera;
 
     private:
         glm::vec3 direction;

@@ -146,9 +146,9 @@ float shadowMapping(int idx, vec3 N, vec3 L) {
         return 1.0;
 
     vec2 shadowMapTexCoord = inData.positionsLightNDC[idx].xy * 0.5 + 0.5;
+    //shadowMapTexCoord = parallaxOcclusionMap(shadowMapTexCoord, normalize(inData.VTan));
     //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
     shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
-    shadowMapTexCoord = parallaxOcclusionMap(shadowMapTexCoord, normalize(inData.VTan));
     
     vec3 coordAndCompare = vec3(shadowMapTexCoord, inData.positionsLightNDC[idx].z);
     return texture(uShadowMapSamplers[idx], coordAndCompare);

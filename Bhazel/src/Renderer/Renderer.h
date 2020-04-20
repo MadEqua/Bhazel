@@ -16,19 +16,12 @@ namespace BZ {
     class Framebuffer;
     class Sampler;
     class TextureView;
+    struct FrameStats;
 
-    struct RendererStats {
-        uint32 vertexCount;
-        uint32 triangleCount;
-        uint32 drawCallCount;
-        uint32 materialCount;
-    };
 
     class Renderer {
     public:
         static void drawScene(const Scene &scene);
-
-        static const RendererStats& getStats() { return stats; }
 
         static const DataLayout& getVertexDataLayout();
         static const DataLayout& getIndexDataLayout();
@@ -55,12 +48,14 @@ namespace BZ {
         static void drawEntity(const Entity &entity, uint32 index);
         static void drawMesh(const Mesh &mesh, const Transform &transform);
 
-        static void handleScene(const Scene &scene);
-        static void handleEntities(const Scene &scene);
-        static void handleMaterials(const Scene &scene);
-        static void handleMaterial(const Material &material);
+        static void fillConstants(const Scene &scene);
+        static void fillPasses(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices);
+        static void fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices);
+        static void fillEntities(const Scene &scene);
+        static void fillMaterials(const Scene &scene);
+        static void fillMaterial(const Material &material);
 
-        static RendererStats stats;
+        static void onImGuiRender(const FrameStats &frameStats);
     };
 }
 

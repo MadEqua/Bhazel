@@ -24,7 +24,8 @@ namespace BZ {
         Draw,
         DrawIndexed,            //Requires Dynamic State
         SetViewports,           //Requires Dynamic State
-        SetScissorRects,
+        SetScissorRects,        //Requires Dynamic State
+        SetDepthBias,           //Requires Dynamic State
     };
 
     struct Command {
@@ -109,6 +110,12 @@ namespace BZ {
                 ScissorRect rects[MAX_VIEWPORTS];
                 uint32 rectCount;
             } setScissorRectsData;
+
+            struct SetDepthBiasData {
+                float constantFactor;
+                float clamp;
+                float slopeFactor;
+            } setDepthBiasData;
         };
     };
 
@@ -158,5 +165,6 @@ namespace BZ {
         //Pipeline dynamic state changes
         virtual void setViewports(uint32 firstIndex, const Command::Viewport viewports[], uint32 viewportCount) = 0;
         virtual void setScissorRects(uint32 firstIndex, const Command::ScissorRect rects[], uint32 rectCount) = 0;
+        virtual void setDepthBias(float constantFactor, float clamp, float slopeFactor) = 0;
     };
 }

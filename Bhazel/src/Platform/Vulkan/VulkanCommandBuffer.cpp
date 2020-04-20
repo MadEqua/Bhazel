@@ -180,4 +180,8 @@ namespace BZ {
         }
         vkCmdSetScissor(nativeHandle, firstIndex, rectCount, vkRects);
     }
+
+    void VulkanCommandBuffer::setDepthBias(float constantFactor, float clamp, float slopeFactor) {
+        vkCmdSetDepthBias(nativeHandle, constantFactor, clamp, slopeFactor);
+    }
 }

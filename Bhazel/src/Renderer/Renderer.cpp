@@ -13,12 +13,15 @@
 
 #include "Core/Application.h"
 #include "Core/Window.h"
+#include "Core/Utils.h"
 
 #include "Camera.h"
 #include "Transform.h"
 #include "Mesh.h"
 #include "Material.h"
 #include "Scene.h"
+
+#include <imgui.h>
 
 
 namespace BZ {
@@ -56,6 +59,8 @@ namespace BZ {
     constexpr uint32 ENTITY_CONSTANT_BUFFER_OFFSET = SCENE_CONSTANT_BUFFER_OFFSET + SCENE_CONSTANT_BUFFER_SIZE;
     constexpr uint32 MATERIAL_CONSTANT_BUFFER_OFFSET = ENTITY_CONSTANT_BUFFER_OFFSET + ENTITY_CONSTANT_BUFFER_SIZE;
 
+    constexpr uint32 SHADOW_MAP_SIZE = 1024;
+
     static DataLayout vertexDataLayout = {
         { DataType::Float32, DataElements::Vec3, "POSITION" },
         { DataType::Float32, DataElements::Vec3, "NORMAL" },
@@ -68,7 +73,12 @@ namespace BZ {
         { DataType::Uint32, DataElements::Scalar, "" }
     };
 
-    RendererStats Renderer::stats;
+    struct RendererStats {
+        uint32 vertexCount;
+        uint32 triangleCount;
+        uint32 drawCallCount;
+        uint32 materialCount;
+    };
 
     static struct RendererData {
         uint32 commandBufferId;
@@ -101,6 +111,16 @@ namespace BZ {
         std::unordered_map<Material, uint32> materialOffsetMap;
 
         Ref<RenderPass> depthRenderPass;
+
+        //ConstantFactor, clamp and slopeFactor
+        glm::vec3 depthBiasData = {1.0f, 0.0f, 10.0f};
+
+        //Stats
+        RendererStats stats;
+        RendererStats visibleFrameStats;
+
+        uint64 statsRefreshPeriodNs = 250000000;
+        uint64 statsRefreshTimeAcumNs;
     } rendererData;
 
 
@@ -208,16 +228,15 @@ namespace BZ {
         rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc });
         pipelineStateData.renderPass = rendererData.depthRenderPass;
 
-        //This can be dynamic if needed
         pipelineStateData.rasterizerState.enableDepthBias = true;
-        pipelineStateData.rasterizerState.depthBiasConstantFactor = 5.0f;
-        pipelineStateData.rasterizerState.depthBiasSlopeFactor = 10.0f;
+        //pipelineStateData.rasterizerState.depthBiasConstantFactor = 50.0f;
+        //pipelineStateData.rasterizerState.depthBiasSlopeFactor = 0.0f;
+        pipelineStateData.dynamicStates = { DynamicState::DepthBias };
 
         pipelineStateData.blendingState = {};
 
-        const glm::vec2 depthTextureSize = WINDOW_DIMS_FLOAT * 0.5f; //TODO: size handling
-        pipelineStateData.viewports = { { 0.0f, 0.0f, depthTextureSize.x, depthTextureSize.y } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(depthTextureSize.x), static_cast<uint32>(depthTextureSize.y) } };
+        pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
+        pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
 
         shaderBuilder.setName("ShadowPass");
         shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ShadowPassVert.spv");
@@ -280,12 +299,9 @@ namespace BZ {
     void Renderer::drawScene(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
-        memset(&stats, 0, sizeof(stats));
+        memset(&rendererData.stats, 0, sizeof(RendererStats));
  
-        //Fill respective ConstantBuffer data.
-        handleScene(scene);
-        handleMaterials(scene);
-        handleEntities(scene);
+        fillConstants(scene);
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
 
@@ -304,17 +320,11 @@ namespace BZ {
 
     void Renderer::depthPass(const Scene &scene) {
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.depthPassPipelineState);
+        Graphics::setDepthBias(rendererData.commandBufferId, rendererData.depthBiasData.x, rendererData.depthBiasData.y, rendererData.depthBiasData.z);
 
         uint32 passIndex = 0;
         for (auto &dirLight : scene.getDirectionalLights()) {
             uint32 passOffset = passIndex * sizeof(PassConstantBufferData);
-
-            PassConstantBufferData passConstantBufferData;
-            passConstantBufferData.viewMatrix = dirLight.camera.getViewMatrix();
-            passConstantBufferData.projectionMatrix = dirLight.camera.getProjectionMatrix();
-            passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
-            memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(glm::mat4) * 3);
-
             Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
                 rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &passOffset, 1);
 
@@ -334,18 +344,7 @@ namespace BZ {
     }
 
     void Renderer::colorPass(const Scene &scene) {
-        const Camera &camera = scene.getCamera();
-        PassConstantBufferData passConstantBufferData;
-        passConstantBufferData.viewMatrix = camera.getViewMatrix();
-        passConstantBufferData.projectionMatrix = camera.getProjectionMatrix();
-        passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
-        const glm::vec3 &cameraPosition = camera.getTransform().getTranslation();
-        passConstantBufferData.cameraPosition.x = cameraPosition.x;
-        passConstantBufferData.cameraPosition.y = cameraPosition.y;
-        passConstantBufferData.cameraPosition.z = cameraPosition.z;
-
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
-        memcpy(rendererData.passConstantBufferPtr + colorPassOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
 
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
@@ -390,16 +389,90 @@ namespace BZ {
         else
             Graphics::draw(rendererData.commandBufferId, mesh.getVertexCount(), 1, 0, 0);
 
-        stats.drawCallCount++;
-        stats.vertexCount += mesh.getVertexCount();
-        stats.triangleCount += (mesh.hasIndices() ? mesh.getIndexCount() : mesh.getVertexCount()) / 3;
+        rendererData.stats.drawCallCount++;
+        rendererData.stats.vertexCount += mesh.getVertexCount();
+        rendererData.stats.triangleCount += (mesh.hasIndices() ? mesh.getIndexCount() : mesh.getVertexCount()) / 3;
     }
 
-    void Renderer::handleScene(const Scene &scene) {
+    void Renderer::fillConstants(const Scene &scene) {
+        //Matrices related to the depth passes for the lights.
+        glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE];
+        glm::mat4 lightProjectionMatrices[MAX_DIR_LIGHTS_PER_SCENE];
+
+        const PerspectiveCamera &camera = static_cast<const PerspectiveCamera&>(scene.getCamera());
+        const PerspectiveCamera::Parameters &cameraParams = camera.getParameters();
+
+        //Compute Sphere that enconpasses the frustum, in camera space.
+        //The sphere is useful to have the shadow frustum to be always the same size regardless of the camera orientation, leading to no shadow flickering.
+        float t = glm::tan(glm::radians(cameraParams.aspectRatio * cameraParams.fovy * 0.5f));
+        glm::vec3 n(t * cameraParams.near, 0.0f, -cameraParams.near);
+        glm::vec3 f(t * cameraParams.far, 0.0f, -cameraParams.far);
+
+        //Solve the equation |f-center|=|n-center|, knowing that the sphere center is (0, 0, centerZ).
+        float centerZ = ((f.x * f.x + f.z * f.z) - (n.x * n.x + n.z * n.z)) / (2.0f * f.z - 2.0f * n.z);
+        float r = glm::distance(glm::vec3(0.0f, 0.0f, centerZ), n);
+
+        glm::vec3 sphereCenterWorld = camera.getTransform().getLocalToParentMatrix() * glm::vec4(0.0f, 0.0f, centerZ, 1.0f);
+
+        //Units of view space per shadow map texel (and world space, assuming no scaling between the two spaces).
+        const float Q = (r * 2.0f) / SHADOW_MAP_SIZE;
+
+        uint32 lightIndex = 0;
+        for (auto &dirLight : scene.getDirectionalLights()) {  
+            Transform lightTransform = {};
+
+            lightTransform.setTranslation(sphereCenterWorld - dirLight.getDirection() * r);
+            lightTransform.lookAt(sphereCenterWorld);
+
+            lightMatrices[lightIndex] = lightTransform.getParentToLocalMatrix();
+
+            //Apply the quantization to translation to stabilize shadows when camera moves. We only the light camera in texel sized snaps.
+            lightMatrices[lightIndex][3].x = glm::floor(lightMatrices[lightIndex][3].x / Q) * Q;
+            lightMatrices[lightIndex][3].y = glm::floor(lightMatrices[lightIndex][3].y / Q) * Q;
+            lightMatrices[lightIndex][3].z = glm::floor(lightMatrices[lightIndex][3].z / Q) * Q;
+
+            lightProjectionMatrices[lightIndex] = Utils::ortho(-r, r, -r, r, 0.1f, r * 2.0f);
+            lightIndex++;
+        }
+
+        fillPasses(scene, lightMatrices, lightProjectionMatrices);
+        fillScene(scene, lightMatrices, lightProjectionMatrices);
+        fillMaterials(scene);
+        fillEntities(scene);
+    }
+
+    void Renderer::fillPasses(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices) {
+        //Depth Pass data
+        uint32 passIndex = 0;
+        for (auto &dirLight : scene.getDirectionalLights()) {
+            uint32 passOffset = passIndex * sizeof(PassConstantBufferData);
+            PassConstantBufferData passConstantBufferData;
+            passConstantBufferData.viewMatrix = lightMatrices[passIndex];
+            passConstantBufferData.projectionMatrix = lightProjectionMatrices[passIndex];
+            passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
+            memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(glm::mat4) * 3);
+            passIndex++;
+        }
+
+        //Color pass data
+        PassConstantBufferData passConstantBufferData;
+        passConstantBufferData.viewMatrix = scene.getCamera().getViewMatrix();
+        passConstantBufferData.projectionMatrix = scene.getCamera().getProjectionMatrix();
+        passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
+        const glm::vec3 &cameraPosition = scene.getCamera().getTransform().getTranslation();
+        passConstantBufferData.cameraPosition.x = cameraPosition.x;
+        passConstantBufferData.cameraPosition.y = cameraPosition.y;
+        passConstantBufferData.cameraPosition.z = cameraPosition.z;
+
+        uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
+        memcpy(rendererData.passConstantBufferPtr + colorPassOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
+    }
+
+    void Renderer::fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices) {
         SceneConstantBufferData sceneConstantBufferData;
         int i = 0;
         for (const auto &dirLight : scene.getDirectionalLights()) {
-            sceneConstantBufferData.lightMatrices[i] = dirLight.camera.getProjectionMatrix() * dirLight.camera.getViewMatrix();
+            sceneConstantBufferData.lightMatrices[i] = lightProjectionMatrices[i] * lightMatrices[i];
 
             const auto &dir = dirLight.getDirection();
             sceneConstantBufferData.dirLightDirectionsAndIntensities[i].x = dir.x;
@@ -416,7 +489,7 @@ namespace BZ {
         memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
     }
 
-    void Renderer::handleEntities(const Scene &scene) {
+    void Renderer::fillEntities(const Scene &scene) {
         uint32 entityIndex = 0;
         for (const auto &entity : scene.getEntities()) {
             EntityConstantBufferData entityConstantBufferData;
@@ -431,23 +504,23 @@ namespace BZ {
     }
 
     //TODO: There's no need to call this every frame, like it's being done now.
-    void Renderer::handleMaterials(const Scene &scene) {
+    void Renderer::fillMaterials(const Scene &scene) {
         rendererData.materialOffsetMap.clear();
 
         if (scene.hasSkyBox()) {
-            handleMaterial(scene.getSkyBox().mesh.getMaterial());
+            fillMaterial(scene.getSkyBox().mesh.getMaterial());
         }
 
         for (const auto &entity : scene.getEntities()) {
-            handleMaterial(entity.mesh.getMaterial());
+            fillMaterial(entity.mesh.getMaterial());
         }
 
         uint32 materialCount = static_cast<uint32>(rendererData.materialOffsetMap.size());
-        stats.materialCount = materialCount;
+        rendererData.stats.materialCount = materialCount;
         BZ_ASSERT_CORE(materialCount <= MAX_MATERIALS_PER_SCENE, "Reached the max number of Materials!");
     }
 
-    void Renderer::handleMaterial(const Material &material) {
+    void Renderer::fillMaterial(const Material &material) {
         BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/initialized Material!");
 
         const auto storedMaterialIt = rendererData.materialOffsetMap.find(material);
@@ -466,6 +539,30 @@ namespace BZ {
         else {
             materialOffset = storedMaterialIt->second;
         }
+    }
+
+    void Renderer::onImGuiRender(const FrameStats &frameStats) {
+        if (ImGui::Begin("Renderer")) {
+            ImGui::Text("Depth Bias Data");
+            ImGui::DragFloat("ConstantFactor", &rendererData.depthBiasData.x, 0.05f, 0.0f, 10.0f);
+            ImGui::DragFloat("Clamp", &rendererData.depthBiasData.y, 0.05f, -10.0f, 10.0f);
+            ImGui::DragFloat("SlopeFactor", &rendererData.depthBiasData.z, 0.05f, 0.0f, 100.0f);
+            ImGui::Separator();
+
+            rendererData.statsRefreshTimeAcumNs += frameStats.lastFrameTime.asNanoseconds();
+            if (rendererData.statsRefreshTimeAcumNs >= rendererData.statsRefreshPeriodNs) {
+                rendererData.statsRefreshTimeAcumNs = 0;
+                rendererData.visibleFrameStats = rendererData.stats;
+            }
+            ImGui::Text("Stats:");
+            ImGui::Text("Vertex Count: %d", rendererData.visibleFrameStats.vertexCount);
+            ImGui::Text("Triangle Count: %d", rendererData.visibleFrameStats.triangleCount);
+            ImGui::Text("Draw Calls: %d", rendererData.visibleFrameStats.drawCallCount);
+            ImGui::Text("Material Count: %d", rendererData.visibleFrameStats.materialCount);
+            ImGui::Separator();
+            ImGui::SliderInt("Refresh period ns", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodNs), 0, 1000000000);
+        }
+        ImGui::End();
     }
 
     const DataLayout& Renderer::getVertexDataLayout() {
@@ -489,9 +586,7 @@ namespace BZ {
     }
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
-        //TODO: better size handling
-        auto size = Application::getInstance().getWindow().getDimensionsFloat() * 0.5f;
-        auto shadowMapRef = Texture2D::createRenderTarget(size.x, size.y, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
+        auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format.format);
         return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, shadowMapRef->getDimensions());
     }
 

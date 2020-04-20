@@ -259,6 +259,18 @@ namespace BZ {
         command.setScissorRectsData.rectCount = rectCount;
     }
 
+    void Graphics::setDepthBias(uint32 commandBufferId, float constantFactor, float clamp, float slopeFactor) {
+        BZ_PROFILE_FUNCTION();
+
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = data.commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::SetDepthBias);
+        command.setDepthBiasData.constantFactor = constantFactor;
+        command.setDepthBiasData.clamp = clamp;
+        command.setDepthBiasData.slopeFactor = slopeFactor;
+    }
+
     void Graphics::waitForDevice() {
         BZ_PROFILE_FUNCTION();
 

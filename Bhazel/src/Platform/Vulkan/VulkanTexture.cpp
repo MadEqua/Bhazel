@@ -615,9 +615,9 @@ namespace BZ {
         else if (texture->getFormat().isDepth()) {
             imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         }
-        if (texture->getFormat().isStencil()) {
-            imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-        }
+        //if (texture->getFormat().isStencil()) {
+        //    imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        //}
 
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
         imageViewCreateInfo.subresourceRange.levelCount = texture->getMipLevels();
