@@ -46,7 +46,7 @@ namespace BZ {
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
-        float parallaxOcclusionScale;
+        glm::vec4 uvScaleAndParallaxOcclusionScale;
     };
 
     constexpr uint32 PASS_CONSTANT_BUFFER_SIZE = sizeof(PassConstantBufferData) * MAX_PASSES_PER_FRAME;
@@ -546,9 +546,11 @@ namespace BZ {
 
         //If it's the first time this Material is used on a Scene set the correspondent data.
         if (storedMaterialIt == rendererData.materialOffsetMap.end()) {
+            const auto &uvScale = material.getUvScale();
             MaterialConstantBufferData materialConstantBufferData;
-            materialConstantBufferData.parallaxOcclusionScale = material.getParallaxOcclusionScale();
-
+            materialConstantBufferData.uvScaleAndParallaxOcclusionScale.x = uvScale.x;
+            materialConstantBufferData.uvScaleAndParallaxOcclusionScale.y = uvScale.y;
+            materialConstantBufferData.uvScaleAndParallaxOcclusionScale.z = material.getParallaxOcclusionScale();
             materialOffset = static_cast<uint32>(rendererData.materialOffsetMap.size()) * sizeof(EntityConstantBufferData);
             memcpy(rendererData.materialConstantBufferPtr + materialOffset, &materialConstantBufferData, sizeof(MaterialConstantBufferData));
 

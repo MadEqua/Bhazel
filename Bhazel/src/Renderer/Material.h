@@ -30,6 +30,9 @@ namespace BZ {
         float getParallaxOcclusionScale() const { return parallaxOcclusionScale; }
         void setParallaxOcclusionScale(float scale) { parallaxOcclusionScale = scale; }
 
+        const glm::vec2& getUvScale() const { return uvScale; }
+        void setUvScale(const glm::vec2& mult) { uvScale = mult; }
+
         bool operator==(const Material &other) const;
 
     private:
@@ -42,6 +45,7 @@ namespace BZ {
         Ref<DescriptorSet> descriptorSet;
 
         float parallaxOcclusionScale = 0.0f;
+        glm::vec2 uvScale = { 1.0f, 1.0f };
 
         void init();
     };

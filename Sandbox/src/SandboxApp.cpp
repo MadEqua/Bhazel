@@ -89,7 +89,7 @@ void Layer3D::onGraphicsContextCreated() {
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     orthoCamera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
 
-    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 150.0f);
+    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 400.0f);
     camera.getTransform().setTranslation({ 0.0f, 50.0f, 50.0f });
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
@@ -107,7 +107,7 @@ void Layer3D::onGraphicsContextCreated() {
     BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
     BZ::Transform hydrantTransform;
     hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
-    hydrantTransform.setTranslation(0.0f, -25.0f, 0.0f);
+    hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f);
     scenes[0].addEntity(hydrantMesh, hydrantTransform);
     scenes[1].addEntity(hydrantMesh, hydrantTransform);
     scenes[2].addEntity(hydrantMesh, hydrantTransform);
@@ -141,18 +141,30 @@ void Layer3D::onGraphicsContextCreated() {
     scenes[1].addEntity(gunMesh, gunTransform);
     scenes[2].addEntity(gunMesh, gunTransform);
 
-    BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
-        "Sandbox/textures/steppingstones/steppingstones1_normal.png",
-        "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
-        "Sandbox/textures/steppingstones/steppingstones1_roughness.png",
-        "Sandbox/textures/steppingstones/steppingstones1_height.png");
+    //BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
+    //    "Sandbox/textures/steppingstones/steppingstones1_normal.png",
+    //    "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
+    //    "Sandbox/textures/steppingstones/steppingstones1_roughness.png",
+    //    "Sandbox/textures/steppingstones/steppingstones1_height.png");
+    //
+    BZ::Material groundMaterial("Sandbox/textures/octostone/octostoneAlbedo.png",
+                                "Sandbox/textures/octostone/octostoneNormalc.png",
+                                "Sandbox/textures/octostone/octostoneMetallic.png",
+                                "Sandbox/textures/octostone/octostoneRoughness2.png",
+                                "Sandbox/textures/octostone/octostoneHeightc.png");
+    //BZ::Material groundMaterial("Sandbox/textures/hexstones/hex-stones1-albedo.png",
+    //                            "Sandbox/textures/hexstones/hex-stones1-normal-ogl.png",
+    //                            "Sandbox/textures/hexstones/hex-stones1-metallic.png",
+    //                            "Sandbox/textures/hexstones/hex-stones1-roughness.png",
+    //                            "Sandbox/textures/hexstones/hex-stones1-height.png");
     groundMaterial.setParallaxOcclusionScale(0.15f);
+    groundMaterial.setUvScale({ 10.0f, 10.0f });
     //BZ::Mesh groundMesh = BZ::Mesh::createUnitCube(groundMaterial);
     BZ::Mesh groundMesh = BZ::Mesh::createHorizontalPlane(groundMaterial);
     //BZ::Mesh sphere("Sandbox/meshes/sphere.obj", groundMaterial);
     BZ::Transform groundTransform;
     groundTransform.setTranslation(0.0f, -27.0f, 0.0f);
-    groundTransform.setScale(50.0f, 50.0f, 50.0f);
+    groundTransform.setScale(300.0f, 300.0f, 300.0f);
     scenes[0].addEntity(groundMesh, groundTransform, false);
     scenes[1].addEntity(groundMesh, groundTransform, false);
     scenes[2].addEntity(groundMesh, groundTransform, false);
@@ -181,13 +193,13 @@ void Layer3D::onGraphicsContextCreated() {
                            "Sandbox/textures/lobbyIrradiance/", cubeFileNames,
                            "Sandbox/textures/lobbyRadiance/", cubeFileNames, 5);
 
-    //scenes[1].enableSkyBox("Sandbox/textures/theater/", cubeFileNames,
-    //                       "Sandbox/textures/theaterIrradiance/", cubeFileNames,
-    //                       "Sandbox/textures/theaterRadiance/", cubeFileNames, 5);
-    //
-    //scenes[2].enableSkyBox("Sandbox/textures/sky/", cubeFileNames,
-    //                       "Sandbox/textures/skyIrradiance/", cubeFileNames,
-    //                       "Sandbox/textures/skyRadiance/", cubeFileNames, 5);
+    scenes[1].enableSkyBox("Sandbox/textures/theater/", cubeFileNames,
+                           "Sandbox/textures/theaterIrradiance/", cubeFileNames,
+                           "Sandbox/textures/theaterRadiance/", cubeFileNames, 5);
+    
+    scenes[2].enableSkyBox("Sandbox/textures/sky/", cubeFileNames,
+                           "Sandbox/textures/skyIrradiance/", cubeFileNames,
+                           "Sandbox/textures/skyRadiance/", cubeFileNames, 5);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
@@ -291,7 +303,7 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     }
     ImGui::End();
 
-    if (ImGui::Begin("Parallax Occlusion Mapping")) {
+    if (ImGui::Begin("Materials")) {
         i = 0;
         for (auto &entity : scene.getEntities()) {
             BZ::Material &mat = entity.mesh.getMaterial();
@@ -299,6 +311,10 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
             ImGui::PushID(i);
             if (ImGui::DragFloat("Scale", &scale, 0.001f, 0.0f, 2.0f)) {
                 mat.setParallaxOcclusionScale(scale);
+            }
+            glm::vec2 uvScale = mat.getUvScale();
+            if (ImGui::DragFloat2("UV Scale", &uvScale[0], 0.1f, 0.0f, 50.0f)) {
+                mat.setUvScale(uvScale);
             }
             ImGui::Separator();
             ImGui::PopID();

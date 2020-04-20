@@ -17,7 +17,7 @@ layout(set = 2, binding = 2) uniform samplerCube uRadianceMapTexSampler;
 layout(set = 2, binding = 3) uniform sampler2DShadow uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE];
 
 layout (set = 4, binding = 0, std140) uniform MaterialConstants {
-     float parallaxOcclusionScale;
+    vec4 uvScaleAndParallaxOcclusionScale;
 } uMaterialConstants;
 
 layout(set = 4, binding = 1) uniform sampler2D uAlbedoTexSampler;
@@ -49,7 +49,7 @@ vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
     float layerDepth = 1.0 / LAYERS;
     float currentLayerDepth = 0.0;
 
-    vec2 P = viewDirTangentSpace.xy * uMaterialConstants.parallaxOcclusionScale; 
+    vec2 P = viewDirTangentSpace.xy * uMaterialConstants.uvScaleAndParallaxOcclusionScale.z; 
     vec2 deltaTexCoords = P / LAYERS;
 
     vec2  currentTexCoords = texCoord;
@@ -174,9 +174,12 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
 void main() {
     vec3 V = normalize(inData.VTan);
 
-    vec2 texCoord = parallaxOcclusionMap(inData.texCoord, V);
-    if(texCoord.x > 1.0 || texCoord.y > 1.0 || texCoord.x < 0.0 || texCoord.y < 0.0)
+    const vec2 uvScale = uMaterialConstants.uvScaleAndParallaxOcclusionScale.xy;
+    vec2 texCoord = parallaxOcclusionMap(inData.texCoord * uvScale, V);
+    if(texCoord.x > uvScale.x || texCoord.y > uvScale.y || texCoord.x < 0.0 || texCoord.y < 0.0)
         discard;
+
+    //texCoord *= uMaterialConstants.uvScaleAndParallaxOcclusionScale.xy;
 
     vec3 N = normalize(texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0);
 
