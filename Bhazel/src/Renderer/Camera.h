@@ -63,7 +63,7 @@ namespace BZ {
         void setParameters(const Parameters &parameters) { this->parameters = parameters; computeProjectionMatrix(); }
 
         //Near left bottom, near right bottom, near left top, near right top, ...
-        const glm::vec3* getFrustumCornerPoints() const;
+        //const glm::vec3* getFrustumCornerPoints() const;
 
     private:
         Parameters parameters;

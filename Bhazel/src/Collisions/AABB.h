@@ -11,7 +11,7 @@ namespace BZ {
         AABB(const AABB &other);
 
         //Will enclose all points.
-        explicit AABB(const std::vector<glm::vec3> &points);
+        explicit AABB(const glm::vec3 *points, uint32 count);
 
         //Will enclose the other transformed AABB.
         AABB(const AABB &other, const glm::mat4 &transform);

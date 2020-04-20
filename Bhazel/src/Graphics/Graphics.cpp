@@ -13,8 +13,23 @@
 #include "Graphics/Color.h"
 #include "Graphics/CommandBuffer.h"
 
+#include <imgui.h>
 
-namespace BZ {  
+
+namespace BZ {
+
+    constexpr static int FRAME_HISTORY_SIZE = 100;
+
+    struct GraphicsStats {
+        FrameStats frameStats;
+        uint32 commandBufferCount;
+        uint32 commandCount;
+        uint32 renderPassCount;
+        uint32 drawCallCount;
+        uint32 bufferBindCount;
+        uint32 descriptorSetBindCount;
+        uint32 pipelineStateBindCount;
+    };
 
     static struct GraphicsData {
         Ref<CommandBuffer> commandBuffers[MAX_COMMAND_BUFFERS];
@@ -23,6 +38,16 @@ namespace BZ {
         GraphicsContext* graphicsContext;
 
         std::set<Ref<Framebuffer>> clearedFramebuffers;
+
+        //Stats
+        GraphicsStats stats;
+        GraphicsStats visibleStats;
+
+        uint64 statsRefreshPeriodMs = 250;
+        uint64 statsTimeAcumMs;
+
+        float frameTimeHistory[FRAME_HISTORY_SIZE] = {};
+        uint32 frameTimeHistoryIdx;
     } data;
 
     Graphics::API Graphics::api = API::Unknown;
@@ -54,6 +79,9 @@ namespace BZ {
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
         data.commandBuffers[commandBufferId]->optimizeAndGenerate();
+
+        data.stats.commandBufferCount++;
+        data.stats.commandCount += data.commandBuffers[commandBufferId]->getCommandCount();
     }
 
     void Graphics::beginRenderPass(uint32 commandBufferId) {
@@ -76,8 +104,12 @@ namespace BZ {
     }
 
     void Graphics::endRenderPass(uint32 commandBufferId) {
+        BZ_PROFILE_FUNCTION();
+
         auto &commandBuffer = data.commandBuffers[commandBufferId];
         commandBuffer->addCommand(CommandType::EndRenderPass);
+
+        data.stats.renderPassCount++;
     }
 
     void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {
@@ -134,6 +166,8 @@ namespace BZ {
         auto &command = commandBuffer->addCommand(CommandType::BindBuffer);
         command.bindBufferData.buffer = buffer.get();
         command.bindBufferData.offset = buffer->getCurrentBaseOfReplicaOffset() + offset;
+
+        data.stats.bufferBindCount++;
     }
 
     void Graphics::bindPipelineState(uint32 commandBufferId, const Ref<PipelineState> &pipelineState) {
@@ -144,6 +178,8 @@ namespace BZ {
         auto &commandBuffer = data.commandBuffers[commandBufferId];
         auto &command = commandBuffer->addCommand(CommandType::BindPipelineState);
         command.bindPipelineStateData.pipelineState = pipelineState.get();
+
+        data.stats.pipelineStateBindCount++;
     }
 
     /*static void bindDescriptorSets(uint32 commandBufferId, const Ref<DescriptorSet> &descriptorSet);
@@ -187,6 +223,8 @@ namespace BZ {
         command.bindDescriptorSetData.setIndex = setIndex;
         memcpy(command.bindDescriptorSetData.dynamicBufferOffsets, finalDynamicBufferOffsets, index * sizeof(uint32));
         command.bindDescriptorSetData.dynamicBufferCount = index;
+
+        data.stats.descriptorSetBindCount++;
     }
 
     void Graphics::setPushConstants(uint32 commandBufferId, const Ref<PipelineState> &pipelineState, uint8 shaderStageMask, const void *data, uint32 size, uint32 offset) {
@@ -217,6 +255,8 @@ namespace BZ {
         command.drawData.instanceCount = instanceCount;
         command.drawData.firstVertex = firstVertex;
         command.drawData.firstInstance = firstInstance;
+
+        data.stats.drawCallCount++;
     }
 
     void Graphics::drawIndexed(uint32 commandBufferId, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
@@ -231,6 +271,8 @@ namespace BZ {
         command.drawIndexedData.firstIndex = firstIndex;
         command.drawIndexedData.vertexOffset = vertexOffset;
         command.drawIndexedData.firstInstance = firstInstance;
+
+        data.stats.drawCallCount++;
     }
 
     void Graphics::setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
@@ -282,6 +324,8 @@ namespace BZ {
 
         data.nextCommandBufferIndex = 0;
         data.clearedFramebuffers.clear();
+
+        memset(&data.stats, 0, sizeof(GraphicsStats));
     }
 
     void Graphics::endFrame() {
@@ -289,6 +333,49 @@ namespace BZ {
 
         data.graphicsContext->submitCommandBuffersAndFlush(data.commandBuffers, data.nextCommandBufferIndex);
         //No need to delete CommandBuffers. The pools are responsible for that.
+    }
+
+    void Graphics::onImGuiRender(const FrameStats &frameStats) {
+        BZ_PROFILE_FUNCTION();
+
+        data.stats.frameStats = frameStats;
+
+        data.statsTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint64();
+        if (data.statsTimeAcumMs >= data.statsRefreshPeriodMs) {
+            data.statsTimeAcumMs = 0;
+            data.visibleStats = data.stats;
+            data.frameTimeHistory[data.frameTimeHistoryIdx] = frameStats.lastFrameTime.asMillisecondsFloat();
+            data.frameTimeHistoryIdx = (data.frameTimeHistoryIdx + 1) % FRAME_HISTORY_SIZE;
+        }
+
+        if (ImGui::Begin("Graphics")) {
+            ImGui::Text("FrameStats:");
+            ImGui::Text("Last Frame Time: %.3f ms.", data.visibleStats.frameStats.lastFrameTime.asMillisecondsFloat());
+            ImGui::Text("FPS: %.3f.", 1.0f / data.visibleStats.frameStats.lastFrameTime.asSeconds());
+            //ImGui::Separator();
+            ImGui::Text("Avg Frame Time: %.3f ms.", data.visibleStats.frameStats.runningTime.asMillisecondsFloat() / static_cast<float>(data.visibleStats.frameStats.frameCount));
+            ImGui::Text("Avg FPS: %.3f.", static_cast<float>(data.visibleStats.frameStats.frameCount) / data.visibleStats.frameStats.runningTime.asSeconds());
+            //ImGui::Separator();
+            ImGui::Text("Frame Count: %d.", data.visibleStats.frameStats.frameCount);
+            ImGui::Text("Running Time: %.3f seconds.", data.visibleStats.frameStats.runningTime.asSeconds());
+            ImGui::Separator();
+
+            ImGui::Text("Stats:");
+            ImGui::Text("CommandBuffer Count: %d", data.visibleStats.commandBufferCount);
+            ImGui::Text("Command Count: %d", data.visibleStats.commandCount);
+            ImGui::Text("Render Pass Count: %d", data.visibleStats.renderPassCount);
+            ImGui::Text("Draw Call Count: %d", data.visibleStats.drawCallCount);
+            ImGui::Text("Buffer Bind Count: %d", data.visibleStats.bufferBindCount);
+            ImGui::Text("DescriptorSet Bind Count: %d", data.visibleStats.descriptorSetBindCount);
+            ImGui::Text("PipelineState Bind Count: %d", data.visibleStats.pipelineStateBindCount);
+            ImGui::Separator();
+
+            ImGui::PlotLines("Frame Times", data.frameTimeHistory, FRAME_HISTORY_SIZE, data.frameTimeHistoryIdx, "ms", 0.0f, 50.0f, ImVec2(0, 80));
+            ImGui::Separator();
+
+            ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&data.statsRefreshPeriodMs), 0, 1000);
+        }
+        ImGui::End();
     }
 
     void Graphics::onWindowResize(const WindowResizedEvent &ev) {

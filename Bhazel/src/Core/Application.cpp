@@ -9,7 +9,6 @@
 #include "Renderer/Renderer2D.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/ImGuiRenderer.h"
-#include "Layers/FrameStatsLayer.h"
 
 
 namespace BZ {
@@ -53,8 +52,6 @@ namespace BZ {
         Renderer2D::init();
         Renderer::init();
 
-        pushOverlay(new FrameStatsLayer(*this));
-
 #ifdef BZ_HOT_RELOAD_SHADERS
         fileWatcher.startWatching();
 #endif
@@ -90,6 +87,7 @@ namespace BZ {
                 layerStack.onUpdate(frameStats);
 
                 ImGuiRenderer::begin();
+                Graphics::onImGuiRender(frameStats);
                 Renderer::onImGuiRender(frameStats);
                 Renderer2D::onImGuiRender(frameStats);
                 layerStack.onImGuiRender(frameStats);

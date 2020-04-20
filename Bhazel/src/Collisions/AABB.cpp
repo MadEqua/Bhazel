@@ -16,11 +16,13 @@ namespace BZ {
         max = other.max;
     }
 
-    AABB::AABB(const std::vector<glm::vec3> &points) :
+    AABB::AABB(const glm::vec3 *points, uint32 count) :
         IBoundingVolume(BoundingVolumeType::AABB) {
         empty();
-        for (auto &point : points)
-            enclose(point);
+
+        for (uint32 i = 0; i < count; ++i) {
+            enclose(points[i]);
+        }
     }
 
     AABB::AABB(const AABB &other, const glm::mat4 &transform) :

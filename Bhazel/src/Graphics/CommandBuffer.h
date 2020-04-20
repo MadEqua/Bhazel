@@ -2,7 +2,6 @@
 
 #include "Graphics/Color.h"
 #include "Graphics/PipelineState.h"
-#include "Constants.h"
 
 
 namespace BZ {
@@ -129,6 +128,8 @@ namespace BZ {
         Command& addCommand(CommandType type);
 
         void resetIndex() { nextCommandIndex = 0; }
+
+        uint32 getCommandCount() const { return nextCommandIndex; }
 
         void optimizeAndGenerate();
 

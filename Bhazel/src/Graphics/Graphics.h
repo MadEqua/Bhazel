@@ -10,6 +10,7 @@ namespace BZ {
     union ClearValues;
     struct Viewport;
     struct ScissorRect;
+    struct FrameStats;
     
     class WindowResizedEvent;
     class GraphicsContext;
@@ -72,5 +73,7 @@ namespace BZ {
 
         static void beginFrame();
         static void endFrame();
+
+        static void onImGuiRender(const FrameStats &frameStats);
     };
 }

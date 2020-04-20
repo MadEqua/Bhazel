@@ -113,14 +113,14 @@ namespace BZ {
         Ref<RenderPass> depthRenderPass;
 
         //ConstantFactor, clamp and slopeFactor
-        glm::vec3 depthBiasData = {1.0f, 0.0f, 10.0f};
+        glm::vec3 depthBiasData = {1.0f, 0.0f, 2.5f};
 
         //Stats
         RendererStats stats;
-        RendererStats visibleFrameStats;
+        RendererStats visibleStats;
 
-        uint64 statsRefreshPeriodNs = 250000000;
-        uint64 statsRefreshTimeAcumNs;
+        uint64 statsRefreshPeriodMs = 250;
+        uint64 statsRefreshTimeAcumMs;
     } rendererData;
 
 
@@ -229,7 +229,7 @@ namespace BZ {
         pipelineStateData.renderPass = rendererData.depthRenderPass;
 
         pipelineStateData.rasterizerState.enableDepthBias = true;
-        //pipelineStateData.rasterizerState.depthBiasConstantFactor = 50.0f;
+        //pipelineStateData.rasterizerState.depthBiasConstantFactor = 0.0f;
         //pipelineStateData.rasterizerState.depthBiasSlopeFactor = 0.0f;
         pipelineStateData.dynamicStates = { DynamicState::DepthBias };
 
@@ -319,6 +319,8 @@ namespace BZ {
     }
 
     void Renderer::depthPass(const Scene &scene) {
+        BZ_PROFILE_FUNCTION();
+
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.depthPassPipelineState);
         Graphics::setDepthBias(rendererData.commandBufferId, rendererData.depthBiasData.x, rendererData.depthBiasData.y, rendererData.depthBiasData.z);
 
@@ -344,6 +346,8 @@ namespace BZ {
     }
 
     void Renderer::colorPass(const Scene &scene) {
+        BZ_PROFILE_FUNCTION();
+
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
 
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
@@ -366,6 +370,8 @@ namespace BZ {
     }
 
     void Renderer::drawEntity(const Entity &entity, uint32 index) {
+        BZ_PROFILE_FUNCTION();
+
         uint32 entityOffset = index * sizeof(EntityConstantBufferData);
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.entityDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
@@ -395,6 +401,8 @@ namespace BZ {
     }
 
     void Renderer::fillConstants(const Scene &scene) {
+        BZ_PROFILE_FUNCTION();
+
         //Matrices related to the depth passes for the lights.
         glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE];
         glm::mat4 lightProjectionMatrices[MAX_DIR_LIGHTS_PER_SCENE];
@@ -442,6 +450,8 @@ namespace BZ {
     }
 
     void Renderer::fillPasses(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices) {
+        BZ_PROFILE_FUNCTION();
+
         //Depth Pass data
         uint32 passIndex = 0;
         for (auto &dirLight : scene.getDirectionalLights()) {
@@ -469,6 +479,8 @@ namespace BZ {
     }
 
     void Renderer::fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices) {
+        BZ_PROFILE_FUNCTION();
+
         SceneConstantBufferData sceneConstantBufferData;
         int i = 0;
         for (const auto &dirLight : scene.getDirectionalLights()) {
@@ -490,6 +502,8 @@ namespace BZ {
     }
 
     void Renderer::fillEntities(const Scene &scene) {
+        BZ_PROFILE_FUNCTION();
+
         uint32 entityIndex = 0;
         for (const auto &entity : scene.getEntities()) {
             EntityConstantBufferData entityConstantBufferData;
@@ -505,6 +519,8 @@ namespace BZ {
 
     //TODO: There's no need to call this every frame, like it's being done now.
     void Renderer::fillMaterials(const Scene &scene) {
+        BZ_PROFILE_FUNCTION();
+
         rendererData.materialOffsetMap.clear();
 
         if (scene.hasSkyBox()) {
@@ -521,6 +537,8 @@ namespace BZ {
     }
 
     void Renderer::fillMaterial(const Material &material) {
+        BZ_PROFILE_FUNCTION();
+
         BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/initialized Material!");
 
         const auto storedMaterialIt = rendererData.materialOffsetMap.find(material);
@@ -542,6 +560,8 @@ namespace BZ {
     }
 
     void Renderer::onImGuiRender(const FrameStats &frameStats) {
+        BZ_PROFILE_FUNCTION();
+
         if (ImGui::Begin("Renderer")) {
             ImGui::Text("Depth Bias Data");
             ImGui::DragFloat("ConstantFactor", &rendererData.depthBiasData.x, 0.05f, 0.0f, 10.0f);
@@ -549,18 +569,18 @@ namespace BZ {
             ImGui::DragFloat("SlopeFactor", &rendererData.depthBiasData.z, 0.05f, 0.0f, 100.0f);
             ImGui::Separator();
 
-            rendererData.statsRefreshTimeAcumNs += frameStats.lastFrameTime.asNanoseconds();
-            if (rendererData.statsRefreshTimeAcumNs >= rendererData.statsRefreshPeriodNs) {
-                rendererData.statsRefreshTimeAcumNs = 0;
-                rendererData.visibleFrameStats = rendererData.stats;
+            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asNanoseconds();
+            if (rendererData.statsRefreshTimeAcumMs >= rendererData.statsRefreshPeriodMs) {
+                rendererData.statsRefreshTimeAcumMs = 0;
+                rendererData.visibleStats = rendererData.stats;
             }
             ImGui::Text("Stats:");
-            ImGui::Text("Vertex Count: %d", rendererData.visibleFrameStats.vertexCount);
-            ImGui::Text("Triangle Count: %d", rendererData.visibleFrameStats.triangleCount);
-            ImGui::Text("Draw Calls: %d", rendererData.visibleFrameStats.drawCallCount);
-            ImGui::Text("Material Count: %d", rendererData.visibleFrameStats.materialCount);
+            ImGui::Text("Vertex Count: %d", rendererData.visibleStats.vertexCount);
+            ImGui::Text("Triangle Count: %d", rendererData.visibleStats.triangleCount);
+            ImGui::Text("Draw Call Count: %d", rendererData.visibleStats.drawCallCount);
+            ImGui::Text("Material Count: %d", rendererData.visibleStats.materialCount);
             ImGui::Separator();
-            ImGui::SliderInt("Refresh period ns", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodNs), 0, 1000000000);
+            ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
     }

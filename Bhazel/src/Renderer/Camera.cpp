@@ -31,7 +31,7 @@ namespace BZ {
         computeProjectionMatrix();
     }
 
-    const glm::vec3* PerspectiveCamera::getFrustumCornerPoints() const {
+    /*const glm::vec3* PerspectiveCamera::getFrustumCornerPoints() const {
         float tg = glm::tan(glm::radians(parameters.fovy * 0.5f));
 
         glm::vec2 nearDims = { tg * parameters.near * 2.0f * parameters.aspectRatio, tg * parameters.near * 2.0f };
@@ -73,7 +73,7 @@ namespace BZ {
         }
 
         return frustumCornerPoints;
-    }
+    }*/
 
     void PerspectiveCamera::computeProjectionMatrix() {
         projectionMatrix = Utils::perspective(parameters.fovy, parameters.aspectRatio, parameters.near, parameters.far);

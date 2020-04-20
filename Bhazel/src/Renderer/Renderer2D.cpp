@@ -112,10 +112,10 @@ namespace BZ {
 
         //Stats
         Renderer2DStats stats;
-        Renderer2DStats visibleFrameStats;
+        Renderer2DStats visibleStats;
 
-        uint64 statsRefreshPeriodNs = 250000000;
-        uint64 statsRefreshTimeAcumNs;
+        uint64 statsRefreshPeriodMs = 250;
+        uint64 statsRefreshTimeAcumMs;
     } rendererData;
 
 
@@ -365,6 +365,8 @@ namespace BZ {
     }
 
     void Renderer2D::drawParticleSystem2D(const ParticleSystem2D & particleSystem) {
+        BZ_PROFILE_FUNCTION();
+
         for (const auto &emitter : particleSystem.getEmitters()) {
             for (const auto &particle : emitter.getActiveParticles()) {
                 drawQuad(particle.position, particle.dimensions, particle.rotationDeg, emitter.texture, particle.tintAndAlpha);
@@ -373,19 +375,21 @@ namespace BZ {
     }
 
     void Renderer2D::onImGuiRender(const FrameStats &frameStats) {
+        BZ_PROFILE_FUNCTION();
+
         if (ImGui::Begin("Renderer2D")) {
-            rendererData.statsRefreshTimeAcumNs += frameStats.lastFrameTime.asNanoseconds();
-            if (rendererData.statsRefreshTimeAcumNs >= rendererData.statsRefreshPeriodNs) {
-                rendererData.statsRefreshTimeAcumNs = 0;
-                rendererData.visibleFrameStats = rendererData.stats;
+            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asNanoseconds();
+            if (rendererData.statsRefreshTimeAcumMs >= rendererData.statsRefreshPeriodMs) {
+                rendererData.statsRefreshTimeAcumMs = 0;
+                rendererData.visibleStats = rendererData.stats;
             }
             ImGui::Text("Stats:");
-            ImGui::Text("Sprite Count: %d", rendererData.visibleFrameStats.spriteCount);
-            ImGui::Text("Draw Call Count: %d", rendererData.visibleFrameStats.drawCallCount);
-            ImGui::Text("Descriptor Set Bind Count: %d", rendererData.visibleFrameStats.descriptorSetBindCount);
+            ImGui::Text("Sprite Count: %d", rendererData.visibleStats.spriteCount);
+            ImGui::Text("Draw Call Count: %d", rendererData.visibleStats.drawCallCount);
+            ImGui::Text("Descriptor Set Bind Count: %d", rendererData.visibleStats.descriptorSetBindCount);
             //ImGui::Text("Tint Push Count: %d", visibleFrameStats.tintPushCount);
             ImGui::Separator();
-            ImGui::SliderInt("Refresh period ns", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodNs), 0, 1000000000);
+            ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
     }
