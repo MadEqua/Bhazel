@@ -11,7 +11,6 @@
 namespace BZ {
 
     class Mesh {
-
     public:
         struct Vertex {
             glm::vec3 position;
@@ -23,6 +22,14 @@ namespace BZ {
             bool operator==(const Vertex& other) const {
                 return memcmp(this, &other, sizeof(Vertex)) == 0;
             }
+        };
+
+        struct SubMesh {
+            Material material;
+            uint32 vertexOffset;
+            uint32 vertexCount;
+            uint32 indexOffset;
+            uint32 indexCount;
         };
 
         static Mesh createUnitCube(const Material &material = Material());
@@ -40,11 +47,14 @@ namespace BZ {
         uint32 getVertexCount() const { return vertexCount; }
         uint32 getIndexCount() const { return indexCount; }
 
-        bool isValid() const { return vertexCount > 0 && static_cast<bool>(vertexBuffer); }
+        bool isValid() const { return vertexCount > 0 && static_cast<bool>(vertexBuffer) && !submeshes.empty(); }
         bool hasIndices() const { return indexCount > 0; }
 
-        const Material& getMaterial() const { return material; }
-        Material& getMaterial() { return material; }
+        uint32 getSubMeshCount() const { return static_cast<uint32>(submeshes.size()); }
+        const SubMesh& getSubMeshIdx(uint32 idx) const { BZ_ASSERT_CORE(idx < submeshes.size(), "Invalid index!"); return submeshes[idx]; }
+        SubMesh& getSubMeshIdx(uint32 idx) { BZ_ASSERT_CORE(idx < submeshes.size(), "Invalid index!"); return submeshes[idx]; }
+        const std::vector<SubMesh>& getSubmeshes() const { return submeshes; }
+        std::vector<SubMesh>& getSubmeshes() { return submeshes; }
 
     private:
         uint32 vertexCount;
@@ -53,7 +63,7 @@ namespace BZ {
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
 
-        Material material;
+        std::vector<SubMesh> submeshes;
 
         void computeTangents(std::vector<Vertex> &vertices, const std::vector<uint32> &indices);
     };

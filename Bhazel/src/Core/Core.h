@@ -30,8 +30,8 @@ namespace BZ {
     template<typename T, class... Args>
     inline Ref<T> MakeRef(Args&&... args) { return std::make_shared<T>(std::forward<Args>(args)...); }
 
-    template<typename T, class... Args>
-    inline Ref<T> MakeRefNull() { return std::shared_ptr<Buffer>(); }
+    template<typename T>
+    inline Ref<T> MakeRefNull() { return std::shared_ptr<T>(); }
 }
 
 #define EnumClassFlagOperators(e_) \

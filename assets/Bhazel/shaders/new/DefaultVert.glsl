@@ -32,13 +32,14 @@ layout(location = 0) out struct {
     mat3 TBN; //TBN matrix goes from tangent space to world space
     vec2 texCoord;
 
-    //Light NDC space
+    //In Light NDC space
     vec3 positionsLightNDC[MAX_DIR_LIGHTS_PER_SCENE];
 
     //From here, all in tangent space
     //vec3 positionTan;
     vec3 LTan[MAX_DIR_LIGHTS_PER_SCENE];
     vec3 VTan;
+    vec3 NTan;
 } outData;
 
 
@@ -59,4 +60,5 @@ void main() {
     }
 
     outData.VTan = normalize((uPassConstants.cameraPosition.xyz - positionWorld.xyz) * outData.TBN);
+    outData.NTan = normalize(attrNormal * outData.TBN);
 }

@@ -46,7 +46,8 @@ namespace BZ {
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
-        glm::vec4 uvScaleAndParallaxOcclusionScale;
+        glm::vec4 normalMetallicRoughnessAndAO;
+        glm::vec4 heightAndUvScale;
     };
 
     constexpr uint32 PASS_CONSTANT_BUFFER_SIZE = sizeof(PassConstantBufferData) * MAX_PASSES_PER_FRAME;
@@ -160,7 +161,8 @@ namespace BZ {
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder5;
         descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Fragment), 1);
 
-        //Albedo, Normal, Metallic, Roughness and Height textures
+        //Albedo, Normal, Metallic, Roughness, Height and AO.
+        descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder5.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
@@ -381,21 +383,24 @@ namespace BZ {
     void Renderer::drawMesh(const Mesh &mesh, const Transform &transform) {
         BZ_PROFILE_FUNCTION();
 
-        uint32 materialOffset = rendererData.materialOffsetMap[mesh.getMaterial()];
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, mesh.getMaterial().getDescriptorSet(),
-            rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
-
         Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer(), 0);
-
+        
         if (mesh.hasIndices())
             Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer(), 0);
 
-        if (mesh.hasIndices())
-            Graphics::drawIndexed(rendererData.commandBufferId, mesh.getIndexCount(), 1, 0, 0, 0);
-        else
-            Graphics::draw(rendererData.commandBufferId, mesh.getVertexCount(), 1, 0, 0);
+        for (const auto &submesh : mesh.getSubmeshes()) {
+            uint32 materialOffset = rendererData.materialOffsetMap[submesh.material];
+            Graphics::bindDescriptorSet(rendererData.commandBufferId, submesh.material.getDescriptorSet(),
+                rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
 
-        rendererData.stats.drawCallCount++;
+            if (mesh.hasIndices())
+                Graphics::drawIndexed(rendererData.commandBufferId, submesh.indexCount, 1, submesh.indexOffset, 0, 0);
+            else
+                Graphics::draw(rendererData.commandBufferId, submesh.vertexCount, 1, submesh.vertexOffset, 1);
+
+            rendererData.stats.drawCallCount++;
+        }
+
         rendererData.stats.vertexCount += mesh.getVertexCount();
         rendererData.stats.triangleCount += (mesh.hasIndices() ? mesh.getIndexCount() : mesh.getVertexCount()) / 3;
     }
@@ -524,11 +529,13 @@ namespace BZ {
         rendererData.materialOffsetMap.clear();
 
         if (scene.hasSkyBox()) {
-            fillMaterial(scene.getSkyBox().mesh.getMaterial());
+            fillMaterial(scene.getSkyBox().mesh.getSubMeshIdx(0).material);
         }
 
         for (const auto &entity : scene.getEntities()) {
-            fillMaterial(entity.mesh.getMaterial());
+            for (const auto &submesh : entity.mesh.getSubmeshes()) {
+                fillMaterial(submesh.material);
+            }
         }
 
         uint32 materialCount = static_cast<uint32>(rendererData.materialOffsetMap.size());
@@ -539,7 +546,7 @@ namespace BZ {
     void Renderer::fillMaterial(const Material &material) {
         BZ_PROFILE_FUNCTION();
 
-        BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/initialized Material!");
+        BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/uninitialized Material!");
 
         const auto storedMaterialIt = rendererData.materialOffsetMap.find(material);
         uint32 materialOffset;
@@ -548,9 +555,15 @@ namespace BZ {
         if (storedMaterialIt == rendererData.materialOffsetMap.end()) {
             const auto &uvScale = material.getUvScale();
             MaterialConstantBufferData materialConstantBufferData;
-            materialConstantBufferData.uvScaleAndParallaxOcclusionScale.x = uvScale.x;
-            materialConstantBufferData.uvScaleAndParallaxOcclusionScale.y = uvScale.y;
-            materialConstantBufferData.uvScaleAndParallaxOcclusionScale.z = material.getParallaxOcclusionScale();
+            materialConstantBufferData.normalMetallicRoughnessAndAO.x = material.hasNormalTexture() ? 1.0f : 0.0f;
+            materialConstantBufferData.normalMetallicRoughnessAndAO.y = material.hasMetallicTexture() ? -1.0f : material.getMetallic();
+            materialConstantBufferData.normalMetallicRoughnessAndAO.z = material.hasRoughnessTexture() ? -1.0f : material.getRoughness();
+            materialConstantBufferData.normalMetallicRoughnessAndAO.w = material.hasAOTexture() ? 1.0f : 0.0f;
+
+            materialConstantBufferData.heightAndUvScale.x = material.hasHeightTexture() ? material.getParallaxOcclusionScale() : -1.0f;
+            materialConstantBufferData.heightAndUvScale.y = uvScale.x;
+            materialConstantBufferData.heightAndUvScale.z = uvScale.y;
+
             materialOffset = static_cast<uint32>(rendererData.materialOffsetMap.size()) * sizeof(EntityConstantBufferData);
             memcpy(rendererData.materialConstantBufferPtr + materialOffset, &materialConstantBufferData, sizeof(MaterialConstantBufferData));
 

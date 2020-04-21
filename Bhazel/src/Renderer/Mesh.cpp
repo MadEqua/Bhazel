@@ -156,8 +156,7 @@ namespace BZ {
         return Mesh(vertices, VERTEX_COUNT, material);
     }
 
-    Mesh::Mesh(const char *path, const Material &material) :
-        material(material) {
+    Mesh::Mesh(const char *path, const Material &material) {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;
@@ -178,7 +177,14 @@ namespace BZ {
         std::vector<uint32> indices;
         std::unordered_map<Vertex, uint32_t> uniqueVertices;
 
+        uint32 shapeIdx = 0;
+        uint32 vxOffset= 0;
+        uint32 idxOffset = 0;
+
         for (const auto& shape : shapes) {
+            uint32 shapeVxCount = 0;
+            uint32 shapeIdxCount = 0;
+
             for (const auto& index : shape.mesh.indices) {
                 Vertex vertex = {};
 
@@ -202,27 +208,47 @@ namespace BZ {
                 if (uniqueVertices.count(vertex) == 0) {
                     uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
                     vertices.push_back(vertex);
+                    shapeVxCount++;
                 }
 
                 indices.push_back(uniqueVertices[vertex]);
+                shapeIdxCount++;
             }
+
+            SubMesh submesh;
+            submesh.vertexOffset = vxOffset;
+            submesh.vertexCount = shapeVxCount;
+            submesh.indexOffset = idxOffset;
+            submesh.indexCount = shapeIdxCount;
+
+            vxOffset += shapeVxCount;
+            idxOffset += shapeIdxCount;
+
+            if (materials.empty()) {
+                submesh.material = material;
+            }
+            else {
+                //Assuming all faces of the same shape have the same material.
+                tinyobj::material_t material = materials[shape.mesh.material_ids[0]];
+
+                auto pathWithoutFileName = Utils::removeFileNameFromPath(path);
+                submesh.material = Material((pathWithoutFileName + material.diffuse_texname).c_str(),
+                                            (pathWithoutFileName + material.normal_texname).c_str(),
+                                            (pathWithoutFileName + material.metallic_texname).c_str(),
+                                            (pathWithoutFileName + material.roughness_texname).c_str(),
+                                            (pathWithoutFileName + material.bump_texname).c_str(),
+                                            (pathWithoutFileName + material.ambient_texname).c_str());
+            }
+            submeshes.push_back(submesh);
+            shapeIdx++;
         }
 
         vertexCount = static_cast<uint32>(vertices.size());
         indexCount = static_cast<uint32>(indices.size());
 
-        //Only compute tangents if texcoords are present
+        //Only compute tangents if texcoords are present.
         if (!attrib.texcoords.empty()) {
             computeTangents(vertices, indices);
-        }
-
-        auto pathWithoutFileName = Utils::removeFileNameFromPath(path);
-        for (auto &material : materials) {
-            this->material = Material((pathWithoutFileName + material.diffuse_texname).c_str(),
-                                      (pathWithoutFileName + material.normal_texname).c_str(),
-                                      (pathWithoutFileName + material.metallic_texname).c_str(),
-                                      (pathWithoutFileName + material.roughness_texname).c_str(),
-                                      (pathWithoutFileName + material.bump_texname).c_str());
         }
 
         vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
@@ -233,18 +259,34 @@ namespace BZ {
     }
 
     Mesh::Mesh(Vertex vertices[], uint32 vertexCount, const Material &material) :
-        vertexCount(vertexCount), indexCount(0), material(material) {
+        vertexCount(vertexCount), indexCount(0) {
         vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
         vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
+
+        SubMesh submesh;
+        submesh.vertexOffset = 0;
+        submesh.vertexCount = vertexCount;
+        submesh.indexOffset = 0;
+        submesh.indexCount = 0;
+        submesh.material = material;
+        submeshes.push_back(submesh);
     }
 
     Mesh::Mesh(Vertex vertices[], uint32 vertexCount, uint32 indices[], uint32 indexCount, const Material &material) :
-        vertexCount(vertexCount), indexCount(indexCount), material(material) {
+        vertexCount(vertexCount), indexCount(indexCount) {
         vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
         indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
 
         vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
         indexBuffer->setData(indices, sizeof(uint32) * indexCount, 0);
+
+        SubMesh submesh;
+        submesh.vertexOffset = 0;
+        submesh.vertexCount = vertexCount;
+        submesh.indexOffset = 0;
+        submesh.indexCount = indexCount;
+        submesh.material = material;
+        submeshes.push_back(submesh);
     }
 
     void Mesh::computeTangents(std::vector<Vertex> &vertices, const std::vector<uint32> &indices) {

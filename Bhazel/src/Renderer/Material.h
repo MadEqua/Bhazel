@@ -10,27 +10,49 @@ namespace BZ {
     public:
         Material() = default;
 
-        Material(Ref<Texture2D> &albedoTexture, Ref<Texture2D> &normalTexture, Ref<Texture2D> &metallicTexture, Ref<Texture2D> &roughnessTextureView, Ref<Texture2D> &heightTextureView);
-        Material(Ref<Texture2D> &albedoTexture, Ref<Texture2D> &normalTexture);
-        explicit Material(Ref<TextureCube> &albedoTexture);
+        Material(Ref<Texture2D> &albedoTexture,
+                 Ref<Texture2D> &normalTexture = MakeRefNull<Texture2D>(),
+                 Ref<Texture2D> &metallicTexture = MakeRefNull<Texture2D>(), 
+                 Ref<Texture2D> &roughnessTexture = MakeRefNull<Texture2D>(),
+                 Ref<Texture2D> &heightTexture = MakeRefNull<Texture2D>(),
+                 Ref<Texture2D> &aoTexture = MakeRefNull<Texture2D>());
 
-        Material(const char *albedoTexturePath, const char *normalTexturePath, const char *metallicTexturePath, const char *roughnessTexturePath, const char *heightTexturePath);
-        Material(const char *albedoTexturePath, const char *normalTexturePath);
+        explicit Material(Ref<TextureCube> &albedoTexture);
+       
+        Material(const char *albedoTexturePath,
+                 const char *normalTexturePath = nullptr,
+                 const char *metallicTexturePath = nullptr,
+                 const char *roughnessTexturePath = nullptr,
+                 const char *heightTexturePath = nullptr,
+                 const char *aoTexturePath = nullptr);
 
         bool isValid() const { return static_cast<bool>(descriptorSet); }
+        const Ref<DescriptorSet>& getDescriptorSet() const { return descriptorSet; }
 
         const Ref<TextureView>& getAlbedoTextureView() const { return albedoTextureView; }
         const Ref<TextureView>& getNormalTextureView() const { return normalTextureView; }
         const Ref<TextureView>& getMetallicTextureView() const { return metallicTextureView; }
         const Ref<TextureView>& getRoughnessTextureView() const { return roughnessTextureView; }
         const Ref<TextureView>& getHeightTextureView() const { return heightTextureView; }
+        const Ref<TextureView>& getAOTextureView() const { return aoTextureView; }
 
-        const Ref<DescriptorSet>& getDescriptorSet() const { return descriptorSet; }
+        bool hasNormalTexture() const { return static_cast<bool>(normalTextureView); }
+        bool hasMetallicTexture() const { return static_cast<bool>(metallicTextureView); }
+        bool hasRoughnessTexture() const { return static_cast<bool>(roughnessTextureView); }
+        bool hasHeightTexture() const { return static_cast<bool>(heightTextureView); }
+        bool hasAOTexture() const { return static_cast<bool>(aoTextureView); }
+
+        float getMetallic() const { return metallic; }
+        void setMetallic(float met) { metallic = met; }
+
+        float getRoughness() const { return roughness; }
+        void setRoughness(float rough) { roughness = rough; }
 
         float getParallaxOcclusionScale() const { return parallaxOcclusionScale; }
         void setParallaxOcclusionScale(float scale) { parallaxOcclusionScale = scale; }
 
         const glm::vec2& getUvScale() const { return uvScale; }
+        void setUvScale(float u, float v) { uvScale.x = u; uvScale.y = v; }
         void setUvScale(const glm::vec2& mult) { uvScale = mult; }
 
         bool operator==(const Material &other) const;
@@ -41,8 +63,13 @@ namespace BZ {
         Ref<TextureView> metallicTextureView;
         Ref<TextureView> roughnessTextureView;
         Ref<TextureView> heightTextureView;
+        Ref<TextureView> aoTextureView;
 
         Ref<DescriptorSet> descriptorSet;
+
+        //Valid if no respective textures are present.
+        float metallic = 1.0f;
+        float roughness = 0.0f;
 
         float parallaxOcclusionScale = 0.0f;
         glm::vec2 uvScale = { 1.0f, 1.0f };
@@ -59,6 +86,7 @@ struct std::hash<BZ::Material> {
             (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getMetallicTextureView())) ^
             (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getRoughnessTextureView())) ^
             (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getHeightTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAOTextureView())) ^
             std::hash<float>()(mat.getParallaxOcclusionScale());
     }
 };
