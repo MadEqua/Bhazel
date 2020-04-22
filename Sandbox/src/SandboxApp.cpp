@@ -99,7 +99,7 @@ void Layer3D::onGraphicsContextCreated() {
     freeCameraController = BZ::FreeCameraController(camera);
 
     //Hydrant, Wrench and Cerberus
-#if 0
+#if 1
     BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
                                  "Sandbox/meshes/fireHydrant/Normal.png",
                                  "Sandbox/meshes/fireHydrant/Metallic.png",
@@ -212,7 +212,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 1
+#if 0
     byte whiteTextureData [] = { 255, 255, 255, 255 };
     auto whiteTexRef = BZ::Texture2D::create(whiteTextureData, 1, 1, BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::DoNothing);
     BZ::Mesh sphereMesh("Sandbox/meshes/sphere.obj");

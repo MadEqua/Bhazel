@@ -244,8 +244,7 @@ namespace BZ {
         pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
 
         shaderBuilder.setName("ShadowPass");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ShadowPassVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/ShadowPassFrag.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/DepthPassVert.spv");
         pipelineStateData.shader = shaderBuilder.build();
 
         rendererData.depthPassPipelineState = PipelineState::create(pipelineStateData);
