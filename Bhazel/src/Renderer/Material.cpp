@@ -96,6 +96,9 @@ namespace BZ {
             roughnessTextureView == other.roughnessTextureView &&
             heightTextureView == other.heightTextureView &&
             aoTextureView == other.aoTextureView &&
+            metallic == other.metallic &&
+            roughness == other.roughness &&
             parallaxOcclusionScale == other.parallaxOcclusionScale;
+            uvScale == other.uvScale;
     }
 }

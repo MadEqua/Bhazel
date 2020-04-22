@@ -29,7 +29,8 @@ layout(set = 4, binding = 5) uniform sampler2D uHeightTexSampler;
 layout(set = 4, binding = 6) uniform sampler2D uAOTexSampler;
 
 layout(location = 0) in struct {
-    mat3 TBN; //TBN matrix goes from tangent space to world space
+    //TBN matrix goes from tangent space to world space
+    mat3 TBN;
     vec2 texCoord;
 
     //Light NDC space
@@ -148,6 +149,7 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness, vec2 t
     worldR.x = -worldR.x;
 
     vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * uSceneConstants.dirLightCountAndRadianceMapMips.y).rgb;
+    //vec2 envBRDF = texture(uBrdfLookupTexture, vec2(NdotV, roughness)).rg;
     vec2 envBRDF = texture(uBrdfLookupTexture, vec2(NdotV, roughness)).rg;
     vec3 specular = radiance * (F * envBRDF.x + envBRDF.y);
 
@@ -172,7 +174,8 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     float metallic = uMaterialConstants.normalMetallicRoughnessAndAO.y < 0.0 ? texture(uMetallicTexSampler, texCoord).r : uMaterialConstants.normalMetallicRoughnessAndAO.y;
     float roughness = uMaterialConstants.normalMetallicRoughnessAndAO.z < 0.0 ? texture(uRoughnessTexSampler, texCoord).r : uMaterialConstants.normalMetallicRoughnessAndAO.z;
 
-    vec3 F0 = mix(vec3(0.04), albedo, metallic); //Hardcoded reflectance for dielectrics
+    //Hardcoded reflectance for dielectrics
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
     vec3 col = indirectLight(N, V, F0, albedo, roughness, texCoord);
     for(int i = 0; i < int(uSceneConstants.dirLightCountAndRadianceMapMips.x); ++i) {

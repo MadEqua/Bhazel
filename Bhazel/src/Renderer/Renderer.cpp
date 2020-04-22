@@ -2,6 +2,8 @@
 
 #include "Renderer.h"
 
+#include "BRDFLookUpGenerator.h"
+
 #include "Graphics/Graphics.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Texture.h"
@@ -101,6 +103,7 @@ namespace BZ {
         Ref<DescriptorSet> entityDescriptorSet;
 
         Ref<Sampler> defaultSampler;
+        Ref<Sampler> brdfLookupSampler;
         Ref<Sampler> shadowSampler;
 
         Ref<PipelineState> defaultPipelineState;
@@ -217,7 +220,7 @@ namespace BZ {
 
         //DepthPassPipelineState
         AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = TextureFormatEnum::D32;
+        depthStencilAttachmentDesc.format = TextureFormatEnum::D32_SFLOAT;
         depthStencilAttachmentDesc.samples = 1;
         depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
         depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
@@ -255,12 +258,15 @@ namespace BZ {
         samplerBuilder2.enableCompare(CompareFunction::Less);
         rendererData.shadowSampler = samplerBuilder2.build();
 
-        //The ideal 2 Channels (RG) are not supported by stbi. 3 channels is badly supported by Vulkan implementations. So 4 channels...
-        auto brdfTex = Texture2D::create("Bhazel/textures/ibl_brdf_lut.png", TextureFormatEnum::R8G8B8A8, MipmapData::Options::DoNothing);
-        rendererData.brdfLookupTexture = TextureView::create(brdfTex);
+        Sampler::Builder samplerBuilder3;
+        samplerBuilder3.setAddressModeAll(AddressMode::ClampToEdge);
+        rendererData.brdfLookupSampler = samplerBuilder3.build();
+
+        auto brdfTexRef = generateCookTorranceBRDFLUT();
+        rendererData.brdfLookupTexture = TextureView::create(brdfTexRef);
 
         rendererData.globalDescriptorSet = DescriptorSet::create(rendererData.globalDescriptorSetLayout);
-        rendererData.globalDescriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.defaultSampler, 0);
+        rendererData.globalDescriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.brdfLookupSampler, 0);
 
         rendererData.passDescriptorSet = DescriptorSet::create(rendererData.passDescriptorSetLayout);
         rendererData.passDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, PASS_CONSTANT_BUFFER_OFFSET, sizeof(PassConstantBufferData));
@@ -289,6 +295,7 @@ namespace BZ {
         rendererData.depthPassPipelineState.reset();
 
         rendererData.defaultSampler.reset();
+        rendererData.brdfLookupSampler.reset();
         rendererData.shadowSampler.reset();
 
         rendererData.materialOffsetMap.clear();
@@ -359,7 +366,7 @@ namespace BZ {
 
         if (scene.hasSkyBox()) {
             Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.skyBoxPipelineState);
-            drawMesh(scene.getSkyBox().mesh, Transform());
+            drawMesh(scene.getSkyBox().mesh, Material());
         }
 
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.defaultPipelineState);
@@ -377,10 +384,10 @@ namespace BZ {
         uint32 entityOffset = index * sizeof(EntityConstantBufferData);
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.entityDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
-        drawMesh(entity.mesh, entity.transform);
+        drawMesh(entity.mesh, entity.overrideMaterial);
     }
 
-    void Renderer::drawMesh(const Mesh &mesh, const Transform &transform) {
+    void Renderer::drawMesh(const Mesh &mesh, const Material &overrideMaterial) {
         BZ_PROFILE_FUNCTION();
 
         Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer(), 0);
@@ -389,8 +396,10 @@ namespace BZ {
             Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer(), 0);
 
         for (const auto &submesh : mesh.getSubmeshes()) {
-            uint32 materialOffset = rendererData.materialOffsetMap[submesh.material];
-            Graphics::bindDescriptorSet(rendererData.commandBufferId, submesh.material.getDescriptorSet(),
+            const Material &materialToUse = overrideMaterial.isValid() ? overrideMaterial : submesh.material;
+
+            uint32 materialOffset = rendererData.materialOffsetMap[materialToUse];
+            Graphics::bindDescriptorSet(rendererData.commandBufferId, materialToUse.getDescriptorSet(),
                 rendererData.defaultPipelineState, RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
 
             if (mesh.hasIndices())
@@ -533,8 +542,13 @@ namespace BZ {
         }
 
         for (const auto &entity : scene.getEntities()) {
-            for (const auto &submesh : entity.mesh.getSubmeshes()) {
-                fillMaterial(submesh.material);
+            if (entity.overrideMaterial.isValid()) {
+                fillMaterial(entity.overrideMaterial);
+            }
+            else {
+                for (const auto &submesh : entity.mesh.getSubmeshes()) {
+                    fillMaterial(submesh.material);
+                }
             }
         }
 
@@ -549,7 +563,6 @@ namespace BZ {
         BZ_ASSERT_CORE(material.isValid(), "Trying to use an invalid/uninitialized Material!");
 
         const auto storedMaterialIt = rendererData.materialOffsetMap.find(material);
-        uint32 materialOffset;
 
         //If it's the first time this Material is used on a Scene set the correspondent data.
         if (storedMaterialIt == rendererData.materialOffsetMap.end()) {
@@ -564,13 +577,10 @@ namespace BZ {
             materialConstantBufferData.heightAndUvScale.y = uvScale.x;
             materialConstantBufferData.heightAndUvScale.z = uvScale.y;
 
-            materialOffset = static_cast<uint32>(rendererData.materialOffsetMap.size()) * sizeof(EntityConstantBufferData);
+            uint32 materialOffset = static_cast<uint32>(rendererData.materialOffsetMap.size()) * sizeof(EntityConstantBufferData);
             memcpy(rendererData.materialConstantBufferPtr + materialOffset, &materialConstantBufferData, sizeof(MaterialConstantBufferData));
 
             rendererData.materialOffsetMap[material] = materialOffset;
-        }
-        else {
-            materialOffset = storedMaterialIt->second;
         }
     }
 
@@ -578,7 +588,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         if (ImGui::Begin("Renderer")) {
-            ImGui::Text("Depth Bias Data");
+            ImGui::Text("Depth Bias:");
             ImGui::DragFloat("ConstantFactor", &rendererData.depthBiasData.x, 0.05f, 0.0f, 10.0f);
             ImGui::DragFloat("Clamp", &rendererData.depthBiasData.y, 0.05f, -10.0f, 10.0f);
             ImGui::DragFloat("SlopeFactor", &rendererData.depthBiasData.z, 0.05f, 0.0f, 100.0f);

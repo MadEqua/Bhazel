@@ -29,7 +29,8 @@ layout (set = 3, binding = 0, std140) uniform EntityConstants {
 } uEntityConstants;
 
 layout(location = 0) out struct {
-    mat3 TBN; //TBN matrix goes from tangent space to world space
+    //TBN matrix goes from tangent space to world space
+    mat3 TBN;
     vec2 texCoord;
 
     //In Light NDC space
@@ -60,5 +61,5 @@ void main() {
     }
 
     outData.VTan = normalize((uPassConstants.cameraPosition.xyz - positionWorld.xyz) * outData.TBN);
-    outData.NTan = normalize(attrNormal * outData.TBN);
+    outData.NTan = normalize(outData.TBN[2] * outData.TBN);
 }

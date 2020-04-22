@@ -46,7 +46,7 @@ namespace BZ {
         static void colorPass(const Scene &scene);
 
         static void drawEntity(const Entity &entity, uint32 index);
-        static void drawMesh(const Mesh &mesh, const Transform &transform);
+        static void drawMesh(const Mesh &mesh, const Material &overrideMaterial);
 
         static void fillConstants(const Scene &scene);
         static void fillPasses(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices);

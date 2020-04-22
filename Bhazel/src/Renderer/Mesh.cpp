@@ -231,13 +231,13 @@ namespace BZ {
                 //Assuming all faces of the same shape have the same material.
                 tinyobj::material_t material = materials[shape.mesh.material_ids[0]];
 
-                auto pathWithoutFileName = Utils::removeFileNameFromPath(path);
+                std::string pathWithoutFileName = Utils::removeFileNameFromPath(path);
                 submesh.material = Material((pathWithoutFileName + material.diffuse_texname).c_str(),
-                                            (pathWithoutFileName + material.normal_texname).c_str(),
-                                            (pathWithoutFileName + material.metallic_texname).c_str(),
-                                            (pathWithoutFileName + material.roughness_texname).c_str(),
-                                            (pathWithoutFileName + material.bump_texname).c_str(),
-                                            (pathWithoutFileName + material.ambient_texname).c_str());
+                    !material.normal_texname.empty() ? (pathWithoutFileName + material.normal_texname).c_str() : nullptr,
+                    !material.metallic_texname.empty() ? (pathWithoutFileName + material.metallic_texname).c_str() : nullptr,
+                    !material.roughness_texname.empty() ? (pathWithoutFileName + material.roughness_texname).c_str() : nullptr,
+                    !material.bump_texname.empty() ? (pathWithoutFileName + material.bump_texname).c_str() : nullptr,
+                    !material.ambient_texname.empty() ? (pathWithoutFileName + material.ambient_texname).c_str() : nullptr);
             }
             submeshes.push_back(submesh);
             shapeIdx++;

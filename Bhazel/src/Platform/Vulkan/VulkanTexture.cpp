@@ -224,8 +224,6 @@ namespace BZ {
     VulkanTexture2D::VulkanTexture2D(const char *path, TextureFormat format, MipmapData mipmapData) :
         Texture2D(format), isWrapping(false) {
 
-        int desiredChannels = this->format.getChannelCount();
-
         VkCommandBuffer commBuffer = beginCommandBuffer();
         byte *stagingPtr;
 
@@ -238,9 +236,9 @@ namespace BZ {
                 std::string mipName = "_" + std::to_string(mipIdx);
                 std::string fullPath = Utils::appendToFileName(path, mipName);
                 
-                const FileData fileData = loadFile(fullPath.c_str(), desiredChannels, true);
+                const FileData fileData = loadFile(fullPath.c_str(), format.getChannelCount(), true);
                 fileDatas[mipIdx] = fileData;
-                totalSize += fileData.width * fileData.height * desiredChannels;
+                totalSize += fileData.width * fileData.height * format.getSizePerTexel();
             }
 
             dimensions.x = fileDatas[0].width;
@@ -254,7 +252,7 @@ namespace BZ {
 
             uint32 stagingOffset = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
-                uint32 dataSize = fileDatas[mipIdx].width * fileDatas[mipIdx].height * desiredChannels;
+                uint32 dataSize = fileDatas[mipIdx].width * fileDatas[mipIdx].height * format.getSizePerTexel();
                 memcpy(stagingPtr + stagingOffset, fileDatas[mipIdx].data, dataSize);
                 freeData(fileDatas[mipIdx]);
                 copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, stagingOffset, fileDatas[mipIdx].width, fileDatas[mipIdx].height, mipIdx);
@@ -267,7 +265,7 @@ namespace BZ {
             destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
         }
         else {
-            const FileData fileData = loadFile(path, desiredChannels, true);
+            const FileData fileData = loadFile(path, format.getChannelCount(), true);
 
             dimensions.x = fileData.width;
             dimensions.y = fileData.height;
@@ -281,7 +279,7 @@ namespace BZ {
             createImage(true, mipmapData);
             transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-            uint32 dataSize = dimensions.x * dimensions.y * desiredChannels;
+            uint32 dataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
             initStagingBuffer(dataSize, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
 
             BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
@@ -305,8 +303,6 @@ namespace BZ {
     VulkanTexture2D::VulkanTexture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData) :
         Texture2D(format), isWrapping(false) {
 
-        int channels = this->format.getChannelCount();
-
         VkCommandBuffer commBuffer = beginCommandBuffer();
         byte *stagingPtr;
 
@@ -322,7 +318,7 @@ namespace BZ {
                 datas[mipIdx].data = data + totalSize;
                 datas[mipIdx].width = dimensions.x >> mipIdx;
                 datas[mipIdx].height = dimensions.y >> mipIdx;
-                totalSize += datas[mipIdx].width * datas[mipIdx].height * channels;
+                totalSize += datas[mipIdx].width * datas[mipIdx].height * format.getSizePerTexel();
             }
 
             createImage(true, mipmapData);
@@ -333,7 +329,7 @@ namespace BZ {
 
             uint32 stagingOffset = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
-                uint32 dataSize = datas[mipIdx].width * datas[mipIdx].height * channels;
+                uint32 dataSize = datas[mipIdx].width * datas[mipIdx].height * format.getSizePerTexel();
                 memcpy(stagingPtr + stagingOffset, datas[mipIdx].data, dataSize);
                 copyBufferToImage(*this, nativeHandle.stagingBufferHandle, nativeHandle.imageHandle, commBuffer, stagingOffset, datas[mipIdx].width, datas[mipIdx].height, mipIdx);
                 stagingOffset += dataSize;
@@ -355,7 +351,7 @@ namespace BZ {
             createImage(true, mipmapData);
             transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-            uint32 dataSize = dimensions.x * dimensions.y * channels;
+            uint32 dataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
             initStagingBuffer(dataSize, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
 
             BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
@@ -444,8 +440,6 @@ namespace BZ {
 
         layers = 6;
 
-        int desiredChannels = this->format.getChannelCount();
-
         VkCommandBuffer commBuffer = beginCommandBuffer();
         byte *stagingPtr;
 
@@ -460,9 +454,9 @@ namespace BZ {
                 
                 for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
                     std::string fullPath = basePath + Utils::appendToFileName(fileNames[faceIdx], mipName);
-                    const FileData fileData = loadFile(fullPath.c_str(), desiredChannels, false);
+                    const FileData fileData = loadFile(fullPath.c_str(), format.getChannelCount(), false);
                     fileDatas[mipIdx * 6 + faceIdx] = fileData;
-                    totalSize += fileData.width * fileData.height * desiredChannels;
+                    totalSize += fileData.width * fileData.height * format.getSizePerTexel();
                 }
             }
 
@@ -478,7 +472,7 @@ namespace BZ {
             uint32 faceOffset = 0;
             uint32 copyOffset = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
-                uint32 faceSize = fileDatas[mipIdx * 6].width * fileDatas[mipIdx * 6].height * desiredChannels;
+                uint32 faceSize = fileDatas[mipIdx * 6].width * fileDatas[mipIdx * 6].height * format.getSizePerTexel();
 
                 for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
                     uint32 fileDatasIdx = mipIdx * 6 + faceIdx;
@@ -500,7 +494,7 @@ namespace BZ {
             std::vector<FileData> fileDatas(6);
             for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
                 std::string fullPath = std::string(basePath) + fileNames[faceIdx];
-                fileDatas[faceIdx] = loadFile(fullPath.c_str(), desiredChannels, false);
+                fileDatas[faceIdx] = loadFile(fullPath.c_str(), format.getChannelCount(), false);
             }
 
             dimensions.x = fileDatas[0].width;
@@ -516,7 +510,7 @@ namespace BZ {
             createImage(true, mipmapData);
             transitionImageLayout(*this, commBuffer, nativeHandle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-            uint32 faceDataSize = dimensions.x * dimensions.y * desiredChannels;
+            uint32 faceDataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
             initStagingBuffer(faceDataSize * 6, &nativeHandle.stagingBufferHandle, &nativeHandle.stagingBufferAllocationHandle);
 
             BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), nativeHandle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));

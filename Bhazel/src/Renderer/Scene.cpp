@@ -21,6 +21,10 @@ namespace BZ {
         mesh(mesh), transform(transform), castShadow(castShadow) {
     }
 
+    Entity::Entity(Mesh &mesh, Transform &transform, Material &overrideMaterial, bool castShadow):
+        mesh(mesh), transform(transform), overrideMaterial(overrideMaterial), castShadow(castShadow) {
+    }
+
 
     Scene::Scene() {
         descriptorSet = Renderer::createSceneDescriptorSet();
@@ -34,6 +38,11 @@ namespace BZ {
     void Scene::addEntity(Mesh &mesh, Transform &transform, bool castShadow) {
         BZ_ASSERT_CORE(entities.size() < MAX_ENTITIES_PER_SCENE, "Reached the maximum ammount of Entities!");
         entities.push_back({ mesh, transform, castShadow });
+    }
+
+    void Scene::addEntity(Mesh &mesh, Transform &transform, Material &overrideMaterial, bool castShadow) {
+        BZ_ASSERT_CORE(entities.size() < MAX_ENTITIES_PER_SCENE, "Reached the maximum ammount of Entities!");
+        entities.push_back({ mesh, transform, overrideMaterial, castShadow });
     }
 
     void Scene::addDirectionalLight(DirectionalLight &light) {

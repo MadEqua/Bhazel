@@ -3,6 +3,9 @@
 #include "Graphics/Texture.h"
 #include "Graphics/DescriptorSet.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 
 namespace BZ {
 
@@ -82,11 +85,14 @@ template<>
 struct std::hash<BZ::Material> {
     size_t operator()(const BZ::Material &mat) const {
         return (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAlbedoTextureView())) ^
-            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getNormalTextureView())) ^
-            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getMetallicTextureView())) ^
-            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getRoughnessTextureView())) ^
-            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getHeightTextureView())) ^
-            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAOTextureView())) ^
-            std::hash<float>()(mat.getParallaxOcclusionScale());
+               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getNormalTextureView())) ^
+               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getMetallicTextureView())) ^
+               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getRoughnessTextureView())) ^
+               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getHeightTextureView())) ^
+               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAOTextureView())) ^
+               (std::hash<float>()(mat.getMetallic())) ^
+               (std::hash<float>()(mat.getRoughness())) ^
+               (std::hash<float>()(mat.getParallaxOcclusionScale())) ^
+               (std::hash<glm::vec2>()(mat.getUvScale()));
     }
 };

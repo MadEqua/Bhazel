@@ -54,7 +54,9 @@ namespace BZ {
 
     void PipelineState::reload() {
         destroy();
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         data.shader->reload();
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         init();
     }
 }

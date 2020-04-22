@@ -25,6 +25,7 @@ namespace BZ {
         const glm::vec3& getScale() const { return scale; }
         void setScale(const glm::vec3 &sc) { scale = sc; computeMatrices(); }
         void setScale(float x, float y, float z) { scale.x = x; scale.y = y; scale.z = z; computeMatrices(); }
+        void setScale(float sc) { scale.x = sc; scale.y = sc; scale.z = sc; computeMatrices(); }
 
         const glm::mat4& getLocalToParentMatrix() const { return localToParentMatrix; }
         const glm::mat4& getParentToLocalMatrix() const { return parentToLocalMatrix; }

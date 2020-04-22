@@ -209,7 +209,25 @@ namespace BZ {
             return VK_FORMAT_B8G8R8A8_UNORM;
         case TextureFormatEnum::B8G8R8A8_SRGB:
             return VK_FORMAT_B8G8R8A8_SRGB;
-        case TextureFormatEnum::D32:
+
+        case TextureFormatEnum::R16_SFLOAT:
+            return VK_FORMAT_R16_SFLOAT;
+        case TextureFormatEnum::R16G16_SFLOAT:
+            return VK_FORMAT_R16G16_SFLOAT;
+        case TextureFormatEnum::R16G16B16_SFLOAT:
+            return VK_FORMAT_R16G16B16_SFLOAT;
+        case TextureFormatEnum::R16G16B16A16_SFLOAT:
+            return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case TextureFormatEnum::R32_SFLOAT:
+            return VK_FORMAT_R32_SFLOAT;
+        case TextureFormatEnum::R32G32_SFLOAT:
+            return VK_FORMAT_R32G32_SFLOAT;
+        case TextureFormatEnum::R32G32B32_SFLOAT:
+            return VK_FORMAT_R32G32B32_SFLOAT;
+        case TextureFormatEnum::R32G32B32A32_SFLOAT:
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+
+        case TextureFormatEnum::D32_SFLOAT:
             return VK_FORMAT_D32_SFLOAT;
         case TextureFormatEnum::D16S8:
             return VK_FORMAT_D16_UNORM_S8_UINT;
@@ -246,7 +264,7 @@ namespace BZ {
         case VK_FORMAT_B8G8R8A8_SRGB:
             return TextureFormatEnum::B8G8R8A8_SRGB;
         case VK_FORMAT_D32_SFLOAT:
-            return TextureFormatEnum::D32;
+            return TextureFormatEnum::D32_SFLOAT;
         case VK_FORMAT_D16_UNORM_S8_UINT:
             return TextureFormatEnum::D16S8;
         case VK_FORMAT_D24_UNORM_S8_UINT:
@@ -644,7 +662,7 @@ namespace BZ {
         case AddressMode::ClampToBorder:
             return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         case AddressMode::MirrorClampToEdge:
-            return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown AddressMode!");
             return VK_SAMPLER_ADDRESS_MODE_REPEAT;

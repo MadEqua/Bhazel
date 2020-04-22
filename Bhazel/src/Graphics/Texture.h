@@ -12,7 +12,13 @@ namespace BZ {
         R8G8B8, R8G8B8_SRGB,
         R8G8B8A8, R8G8B8A8_SRGB,
         B8G8R8A8, B8G8R8A8_SRGB,
-        D32, D16S8, D24S8,
+
+        R16_SFLOAT, R32_SFLOAT,
+        R16G16_SFLOAT, R32G32_SFLOAT,
+        R16G16B16_SFLOAT, R32G32B32_SFLOAT,
+        R16G16B16A16_SFLOAT, R32G32B32A32_SFLOAT,
+
+        D32_SFLOAT, D16S8, D24S8,
     };
 
     struct TextureFormat {
@@ -25,8 +31,11 @@ namespace BZ {
         bool isDepthStencil() const;
         bool isDepthOnly() const;
         bool isSRGB() const;
+        bool isFloatingPoint() const;
 
         int getChannelCount() const;
+        int getSizePerChannel() const;
+        int getSizePerTexel() const;
 
         bool operator==(const TextureFormat &other) const {
             return formaEnum == other.formaEnum;
