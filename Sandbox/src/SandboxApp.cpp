@@ -175,7 +175,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Houses and barrel
-#if 1
+#if 0
     BZ::Mesh barrelMesh("Sandbox/meshes/barrel/barrel.obj");
     BZ::Transform barrelTransform;
     barrelTransform.setScale(2.5f, 2.5f, 2.5f);
@@ -212,7 +212,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 0
+#if 1
     byte whiteTextureData [] = { 255, 255, 255, 255 };
     auto whiteTexRef = BZ::Texture2D::create(whiteTextureData, 1, 1, BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::DoNothing);
     BZ::Mesh sphereMesh("Sandbox/meshes/sphere.obj");

@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-#include "BRDFLookUpGenerator.h"
+#include "BRDFLookup.h"
 
 #include "Graphics/Graphics.h"
 #include "Graphics/DescriptorSet.h"
@@ -262,8 +262,8 @@ namespace BZ {
         samplerBuilder3.setAddressModeAll(AddressMode::ClampToEdge);
         rendererData.brdfLookupSampler = samplerBuilder3.build();
 
-        auto brdfTexRef = generateCookTorranceBRDFLUT();
-        rendererData.brdfLookupTexture = TextureView::create(brdfTexRef);
+        auto brdfLookupTexRef = Texture2D::create(reinterpret_cast<const byte*>(brdfLut), brdfLutSize, brdfLutSize, TextureFormatEnum::R16G16_SFLOAT, MipmapData::Options::DoNothing);
+        rendererData.brdfLookupTexture = TextureView::create(brdfLookupTexRef);
 
         rendererData.globalDescriptorSet = DescriptorSet::create(rendererData.globalDescriptorSetLayout);
         rendererData.globalDescriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.brdfLookupSampler, 0);

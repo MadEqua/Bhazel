@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics/Texture.h"
+#include <fstream>
 
 
 namespace BZ {
@@ -73,24 +73,38 @@ namespace BZ {
         return glm::vec2(A, B) / float(numSamples);
     }
 
-    Ref<Texture2D> generateCookTorranceBRDFLUT(uint32_t mapDim = 256) {
-        byte *data = new byte[mapDim * mapDim * sizeof(glm::detail::hdata) * 2];
+    //Call this to generate the BRDF Lookup table as a data array on a .h file ready to be used.
+    void generateCookTorranceBRDFLUT(uint32 mapDim = 256) {
+        //byte *data = new byte[mapDim * mapDim * sizeof(glm::detail::hdata) * 2];
+
+        std::ofstream file;
+        file.open("BRDFLookup.h");
+        file << "#pragma once\n";
+        file << "namespace BZ {\n";
+        file << "constexpr uint32 brdfLutSize = " << mapDim << ";\n";
+        file << "//AUTO-GENERATED data in 16bit-Floating point format.\n";
+        file << "constexpr uint16 const brdfLut[] = {\n";
 
         uint32 offset = 0;
         for (uint32 j = 0; j < mapDim; ++j) {
             for (uint32 i = 0; i < mapDim; ++i) {
                 glm::vec2 v2 = integrateBRDF((static_cast<float>(j) + .5f) / static_cast<float>(mapDim), ((static_cast<float>(i) + .5f) / static_cast<float>(mapDim)));
-                glm::detail::hdata halfR = glm::detail::toFloat16(v2.r);
-                glm::detail::hdata halfG = glm::detail::toFloat16(v2.g);
+                uint16 halfR = glm::detail::toFloat16(v2.r);
+                uint16 halfG = glm::detail::toFloat16(v2.g);
 
-                memcpy(data + offset, &halfR, sizeof(glm::detail::hdata));
-                memcpy(data + offset + sizeof(glm::detail::hdata), &halfG, sizeof(glm::detail::hdata));
-                offset += sizeof(glm::detail::hdata) * 2;
+                file << halfR << "," << halfG << ",";
+
+                //memcpy(data + offset, &halfR, sizeof(uint16));
+                //memcpy(data + offset + sizeof(uint16), &halfG, sizeof(uint16));
+                offset += sizeof(uint16) * 2;
             }
         }
 
-        Ref<Texture2D> texture = Texture2D::create(data, mapDim, mapDim, TextureFormatEnum::R16G16_SFLOAT, MipmapData::Options::DoNothing);
-        delete [] data;
-        return texture;
+        file << "\n};}";
+        file.close();
+
+        //Ref<Texture2D> texture = Texture2D::create(data, mapDim, mapDim, TextureFormatEnum::R16G16_SFLOAT, MipmapData::Options::DoNothing);
+        //delete [] data;
+        //return texture;
     }
 }
