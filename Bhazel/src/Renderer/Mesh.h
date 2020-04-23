@@ -15,8 +15,7 @@ namespace BZ {
         struct Vertex {
             glm::vec3 position;
             glm::vec3 normal;
-            glm::vec3 tangent;
-            glm::vec3 bitangent;
+            glm::vec4 tangentAndDet;
             uint16 texCoord[2];
 
             bool operator==(const Vertex& other) const {
@@ -71,10 +70,9 @@ namespace BZ {
 
 template<> struct std::hash<BZ::Mesh::Vertex> {
     size_t operator()(const BZ::Mesh::Vertex &vertex) const {
-        return ((std::hash<glm::vec3>()(vertex.position) ^
-            (std::hash<glm::vec3>()(vertex.normal) << 1) ^
-            (std::hash<glm::vec3>()(vertex.tangent) << 1) ^
-            (std::hash<glm::vec3>()(vertex.bitangent) << 1)) >> 1) ^
-            (vertex.texCoord[0] ^ vertex.texCoord[1]);
+        return std::hash<glm::vec3>()(vertex.position) ^
+               std::hash<glm::vec3>()(vertex.normal) ^
+               std::hash<glm::vec4>()(vertex.tangentAndDet) ^
+               vertex.texCoord[0] ^ vertex.texCoord[1];
     }
 };

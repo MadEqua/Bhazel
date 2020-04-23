@@ -195,6 +195,10 @@ void main() {
     vec3 N = normalize(uMaterialConstants.normalMetallicRoughnessAndAO.x > 0.0 ? (texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0) : inData.NTan);
 
     vec3 col = lighting(N, V, texCoord);
+
+    //col = inData.TBN[0];
+    //col = vec3(texCoord, 0.0);
     //col =  texture(uAlbedoTexSampler, texCoord).rgb;
+    col = inData.TBN * N;
     outColor = vec4(col, 1.0);
 }

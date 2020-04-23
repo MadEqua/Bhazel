@@ -67,8 +67,7 @@ namespace BZ {
     static DataLayout vertexDataLayout = {
         { DataType::Float32, DataElements::Vec3, "POSITION" },
         { DataType::Float32, DataElements::Vec3, "NORMAL" },
-        { DataType::Float32, DataElements::Vec3, "TANGENT" },
-        { DataType::Float32, DataElements::Vec3, "BITANGENT" },
+        { DataType::Float32, DataElements::Vec4, "TANGENT" },
         { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
     };
 

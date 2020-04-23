@@ -2,10 +2,6 @@
 #pragma shader_stage(vertex)
 
 layout(location = 0) in vec3 attrPosition;
-layout(location = 1) in vec3 attrNormal;
-layout(location = 2) in vec3 attrTangent;
-layout(location = 3) in vec3 attrBitangent;
-layout(location = 4) in vec2 attrTexCoord;
 
 layout (set = 1, binding = 0, std140) uniform PassConstants {
     mat4 viewMatrix;

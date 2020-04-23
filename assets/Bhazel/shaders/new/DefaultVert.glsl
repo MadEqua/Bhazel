@@ -5,9 +5,8 @@
 
 layout(location = 0) in vec3 attrPosition;
 layout(location = 1) in vec3 attrNormal;
-layout(location = 2) in vec3 attrTangent;
-layout(location = 3) in vec3 attrBitangent;
-layout(location = 4) in vec2 attrTexCoord;
+layout(location = 2) in vec4 attrTangentAndDet;
+layout(location = 3) in vec2 attrTexCoord;
 
 layout (set = 1, binding = 0, std140) uniform PassConstants {
     mat4 viewMatrix;
@@ -48,7 +47,8 @@ void main() {
     vec4 positionWorld = uEntityConstants.modelMatrix * vec4(attrPosition, 1.0);
     gl_Position = uPassConstants.viewProjectionMatrix * positionWorld;
 
-    outData.TBN = mat3(uEntityConstants.normalMatrix) * mat3(attrTangent, attrBitangent, attrNormal);
+    vec3 bitangent = cross(attrNormal, attrTangentAndDet.xyz) * attrTangentAndDet.w;
+    outData.TBN = mat3(uEntityConstants.normalMatrix) * mat3(attrTangentAndDet.xyz, bitangent, attrNormal);
     outData.texCoord = attrTexCoord;
 
     //Multiply on the left is equal to multiply with the transpose (= inverse in this case). So transforming from world to tangent space.
