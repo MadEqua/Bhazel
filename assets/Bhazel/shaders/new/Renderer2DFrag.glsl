@@ -21,6 +21,7 @@ vec4 unpackColorInt(uint color) {
     return vec;
 }
 
+
 void main() {
     //outColor = texture(uTexSampler, inTexCoord) * pushConstants.tintAndAlpha;
     outColor = texture(uTexSampler, inTexCoord) * unpackColorInt(inColorPacked);

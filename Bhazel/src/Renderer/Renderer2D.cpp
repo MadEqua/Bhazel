@@ -137,8 +137,8 @@ namespace BZ {
 
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("Renderer2D");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/TextureVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/TextureFrag.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/Renderer2DVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/Renderer2DFrag.spv");
 
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();

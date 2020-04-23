@@ -10,6 +10,7 @@ layout(location = 0) in struct {
 
 layout(location = 0) out vec4 outColor;
 
+
 void main() {
     outColor = inData.color * texture(uFontTexSampler, inData.texCoord);
 }

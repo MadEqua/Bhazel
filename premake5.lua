@@ -32,7 +32,7 @@ workspace "Bhazel"
 
 OUTPUT_DIR = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-VULKAN_SDK_DIR = "C:/VulkanSDK/1.1.121.2"
+VULKAN_SDK_DIR = os.getenv("VULKAN_SDK")
 
 include "Bhazel"
 include "Sandbox"

@@ -12,6 +12,7 @@ layout (set = 0, binding = 0, std140) uniform Constants {
 layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) flat out uint outColorPacked;
 
+
 void main() {
     gl_Position = uConstants.viewProjectionMatrix * vec4(attrPosition, 0.0, 1.0);
     outTexCoord = attrTexCoord;

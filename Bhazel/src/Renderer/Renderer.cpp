@@ -175,8 +175,8 @@ namespace BZ {
         //DefaultPipelineState
         Shader::Builder shaderBuilder;
         shaderBuilder.setName("DefaultRenderer");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/DefaultVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/DefaultFrag.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/RendererVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/RendererFrag.spv");
 
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = shaderBuilder.build();
@@ -211,10 +211,11 @@ namespace BZ {
         rendererData.defaultPipelineState = PipelineState::create(pipelineStateData);
 
         //SkyBoxPipelineState
-        shaderBuilder.setName("SkyBox");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/SkyBoxVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/SkyBoxFrag.spv");
-        pipelineStateData.shader = shaderBuilder.build();
+        Shader::Builder shaderBuilder2;
+        shaderBuilder2.setName("SkyBox");
+        shaderBuilder2.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/SkyBoxVert.spv");
+        shaderBuilder2.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/SkyBoxFrag.spv");
+        pipelineStateData.shader = shaderBuilder2.build();
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
 
         //DepthPassPipelineState
@@ -242,9 +243,10 @@ namespace BZ {
         pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
         pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
 
-        shaderBuilder.setName("ShadowPass");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/DepthPassVert.spv");
-        pipelineStateData.shader = shaderBuilder.build();
+        Shader::Builder shaderBuilder3;
+        shaderBuilder3.setName("DepthPass");
+        shaderBuilder3.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/DepthPassVert.spv");
+        pipelineStateData.shader = shaderBuilder3.build();
 
         rendererData.depthPassPipelineState = PipelineState::create(pipelineStateData);
 

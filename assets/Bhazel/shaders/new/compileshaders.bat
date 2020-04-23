@@ -1,10 +1,15 @@
-C:/VulkanSDK/1.1.121.2/Bin32/glslc.exe ./TextureVert.glsl -o ..\bin\TextureVert.spv
-C:/VulkanSDK/1.1.121.2/Bin32/glslc.exe ./TextureFrag.glsl -o ..\bin\TextureFrag.spv
+%VULKAN_SDK%/Bin32/glslc.exe ./Renderer2DVert.glsl -o ..\bin\Renderer2DVert.spv
+%VULKAN_SDK%/Bin32/glslc.exe ./Renderer2DFrag.glsl -o ..\bin\Renderer2DFrag.spv
 
-C:/VulkanSDK/1.1.121.2/Bin32/glslc.exe ./ImGuiVert.glsl -o ..\bin\ImGuiVert.spv
-C:/VulkanSDK/1.1.121.2/Bin32/glslc.exe ./ImGuiFrag.glsl -o ..\bin\ImGuiFrag.spv
+%VULKAN_SDK%/Bin32/glslc.exe ./ImGuiVert.glsl -o ..\bin\ImGuiVert.spv
+%VULKAN_SDK%/Bin32/glslc.exe ./ImGuiFrag.glsl -o ..\bin\ImGuiFrag.spv
 
-C:/VulkanSDK/1.1.121.2/Bin32/glslc.exe ./DefaultVert.glsl -o ..\bin\DefaultVert.spv
-C:/VulkanSDK/1.1.121.2/Bin32/glslc.exe ./DefaultFrag.glsl -o ..\bin\DefaultFrag.spv
+%VULKAN_SDK%/Bin32/glslc.exe ./RendererVert.glsl -o ..\bin\RendererVert.spv
+%VULKAN_SDK%/Bin32/glslc.exe ./RendererFrag.glsl -o ..\bin\RendererFrag.spv
+
+%VULKAN_SDK%/Bin32/glslc.exe ./SkyBoxVert.glsl -o ..\bin\SkyBoxVert.spv
+%VULKAN_SDK%/Bin32/glslc.exe ./SkyBoxFrag.glsl -o ..\bin\SkyBoxFrag.spv
+
+%VULKAN_SDK%/Bin32/glslc.exe ./DepthPassVert.glsl -o ..\bin\DepthPassVert.spv
 
 pause

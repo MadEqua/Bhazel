@@ -63,7 +63,7 @@ namespace BZ {
     void Scene::enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],
                              const char *irradianceMapBasePath, const char *irradianceMapFileNames[6],
                              const char *radianceMapBasePath, const char *radianceMapFileNames[6], uint32 radianceMipmapCount) {
-        
+
         auto albedoTexRef = TextureCube::create(albedoBasePath, albedoFileNames, TextureFormatEnum::R8G8B8A8_SRGB, MipmapData::Options::Generate);
         skyBox.mesh = Mesh::createUnitCubeInsides(Material(albedoTexRef));
 

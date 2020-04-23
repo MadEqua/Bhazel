@@ -14,6 +14,7 @@ layout(location = 0) out struct {
     vec2 texCoord; 
 } outData;
 
+
 void main() {
     outData.color = attrColor;
     outData.texCoord = attrTexCoord;

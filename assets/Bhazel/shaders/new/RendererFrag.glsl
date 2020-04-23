@@ -196,9 +196,6 @@ void main() {
 
     vec3 col = lighting(N, V, texCoord);
 
-    //col = inData.TBN[0];
     //col = vec3(texCoord, 0.0);
-    //col =  texture(uAlbedoTexSampler, texCoord).rgb;
-    col = inData.TBN * N;
     outColor = vec4(col, 1.0);
 }
