@@ -323,10 +323,18 @@ namespace BZ {
         format(format) {
     }
 
-    Texture::FileData Texture::loadFile(const char* path, int desiredChannels, bool flip) {
+    Texture::FileData Texture::loadFile(const char* path, int desiredChannels, bool flip, float isFloatingPoint) {
         stbi_set_flip_vertically_on_load(flip);
         int channelsInFile, width, height;
-        stbi_uc* data = stbi_load(path, &width, &height, &channelsInFile, desiredChannels);
+
+        stbi_uc* data = nullptr;
+        if (isFloatingPoint) {
+            data = reinterpret_cast<stbi_uc*>(stbi_loadf(path, &width, &height, &channelsInFile, desiredChannels));
+        }
+        else {
+            data = stbi_load(path, &width, &height, &channelsInFile, desiredChannels);
+        }
+
         BZ_CRITICAL_ERROR_CORE(data, "Failed to load image '{}'. Reason: {}.", path, stbi_failure_reason());
 
         FileData ret;

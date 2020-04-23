@@ -81,7 +81,7 @@ namespace BZ {
             uint32 width, height;
         };
 
-        static FileData loadFile(const char* path, int desiredChannels, bool flip);
+        static FileData loadFile(const char* path, int desiredChannels, bool flip, float isFloatingPoint);
         static void freeData(const FileData &fileData);
 
         TextureFormat format;

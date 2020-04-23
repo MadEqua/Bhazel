@@ -236,7 +236,7 @@ namespace BZ {
                 std::string mipName = "_" + std::to_string(mipIdx);
                 std::string fullPath = Utils::appendToFileName(path, mipName);
                 
-                const FileData fileData = loadFile(fullPath.c_str(), format.getChannelCount(), true);
+                const FileData fileData = loadFile(fullPath.c_str(), format.getChannelCount(), true, format.isFloatingPoint());
                 fileDatas[mipIdx] = fileData;
                 totalSize += fileData.width * fileData.height * format.getSizePerTexel();
             }
@@ -265,7 +265,7 @@ namespace BZ {
             destroyStagingBuffer(nativeHandle.stagingBufferHandle, nativeHandle.stagingBufferAllocationHandle);
         }
         else {
-            const FileData fileData = loadFile(path, format.getChannelCount(), true);
+            const FileData fileData = loadFile(path, format.getChannelCount(), true, format.isFloatingPoint());
 
             dimensions.x = fileData.width;
             dimensions.y = fileData.height;
@@ -454,7 +454,7 @@ namespace BZ {
                 
                 for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
                     std::string fullPath = basePath + Utils::appendToFileName(fileNames[faceIdx], mipName);
-                    const FileData fileData = loadFile(fullPath.c_str(), format.getChannelCount(), false);
+                    const FileData fileData = loadFile(fullPath.c_str(), format.getChannelCount(), false, format.isFloatingPoint());
                     fileDatas[mipIdx * 6 + faceIdx] = fileData;
                     totalSize += fileData.width * fileData.height * format.getSizePerTexel();
                 }
@@ -494,7 +494,7 @@ namespace BZ {
             std::vector<FileData> fileDatas(6);
             for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
                 std::string fullPath = std::string(basePath) + fileNames[faceIdx];
-                fileDatas[faceIdx] = loadFile(fullPath.c_str(), format.getChannelCount(), false);
+                fileDatas[faceIdx] = loadFile(fullPath.c_str(), format.getChannelCount(), false, format.isFloatingPoint());
             }
 
             dimensions.x = fileDatas[0].width;
