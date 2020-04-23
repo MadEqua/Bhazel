@@ -47,10 +47,15 @@ layout(location = 0) out vec4 outColor;
 
 #define PI 3.14159265359
 
+bool hasNormalMap = uMaterialConstants.normalMetallicRoughnessAndAO.x > 0.0;
+bool hasMetallicMap = uMaterialConstants.normalMetallicRoughnessAndAO.y < 0.0;
+bool hasRoughnessMap = uMaterialConstants.normalMetallicRoughnessAndAO.z < 0.0;
+bool hasAOMap = uMaterialConstants.normalMetallicRoughnessAndAO.w > 0.0;
+bool hasHeightMap = uMaterialConstants.heightAndUvScale.x > 0.0;
+
 
 vec2 parallaxOcclusionMap(vec2 texCoord, vec3 viewDirTangentSpace) {
-    //If no Height Texture is bound
-    if(uMaterialConstants.heightAndUvScale.x < 0.0)
+    if(!hasHeightMap)
         return texCoord;
 
     const float LAYERS = 10;
@@ -152,7 +157,7 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness, vec2 t
     vec2 envBRDF = texture(uBrdfLookupTexture, vec2(NdotV, roughness)).rg;
     vec3 specular = radiance * (F * envBRDF.x + envBRDF.y);
 
-    float ao = uMaterialConstants.normalMetallicRoughnessAndAO.w > 0.0 ? texture(uAOTexSampler, texCoord).r : 1.0f;
+    float ao = hasAOMap ? texture(uAOTexSampler, texCoord).r : 1.0f;
     return (kDiffuse * diffuse + specular) * ao; 
 }
 
@@ -170,8 +175,8 @@ float shadowMapping(int lightIdx, vec3 N, vec3 L) {
 
 vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     vec3 albedo = texture(uAlbedoTexSampler, texCoord).rgb;
-    float metallic = uMaterialConstants.normalMetallicRoughnessAndAO.y < 0.0 ? texture(uMetallicTexSampler, texCoord).r : uMaterialConstants.normalMetallicRoughnessAndAO.y;
-    float roughness = uMaterialConstants.normalMetallicRoughnessAndAO.z < 0.0 ? texture(uRoughnessTexSampler, texCoord).r : uMaterialConstants.normalMetallicRoughnessAndAO.z;
+    float metallic = hasMetallicMap ? texture(uMetallicTexSampler, texCoord).r : uMaterialConstants.normalMetallicRoughnessAndAO.y;
+    float roughness = hasRoughnessMap ? texture(uRoughnessTexSampler, texCoord).r : uMaterialConstants.normalMetallicRoughnessAndAO.z;
 
     //Hardcoded reflectance for dielectrics
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
@@ -192,7 +197,7 @@ void main() {
     const vec2 uvScale = uMaterialConstants.heightAndUvScale.yz;
     vec2 texCoord = parallaxOcclusionMap(inData.texCoord * uvScale, V);
 
-    vec3 N = normalize(uMaterialConstants.normalMetallicRoughnessAndAO.x > 0.0 ? (texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0) : inData.NTan);
+    vec3 N = normalize(hasNormalMap ? (texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0) : inData.NTan);
 
     vec3 col = lighting(N, V, texCoord);
 

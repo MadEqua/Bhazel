@@ -145,7 +145,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Ground
-#if 1
+#if 0
     //BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
     //    "Sandbox/textures/steppingstones/steppingstones1_normal.png",
     //    "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
@@ -212,7 +212,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 0
+#if 1
     byte whiteTextureData [] = { 255, 255, 255, 255 };
     auto whiteTexRef = BZ::Texture2D::create(whiteTextureData, 1, 1, BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::DoNothing);
     BZ::Mesh sphereMesh("Sandbox/meshes/sphere.obj");
