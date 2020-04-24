@@ -29,9 +29,6 @@ namespace BZ {
         OrthographicCamera() = default;
         OrthographicCamera(float left, float right, float bottom, float top, float near = 0.0f, float far = 1.0f);
 
-        float getRotation() const { return transform.getRotationEuler().z; }
-        void setRotation(float rotDeg) { transform.setRotationEuler(0.0f, 0.0f, rotDeg); }
-
         struct Parameters {
             float left, right;
             float bottom, top;
@@ -67,7 +64,7 @@ namespace BZ {
 
     private:
         Parameters parameters;
-        mutable glm::vec3 frustumCornerPoints[8];
+        //mutable glm::vec3 frustumCornerPoints[8];
 
         void computeProjectionMatrix();
     };

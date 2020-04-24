@@ -213,8 +213,8 @@ void MainLayer::onGraphicsContextCreated() {
     const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
 
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
-    camera.getTransform().setTranslation({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
-    cameraController = BZ::OrthographicCameraController(camera);
+    camera.getTransform().setTranslation(WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f, BZ::Space::Parent);
+    cameraController = BZ::CameraController2D(camera, 400.0f, true, 45.0f);
 
     brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
     paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
@@ -237,7 +237,7 @@ void MainLayer::onUpdate(const BZ::FrameStats &frameStats) {
     brickMap.onUpdate(frameStats);
     paddle.onUpdate(frameStats);
     ball.onUpdate(frameStats, brickMap, paddle);
-    
+
     BZ::Renderer2D::end();
 }
 

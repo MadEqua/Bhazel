@@ -48,10 +48,11 @@ namespace BZ {
     }
 
 
-    class OrthographicCameraController : public CameraController<OrthographicCamera> {
+    class CameraController2D : public CameraController<OrthographicCamera> {
     public:
-        OrthographicCameraController() = default;
-        OrthographicCameraController(OrthographicCamera &camera, bool enableRotation = true);
+        CameraController2D() = default;
+        CameraController2D(OrthographicCamera &camera, float cameraMoveSpeed, bool enableRotation, float cameraRotationSpeed);
+        CameraController2D(OrthographicCamera &camera, float cameraMoveSpeed, bool enableRotation);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -62,15 +63,15 @@ namespace BZ {
         OrthographicCamera::Parameters originalParameters;
 
         bool enableRotation;
-        float cameraRotationSpeed = 90.0f;
-        float cameraMoveSpeed = 200.0f;
+        float cameraRotationSpeed = 10.0f;
+        float cameraMoveSpeed = 1.0f;
     };
 
 
     class FreeCameraController : public CameraController<PerspectiveCamera> {
     public:
         FreeCameraController() = default;
-        FreeCameraController(PerspectiveCamera &camera);
+        FreeCameraController(PerspectiveCamera &camera, float cameraMoveSpeed);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -80,7 +81,7 @@ namespace BZ {
 
         PerspectiveCamera::Parameters originalParameters;
 
-        float cameraMoveSpeed = 100.0f;
+        float cameraMoveSpeed = 1.0f;
         glm::ivec2 lastMousePosition = {-1, -1};
     };
 
@@ -91,7 +92,7 @@ namespace BZ {
     class RotateCameraController : public CameraController<PerspectiveCamera> {
     public:
         RotateCameraController() = default;
-        RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed = 1.0f);
+        RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed, float cameraRotationAccel);
 
         void onUpdate(const FrameStats &frameStats) override;
 
@@ -117,7 +118,8 @@ namespace BZ {
         float zAccel = 0.0f;
         float zVelocity = 0.0f;
 
-        float cameraMoveSpeed;
+        float cameraRotationAccel = 1.0f;
+        float cameraMoveSpeed = 1.0f;
 
         glm::ivec2 lastMousePosition = { -1, -1 };
     };

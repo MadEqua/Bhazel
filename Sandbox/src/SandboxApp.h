@@ -16,7 +16,7 @@ public:
 
 private:
     BZ::OrthographicCamera camera;
-    BZ::OrthographicCameraController cameraController;
+    BZ::CameraController2D cameraController;
 
     BZ::Ref<BZ::Texture2D> tex1;
     BZ::Ref<BZ::Texture2D> tex2;

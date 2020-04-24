@@ -443,8 +443,8 @@ namespace BZ {
         for (auto &dirLight : scene.getDirectionalLights()) {  
             Transform lightTransform = {};
 
-            lightTransform.setTranslation(sphereCenterWorld - dirLight.getDirection() * r);
-            lightTransform.lookAt(sphereCenterWorld);
+            lightTransform.setTranslation(sphereCenterWorld - dirLight.getDirection() * r, Space::Parent);
+            lightTransform.lookAt(sphereCenterWorld, glm::vec3(0, 1, 0));
 
             lightMatrices[lightIndex] = lightTransform.getParentToLocalMatrix();
 

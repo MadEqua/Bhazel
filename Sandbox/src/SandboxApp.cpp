@@ -14,8 +14,8 @@ void ParticleLayer::onGraphicsContextCreated() {
     const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
-    camera.getTransform().setTranslation({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f });
-    cameraController = BZ::OrthographicCameraController(camera);
+    camera.getTransform().setTranslation(WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f, BZ::Space::Parent);
+    cameraController = BZ::CameraController2D(camera, 25.0f, false);
 
     tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
     tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
@@ -90,43 +90,43 @@ void Layer3D::onGraphicsContextCreated() {
     orthoCamera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
 
     camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 400.0f);
-    camera.getTransform().setTranslation({ 0.0f, 100.0f, 100.0f });
+    camera.getTransform().setTranslation(0.0f, 100.0f, 100.0f, BZ::Space::Parent);
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
     scenes[2].setCamera(camera);
     
-    rotateCameraController = BZ::RotateCameraController(camera, 1.0f);
-    freeCameraController = BZ::FreeCameraController(camera);
+    rotateCameraController = BZ::RotateCameraController(camera, 11.0f, 0.07f);
+    freeCameraController = BZ::FreeCameraController(camera, 150.0f);
 
     //Hydrant, Wrench and Cerberus
 #if 1
-    BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
-                                 "Sandbox/meshes/fireHydrant/Normal.png",
-                                 "Sandbox/meshes/fireHydrant/Metallic.png",
-                                 "Sandbox/meshes/fireHydrant/Roughness.png",
-                                 "Sandbox/meshes/fireHydrant/Height.png");
-    hydrantMaterial.setParallaxOcclusionScale(0.001f);
-    BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
-    BZ::Transform hydrantTransform;
-    hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
-    hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f);
-    scenes[0].addEntity(hydrantMesh, hydrantTransform);
-    scenes[1].addEntity(hydrantMesh, hydrantTransform);
-    scenes[2].addEntity(hydrantMesh, hydrantTransform);
-    
-    BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
-                                "Sandbox/meshes/wrench/normal.png",
-                                "Sandbox/meshes/wrench/metallic.jpg",
-                                "Sandbox/meshes/wrench/roughness.jpg",
-                                "Sandbox/meshes/wrench/height.png");
-    wrenchMaterial.setParallaxOcclusionScale(0.01f);
-    BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
-    BZ::Transform wrenchTransform;
-    wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f);
-    wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f);
-    scenes[0].addEntity(wrenchMesh, wrenchTransform);
-    scenes[1].addEntity(wrenchMesh, wrenchTransform);
-    scenes[2].addEntity(wrenchMesh, wrenchTransform);
+    //BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
+    //                             "Sandbox/meshes/fireHydrant/Normal.png",
+    //                             "Sandbox/meshes/fireHydrant/Metallic.png",
+    //                             "Sandbox/meshes/fireHydrant/Roughness.png",
+    //                             "Sandbox/meshes/fireHydrant/Height.png");
+    //hydrantMaterial.setParallaxOcclusionScale(0.001f);
+    //BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
+    //BZ::Transform hydrantTransform;
+    //hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
+    //hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f);
+    //scenes[0].addEntity(hydrantMesh, hydrantTransform);
+    //scenes[1].addEntity(hydrantMesh, hydrantTransform);
+    //scenes[2].addEntity(hydrantMesh, hydrantTransform);
+    //
+    //BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
+    //                            "Sandbox/meshes/wrench/normal.png",
+    //                            "Sandbox/meshes/wrench/metallic.jpg",
+    //                            "Sandbox/meshes/wrench/roughness.jpg",
+    //                            "Sandbox/meshes/wrench/height.png");
+    //wrenchMaterial.setParallaxOcclusionScale(0.01f);
+    //BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
+    //BZ::Transform wrenchTransform;
+    //wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f);
+    //wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f);
+    //scenes[0].addEntity(wrenchMesh, wrenchTransform);
+    //scenes[1].addEntity(wrenchMesh, wrenchTransform);
+    //scenes[2].addEntity(wrenchMesh, wrenchTransform);
     
     BZ::Material gunMaterial("Sandbox/meshes/cerberus/albedo.png",
                              "Sandbox/meshes/cerberus/normal.png",
@@ -137,15 +137,15 @@ void Layer3D::onGraphicsContextCreated() {
     BZ::Mesh gunMesh("Sandbox/meshes/cerberus/cerberus.obj", gunMaterial);
     BZ::Transform gunTransform;
     gunTransform.setScale(9.0f, 9.0f, 9.0f);
-    gunTransform.setTranslation(-25.0f, 0.0f, 0.0f);
-    gunTransform.setRotationEuler(0.0f, 90.0f, -45.0f);
+    gunTransform.setTranslation(-25.0f, 0.0f, 0.0f, BZ::Space::Parent);
+    gunTransform.setRotationEuler(0.0f, 90.0f, -45.0f, BZ::Space::Parent);
     scenes[0].addEntity(gunMesh, gunTransform);
     scenes[1].addEntity(gunMesh, gunTransform);
     scenes[2].addEntity(gunMesh, gunTransform);
 #endif
 
     //Ground
-#if 0
+#if 1
     //BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
     //    "Sandbox/textures/steppingstones/steppingstones1_normal.png",
     //    "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
@@ -167,7 +167,7 @@ void Layer3D::onGraphicsContextCreated() {
     groundMaterial.setUvScale(20.0f, 20.0f);
     BZ::Mesh groundMesh = BZ::Mesh::createHorizontalPlane(groundMaterial);
     BZ::Transform groundTransform;
-    groundTransform.setTranslation(0.0f, 0.0f, 0.0f);
+    groundTransform.setTranslation(0.0f, 0.0f, 0.0f, BZ::Space::Parent);
     groundTransform.setScale(300.0f, 300.0f, 300.0f);
     scenes[0].addEntity(groundMesh, groundTransform, false);
     scenes[1].addEntity(groundMesh, groundTransform, false);
@@ -212,9 +212,10 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 1
-    byte whiteTextureData [] = { 255, 255, 255, 255 };
-    auto whiteTexRef = BZ::Texture2D::create(whiteTextureData, 1, 1, BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::DoNothing);
+#if 0
+    //byte whiteTextureData [] = { 255, 255, 255, 255 };
+    //auto texRef = BZ::Texture2D::create(whiteTextureData, 1, 1, BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::DoNothing);
+    auto texRef = BZ::Texture2D::create("Sandbox/textures/test.jpg", BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::Generate);
     BZ::Mesh sphereMesh("Sandbox/meshes/sphere.obj");
 
     const float SCALE = 7.0f;
@@ -224,9 +225,9 @@ void Layer3D::onGraphicsContextCreated() {
 
             BZ::Transform sphereTransform;
             sphereTransform.setScale(SCALE);
-            sphereTransform.setTranslation(pos);
+            sphereTransform.setTranslation(pos, BZ::Space::Parent);
 
-            BZ::Material mat(whiteTexRef);
+            BZ::Material mat(texRef);
             mat.setMetallic(static_cast<float>(x + 3) / 6.0f);
             mat.setRoughness(static_cast<float>(y + 3) / 6.0f);
 
@@ -324,13 +325,12 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
             auto translation = entity.transform.getTranslation();
             auto rot = entity.transform.getRotationEuler();
             auto scale = entity.transform.getScale();
-
             ImGui::PushID(i);
             if (ImGui::DragFloat3("Translation", &translation[0], 0.1f, -100.0f, 100.0f)) {
-                entity.transform.setTranslation(translation);
+                entity.transform.setTranslation(translation, BZ::Space::Parent);
             }
-            if (ImGui::DragFloat3("Rot", &rot[0], 1.0f, -359.0f, 359.0f)) {
-                entity.transform.setRotationEuler(rot);
+            if (ImGui::DragFloat3("Rotation", &rot[0], 1.0f, -359.0f, 359.0f)) {
+                entity.transform.setRotationEuler(rot, BZ::Space::Parent);
             }
             if (ImGui::DragFloat3("Scale", &scale[0], 0.05f, 0.0f, 100.0f)) {
                 entity.transform.setScale(scale);

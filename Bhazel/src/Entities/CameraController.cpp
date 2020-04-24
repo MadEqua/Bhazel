@@ -10,57 +10,60 @@
 
 namespace BZ {
 
-    OrthographicCameraController::OrthographicCameraController(OrthographicCamera &camera, bool enableRotation) :
+    CameraController2D::CameraController2D(OrthographicCamera &camera, float cameraMoveSpeed, bool enableRotation, float cameraRotationSpeed) :
         CameraController(camera),
         originalParameters(camera.getParameters()),
-        enableRotation(false) {
+        cameraMoveSpeed(cameraMoveSpeed),
+        enableRotation(enableRotation),
+        cameraRotationSpeed(cameraRotationSpeed) {
     }
 
-    void OrthographicCameraController::onUpdate(const FrameStats &frameStats) {
-        auto cameraPosition = camera->getTransform().getTranslation();
+    CameraController2D::CameraController2D(OrthographicCamera &camera, float cameraMoveSpeed, bool enableRotation) :
+        CameraController(camera),
+        originalParameters(camera.getParameters()),
+        cameraMoveSpeed(cameraMoveSpeed),
+        enableRotation(enableRotation) {
+    }
+
+    void CameraController2D::onUpdate(const FrameStats &frameStats) {
+        glm::vec3 movementDir = {};
         bool positionChanged = false;
 
         Input &input = Application::getInstance().getInput();
         if(input.isKeyPressed(BZ_KEY_A)) {
-            cameraPosition.x -= cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            movementDir.x -= 1.0f;
             positionChanged = true;
         }
         if(input.isKeyPressed(BZ_KEY_D)) {
-            cameraPosition.x += cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            movementDir.x += 1.0f;
             positionChanged = true;
         }
-        
+
         if(input.isKeyPressed(BZ_KEY_W)) {
-            cameraPosition.y += cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            movementDir.y += 1.0f;
             positionChanged = true;
         }
         if(input.isKeyPressed(BZ_KEY_S)) {
-            cameraPosition.y -= cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            movementDir.y -= 1.0f;
             positionChanged = true;
         }
 
-        if(positionChanged) 
-            camera->getTransform().setTranslation(cameraPosition);
+        if (positionChanged) {
+            glm::vec3 movementScaled = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            camera->getTransform().setTranslation(camera->getTransform().getTranslation() + movementScaled, Space::Parent);
+        }
 
         if(enableRotation) {
-            auto cameraRotation = camera->getRotation();
-            bool rotationChanged = false;
-
             if(input.isKeyPressed(BZ_KEY_Q)) {
-                cameraRotation -= cameraRotationSpeed * frameStats.lastFrameTime.asSeconds();
-                rotationChanged = true;
+                camera->getTransform().roll(-cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
             }
-            else if(input.isKeyPressed(BZ_KEY_E)) {
-                cameraRotation += cameraRotationSpeed * frameStats.lastFrameTime.asSeconds();
-                rotationChanged = true;
+            if(input.isKeyPressed(BZ_KEY_E)) {
+                camera->getTransform().roll(cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
             }
-
-            if(rotationChanged)
-                camera->setRotation(cameraRotation);
         }
     }
 
-    bool OrthographicCameraController::onMouseScrolled(const MouseScrolledEvent &e) {
+    bool CameraController2D::onMouseScrolled(const MouseScrolledEvent &e) {
         zoom = std::max(zoom - e.getYOffset() * cameraZoomSpeed, 0.01f);
         
         float originalWidth = originalParameters.right - originalParameters.left;
@@ -84,14 +87,23 @@ namespace BZ {
         return false;
     }
 
-    bool OrthographicCameraController::onWindowResized(const WindowResizedEvent &e) {
+    bool CameraController2D::onWindowResized(const WindowResizedEvent &e) {
+        OrthographicCamera::Parameters params;
+        params.left = -static_cast<float>(e.getWidth()) * 0.5f;
+        params.right = static_cast<float>(e.getWidth()) * 0.5f;
+        params.bottom = -static_cast<float>(e.getHeight()) * 0.5f;
+        params.top = static_cast<float>(e.getHeight()) * 0.5f;
+        params.near = originalParameters.near;
+        params.far = originalParameters.far;
+        camera->setParameters(params);
         return false;
     }
 
 
-    FreeCameraController::FreeCameraController(PerspectiveCamera &camera) :
+    FreeCameraController::FreeCameraController(PerspectiveCamera &camera, float cameraMoveSpeed) :
         CameraController(camera),
-        originalParameters(camera.getParameters()) {
+        originalParameters(camera.getParameters()),
+        cameraMoveSpeed(cameraMoveSpeed) {
     }
 
     void FreeCameraController::onUpdate(const FrameStats &frameStats) {
@@ -101,14 +113,10 @@ namespace BZ {
 
         if(mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if(lastMousePosition.x != -1 && lastMousePosition.y != -1) {
-
                 auto dif = mousePosition - lastMousePosition;
-
                 if(input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
-                    auto cameraRotation = camera->getTransform().getRotationEuler();
-                    cameraRotation.y -= static_cast<float>(dif.x) * 0.2f;
-                    cameraRotation.x -= static_cast<float>(dif.y) * 0.2f;
-                    camera->getTransform().setRotationEuler(cameraRotation);
+                    camera->getTransform().yaw(-static_cast<float>(dif.x) * 0.2f, Space::Parent);
+                    camera->getTransform().pitch(static_cast<float>(dif.y) * 0.2f, Space::Local);
                 }
             }
             lastMousePosition = mousePosition;
@@ -121,27 +129,26 @@ namespace BZ {
         glm::vec3 movementDir = {};
 
         if(input.isKeyPressed(BZ_KEY_A)) {
-            movementDir += glm::vec3(-1.0f, 0.0f, 0.0f);
+            movementDir.x -= 1.0f;
             positionChanged = true;
         }
         if(input.isKeyPressed(BZ_KEY_D)) {
-            movementDir += glm::vec3(1.0, 0.0f, 0.0f);
+            movementDir.x += 1.0;
             positionChanged = true;
         }
 
         if(input.isKeyPressed(BZ_KEY_W)) {
-            movementDir += glm::vec3(0.0f, 0.0f, -1.0f);
+            movementDir.z -= 1.0f;
             positionChanged = true;
         }
         if(input.isKeyPressed(BZ_KEY_S)) {
-            movementDir += glm::vec3(0.0f, 0.0f, 1.0f);
+            movementDir.z += 1.0f;
             positionChanged = true;
         }
 
         if(positionChanged) {
-            glm::vec3 localMovement = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
-            glm::vec3 worldMovement = glm::transpose(glm::mat3(camera->getViewMatrix())) * localMovement;
-            camera->getTransform().setTranslation(camera->getTransform().getTranslation() + worldMovement);
+            glm::vec3 movementScaled = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            camera->getTransform().translate(movementScaled, Space::Local);
         }
     }
 
@@ -168,10 +175,11 @@ namespace BZ {
     }
 
 
-    RotateCameraController::RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed) :
+    RotateCameraController::RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed, float cameraRotationAccel) :
         CameraController(camera),
+        originalParameters(camera.getParameters()),
         cameraMoveSpeed(cameraMoveSpeed),
-        originalParameters(camera.getParameters()) {
+        cameraRotationAccel(cameraRotationAccel) {
 
         const glm::vec3 &position = camera.getTransform().getTranslation();
 
@@ -179,7 +187,7 @@ namespace BZ {
         camPosCilindrical[1] = glm::atan(position.x, position.z);
         camPosCilindrical[2] = position.y;
 
-        camera.getTransform().lookAt(glm::vec3(0.0f));
+        camera.getTransform().lookAt(glm::vec3(0.0f), glm::vec3(0, 1, 0));
     }
 
     void RotateCameraController::onUpdate(const FrameStats &frameStats) {
@@ -192,15 +200,13 @@ namespace BZ {
 
         if (mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if (lastMousePosition.x != -1 && lastMousePosition.y != -1) {
-
                 auto dif = mousePosition - lastMousePosition;
-
                 if (input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT)) {
                     if (dif.x != 0.0f) {
-                        thetaAccel = dif.x * 0.1f;
+                        thetaAccel = dif.x * cameraRotationAccel;
                     }
                     if (dif.y != 0.0f) {
-                        zAccel = dif.y * cameraMoveSpeed;
+                        zAccel = dif.y * cameraMoveSpeed * 0.45f;
                     }
                 }
             }
@@ -214,10 +220,7 @@ namespace BZ {
 
         //Acceleration
         thetaVelocity += thetaAccel;
-        thetaVelocity = glm::clamp(thetaVelocity, -8.0f, 8.0f);
-
         zVelocity += zAccel;
-        zVelocity = glm::clamp(zVelocity, -100.0f, 100.0f);
 
         //Velocity
         if (glm::abs(thetaVelocity) > 0.0f) {
@@ -267,10 +270,10 @@ namespace BZ {
 
     void RotateCameraController::recompute() {
         glm::vec3 cameraPosition = { camPosCilindrical[0] * glm::sin(camPosCilindrical[1]),
-            camPosCilindrical[2],
-            camPosCilindrical[0] * glm::cos(camPosCilindrical[1]) };
+                                     camPosCilindrical[2],
+                                     camPosCilindrical[0] * glm::cos(camPosCilindrical[1]) };
 
-        camera->getTransform().setTranslation(cameraPosition);
-        camera->getTransform().lookAt(glm::vec3(0.0f));
+        camera->getTransform().setTranslation(cameraPosition, Space::Parent);
+        camera->getTransform().lookAt(glm::vec3(0.0f), glm::vec3(0, 1, 0));
     }
 }

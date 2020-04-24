@@ -83,7 +83,7 @@ public:
 
 private:
     BZ::OrthographicCamera camera;
-    BZ::OrthographicCameraController cameraController;
+    BZ::CameraController2D cameraController;
 
     BrickMap brickMap;
     Ball ball;
