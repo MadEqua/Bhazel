@@ -15,7 +15,7 @@ void ParticleLayer::onGraphicsContextCreated() {
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
     camera.getTransform().setTranslation(WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f, BZ::Space::Parent);
-    cameraController = BZ::CameraController2D(camera, 25.0f, false);
+    cameraController = BZ::CameraController2D(camera, 400.0f, true, 45.0f);
 
     tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
     tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
@@ -61,7 +61,7 @@ void ParticleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     pos.y = (sin(pos.x * 0.02f) * 0.5f + 0.5f) * (WINDOW_DIMS.y * 0.75f) + (WINDOW_DIMS.y * 0.125f);
     particleSystem.setPosition(pos);
 
-    BZ::Renderer2D::begin(cameraController.getCamera());
+    BZ::Renderer2D::begin(camera);
     particleSystem.onUpdate(frameStats);
     BZ::Renderer2D::drawParticleSystem2D(particleSystem);
     BZ::Renderer2D::end();
@@ -94,39 +94,39 @@ void Layer3D::onGraphicsContextCreated() {
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
     scenes[2].setCamera(camera);
-    
+
     rotateCameraController = BZ::RotateCameraController(camera, 11.0f, 0.07f);
-    freeCameraController = BZ::FreeCameraController(camera, 150.0f);
+    freeCameraController = BZ::FreeCameraController(camera, 50.0f);
 
     //Hydrant, Wrench and Cerberus
 #if 1
-    //BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
-    //                             "Sandbox/meshes/fireHydrant/Normal.png",
-    //                             "Sandbox/meshes/fireHydrant/Metallic.png",
-    //                             "Sandbox/meshes/fireHydrant/Roughness.png",
-    //                             "Sandbox/meshes/fireHydrant/Height.png");
-    //hydrantMaterial.setParallaxOcclusionScale(0.001f);
-    //BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
-    //BZ::Transform hydrantTransform;
-    //hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
-    //hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f);
-    //scenes[0].addEntity(hydrantMesh, hydrantTransform);
-    //scenes[1].addEntity(hydrantMesh, hydrantTransform);
-    //scenes[2].addEntity(hydrantMesh, hydrantTransform);
-    //
-    //BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
-    //                            "Sandbox/meshes/wrench/normal.png",
-    //                            "Sandbox/meshes/wrench/metallic.jpg",
-    //                            "Sandbox/meshes/wrench/roughness.jpg",
-    //                            "Sandbox/meshes/wrench/height.png");
-    //wrenchMaterial.setParallaxOcclusionScale(0.01f);
-    //BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
-    //BZ::Transform wrenchTransform;
-    //wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f);
-    //wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f);
-    //scenes[0].addEntity(wrenchMesh, wrenchTransform);
-    //scenes[1].addEntity(wrenchMesh, wrenchTransform);
-    //scenes[2].addEntity(wrenchMesh, wrenchTransform);
+    BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
+                                 "Sandbox/meshes/fireHydrant/Normal.png",
+                                 "Sandbox/meshes/fireHydrant/Metallic.png",
+                                 "Sandbox/meshes/fireHydrant/Roughness.png",
+                                 "Sandbox/meshes/fireHydrant/Height.png");
+    hydrantMaterial.setParallaxOcclusionScale(0.001f);
+    BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
+    BZ::Transform hydrantTransform;
+    hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
+    hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f, BZ::Space::Parent);
+    scenes[0].addEntity(hydrantMesh, hydrantTransform);
+    scenes[1].addEntity(hydrantMesh, hydrantTransform);
+    scenes[2].addEntity(hydrantMesh, hydrantTransform);
+    
+    BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
+                                "Sandbox/meshes/wrench/normal.png",
+                                "Sandbox/meshes/wrench/metallic.jpg",
+                                "Sandbox/meshes/wrench/roughness.jpg",
+                                "Sandbox/meshes/wrench/height.png");
+    wrenchMaterial.setParallaxOcclusionScale(0.01f);
+    BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
+    BZ::Transform wrenchTransform;
+    wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f, BZ::Space::Parent);
+    wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f, BZ::Space::Parent);
+    scenes[0].addEntity(wrenchMesh, wrenchTransform);
+    scenes[1].addEntity(wrenchMesh, wrenchTransform);
+    scenes[2].addEntity(wrenchMesh, wrenchTransform);
     
     BZ::Material gunMaterial("Sandbox/meshes/cerberus/albedo.png",
                              "Sandbox/meshes/cerberus/normal.png",
@@ -146,18 +146,18 @@ void Layer3D::onGraphicsContextCreated() {
 
     //Ground
 #if 1
-    //BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
-    //    "Sandbox/textures/steppingstones/steppingstones1_normal.png",
-    //    "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
-    //    "Sandbox/textures/steppingstones/steppingstones1_roughness.png",
-    //    "Sandbox/textures/steppingstones/steppingstones1_height.png");
-    //
-    BZ::Material groundMaterial("Sandbox/textures/octostone/octostoneAlbedo.png",
-                                "Sandbox/textures/octostone/octostoneNormalc.png",
-                                "Sandbox/textures/octostone/octostoneMetallic.png",
-                                "Sandbox/textures/octostone/octostoneRoughness2.png",
-                                "Sandbox/textures/octostone/octostoneHeightc.png",
-                                "Sandbox/textures/octostone/octostoneAmbient_Occlusionc.png");
+    BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
+        "Sandbox/textures/steppingstones/steppingstones1_normal.png",
+        "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
+        "Sandbox/textures/steppingstones/steppingstones1_roughness.png",
+        "Sandbox/textures/steppingstones/steppingstones1_height.png");
+    
+    //BZ::Material groundMaterial("Sandbox/textures/octostone/octostoneAlbedo.png",
+    //                            "Sandbox/textures/octostone/octostoneNormalc.png",
+    //                            "Sandbox/textures/octostone/octostoneMetallic.png",
+    //                            "Sandbox/textures/octostone/octostoneRoughness2.png",
+    //                            "Sandbox/textures/octostone/octostoneHeightc.png",
+    //                            "Sandbox/textures/octostone/octostoneAmbient_Occlusionc.png");
     //BZ::Material groundMaterial("Sandbox/textures/hexstones/hex-stones1-albedo.png",
     //                            "Sandbox/textures/hexstones/hex-stones1-normal-ogl.png",
     //                            "Sandbox/textures/hexstones/hex-stones1-metallic.png",

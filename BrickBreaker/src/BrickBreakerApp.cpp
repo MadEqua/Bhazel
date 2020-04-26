@@ -232,7 +232,7 @@ void MainLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     cameraController.onUpdate(frameStats);
 
-    BZ::Renderer2D::begin(cameraController.getCamera());
+    BZ::Renderer2D::begin(camera);
     
     brickMap.onUpdate(frameStats);
     paddle.onUpdate(frameStats);

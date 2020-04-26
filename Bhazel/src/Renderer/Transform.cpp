@@ -29,7 +29,7 @@ namespace BZ {
         }
         else {
             glm::vec4 transLocal(x, y, z, 0.0f);
-            glm::vec4 transParent = localToParentMatrix * transLocal;
+            glm::vec4 transParent = getLocalToParentMatrix() * transLocal;
             translation.x = transParent.x;
             translation.y = transParent.y;
             translation.z = transParent.z;
@@ -45,7 +45,7 @@ namespace BZ {
         }
         else {
             glm::vec4 transLocal(x, y, z, 0.0f);
-            glm::vec4 transParent = localToParentMatrix * transLocal;
+            glm::vec4 transParent = getLocalToParentMatrix() * transLocal;
             translation.x += transParent.x;
             translation.y += transParent.y;
             translation.z += transParent.z;
@@ -58,7 +58,7 @@ namespace BZ {
             orientation = quat;
         }
         else {
-            glm::vec3 axisParent = localToParentMatrix * glm::vec4(glm::axis(quat), 0.0);
+            glm::vec3 axisParent = getLocalToParentMatrix() * glm::vec4(glm::axis(quat), 0.0);
             orientation = glm::angleAxis(glm::angle(quat), axisParent);
         }
         matricesDirty = true;
@@ -69,7 +69,7 @@ namespace BZ {
             orientation = quat * orientation;
         }
         else {
-            glm::vec3 axisParent = localToParentMatrix * glm::vec4(glm::axis(quat), 0.0);
+            glm::vec3 axisParent = getLocalToParentMatrix() * glm::vec4(glm::axis(quat), 0.0);
             glm::quat orientationParent = glm::angleAxis(glm::angle(quat), axisParent);
             orientation = orientationParent * orientation;
         }

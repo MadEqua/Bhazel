@@ -26,40 +26,43 @@ namespace BZ {
     }
 
     void CameraController2D::onUpdate(const FrameStats &frameStats) {
-        glm::vec3 movementDir = {};
-        bool positionChanged = false;
-
         Input &input = Application::getInstance().getInput();
-        if(input.isKeyPressed(BZ_KEY_A)) {
+
+        if (enableRotation) {
+            if (input.isKeyPressed(BZ_KEY_Q)) {
+                camera->getTransform().roll(cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
+            }
+            if (input.isKeyPressed(BZ_KEY_E)) {
+                camera->getTransform().roll(-cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
+            }
+        }
+
+        bool positionChanged = false;
+        glm::vec3 movementDir = {};
+        if (input.isKeyPressed(BZ_KEY_A)) {
             movementDir.x -= 1.0f;
             positionChanged = true;
         }
-        if(input.isKeyPressed(BZ_KEY_D)) {
+        if (input.isKeyPressed(BZ_KEY_D)) {
             movementDir.x += 1.0f;
             positionChanged = true;
         }
 
-        if(input.isKeyPressed(BZ_KEY_W)) {
+        if (input.isKeyPressed(BZ_KEY_W)) {
             movementDir.y += 1.0f;
             positionChanged = true;
         }
-        if(input.isKeyPressed(BZ_KEY_S)) {
+        if (input.isKeyPressed(BZ_KEY_S)) {
             movementDir.y -= 1.0f;
             positionChanged = true;
         }
 
         if (positionChanged) {
             glm::vec3 movementScaled = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
-            camera->getTransform().setTranslation(camera->getTransform().getTranslation() + movementScaled, Space::Parent);
-        }
 
-        if(enableRotation) {
-            if(input.isKeyPressed(BZ_KEY_Q)) {
-                camera->getTransform().roll(-cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
-            }
-            if(input.isKeyPressed(BZ_KEY_E)) {
-                camera->getTransform().roll(cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
-            }
+            //TODO (Mistery alert): Space::Parent is behaving as Space::Local and vice-versa.
+            //Only in this CameraController, other Controllers and Entities behave as expected, and they all use the Transform class equally.
+            camera->getTransform().translate(movementScaled, Space::Parent);
         }
     }
 
@@ -146,8 +149,13 @@ namespace BZ {
             positionChanged = true;
         }
 
+
         if(positionChanged) {
-            glm::vec3 movementScaled = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            float mult = 1.0f;
+            if (input.isKeyPressed(BZ_KEY_LEFT_SHIFT)) mult = 10.0f;
+            if (input.isKeyPressed(BZ_KEY_LEFT_CONTROL)) mult = 0.05f;
+            float speed = cameraMoveSpeed * mult;
+            glm::vec3 movementScaled = movementDir * speed * frameStats.lastFrameTime.asSeconds();
             camera->getTransform().translate(movementScaled, Space::Local);
         }
     }
