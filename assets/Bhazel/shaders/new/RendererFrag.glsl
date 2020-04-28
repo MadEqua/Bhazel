@@ -2,19 +2,21 @@
 #pragma shader_stage(fragment)
 
 #define MAX_DIR_LIGHTS_PER_SCENE 2
+#define SHADOW_MAPPING_CASCADE_COUNT 4
 
 layout(set = 0, binding = 0) uniform sampler2D uBrdfLookupTexture;
 
 layout (set = 2, binding = 0, std140) uniform SceneConstants {
-    mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE];
+    mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
     vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
     vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE];
+    vec4 cascadeSplits; //View space
     vec2 dirLightCountAndRadianceMapMips;
 } uSceneConstants;
 
 layout(set = 2, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
 layout(set = 2, binding = 2) uniform samplerCube uRadianceMapTexSampler;
-layout(set = 2, binding = 3) uniform sampler2DShadow uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE];
+layout(set = 2, binding = 3) uniform sampler2DShadow uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
 
 layout (set = 4, binding = 0, std140) uniform MaterialConstants {
     vec4 normalMetallicRoughnessAndAO;
@@ -33,8 +35,11 @@ layout(location = 0) in struct {
     mat3 TBN;
     vec2 texCoord;
 
-    //Light NDC space
-    vec3 positionsLightNDC[MAX_DIR_LIGHTS_PER_SCENE];
+    //In Light NDC space
+    vec3 positionsLightNDC[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
+
+    //View space
+    vec3 positionView;
 
     //From here, all in tangent space
     //vec3 positionTan;
@@ -161,16 +166,35 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness, vec2 t
     return (kDiffuse * diffuse + specular) * ao; 
 }
 
-float shadowMapping(int lightIdx, vec3 N, vec3 L) {
-    if(inData.positionsLightNDC[lightIdx].z > 1.0)
-        return 1.0;
+int findShadowMapCascade() {
+    for(int cascadeIdx = 0; cascadeIdx < SHADOW_MAPPING_CASCADE_COUNT; ++cascadeIdx) {
+        if(inData.positionView.z > uSceneConstants.cascadeSplits[cascadeIdx])
+            return cascadeIdx;
+    }
+}
 
-    vec2 shadowMapTexCoord = inData.positionsLightNDC[lightIdx].xy * 0.5 + 0.5;
-    //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
-    shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
-    
-    vec3 coordAndCompare = vec3(shadowMapTexCoord, inData.positionsLightNDC[lightIdx].z);
-    return texture(uShadowMapSamplers[lightIdx], coordAndCompare);
+float shadowMapping(int lightIdx, int cascadeIdx, vec3 N, vec3 L) {
+    //Try to use cascade i - 1 even if we are on cascade i. Possible because the interceptions between cascades.
+    int previousCascade = max(0, cascadeIdx - 1);
+    for(int i = previousCascade; i <= cascadeIdx; ++i) {
+        int index = i + lightIdx * SHADOW_MAPPING_CASCADE_COUNT;
+        vec3 posLightNDC = inData.positionsLightNDC[index];
+
+        if(posLightNDC.x < -1.0 || posLightNDC.x > 1.0 ||
+           posLightNDC.y < -1.0 || posLightNDC.y > 1.0 ||
+           posLightNDC.z < 0.0 || posLightNDC.z > 1.0) {
+            continue;
+        }
+        else {
+            vec2 shadowMapTexCoord = posLightNDC.xy * 0.5 + 0.5;
+            //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
+            shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
+
+            vec3 coordAndCompare = vec3(shadowMapTexCoord, posLightNDC.z);
+            return texture(uShadowMapSamplers[index], coordAndCompare);
+        }
+    }
+    return 1.0;
 }
 
 vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
@@ -182,14 +206,31 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
     vec3 col = indirectLight(N, V, F0, albedo, roughness, texCoord);
-    for(int i = 0; i < int(uSceneConstants.dirLightCountAndRadianceMapMips.x); ++i) {
-        vec3 L = normalize(inData.LTan[i]);
+    int cascadeIdx = findShadowMapCascade();
 
-        float shadow = shadowMapping(i, N, L);
-        col += shadow * directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[i].xyz * uSceneConstants.dirLightDirectionsAndIntensities[i].w, texCoord);
+    for(int lightIdx = 0; lightIdx < int(uSceneConstants.dirLightCountAndRadianceMapMips.x); ++lightIdx) {
+        vec3 L = normalize(inData.LTan[lightIdx]);
+
+        float shadow = shadowMapping(lightIdx, cascadeIdx, N, L);
+        col += shadow * directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[lightIdx].xyz * uSceneConstants.dirLightDirectionsAndIntensities[lightIdx].w, texCoord);
     }
     return col;
 }
+
+/*vec3 cascadeColor(int cascade) {
+    if(cascade==0) return vec3(1,0,0);
+    if(cascade==1) return vec3(1,1,0);
+    if(cascade==2) return vec3(0,1,0);
+    if(cascade==3) return vec3(0.5,0.5,0.5);
+}
+
+vec3 debugCascades() {
+    for(int cascade = 0; cascade < SHADOW_MAPPING_CASCADE_COUNT; ++cascade) {
+        if(inData.positionView.z > uSceneConstants.cascadeSplits[cascade]) {
+            return cascadeColor(cascade);
+        }
+    }
+}*/
 
 void main() {
     vec3 V = normalize(inData.VTan);
@@ -200,7 +241,5 @@ void main() {
     vec3 N = normalize(hasNormalMap ? (texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0) : inData.NTan);
 
     vec3 col = lighting(N, V, texCoord);
-
-    //col = vec3(texCoord, 0.0);
     outColor = vec4(col, 1.0);
 }

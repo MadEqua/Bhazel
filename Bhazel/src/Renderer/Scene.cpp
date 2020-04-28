@@ -9,7 +9,7 @@
 namespace BZ {
 
     DirectionalLight::DirectionalLight() {
-        shadowMapFramebuffer = Renderer::createShadowMapFramebuffer();
+        shadowMapFramebuffers = Renderer::createShadowMapFramebuffers();
     }
 
     void DirectionalLight::setDirection(const glm::vec3 &direction) {
@@ -50,14 +50,18 @@ namespace BZ {
         lights.push_back(light);
 
         //TODO: this is ugly and bad.
-        std::array<Ref<TextureView>, MAX_DIR_LIGHTS_PER_SCENE> shadowMaps;
+        std::array<Ref<TextureView>, MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT> shadowMaps;
         for (uint32 i = 0; i < MAX_DIR_LIGHTS_PER_SCENE; ++i) {
-            if (i < lights.size())
-                shadowMaps[i] = lights[i].shadowMapFramebuffer->getDepthStencilTextureView();
-            else
-                shadowMaps[i] = Renderer::getDummyTextureView();
+            for (uint32 j = 0; j < SHADOW_MAPPING_CASCADE_COUNT; ++j) {
+                if (i < lights.size()) {
+                    shadowMaps[j + i * SHADOW_MAPPING_CASCADE_COUNT] = lights[i].shadowMapFramebuffers[j]->getDepthStencilTextureView();
+                }
+                else {
+                    shadowMaps[j + i * SHADOW_MAPPING_CASCADE_COUNT] = Renderer::getDummyTextureView();
+                }
+            }
         }
-        descriptorSet->setCombinedTextureSampler(shadowMaps.data(), MAX_DIR_LIGHTS_PER_SCENE, 0, Renderer::getShadowSampler(), 3);
+        descriptorSet->setCombinedTextureSampler(shadowMaps.data(), MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT, 0, Renderer::getShadowSampler(), 3);
     }
 
     void Scene::enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],

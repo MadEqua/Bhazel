@@ -36,9 +36,10 @@ namespace BZ {
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) SceneConstantBufferData {
-        glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE]; //World to light clip space
+        glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT]; //World to light clip space
         glm::vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
         glm::vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
+        glm::vec4 cascadeSplits; //TODO: should be an array
         glm::vec2 dirLightCountAndRadianceMapMips;
     };
 
@@ -153,7 +154,7 @@ namespace BZ {
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
         descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), MAX_DIR_LIGHTS_PER_SCENE);
+        descriptorSetLayoutBuilder3.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT);
         rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder3.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder4;
@@ -335,22 +336,24 @@ namespace BZ {
 
         uint32 passIndex = 0;
         for (auto &dirLight : scene.getDirectionalLights()) {
-            uint32 passOffset = passIndex * sizeof(PassConstantBufferData);
-            Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
-                rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &passOffset, 1);
+            for (uint32 cascadeIdx = 0; cascadeIdx < SHADOW_MAPPING_CASCADE_COUNT; ++cascadeIdx) {
+                uint32 passOffset = passIndex * sizeof(PassConstantBufferData);
+                Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
+                    rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &passOffset, 1);
 
-            Graphics::beginRenderPass(rendererData.commandBufferId, dirLight.shadowMapFramebuffer);
+                Graphics::beginRenderPass(rendererData.commandBufferId, dirLight.shadowMapFramebuffers[cascadeIdx]);
 
-            uint32 entityIndex = 0;
-            for (const auto &entity : scene.getEntities()) {
-                if (entity.castShadow) {
-                    drawEntity(entity, entityIndex);
+                uint32 entityIndex = 0;
+                for (const auto &entity : scene.getEntities()) {
+                    if (entity.castShadow) {
+                        drawEntity(entity, entityIndex);
+                    }
+                    entityIndex++;
                 }
-                entityIndex++;
-            }
 
-            Graphics::endRenderPass(rendererData.commandBufferId);
-            passIndex++;
+                Graphics::endRenderPass(rendererData.commandBufferId);
+                passIndex++;
+            }
         }
     }
 
@@ -418,47 +421,57 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         //Matrices related to the depth passes for the lights.
-        glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE];
-        glm::mat4 lightProjectionMatrices[MAX_DIR_LIGHTS_PER_SCENE];
+        glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
+        glm::mat4 lightProjectionMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
 
         const PerspectiveCamera &camera = static_cast<const PerspectiveCamera&>(scene.getCamera());
         const PerspectiveCamera::Parameters &cameraParams = camera.getParameters();
 
-        //Compute Sphere that enconpasses the frustum, in camera space.
-        //The sphere is useful to have the shadow frustum to be always the same size regardless of the camera orientation, leading to no shadow flickering.
-        float t = glm::tan(glm::radians(cameraParams.aspectRatio * cameraParams.fovy * 0.5f));
-        glm::vec3 n(t * cameraParams.near, 0.0f, -cameraParams.near);
-        glm::vec3 f(t * cameraParams.far, 0.0f, -cameraParams.far);
+        float cascadeSplits[SHADOW_MAPPING_CASCADE_COUNT];
+        computeCascadedShadowMappingSplits(cascadeSplits, SHADOW_MAPPING_CASCADE_COUNT, cameraParams.near, cameraParams.far);
 
-        //Solve the equation |f-center|=|n-center|, knowing that the sphere center is (0, 0, centerZ).
-        float centerZ = ((f.x * f.x + f.z * f.z) - (n.x * n.x + n.z * n.z)) / (2.0f * f.z - 2.0f * n.z);
-        float r = glm::distance(glm::vec3(0.0f, 0.0f, centerZ), n);
+        uint32 matrixIndex = 0;
+        for (auto &dirLight : scene.getDirectionalLights()) {
+            
+            for (uint32 cascadeIdx = 0; cascadeIdx < SHADOW_MAPPING_CASCADE_COUNT; ++cascadeIdx) {
+                const float cascadeNear = cascadeIdx == 0 ? cameraParams.near : cascadeSplits[cascadeIdx];
+                const float cascadeFar = cascadeIdx == 0 ? cascadeSplits[0] : cascadeSplits[cascadeIdx + 1];
 
-        glm::vec3 sphereCenterWorld = camera.getTransform().getLocalToParentMatrix() * glm::vec4(0.0f, 0.0f, centerZ, 1.0f);
+                //Compute Sphere that enconpasses the frustum, in camera space.
+                //The sphere is useful to have the shadow frustum to be always the same size regardless of the camera orientation, leading to no shadow flickering.
+                float t = glm::tan(glm::radians(cameraParams.aspectRatio * cameraParams.fovy * 0.5f));
+                glm::vec3 n(t * cascadeNear, 0.0f, cascadeNear);
+                glm::vec3 f(t * cascadeFar, 0.0f, cascadeFar);
 
-        //Units of view space per shadow map texel (and world space, assuming no scaling between the two spaces).
-        const float Q = (r * 2.0f) / SHADOW_MAP_SIZE;
+                //Solve the equation |f-center|=|n-center|, knowing that the sphere center is (0, 0, centerZ).
+                float centerZ = ((f.x * f.x + f.z * f.z) - (n.x * n.x + n.z * n.z)) / (2.0f * f.z - 2.0f * n.z);
+                float r = glm::distance(glm::vec3(0.0f, 0.0f, centerZ), n);
 
-        uint32 lightIndex = 0;
-        for (auto &dirLight : scene.getDirectionalLights()) {  
-            Transform lightTransform = {};
+                glm::vec3 sphereCenterWorld = camera.getTransform().getLocalToParentMatrix() * glm::vec4(0.0f, 0.0f, centerZ, 1.0f);
 
-            lightTransform.setTranslation(sphereCenterWorld - dirLight.getDirection() * r, Space::Parent);
-            lightTransform.lookAt(sphereCenterWorld, glm::vec3(0, 1, 0));
+                //Units of view space per shadow map texel (and world space, assuming no scaling between the two spaces).
+                const float Q = (r * 2.0f) / SHADOW_MAP_SIZE;
 
-            lightMatrices[lightIndex] = lightTransform.getParentToLocalMatrix();
 
-            //Apply the quantization to translation to stabilize shadows when camera moves. We only the light camera in texel sized snaps.
-            lightMatrices[lightIndex][3].x = glm::floor(lightMatrices[lightIndex][3].x / Q) * Q;
-            lightMatrices[lightIndex][3].y = glm::floor(lightMatrices[lightIndex][3].y / Q) * Q;
-            lightMatrices[lightIndex][3].z = glm::floor(lightMatrices[lightIndex][3].z / Q) * Q;
+                Transform lightTransform = {};
 
-            lightProjectionMatrices[lightIndex] = Utils::ortho(-r, r, -r, r, 0.1f, r * 2.0f);
-            lightIndex++;
+                lightTransform.setTranslation(sphereCenterWorld - dirLight.getDirection() * r * 2.0f, Space::Parent);
+                lightTransform.lookAt(sphereCenterWorld, glm::vec3(0, 1, 0));
+
+                lightMatrices[matrixIndex] = lightTransform.getParentToLocalMatrix();
+
+                //Apply the quantization to translation to stabilize shadows when camera moves. We only move the light camera in texel sized snaps.
+                lightMatrices[matrixIndex][3].x = glm::floor(lightMatrices[matrixIndex][3].x / Q) * Q;
+                lightMatrices[matrixIndex][3].y = glm::floor(lightMatrices[matrixIndex][3].y / Q) * Q;
+                lightMatrices[matrixIndex][3].z = glm::floor(lightMatrices[matrixIndex][3].z / Q) * Q;
+
+                lightProjectionMatrices[matrixIndex] = Utils::ortho(-r, r, -r, r, 0.1f, r * 4.0f);
+                matrixIndex++;
+            }
         }
 
         fillPasses(scene, lightMatrices, lightProjectionMatrices);
-        fillScene(scene, lightMatrices, lightProjectionMatrices);
+        fillScene(scene, lightMatrices, lightProjectionMatrices, cascadeSplits);
         fillMaterials(scene);
         fillEntities(scene);
     }
@@ -469,13 +482,15 @@ namespace BZ {
         //Depth Pass data
         uint32 passIndex = 0;
         for (auto &dirLight : scene.getDirectionalLights()) {
-            uint32 passOffset = passIndex * sizeof(PassConstantBufferData);
-            PassConstantBufferData passConstantBufferData;
-            passConstantBufferData.viewMatrix = lightMatrices[passIndex];
-            passConstantBufferData.projectionMatrix = lightProjectionMatrices[passIndex];
-            passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
-            memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(glm::mat4) * 3);
-            passIndex++;
+            for (uint32 cascadeIdx = 0; cascadeIdx < SHADOW_MAPPING_CASCADE_COUNT; ++cascadeIdx) {
+                uint32 passOffset = passIndex * sizeof(PassConstantBufferData);
+                PassConstantBufferData passConstantBufferData;
+                passConstantBufferData.viewMatrix = lightMatrices[passIndex];
+                passConstantBufferData.projectionMatrix = lightProjectionMatrices[passIndex];
+                passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
+                memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
+                passIndex++;
+            }
         }
 
         //Color pass data
@@ -492,25 +507,30 @@ namespace BZ {
         memcpy(rendererData.passConstantBufferPtr + colorPassOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
     }
 
-    void Renderer::fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices) {
+    void Renderer::fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices, const float cascadeSplits[]) {
         BZ_PROFILE_FUNCTION();
 
         SceneConstantBufferData sceneConstantBufferData;
-        int i = 0;
+        int lightIdx = 0;
+        int totalCascadeIdx = 0;
         for (const auto &dirLight : scene.getDirectionalLights()) {
-            sceneConstantBufferData.lightMatrices[i] = lightProjectionMatrices[i] * lightMatrices[i];
+            for (uint32 cascadeIdx = 0; cascadeIdx < SHADOW_MAPPING_CASCADE_COUNT; ++cascadeIdx) {
+                sceneConstantBufferData.lightMatrices[totalCascadeIdx] = lightProjectionMatrices[totalCascadeIdx] * lightMatrices[totalCascadeIdx];
+                sceneConstantBufferData.cascadeSplits[cascadeIdx] = cascadeSplits[cascadeIdx];
+                totalCascadeIdx++;
+            }
 
             const auto &dir = dirLight.getDirection();
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].x = dir.x;
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].y = dir.y;
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].z = dir.z;
-            sceneConstantBufferData.dirLightDirectionsAndIntensities[i].w = dirLight.intensity;
-            sceneConstantBufferData.dirLightColors[i].r = dirLight.color.r;
-            sceneConstantBufferData.dirLightColors[i].g = dirLight.color.g;
-            sceneConstantBufferData.dirLightColors[i].b = dirLight.color.b;
-            i++;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[lightIdx].x = dir.x;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[lightIdx].y = dir.y;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[lightIdx].z = dir.z;
+            sceneConstantBufferData.dirLightDirectionsAndIntensities[lightIdx].w = dirLight.intensity;
+            sceneConstantBufferData.dirLightColors[lightIdx].r = dirLight.color.r;
+            sceneConstantBufferData.dirLightColors[lightIdx].g = dirLight.color.g;
+            sceneConstantBufferData.dirLightColors[lightIdx].b = dirLight.color.b;
+            lightIdx++;
         }
-        sceneConstantBufferData.dirLightCountAndRadianceMapMips.x = static_cast<float>(i);
+        sceneConstantBufferData.dirLightCountAndRadianceMapMips.x = static_cast<float>(lightIdx);
         sceneConstantBufferData.dirLightCountAndRadianceMapMips.y = scene.hasSkyBox()?scene.getSkyBox().radianceMapView->getTexture()->getMipLevels():0.0f;
         memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
     }
@@ -611,6 +631,14 @@ namespace BZ {
         ImGui::End();
     }
 
+    void Renderer::computeCascadedShadowMappingSplits(float out[], uint32 splits, float nearPlane, float farPlane) {
+        for (uint32 i = 1; i <= splits; ++i) {
+            float log = nearPlane * std::pow(farPlane / nearPlane, static_cast<float>(i) / splits);
+            float uni = nearPlane + (farPlane - nearPlane) * (static_cast<float>(i) / splits);
+            out[i - 1] = -glm::mix(log, uni, 0.4f); //Negated to be on a right-handed camera space
+        }
+    }
+
     const DataLayout& Renderer::getVertexDataLayout() {
         return vertexDataLayout;
     }
@@ -631,9 +659,13 @@ namespace BZ {
         return descriptorSet;
     }
 
-    Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
-        auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format);
-        return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, shadowMapRef->getDimensions());
+    std::array<Ref<Framebuffer>, SHADOW_MAPPING_CASCADE_COUNT> Renderer::createShadowMapFramebuffers() {
+        std::array<Ref<Framebuffer>, SHADOW_MAPPING_CASCADE_COUNT> arr;
+        for (int i = 0; i < SHADOW_MAPPING_CASCADE_COUNT; ++i) {
+            auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format);
+            arr[i] = Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef) }, shadowMapRef->getDimensions());
+        }
+        return arr;
     }
 
     const Ref<Sampler>& Renderer::getDefaultSampler() {

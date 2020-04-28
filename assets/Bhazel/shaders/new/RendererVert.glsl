@@ -2,6 +2,7 @@
 #pragma shader_stage(vertex)
 
 #define MAX_DIR_LIGHTS_PER_SCENE 2
+#define SHADOW_MAPPING_CASCADE_COUNT 4
 
 layout(location = 0) in vec3 attrPosition;
 layout(location = 1) in vec3 attrNormal;
@@ -16,9 +17,10 @@ layout (set = 1, binding = 0, std140) uniform PassConstants {
 } uPassConstants;
 
 layout (set = 2, binding = 0, std140) uniform SceneConstants {
-    mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE];
+    mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
     vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
     vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE];
+    vec4 cascadeSplits; //View space
     vec2 dirLightCountAndRadianceMapMips;
 } uSceneConstants;
 
@@ -33,7 +35,10 @@ layout(location = 0) out struct {
     vec2 texCoord;
 
     //In Light NDC space
-    vec3 positionsLightNDC[MAX_DIR_LIGHTS_PER_SCENE];
+    vec3 positionsLightNDC[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
+
+    //View space
+    vec3 positionView;
 
     //From here, all in tangent space
     //vec3 positionTan;
@@ -54,9 +59,14 @@ void main() {
     //Multiply on the left is equal to multiply with the transpose (= inverse in this case). So transforming from world to tangent space.
     //outData.positionTan = positionWorld.xyz * outData.TBN;
 
-    for(int i = 0; i < uSceneConstants.dirLightCountAndRadianceMapMips.x; ++i) {
+    for(int i = 0; i < uSceneConstants.dirLightCountAndRadianceMapMips.x * SHADOW_MAPPING_CASCADE_COUNT; ++i) {
         vec4 posLightClip = uSceneConstants.lightMatrices[i] * positionWorld;
         outData.positionsLightNDC[i] = posLightClip.xyz / posLightClip.w;
+    }
+
+    outData.positionView = vec3(uPassConstants.viewMatrix * positionWorld);
+
+    for(int i = 0; i < uSceneConstants.dirLightCountAndRadianceMapMips.x ; ++i) {
         outData.LTan[i] = -normalize(uSceneConstants.dirLightDirectionsAndIntensities[i].xyz * outData.TBN);
     }
 

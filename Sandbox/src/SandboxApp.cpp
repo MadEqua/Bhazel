@@ -89,7 +89,7 @@ void Layer3D::onGraphicsContextCreated() {
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     orthoCamera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
 
-    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 400.0f);
+    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 600.0f);
     camera.getTransform().setTranslation(0.0f, 100.0f, 100.0f, BZ::Space::Parent);
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
@@ -100,19 +100,19 @@ void Layer3D::onGraphicsContextCreated() {
 
     //Hydrant, Wrench and Cerberus
 #if 1
-    BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
-                                 "Sandbox/meshes/fireHydrant/Normal.png",
-                                 "Sandbox/meshes/fireHydrant/Metallic.png",
-                                 "Sandbox/meshes/fireHydrant/Roughness.png",
-                                 "Sandbox/meshes/fireHydrant/Height.png");
-    hydrantMaterial.setParallaxOcclusionScale(0.001f);
-    BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
-    BZ::Transform hydrantTransform;
-    hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
-    hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f, BZ::Space::Parent);
-    scenes[0].addEntity(hydrantMesh, hydrantTransform);
-    scenes[1].addEntity(hydrantMesh, hydrantTransform);
-    scenes[2].addEntity(hydrantMesh, hydrantTransform);
+    //BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
+    //                             "Sandbox/meshes/fireHydrant/Normal.png",
+    //                             "Sandbox/meshes/fireHydrant/Metallic.png",
+    //                             "Sandbox/meshes/fireHydrant/Roughness.png",
+    //                             "Sandbox/meshes/fireHydrant/Height.png");
+    //hydrantMaterial.setParallaxOcclusionScale(0.001f);
+    //BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
+    //BZ::Transform hydrantTransform;
+    //hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
+    //hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f, BZ::Space::Parent);
+    //scenes[0].addEntity(hydrantMesh, hydrantTransform);
+    //scenes[1].addEntity(hydrantMesh, hydrantTransform);
+    //scenes[2].addEntity(hydrantMesh, hydrantTransform);
     
     BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
                                 "Sandbox/meshes/wrench/normal.png",
@@ -167,7 +167,7 @@ void Layer3D::onGraphicsContextCreated() {
     groundMaterial.setUvScale(20.0f, 20.0f);
     BZ::Mesh groundMesh = BZ::Mesh::createHorizontalPlane(groundMaterial);
     BZ::Transform groundTransform;
-    groundTransform.setTranslation(0.0f, 0.0f, 0.0f, BZ::Space::Parent);
+    groundTransform.setTranslation(0.0f, -25.0f, 0.0f, BZ::Space::Parent);
     groundTransform.setScale(300.0f, 300.0f, 300.0f);
     scenes[0].addEntity(groundMesh, groundTransform, false);
     scenes[1].addEntity(groundMesh, groundTransform, false);
@@ -288,9 +288,14 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     const glm::vec2 SIZE = { 256, 256 };
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     glm::vec2 pos = -WINDOW_HALF_DIMS + SIZE * 0.5f;
-    BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
-        std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[0].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
-        glm::vec4(1, 1, 1, 1));
+
+    for (uint32 i = 0; i < SHADOW_MAPPING_CASCADE_COUNT; ++i) {
+        BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
+            std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[0].shadowMapFramebuffers[i]->getDepthStencilTextureView()->getTexture()),
+            glm::vec4(1, 1, 1, 1));
+
+        pos.x += SIZE.x + 5.0f;
+    }
 
     //pos.x += SIZE.x + 5.0f;
     //BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
