@@ -15,12 +15,12 @@
 
 namespace BZ {
 
-    TextureFormat::TextureFormat(TextureFormatEnum formaEnum) :
-        formaEnum(formaEnum)  {
+    TextureFormat::TextureFormat(TextureFormatEnum formatEnum) :
+        formatEnum(formatEnum)  {
     }
 
     bool TextureFormat::isColor() const {
-        switch(formaEnum) {
+        switch(formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8_SRGB:
         case TextureFormatEnum::R8G8:
@@ -52,7 +52,7 @@ namespace BZ {
     }
 
     bool TextureFormat::isDepth() const {
-        switch (formaEnum) {
+        switch (formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8_SRGB:
         case TextureFormatEnum::R8G8:
@@ -84,7 +84,7 @@ namespace BZ {
     }
 
     bool TextureFormat::isStencil() const {
-        switch (formaEnum) {
+        switch (formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8_SRGB:
         case TextureFormatEnum::R8G8:
@@ -116,7 +116,7 @@ namespace BZ {
     }
 
     bool TextureFormat::isDepthStencil() const {
-        switch(formaEnum) {
+        switch(formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8_SRGB:
         case TextureFormatEnum::R8G8:
@@ -148,7 +148,7 @@ namespace BZ {
     }
 
     bool TextureFormat::isDepthOnly() const {
-        switch (formaEnum) {
+        switch (formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8_SRGB:
         case TextureFormatEnum::R8G8:
@@ -180,7 +180,7 @@ namespace BZ {
     }
 
     bool TextureFormat::isSRGB() const {
-        switch (formaEnum) {
+        switch (formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8G8:
         case TextureFormatEnum::R8G8B8:
@@ -212,7 +212,7 @@ namespace BZ {
     }
 
     bool TextureFormat::isFloatingPoint() const {
-        switch (formaEnum) {
+        switch (formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8G8:
         case TextureFormatEnum::R8G8B8:
@@ -244,7 +244,7 @@ namespace BZ {
     }
 
     int TextureFormat::getChannelCount() const {
-        switch (formaEnum) {
+        switch (formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8_SRGB:
         case TextureFormatEnum::R16_SFLOAT:
@@ -280,7 +280,7 @@ namespace BZ {
     }
 
     int TextureFormat::getSizePerChannel() const {
-        switch (formaEnum) {
+        switch (formatEnum) {
         case TextureFormatEnum::R8:
         case TextureFormatEnum::R8G8:
         case TextureFormatEnum::R8G8B8:
@@ -370,10 +370,10 @@ namespace BZ {
         }
     }
 
-    Ref<Texture2D> Texture2D::createRenderTarget(uint32 width, uint32 height, TextureFormat format) {
+    Ref<Texture2D> Texture2D::createRenderTarget(uint32 width, uint32 height, uint32 layers, TextureFormat format) {
         switch (Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanTexture2D>(width, height, format);
+            return MakeRef<VulkanTexture2D>(width, height, layers, format);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
@@ -405,6 +405,17 @@ namespace BZ {
         switch(Graphics::api) {
         case Graphics::API::Vulkan:
             return MakeRef<VulkanTextureView>(texture2D);
+        default:
+            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
+            return nullptr;
+        }
+    }
+
+    Ref<TextureView> TextureView::create(const Ref<Texture2D>& texture2D, uint32 baseLayer, uint32 layerCount) {
+        switch (Graphics::api) {
+        case Graphics::API::Vulkan:
+            BZ_ASSERT_CORE(texture2D->getLayers() <= baseLayer + layerCount, "Texture2D doesn't have enough layers!");
+            return MakeRef<VulkanTextureView>(texture2D, baseLayer, layerCount);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;

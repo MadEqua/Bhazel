@@ -9,14 +9,14 @@ layout(location = 1) in vec3 attrNormal;
 layout(location = 2) in vec4 attrTangentAndDet;
 layout(location = 3) in vec2 attrTexCoord;
 
-layout (set = 1, binding = 0, std140) uniform PassConstants {
+layout (set = 2, binding = 0, std140) uniform PassConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;
     vec4 cameraPosition;
 } uPassConstants;
 
-layout (set = 2, binding = 0, std140) uniform SceneConstants {
+layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
     vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
     vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE];
@@ -24,7 +24,7 @@ layout (set = 2, binding = 0, std140) uniform SceneConstants {
     vec2 dirLightCountAndRadianceMapMips;
 } uSceneConstants;
 
-layout (set = 3, binding = 0, std140) uniform EntityConstants {
+layout (set = 4, binding = 0, std140) uniform EntityConstants {
     mat4 modelMatrix;
     mat4 normalMatrix;
 } uEntityConstants;

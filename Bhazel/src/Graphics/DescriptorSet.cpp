@@ -43,22 +43,27 @@ namespace BZ {
     }
 
     void DescriptorSet::setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) {
+        setConstantBuffers(&buffer, 1, 0, binding, &offset, &size);
+    }
+
+    void DescriptorSet::setConstantBuffers(const Ref<Buffer> buffers[], uint32 srcArrayCount, uint32 dstArrayOffset, uint32 binding, uint32 offsets[], uint32 sizes[]) {
         BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBuffer ||
-                       layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBufferDynamic,
-                       "Binding {} is not of type ConstantBuffer!", binding);
+            layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBufferDynamic,
+            "Binding {} is not of type ConstantBuffer!", binding);
+        BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].arrayCount >= dstArrayOffset + srcArrayCount, "Overflowing the array for binding {}!", binding);
         BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
-        BZ_ASSERT_CORE(!buffer->isDynamic() || (buffer->isDynamic() && layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBufferDynamic),
+        BZ_ASSERT_CORE(!buffers[0]->isDynamic() || (buffers[0]->isDynamic() && layout->getDescriptorDescs()[binding].type == DescriptorType::ConstantBufferDynamic),
             "The buffer is effectively \"dynamic\" (there are internally created replicas because of memory type), so the type on the layout needs to be DescriptorType::ConstantBufferDynamic.");
 
-        dynamicBuffers.emplace_back(binding, buffer);
-        internalSetConstantBuffer(&buffer, 1, 0, binding, offset, size);
+        dynamicBuffers.emplace_back(binding, buffers, srcArrayCount);
+        internalSetConstantBuffer(buffers, srcArrayCount, dstArrayOffset, binding, offsets, sizes);
     }
 
     void DescriptorSet::setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) {
-        setCombinedTextureSampler(&textureView, 1, 0, sampler, binding);
+        setCombinedTextureSamplers(&textureView, 1, 0, sampler, binding);
     }
 
-    void DescriptorSet::setCombinedTextureSampler(const Ref<TextureView> *textureViews, uint32 srcArrayCount, uint32 dstArrayOffset, const Ref<Sampler> &sampler, uint32 binding) {
+    void DescriptorSet::setCombinedTextureSamplers(const Ref<TextureView> textureViews[], uint32 srcArrayCount, uint32 dstArrayOffset, const Ref<Sampler> &sampler, uint32 binding) {
         BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].type == DescriptorType::CombinedTextureSampler, "Binding {} is not of type CombinedTextureSampler!", binding);
         BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].arrayCount >= dstArrayOffset + srcArrayCount, "Overflowing the array for binding {}!", binding);
         BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);

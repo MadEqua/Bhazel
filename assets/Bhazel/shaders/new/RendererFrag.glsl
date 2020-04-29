@@ -6,7 +6,7 @@
 
 layout(set = 0, binding = 0) uniform sampler2D uBrdfLookupTexture;
 
-layout (set = 2, binding = 0, std140) uniform SceneConstants {
+layout (set = 1, binding = 0, std140) uniform SceneConstants {
     mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
     vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
     vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE];
@@ -14,21 +14,21 @@ layout (set = 2, binding = 0, std140) uniform SceneConstants {
     vec2 dirLightCountAndRadianceMapMips;
 } uSceneConstants;
 
-layout(set = 2, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
-layout(set = 2, binding = 2) uniform samplerCube uRadianceMapTexSampler;
-layout(set = 2, binding = 3) uniform sampler2DShadow uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT];
+layout(set = 1, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
+layout(set = 1, binding = 2) uniform samplerCube uRadianceMapTexSampler;
+layout(set = 1, binding = 3) uniform sampler2DArrayShadow uShadowMapSamplers[MAX_DIR_LIGHTS_PER_SCENE];
 
-layout (set = 4, binding = 0, std140) uniform MaterialConstants {
+layout (set = 3, binding = 0, std140) uniform MaterialConstants {
     vec4 normalMetallicRoughnessAndAO;
     vec4 heightAndUvScale;
 } uMaterialConstants;
 
-layout(set = 4, binding = 1) uniform sampler2D uAlbedoTexSampler;
-layout(set = 4, binding = 2) uniform sampler2D uNormalTexSampler;
-layout(set = 4, binding = 3) uniform sampler2D uMetallicTexSampler;
-layout(set = 4, binding = 4) uniform sampler2D uRoughnessTexSampler;
-layout(set = 4, binding = 5) uniform sampler2D uHeightTexSampler;
-layout(set = 4, binding = 6) uniform sampler2D uAOTexSampler;
+layout(set = 3, binding = 1) uniform sampler2D uAlbedoTexSampler;
+layout(set = 3, binding = 2) uniform sampler2D uNormalTexSampler;
+layout(set = 3, binding = 3) uniform sampler2D uMetallicTexSampler;
+layout(set = 3, binding = 4) uniform sampler2D uRoughnessTexSampler;
+layout(set = 3, binding = 5) uniform sampler2D uHeightTexSampler;
+layout(set = 3, binding = 6) uniform sampler2D uAOTexSampler;
 
 layout(location = 0) in struct {
     //TBN matrix goes from tangent space to world space
@@ -177,8 +177,7 @@ float shadowMapping(int lightIdx, int cascadeIdx, vec3 N, vec3 L) {
     //Try to use cascade i - 1 even if we are on cascade i. Possible because the interceptions between cascades.
     int previousCascade = max(0, cascadeIdx - 1);
     for(int i = previousCascade; i <= cascadeIdx; ++i) {
-        int index = i + lightIdx * SHADOW_MAPPING_CASCADE_COUNT;
-        vec3 posLightNDC = inData.positionsLightNDC[index];
+        vec3 posLightNDC = inData.positionsLightNDC[i + lightIdx * SHADOW_MAPPING_CASCADE_COUNT];
 
         if(posLightNDC.x < -1.0 || posLightNDC.x > 1.0 ||
            posLightNDC.y < -1.0 || posLightNDC.y > 1.0 ||
@@ -190,8 +189,8 @@ float shadowMapping(int lightIdx, int cascadeIdx, vec3 N, vec3 L) {
             //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
             shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
 
-            vec3 coordAndCompare = vec3(shadowMapTexCoord, posLightNDC.z);
-            return texture(uShadowMapSamplers[index], coordAndCompare);
+            vec4 coordLayerAndCompare = vec4(shadowMapTexCoord, float(i), posLightNDC.z);
+            return texture(uShadowMapSamplers[lightIdx], coordLayerAndCompare);
         }
     }
     return 1.0;

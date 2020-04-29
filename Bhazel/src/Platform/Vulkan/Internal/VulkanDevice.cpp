@@ -102,6 +102,8 @@ namespace BZ {
 
         VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+        BZ_ASSERT_CORE(deviceFeatures.geometryShader == VK_TRUE, "Support for geometryShader is assumed!");
+        BZ_ASSERT_CORE(deviceFeatures.depthBiasClamp == VK_TRUE, "Support for depthBiasClamp is assumed!");
 
         bool hasRequiredExtensions = checkDeviceExtensionSupport(device, requiredExtensions);
 
@@ -200,8 +202,10 @@ namespace BZ {
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
-        //TODO: add required features here and also when finding physical device
+        //Add required features here and also when finding physical device
         VkPhysicalDeviceFeatures deviceFeatures = {};
+        deviceFeatures.geometryShader = VK_TRUE;
+        deviceFeatures.depthBiasClamp = VK_TRUE;
 
         VkDeviceCreateInfo deviceCreateInfo = {};
         deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

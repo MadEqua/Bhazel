@@ -10,18 +10,18 @@
 
 namespace BZ {
 
-    Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions) {
+    Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) {
         switch (Graphics::api) {
         case Graphics::API::Vulkan:
-            return MakeRef<VulkanFramebuffer>(renderPass, textureViews, dimensions);
+            return MakeRef<VulkanFramebuffer>(renderPass, textureViews, dimensionsAndLayers);
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
             return nullptr;
         }
     }
 
-    Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions) :
-        renderPass(renderPass), dimensions(dimensions) {
+    Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) :
+        renderPass(renderPass), dimensionsAndLayers(dimensionsAndLayers) {
 
         BZ_ASSERT_CORE(textureViews.size() == renderPass->getAttachmentCount(), "The number of TextureViews must match the number of Attachments declared on the RenderPass!");
         

@@ -3,7 +3,7 @@
 
 layout(location = 0) in vec3 attrPosition;
 
-layout (set = 1, binding = 0, std140) uniform PassConstants {
+layout (set = 2, binding = 0, std140) uniform PassConstants {
     mat4 viewMatrix;
     mat4 projectionMatrix;
     mat4 viewProjectionMatrix;

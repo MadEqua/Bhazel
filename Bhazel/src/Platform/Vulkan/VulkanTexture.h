@@ -23,7 +23,7 @@ namespace BZ {
 
         VulkanTexture2D(const char *path, TextureFormat format, MipmapData mipmapData);
         VulkanTexture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
-        VulkanTexture2D(uint32 width, uint32 height, TextureFormat format);
+        VulkanTexture2D(uint32 width, uint32 height, uint32 layers, TextureFormat format);
         
         //Coming from an already existent VkImage. Used on the swapchain images.
         VulkanTexture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
@@ -49,13 +49,14 @@ namespace BZ {
 
     class VulkanTextureView : public TextureView, public VulkanGpuObject<VkImageView> {
     public:
-        explicit VulkanTextureView(const Ref<Texture2D> &texture);
+        explicit VulkanTextureView(const Ref<Texture2D> &texture2D);
+        explicit VulkanTextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount);
         explicit VulkanTextureView(const Ref<TextureCube> &textureCube);
 
         ~VulkanTextureView() override;
 
     private:
-        void init(VkImageViewType viewType, VkImage vkImage);
+        void init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount);
     };
 
 

@@ -13,7 +13,7 @@ namespace BZ {
 
     class VulkanFramebuffer : public Framebuffer, public VulkanGpuObject<VkFramebuffer> {
     public:
-        explicit VulkanFramebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions);
+        explicit VulkanFramebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers);
         ~VulkanFramebuffer() override;
     };
 }

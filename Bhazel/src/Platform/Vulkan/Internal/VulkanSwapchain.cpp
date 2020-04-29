@@ -139,7 +139,7 @@ namespace BZ {
         renderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc });
 
         //Create Views and Framebuffers for the images
-        auto depthTextureRef = Texture2D::createRenderTarget(extent.width, extent.height, TextureFormatEnum::D24S8);
+        auto depthTextureRef = Texture2D::createRenderTarget(extent.width, extent.height, 1, TextureFormatEnum::D24S8);
         auto depthTexViewRef = TextureView::create(depthTextureRef);
 
         framebuffers.resize(imageCount);

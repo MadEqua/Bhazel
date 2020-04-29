@@ -191,9 +191,9 @@ namespace BZ {
                                      uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
         BZ_PROFILE_FUNCTION();
 
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
         BZ_ASSERT_CORE(dynamicBufferCount <= MAX_DESCRIPTOR_DYNAMIC_OFFSETS && dynamicBufferCount <= descriptorSet->getDynamicBufferCount(),
             "Invalid dynamicBufferCount: {}!", dynamicBufferCount);
-        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         //Mix correctly the dynamicBufferOffsets coming from the user with the ones that the engine needs to send behind the scenes for dynamic buffers.
         uint32 finalDynamicBufferOffsets[MAX_DESCRIPTOR_DYNAMIC_OFFSETS];
@@ -204,14 +204,17 @@ namespace BZ {
             if(desc.type == DescriptorType::ConstantBufferDynamic || desc.type == DescriptorType::StorageBufferDynamic) {
                 const auto *dynBufferData = descriptorSet->getDynamicBufferDataByBinding(binding);
                 BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
-                finalDynamicBufferOffsets[index] = dynBufferData->buffer->getCurrentBaseOfReplicaOffset();
-                if(userIndex < dynamicBufferCount) {
-                    finalDynamicBufferOffsets[index] += dynamicBufferOffsets[userIndex++];
+
+                for (uint32 i = 0; i < dynBufferData->arrayCount; ++i) {
+                    finalDynamicBufferOffsets[index] = dynBufferData->buffers[i]->getCurrentBaseOfReplicaOffset();
+                    if (userIndex < dynamicBufferCount) {
+                        finalDynamicBufferOffsets[index] += dynamicBufferOffsets[userIndex++];
+                    }
+                    else if (dynamicBufferCount > 0) {
+                        BZ_LOG_CORE_WARN("Graphics::bindDescriptorSet(): there are more dynamic buffers on the DescriptorSet than the number of offsets sent to the bind function. Might be an error.");
+                    }
+                    index++;
                 }
-                else if(dynamicBufferCount > 0) {
-                    BZ_LOG_CORE_WARN("Graphics::bindDescriptorSet(): there are more dynamic buffers on the DescriptorSet than the number of offsets sent to the bind function. Might be an error.");
-                }
-                index++;
             }
             binding++;
         }

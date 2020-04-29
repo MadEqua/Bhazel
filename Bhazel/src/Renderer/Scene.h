@@ -21,7 +21,7 @@ namespace BZ {
         void setDirection(const glm::vec3 &direction);
 
         //TODO: does this belong here?
-        std::array<Ref<Framebuffer>, SHADOW_MAPPING_CASCADE_COUNT> shadowMapFramebuffers;
+        Ref<Framebuffer> shadowMapFramebuffer;
 
     private:
         glm::vec3 direction;

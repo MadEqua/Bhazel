@@ -371,12 +371,13 @@ namespace BZ {
         }
     }
 
-    VulkanTexture2D::VulkanTexture2D(uint32 width, uint32 height, TextureFormat format):
+    VulkanTexture2D::VulkanTexture2D(uint32 width, uint32 height, uint32 layers, TextureFormat format):
         Texture2D(format), isWrapping(false) {
 
         dimensions.x = width;
         dimensions.y = height;
         mipLevels = 1;
+        this->layers = layers;
         createImage(false, MipmapData::Options::DoNothing);
     }
 
@@ -406,7 +407,7 @@ namespace BZ {
         imageInfo.extent.height = static_cast<uint32_t>(dimensions.y);
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = mipLevels;
-        imageInfo.arrayLayers = 1;
+        imageInfo.arrayLayers = layers;
         imageInfo.format = vkFormat;
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -580,19 +581,24 @@ namespace BZ {
 
     VulkanTextureView::VulkanTextureView(const Ref<Texture2D> &texture2D) :
         TextureView(texture2D) {
-        init(VK_IMAGE_VIEW_TYPE_2D, static_cast<VulkanTexture2D &>(*texture2D).getNativeHandle().imageHandle);
+        init(VK_IMAGE_VIEW_TYPE_2D, static_cast<VulkanTexture2D &>(*texture2D).getNativeHandle().imageHandle, 0, 1);
+    }
+
+    VulkanTextureView::VulkanTextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount) :
+        TextureView(texture2D) {
+        init(VK_IMAGE_VIEW_TYPE_2D_ARRAY, static_cast<VulkanTexture2D &>(*texture2D).getNativeHandle().imageHandle, baseLayer, layerCount);
     }
 
     VulkanTextureView::VulkanTextureView(const Ref<TextureCube> &textureCube) :
         TextureView(textureCube) {
-        init(VK_IMAGE_VIEW_TYPE_CUBE, static_cast<VulkanTextureCube &>(*textureCube).getNativeHandle().imageHandle);
+        init(VK_IMAGE_VIEW_TYPE_CUBE, static_cast<VulkanTextureCube &>(*textureCube).getNativeHandle().imageHandle, 0, 6);
     }
 
     VulkanTextureView::~VulkanTextureView() {
         vkDestroyImageView(getDevice(), nativeHandle, nullptr);
     }
 
-    void VulkanTextureView::init(VkImageViewType viewType, VkImage vkImage) {
+    void VulkanTextureView::init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount) {
         VkImageViewCreateInfo imageViewCreateInfo = {};
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         imageViewCreateInfo.image = vkImage;
@@ -615,8 +621,8 @@ namespace BZ {
 
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
         imageViewCreateInfo.subresourceRange.levelCount = texture->getMipLevels();
-        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewCreateInfo.subresourceRange.layerCount = texture->getLayers();
+        imageViewCreateInfo.subresourceRange.baseArrayLayer = baseLayer;
+        imageViewCreateInfo.subresourceRange.layerCount = layerCount;
         BZ_ASSERT_VK(vkCreateImageView(getDevice(), &imageViewCreateInfo, nullptr, &nativeHandle));
     }
 

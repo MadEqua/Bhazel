@@ -38,13 +38,13 @@ namespace BZ {
         int getSizePerTexel() const;
 
         bool operator==(const TextureFormat &other) const {
-            return formaEnum == other.formaEnum;
+            return formatEnum == other.formatEnum;
         }
 
-        TextureFormatEnum getEnum() const { return formaEnum; }
+        TextureFormatEnum getEnum() const { return formatEnum; }
 
     private:
-        TextureFormatEnum formaEnum;
+        TextureFormatEnum formatEnum;
     };
 
 
@@ -57,7 +57,7 @@ namespace BZ {
         MipmapData(Options option, uint32 mipLevels) : option(option), mipLevels(mipLevels) {}
 
         Options option;
-        uint32 mipLevels; //Used when FromData is the option.
+        uint32 mipLevels; //Used when Load is the option.
     };
 
     class Texture {
@@ -96,7 +96,7 @@ namespace BZ {
         static Ref<Texture2D> create(const char *path, TextureFormat format, MipmapData mipmapData);
         static Ref<Texture2D> create(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
         
-        static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, TextureFormat format);
+        static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, uint32 layers, TextureFormat format);
 
     protected:
         explicit Texture2D(TextureFormat format);
@@ -116,6 +116,7 @@ namespace BZ {
     class TextureView {
     public:
         static Ref<TextureView> create(const Ref<Texture2D> &texture2D);
+        static Ref<TextureView> create(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount);
         static Ref<TextureView> create(const Ref<TextureCube> &textureCube);
 
         //const TextureFormat& getFormat() const { return texture->getFormat(); } TODO: TextureView own format

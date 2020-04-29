@@ -51,13 +51,13 @@ namespace BZ {
         BZ_ASSERT_VK(vkAllocateDescriptorSets(getDevice(), &allocInfo, &nativeHandle));
     }
 
-    void VulkanDescriptorSet::internalSetConstantBuffer(const Ref<Buffer> *buffers, uint32 srcArrayCount, uint32 dstArrayOffset, uint32 binding, uint32 offset, uint32 size) {
+    void VulkanDescriptorSet::internalSetConstantBuffer(const Ref<Buffer> *buffers, uint32 srcArrayCount, uint32 dstArrayOffset, uint32 binding, uint32 *offsets, uint32 *sizes) {
         std::vector<VkDescriptorBufferInfo> bufferInfos(srcArrayCount);
         for (uint32 i = 0; i < srcArrayCount; ++i) {
             VkDescriptorBufferInfo bufferInfo = {};
             bufferInfo.buffer = static_cast<const VulkanBuffer &>(*buffers[i]).getNativeHandle();
-            bufferInfo.offset = offset;
-            bufferInfo.range = size;
+            bufferInfo.offset = offsets[i];
+            bufferInfo.range = sizes[i];
             bufferInfos[i] = bufferInfo;
         }
 

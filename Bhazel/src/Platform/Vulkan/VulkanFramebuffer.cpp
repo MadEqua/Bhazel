@@ -8,8 +8,8 @@
 
 namespace BZ {
 
-    VulkanFramebuffer::VulkanFramebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions) :
-        Framebuffer(renderPass, textureViews, dimensions) {
+    VulkanFramebuffer::VulkanFramebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) :
+        Framebuffer(renderPass, textureViews, dimensionsAndLayers) {
 
         std::vector<VkImageView> vkImageViews(textureViews.size());
 
@@ -28,9 +28,9 @@ namespace BZ {
         framebufferInfo.renderPass = static_cast<VulkanRenderPass&>(*renderPass).getNativeHandle().original;
         framebufferInfo.attachmentCount = static_cast<uint32_t>(vkImageViews.size());
         framebufferInfo.pAttachments = vkImageViews.data();
-        framebufferInfo.width = dimensions.x;
-        framebufferInfo.height = dimensions.y;
-        framebufferInfo.layers = dimensions.z;
+        framebufferInfo.width = dimensionsAndLayers.x;
+        framebufferInfo.height = dimensionsAndLayers.y;
+        framebufferInfo.layers = dimensionsAndLayers.z;
 
         BZ_ASSERT_VK(vkCreateFramebuffer(getDevice(), &framebufferInfo, nullptr, &nativeHandle));
     }

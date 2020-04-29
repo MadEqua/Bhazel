@@ -203,7 +203,7 @@ namespace BZ {
         BlendingState blendingState;
         std::vector<DynamicState> dynamicStates;
 
-        //If absent, it's assumed to be a swapchain framebuffer (the current frame one), which is fine becaues all of are similar.
+        //If absent, it's assumed to be a swapchain framebuffer (the current frame one), which is fine because all of them are similar.
         Ref<RenderPass> renderPass;
     };
 

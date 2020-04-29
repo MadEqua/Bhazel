@@ -62,7 +62,7 @@ namespace BZ {
         renderPassBeginInfo.renderPass = forceClearAttachments ? vulkanRenderPass.getNativeHandle().forceClear : vulkanRenderPass.getNativeHandle().original;
         renderPassBeginInfo.framebuffer = vulkanFramebuffer.getNativeHandle();
         renderPassBeginInfo.renderArea.offset = {};
-        renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(vulkanFramebuffer.getDimensions().x), static_cast<uint32_t>(vulkanFramebuffer.getDimensions().y) };
+        renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(vulkanFramebuffer.getDimensionsAndLayers().x), static_cast<uint32_t>(vulkanFramebuffer.getDimensionsAndLayers().y) };
         renderPassBeginInfo.clearValueCount = vulkanRenderPass.getAttachmentCount();
         renderPassBeginInfo.pClearValues = clearValues;
         vkCmdBeginRenderPass(nativeHandle, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -77,7 +77,7 @@ namespace BZ {
 
         VkRect2D vkRect;
         vkRect.offset = { 0, 0 };
-        vkRect.extent = { static_cast<uint32>(framebuffer.getDimensions().x), static_cast<uint32>(framebuffer.getDimensions().y) };
+        vkRect.extent = { static_cast<uint32>(framebuffer.getDimensionsAndLayers().x), static_cast<uint32>(framebuffer.getDimensionsAndLayers().y) };
 
         VkClearRect clearRect;
         clearRect.baseArrayLayer = 0;
@@ -100,7 +100,7 @@ namespace BZ {
 
         VkRect2D vkRect;
         vkRect.offset = { 0, 0 };
-        vkRect.extent = { static_cast<uint32>(framebuffer.getDimensions().x), static_cast<uint32>(framebuffer.getDimensions().y) };
+        vkRect.extent = { static_cast<uint32>(framebuffer.getDimensionsAndLayers().x), static_cast<uint32>(framebuffer.getDimensionsAndLayers().y) };
 
         VkClearRect clearRect;
         clearRect.baseArrayLayer = 0;

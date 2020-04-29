@@ -246,13 +246,13 @@ void Layer3D::onGraphicsContextCreated() {
     scenes[1].addDirectionalLight(dirLight);
     scenes[2].addDirectionalLight(dirLight);
 
-    //BZ::DirectionalLight dirLight2;
-    //dirLight2.setDirection({ 0.0f, -1.0f, -0.5f });
-    //dirLight2.color = { 1.0f, 1.0f, 1.0f };
-    //dirLight2.intensity = 1.0f;
-    //scenes[0].addDirectionalLight(dirLight2);
-    //scenes[1].addDirectionalLight(dirLight2);
-    //scenes[2].addDirectionalLight(dirLight2);
+    BZ::DirectionalLight dirLight2;
+    dirLight2.setDirection({ 0.0f, -1.0f, -0.5f });
+    dirLight2.color = { 1.0f, 1.0f, 1.0f };
+    dirLight2.intensity = 1.0f;
+    scenes[0].addDirectionalLight(dirLight2);
+    scenes[1].addDirectionalLight(dirLight2);
+    scenes[2].addDirectionalLight(dirLight2);
 
     const char* cubeFileNames[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga", 
                                      "output_skybox_posy.tga", "output_skybox_negy.tga",
@@ -289,18 +289,9 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     glm::vec2 pos = -WINDOW_HALF_DIMS + SIZE * 0.5f;
 
-    for (uint32 i = 0; i < SHADOW_MAPPING_CASCADE_COUNT; ++i) {
-        BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
-            std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[0].shadowMapFramebuffers[i]->getDepthStencilTextureView()->getTexture()),
-            glm::vec4(1, 1, 1, 1));
-
-        pos.x += SIZE.x + 5.0f;
-    }
-
-    //pos.x += SIZE.x + 5.0f;
-    //BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
-    //    std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[1].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
-    //    glm::vec4(1, 1, 1, 1));
+    BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
+        std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[0].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
+        glm::vec4(1, 1, 1, 1));
 
     BZ::Renderer2D::end();
 }
