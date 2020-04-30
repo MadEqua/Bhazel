@@ -209,7 +209,12 @@ namespace BZ {
         pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
         pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
 
+        //To disable clipping on z axis. Geometry behind "light camera" will still cast shadows.
+        pipelineStateData.rasterizerState.enableDepthClamp = true;
+
+        //To avoid shadow acne.
         pipelineStateData.rasterizerState.enableDepthBias = true;
+
         //pipelineStateData.rasterizerState.depthBiasConstantFactor = 0.0f;
         //pipelineStateData.rasterizerState.depthBiasSlopeFactor = 0.0f;
 
@@ -520,22 +525,17 @@ namespace BZ {
                 glm::vec3 sphereCenterWorld = camera.getTransform().getLocalToParentMatrix() * glm::vec4(0.0f, 0.0f, centerZ, 1.0f);
 
                 //Units of view space per shadow map texel (and world space, assuming no scaling between the two spaces).
-                const float Q = (r * 2.0f) / SHADOW_MAP_SIZE;
+                const float Q = glm::ceil(r * 2.0f) / static_cast<float>(SHADOW_MAP_SIZE);
 
-
-                Transform lightTransform = {};
-
-                lightTransform.setTranslation(sphereCenterWorld - dirLight.getDirection() * r * 2.0f, Space::Parent);
-                lightTransform.lookAt(sphereCenterWorld, glm::vec3(0, 1, 0));
-
-                lightMatrices[matrixIndex] = lightTransform.getParentToLocalMatrix();
+                glm::vec3 lightCamPos = sphereCenterWorld - dirLight.getDirection() * r;
+                lightMatrices[matrixIndex] = glm::lookAtRH(lightCamPos, sphereCenterWorld, glm::vec3(0, 1, 0));
 
                 //Apply the quantization to translation to stabilize shadows when camera moves. We only move the light camera in texel sized snaps.
                 lightMatrices[matrixIndex][3].x = glm::floor(lightMatrices[matrixIndex][3].x / Q) * Q;
                 lightMatrices[matrixIndex][3].y = glm::floor(lightMatrices[matrixIndex][3].y / Q) * Q;
                 lightMatrices[matrixIndex][3].z = glm::floor(lightMatrices[matrixIndex][3].z / Q) * Q;
 
-                lightProjectionMatrices[matrixIndex] = Utils::ortho(-r, r, -r, r, 0.1f, r * 4.0f);
+                lightProjectionMatrices[matrixIndex] = Utils::ortho(-r, r, -r, r, 0.1f, r * 2.0f);
                 matrixIndex++;
             }
         }

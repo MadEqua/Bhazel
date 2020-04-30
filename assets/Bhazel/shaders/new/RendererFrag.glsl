@@ -173,7 +173,7 @@ int findShadowMapCascade() {
     }
 }
 
-float shadowMapping(int lightIdx, int cascadeIdx, vec3 N, vec3 L) {
+float shadowMapping(int lightIdx, int cascadeIdx) {
     //Try to use cascade i - 1 even if we are on cascade i. Possible because the interceptions between cascades.
     int previousCascade = max(0, cascadeIdx - 1);
     for(int i = previousCascade; i <= cascadeIdx; ++i) {
@@ -196,6 +196,17 @@ float shadowMapping(int lightIdx, int cascadeIdx, vec3 N, vec3 L) {
     return 1.0;
 }
 
+//float shadowMapping2(int lightIdx, int cascadeIdx) {
+//    vec3 posLightNDC = inData.positionsLightNDC[0];
+//
+//    vec2 shadowMapTexCoord = posLightNDC.xy * 0.5 + 0.5;
+//    //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
+//    shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
+//
+//    vec4 coordLayerAndCompare = vec4(shadowMapTexCoord, 0.0, posLightNDC.z);
+//    return texture(uShadowMapSamplers[lightIdx], coordLayerAndCompare);
+//}
+
 vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     vec3 albedo = texture(uAlbedoTexSampler, texCoord).rgb;
     float metallic = hasMetallicMap ? texture(uMetallicTexSampler, texCoord).r : uMaterialConstants.normalMetallicRoughnessAndAO.y;
@@ -210,7 +221,7 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     for(int lightIdx = 0; lightIdx < int(uSceneConstants.dirLightCountAndRadianceMapMips.x); ++lightIdx) {
         vec3 L = normalize(inData.LTan[lightIdx]);
 
-        float shadow = shadowMapping(lightIdx, cascadeIdx, N, L);
+        float shadow = shadowMapping(lightIdx, cascadeIdx);
         col += shadow * directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[lightIdx].xyz * uSceneConstants.dirLightDirectionsAndIntensities[lightIdx].w, texCoord);
     }
     return col;
