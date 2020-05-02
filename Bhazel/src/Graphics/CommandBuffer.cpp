@@ -62,6 +62,9 @@ namespace BZ {
             case CommandType::SetDepthBias:
                 setDepthBias(cmd.setDepthBiasData.constantFactor, cmd.setDepthBiasData.clamp, cmd.setDepthBiasData.slopeFactor);
                 break;
+            case CommandType::PipelineBarrierTexture:
+                pipelineBarrierTexture(*cmd.pipelineBarrierTexture.texture);
+                break;
             default:
                 BZ_ASSERT_ALWAYS("Invalid Command Type!");
                 break;

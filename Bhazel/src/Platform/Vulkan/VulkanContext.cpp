@@ -55,7 +55,6 @@ namespace BZ {
         createFrameData();
 
         swapchain.init(device, surface);
-        swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
 
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 512);
@@ -205,6 +204,19 @@ namespace BZ {
        return getCurrentFrameCommandPool(QueueProperty::Graphics, false).getCommandBuffer();
     }
 
+    void VulkanContext::beginFrame() {
+        //Make sure that this frame has finished before reutilizing its data. If not, we are GPU bound and should block here.
+        frameDatas[currentFrameIndex].renderFinishedFence.waitFor();
+        frameDatas[currentFrameIndex].renderFinishedFence.reset();
+
+        FrameData &frameData = frameDatas[currentFrameIndex];
+        for (auto &familyAndPool : frameData.commandPoolsByFamily) {
+            familyAndPool.second.reset();
+        }
+
+        swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
+    }
+
     void VulkanContext::submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) {
         VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS];
         uint32 idx;
@@ -214,7 +226,7 @@ namespace BZ {
         }
 
         VkSemaphore waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore.getNativeHandle() };
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT  }; //VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT?
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
         VkSemaphore signalSemaphores[] = { frameDatas[currentFrameIndex].renderFinishedSemaphore.getNativeHandle() };
 
         VkSubmitInfo submitInfo = {};
@@ -227,24 +239,10 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        frameDatas[currentFrameIndex].renderFinishedFence.waitFor();
-        frameDatas[currentFrameIndex].renderFinishedFence.reset();
-
         BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics.getNativeHandle(), 1, &submitInfo, frameDatas[currentFrameIndex].renderFinishedFence.getNativeHandle()));
 
-        //Present image, aquire next and clear command pools.
         swapchain.presentImage(frameDatas[currentFrameIndex].renderFinishedSemaphore);
         currentFrameIndex = (currentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
-
-        swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
-
-        FrameData &frameData = frameDatas[currentFrameIndex];
-        for(auto &familyAndPool : frameData.commandPoolsByFamily) {
-            if(frameData.renderFinishedFence.isSignaled()) //TODO: if we are gpu bound and the fence is never signaled here, then the pool will never be reset
-                familyAndPool.second.reset();
-            else
-                BZ_LOG_CORE_DEBUG("Fence of frame {} is not signaled, will not clean CommandPool! App is GPU bound.", currentFrameIndex);
-        }
     }
 
     void VulkanContext::waitForDevice() {

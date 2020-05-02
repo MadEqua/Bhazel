@@ -51,7 +51,7 @@ namespace BZ {
         destroy();
     }*/
 
-    void VulkanSemaphore::init(const VulkanDevice &device) {
+    void VulkanSemaphore::init(const VulkanDevice &device, bool signaled) {
         BZ_ASSERT_CORE(semaphore == VK_NULL_HANDLE, "Semaphore is already inited!");
 
         this->device = &device;

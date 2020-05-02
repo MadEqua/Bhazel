@@ -19,6 +19,7 @@ namespace BZ {
 
     /*
     * Abstract the Swapchain and respective Framebuffer creation, also manages the Depth Buffer texture for convenience.
+    * Only has one image aquired at any given time.
     */
     class VulkanSwapchain {
     public:
@@ -34,7 +35,7 @@ namespace BZ {
 
         VkSwapchainKHR getNativeHandle() const { return swapchain; }
 
-        const Ref<Framebuffer>& getFramebuffer(int frameIndex) const { return framebuffers[frameIndex]; }
+        const Ref<Framebuffer>& getCurrentFramebuffer() const { return framebuffers[currentImageIndex]; }
         const Ref<RenderPass>& getRenderPass() const { return renderPass; }
         glm::ivec2 getDimensions() const { return { extent.width, extent.height }; }
 
@@ -49,7 +50,10 @@ namespace BZ {
 
         VkFormat imageFormat;
         VkExtent2D extent;
+
+        //This is OK as long as we maintain a steady aquire -> present cycle, ie, only have one image aquired at a time.
         uint32 currentImageIndex = 0;
+        bool aquired = false;
 
         void internalInit();
         void createFramebuffers();

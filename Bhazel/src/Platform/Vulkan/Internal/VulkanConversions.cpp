@@ -516,12 +516,20 @@ namespace BZ {
             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         case TextureLayout::TransferDstOptimal:
             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case TextureLayout::Preinitialized:
-            return VK_IMAGE_LAYOUT_PREINITIALIZED;
         case TextureLayout::DepthReadOnlyStencilAttachmentOptimal:
             return VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
         case TextureLayout::DepthAttachmentStencilReadOnlyOptimal:
             return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+        case TextureLayout::DepthAttachmentOptimal:
+            return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        case TextureLayout::DepthReadOnlyOptimal:
+            return VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+        case TextureLayout::StencilAttachmentOptimal:
+            return VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
+        case TextureLayout::StencilReadOnlyOptimal:
+            return VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL;
+        case TextureLayout::Preinitialized:
+            return VK_IMAGE_LAYOUT_PREINITIALIZED;
         case TextureLayout::Present:
             return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         case TextureLayout::SharedPresent:

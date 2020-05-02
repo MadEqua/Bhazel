@@ -34,7 +34,7 @@ namespace BZ {
         void setVSync(bool enabled) override;
 
         uint32 getCurrentFrameIndex() const override { return currentFrameIndex; }
-        const Ref<Framebuffer>& getCurrentFrameFramebuffer() const override { return swapchain.getFramebuffer(currentFrameIndex); }
+        const Ref<Framebuffer>& getCurrentSwapchainFramebuffer() const override { return swapchain.getCurrentFramebuffer(); }
         const Ref<RenderPass>& getSwapchainRenderPass() const override { return swapchain.getRenderPass(); }
         Ref<CommandBuffer> getCurrentFrameCommandBuffer() override;
 
@@ -45,6 +45,7 @@ namespace BZ {
         VulkanDescriptorPool& getDescriptorPool() { return descriptorPool; }
         VmaAllocator getMemoryAllocator() const { return memoryAllocator; }
 
+        void beginFrame() override;
         void submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) override;
         void waitForDevice() override;
 
@@ -60,8 +61,12 @@ namespace BZ {
         struct FrameData {
             //One command pool per frame makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
             std::unordered_map<uint32, VulkanCommandPool> commandPoolsByFamily;
+
+            //GPU-GPU sync.
             VulkanSemaphore imageAvailableSemaphore;
             VulkanSemaphore renderFinishedSemaphore;
+
+            //CPU-GPU sync, to stop the CPU from piling up more than MAX_FRAMES_IN_FLIGHT frames when the app is GPU-bound.
             VulkanFence renderFinishedFence;
         };
         FrameData frameDatas[MAX_FRAMES_IN_FLIGHT];

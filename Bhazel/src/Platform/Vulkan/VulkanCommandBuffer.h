@@ -8,6 +8,7 @@
 namespace BZ {
 
     class Framebuffer;
+    class Texture;
 
     class VulkanCommandBuffer : public CommandBuffer, public VulkanGpuObject<VkCommandBuffer> {
     public:
@@ -43,5 +44,8 @@ namespace BZ {
         void setViewports(uint32 firstIndex, const Command::Viewport viewports[], uint32 viewportCount) override;
         void setScissorRects(uint32 firstIndex, const Command::ScissorRect rects[], uint32 rectCount) override;
         void setDepthBias(float constantFactor, float clamp, float slopeFactor) override;
+
+        //Sync
+        void pipelineBarrierTexture(const Texture &texture);
     };
 }

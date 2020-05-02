@@ -10,6 +10,7 @@ namespace BZ {
     class Buffer;
     class PipelineState;
     class DescriptorSet;
+    class Texture;
 
     enum class CommandType {
         BeginRenderPass,
@@ -25,6 +26,7 @@ namespace BZ {
         SetViewports,           //Requires Dynamic State
         SetScissorRects,        //Requires Dynamic State
         SetDepthBias,           //Requires Dynamic State
+        PipelineBarrierTexture
     };
 
     struct Command {
@@ -115,6 +117,10 @@ namespace BZ {
                 float clamp;
                 float slopeFactor;
             } setDepthBiasData;
+
+            struct PipelineBarrierTextureData {
+                Texture *texture;
+            } pipelineBarrierTexture;
         };
     };
 
@@ -167,5 +173,8 @@ namespace BZ {
         virtual void setViewports(uint32 firstIndex, const Command::Viewport viewports[], uint32 viewportCount) = 0;
         virtual void setScissorRects(uint32 firstIndex, const Command::ScissorRect rects[], uint32 rectCount) = 0;
         virtual void setDepthBias(float constantFactor, float clamp, float slopeFactor) = 0;
+
+        //Sync
+        virtual void pipelineBarrierTexture(const Texture &texture) = 0;
     };
 }

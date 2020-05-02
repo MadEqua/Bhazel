@@ -114,19 +114,19 @@ void Layer3D::onGraphicsContextCreated() {
     //scenes[1].addEntity(hydrantMesh, hydrantTransform);
     //scenes[2].addEntity(hydrantMesh, hydrantTransform);
     
-    BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
-                                "Sandbox/meshes/wrench/normal.png",
-                                "Sandbox/meshes/wrench/metallic.jpg",
-                                "Sandbox/meshes/wrench/roughness.jpg",
-                                "Sandbox/meshes/wrench/height.png");
-    wrenchMaterial.setParallaxOcclusionScale(0.01f);
-    BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
-    BZ::Transform wrenchTransform;
-    wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f, BZ::Space::Parent);
-    wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f, BZ::Space::Parent);
-    scenes[0].addEntity(wrenchMesh, wrenchTransform);
-    scenes[1].addEntity(wrenchMesh, wrenchTransform);
-    scenes[2].addEntity(wrenchMesh, wrenchTransform);
+    //BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
+    //                            "Sandbox/meshes/wrench/normal.png",
+    //                            "Sandbox/meshes/wrench/metallic.jpg",
+    //                            "Sandbox/meshes/wrench/roughness.jpg",
+    //                            "Sandbox/meshes/wrench/height.png");
+    //wrenchMaterial.setParallaxOcclusionScale(0.01f);
+    //BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
+    //BZ::Transform wrenchTransform;
+    //wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f, BZ::Space::Parent);
+    //wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f, BZ::Space::Parent);
+    //scenes[0].addEntity(wrenchMesh, wrenchTransform);
+    //scenes[1].addEntity(wrenchMesh, wrenchTransform);
+    //scenes[2].addEntity(wrenchMesh, wrenchTransform);
     
     BZ::Material gunMaterial("Sandbox/meshes/cerberus/albedo.png",
                              "Sandbox/meshes/cerberus/normal.png",
@@ -246,13 +246,13 @@ void Layer3D::onGraphicsContextCreated() {
     scenes[1].addDirectionalLight(dirLight);
     scenes[2].addDirectionalLight(dirLight);
 
-    BZ::DirectionalLight dirLight2;
-    dirLight2.setDirection({ 0.0f, -1.0f, -0.5f });
-    dirLight2.color = { 1.0f, 1.0f, 1.0f };
-    dirLight2.intensity = 1.0f;
-    scenes[0].addDirectionalLight(dirLight2);
-    scenes[1].addDirectionalLight(dirLight2);
-    scenes[2].addDirectionalLight(dirLight2);
+    //BZ::DirectionalLight dirLight2;
+    //dirLight2.setDirection({ 0.0f, -1.0f, -0.5f });
+    //dirLight2.color = { 1.0f, 1.0f, 1.0f };
+    //dirLight2.intensity = 1.0f;
+    //scenes[0].addDirectionalLight(dirLight2);
+    //scenes[1].addDirectionalLight(dirLight2);
+    //scenes[2].addDirectionalLight(dirLight2);
 
     const char* cubeFileNames[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga", 
                                      "output_skybox_posy.tga", "output_skybox_negy.tga",

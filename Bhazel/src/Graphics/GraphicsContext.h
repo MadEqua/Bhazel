@@ -22,10 +22,11 @@ namespace BZ {
         bool isVSync() const { return vsync; }
 
         virtual uint32 getCurrentFrameIndex() const = 0;
-        virtual const Ref<Framebuffer>& getCurrentFrameFramebuffer() const = 0;
+        virtual const Ref<Framebuffer>& getCurrentSwapchainFramebuffer() const = 0;
         virtual const Ref<RenderPass>& getSwapchainRenderPass() const = 0;  
         virtual Ref<CommandBuffer> getCurrentFrameCommandBuffer() = 0;
 
+        virtual void beginFrame() = 0;
         virtual void submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) = 0;
         virtual void waitForDevice() = 0;
 

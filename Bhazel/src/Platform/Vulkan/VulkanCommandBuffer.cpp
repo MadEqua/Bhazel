@@ -4,6 +4,7 @@
 
 #include "Platform/Vulkan/VulkanFramebuffer.h"
 #include "Platform/Vulkan/VulkanRenderPass.h"
+#include "Platform/Vulkan/VulkanTexture.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include "Platform/Vulkan/VulkanPipelineState.h"
 #include "Platform/Vulkan/VulkanDescriptorSet.h"
@@ -183,5 +184,61 @@ namespace BZ {
 
     void VulkanCommandBuffer::setDepthBias(float constantFactor, float clamp, float slopeFactor) {
         vkCmdSetDepthBias(nativeHandle, constantFactor, clamp, slopeFactor);
+    }
+
+    void VulkanCommandBuffer::pipelineBarrierTexture(const Texture &texture) {
+        VulkanContext &context = getGraphicsContext();
+
+        VkImageMemoryBarrier imageMemoryBarrier = {};
+        imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+        if(texture.getFormat().isColor())
+            imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        else if (texture.getFormat().isDepth() || texture.getFormat().isStencil())
+            imageMemoryBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        //Making some assumptions here...
+        if (texture.getFormat().isColor())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        /*else if (texture.getFormat().isDepth())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        else if (texture.getFormat().isStencil())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;*/
+        else if (texture.getFormat().isDepth() || texture.getFormat().isStencil())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        uint32 graphicsQueueFamily = context.getDevice().getQueueContainer().graphics.getFamily().getIndex();
+        imageMemoryBarrier.srcQueueFamilyIndex = graphicsQueueFamily;
+        imageMemoryBarrier.dstQueueFamilyIndex = graphicsQueueFamily;
+
+        imageMemoryBarrier.image = static_cast<const VulkanTexture2D&>(texture).getNativeHandle().imageHandle;
+
+        VkImageSubresourceRange subResourceRange;
+        subResourceRange.aspectMask = 0;
+        if (texture.getFormat().isColor())
+            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
+        if (texture.getFormat().isDepth())
+            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+        if (texture.getFormat().isStencil())
+            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        subResourceRange.baseMipLevel = 0;
+        subResourceRange.levelCount = texture.getMipLevels();
+        subResourceRange.baseArrayLayer = 0;
+        subResourceRange.layerCount = texture.getLayers();
+
+        imageMemoryBarrier.subresourceRange = subResourceRange;
+
+        VkPipelineStageFlags srcStageMask;
+        if (texture.getFormat().isColor())
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        else if (texture.getFormat().isDepth() || texture.getFormat().isStencil())
+            srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+        VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        vkCmdPipelineBarrier(nativeHandle, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
     }
 }

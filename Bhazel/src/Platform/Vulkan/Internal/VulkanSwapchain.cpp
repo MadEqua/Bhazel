@@ -24,6 +24,7 @@ namespace BZ {
         renderPass.reset();
         vkDestroySwapchainKHR(device->getNativeHandle(), swapchain, nullptr);
         currentImageIndex = 0;
+        aquired = false;
         swapchain = VK_NULL_HANDLE;
     }
 
@@ -33,14 +34,24 @@ namespace BZ {
     }
 
     void VulkanSwapchain::aquireImage(const VulkanSemaphore &imageAvailableSemaphore) {
-        VkResult result = vkAcquireNextImageKHR(device->getNativeHandle(), swapchain, UINT64_MAX, imageAvailableSemaphore.getNativeHandle(), VK_NULL_HANDLE, &currentImageIndex);
-        if(result != VK_SUCCESS) {
+        BZ_ASSERT_CORE(!aquired, "Aquiring image with one already aquired. Should present first!");
+
+        VkResult result = vkAcquireNextImageKHR(device->getNativeHandle(), swapchain, 0, imageAvailableSemaphore.getNativeHandle(), VK_NULL_HANDLE, &currentImageIndex);
+        if(result < VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
             recreate();
+        }
+        else if (result != VK_SUCCESS) {
+            BZ_LOG_CORE_INFO("VulkanContext had no success acquiring image for presentation. Result was: {}.", result);
+        }
+        else {
+            aquired = true;
         }
     }
 
     void VulkanSwapchain::presentImage(const VulkanSemaphore &renderFinishedSemaphore) {
+        BZ_ASSERT_CORE(aquired, "Presenting image with none aquired. Aquire one first!");
+
         VkSemaphore waitSemaphore[] = { renderFinishedSemaphore.getNativeHandle() };
         VkSwapchainKHR swapchains[] = { swapchain };
 
@@ -58,6 +69,9 @@ namespace BZ {
             BZ_LOG_CORE_ERROR("VulkanContext failed to present image. Error: {}.", result);
             recreate();
         }
+        else {
+            aquired = false;
+        }
     }
 
     void VulkanSwapchain::internalInit() {
@@ -66,10 +80,15 @@ namespace BZ {
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapchainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapchainSupport.presentModes);
         extent = chooseSwapExtent(swapchainSupport.capabilities);
-        uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
+
+        //Try to go for 3 images minimum.
+        uint32_t imageCount = std::max(swapchainSupport.capabilities.minImageCount, 3u);
         if(swapchainSupport.capabilities.maxImageCount > 0 && imageCount > swapchainSupport.capabilities.maxImageCount) {
             imageCount = swapchainSupport.capabilities.maxImageCount;
         }
+
+        BZ_LOG_CORE_INFO("Swapchain needs a minImageCount of {} and a maxImageCount of {}. Picked an image count of {}.", 
+            swapchainSupport.capabilities.minImageCount, swapchainSupport.capabilities.maxImageCount, imageCount);
 
         VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
         swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -177,6 +196,7 @@ namespace BZ {
             return capabilities.currentExtent;
         }
         else {
+            BZ_ASSERT_ALWAYS_CORE("Not implemented!");
             //TODO
             /*int w, h;
             glfwGetFramebufferSize(windowHandle, &w, &h);

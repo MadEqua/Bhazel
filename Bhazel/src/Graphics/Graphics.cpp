@@ -12,6 +12,7 @@
 #include "Graphics/Shader.h"
 #include "Graphics/Color.h"
 #include "Graphics/CommandBuffer.h"
+#include "Graphics/Texture.h"
 
 #include <imgui.h>
 
@@ -87,7 +88,7 @@ namespace BZ {
     void Graphics::beginRenderPass(uint32 commandBufferId) {
         BZ_PROFILE_FUNCTION();
 
-        beginRenderPass(commandBufferId, data.graphicsContext->getCurrentFrameFramebuffer());
+        beginRenderPass(commandBufferId, data.graphicsContext->getCurrentSwapchainFramebuffer());
     }
 
     void Graphics::beginRenderPass(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer) {
@@ -119,7 +120,7 @@ namespace BZ {
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
         auto &command = commandBuffer->addCommand(CommandType::ClearColorAttachments);
-        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer().get();
+        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer().get();
         command.clearAttachmentsData.clearValue = clearColor;
     }
 
@@ -141,7 +142,7 @@ namespace BZ {
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
         auto &command = commandBuffer->addCommand(CommandType::ClearDepthStencilAttachment);
-        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentFrameFramebuffer().get();
+        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer().get();
         command.clearAttachmentsData.clearValue = clearValue;
     }
 
@@ -316,6 +317,16 @@ namespace BZ {
         command.setDepthBiasData.slopeFactor = slopeFactor;
     }
 
+    void Graphics::pipelineBarrierTexture(uint32 commandBufferId, const Ref<Texture> &texture) {
+        BZ_PROFILE_FUNCTION();
+
+        BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
+
+        auto &commandBuffer = data.commandBuffers[commandBufferId];
+        auto &command = commandBuffer->addCommand(CommandType::PipelineBarrierTexture);
+        command.pipelineBarrierTexture.texture = texture.get();
+    }
+
     void Graphics::waitForDevice() {
         BZ_PROFILE_FUNCTION();
 
@@ -329,6 +340,8 @@ namespace BZ {
         data.clearedFramebuffers.clear();
 
         memset(&data.stats, 0, sizeof(GraphicsStats));
+
+        data.graphicsContext->beginFrame();
     }
 
     void Graphics::endFrame() {

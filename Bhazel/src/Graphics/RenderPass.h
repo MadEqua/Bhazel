@@ -26,9 +26,13 @@ namespace BZ {
         ShaderReadOnlyOptimal,
         TransferSrcOptimal,
         TransferDstOptimal,
-        Preinitialized,
         DepthReadOnlyStencilAttachmentOptimal,
         DepthAttachmentStencilReadOnlyOptimal,
+        DepthAttachmentOptimal,
+        DepthReadOnlyOptimal,
+        StencilAttachmentOptimal,
+        StencilReadOnlyOptimal,
+        Preinitialized,
         Present,
         SharedPresent
     };

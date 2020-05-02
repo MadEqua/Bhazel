@@ -11,6 +11,7 @@ namespace BZ {
     struct Viewport;
     struct ScissorRect;
     struct FrameStats;
+    class Texture;
     
     class WindowResizedEvent;
     class GraphicsContext;
@@ -59,6 +60,9 @@ namespace BZ {
         static void setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount);
         static void setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount);
         static void setDepthBias(uint32 commandBufferId, float constantFactor, float clamp, float slopeFactor);
+
+        //Sync
+        static void pipelineBarrierTexture(uint32 commandBufferId, const Ref<Texture> &texture);
 
         static void waitForDevice();
 

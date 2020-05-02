@@ -234,7 +234,7 @@ namespace BZ {
         depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
         depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
         depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        depthStencilAttachmentDesc.finalLayout = TextureLayout::ShaderReadOnlyOptimal; //TODO: This is not optimal for a depth texture, but works. We should pick the optimal layout and then work with layout transitions.
+        depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
         depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
         depthStencilAttachmentDesc.clearValues.integer.y = 0;
         rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc });
@@ -422,6 +422,10 @@ namespace BZ {
             Graphics::beginRenderPass(rendererData.commandBufferId, dirLight.shadowMapFramebuffer);
             drawEntities(scene, true);
             Graphics::endRenderPass(rendererData.commandBufferId);
+
+            //Avoid starting the color pass before the depth pass is finished writing to the textures.
+            Graphics::pipelineBarrierTexture(rendererData.commandBufferId, dirLight.shadowMapFramebuffer->getDepthStencilTextureView()->getTexture());
+
             lightIdx++;
         }
     }
