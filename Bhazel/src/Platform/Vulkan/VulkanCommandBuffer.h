@@ -23,6 +23,8 @@ namespace BZ {
         void beginRenderPass(const Framebuffer &framebuffer, bool forceClearAttachments) override;
         void endRenderPass() override;
 
+        void nextSubPass() override;
+
         void clearColorAttachments(const Framebuffer &framebuffer, const ClearValues &clearColor) override;
         void clearDepthStencilAttachment(const Framebuffer &framebuffer, const ClearValues &clearValue) override;
 

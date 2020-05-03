@@ -244,7 +244,7 @@ namespace BZ {
         pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = nativeHandle.pipelineLayout;
         pipelineInfo.renderPass = static_cast<VulkanRenderPass &>(*data.renderPass).getNativeHandle().original;
-        pipelineInfo.subpass = 0;
+        pipelineInfo.subpass = data.subPassIndex;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
 

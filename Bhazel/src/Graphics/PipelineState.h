@@ -134,7 +134,7 @@ namespace BZ {
         Max
     };
 
-    enum class ColorMaskFlags {
+    enum class ColorMaskFlag {
         Disable = 0,
         Red = 1,
         Green = 2,
@@ -143,7 +143,7 @@ namespace BZ {
         All = Red | Green | Blue | Alpha
     };
 
-    EnumClassFlagOperators(ColorMaskFlags);
+    EnumClassFlagOperators(ColorMaskFlag);
 
     struct BlendingStateAttachment {
         bool enableBlending = false;
@@ -153,7 +153,7 @@ namespace BZ {
         BlendingFactor srcAlphaBlendingFactor = BlendingFactor::One;
         BlendingFactor dstAlphaBlendingFactor = BlendingFactor::One;
         BlendingOperation alphaBlendingOperation = BlendingOperation::Add;
-        uint8 writeMask = flagsToMask(ColorMaskFlags::All);
+        uint8 writeMask = flagsToMask(ColorMaskFlag::All);
     };
 
     struct BlendingState {
@@ -202,9 +202,8 @@ namespace BZ {
         DepthStencilState depthStencilState;
         BlendingState blendingState;
         std::vector<DynamicState> dynamicStates;
-
-        //If absent, it's assumed to be a swapchain framebuffer (the current frame one), which is fine because all of them are similar.
         Ref<RenderPass> renderPass;
+        uint32 subPassIndex = 0;
     };
 
     class PipelineState {

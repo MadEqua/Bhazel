@@ -7,6 +7,7 @@ namespace BZ {
     class Framebuffer;
     class RenderPass;
     class CommandBuffer;
+    class TextureView;
 
     class GraphicsContext {
     public:
@@ -30,9 +31,18 @@ namespace BZ {
         virtual void submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) = 0;
         virtual void waitForDevice() = 0;
 
+        const Ref<TextureView>& getDepthTextureView() const { return depthTextureView; }
+        const Ref<RenderPass>& getMainRenderPass() const { return mainRenderPass; }
+        const Ref<Framebuffer>& getMainFramebuffer() const { return mainFramebuffer; }
+
     protected:
         GraphicsContext() = default;
 
         bool vsync = true;
+
+        Ref<TextureView> colorTextureView;
+        Ref<TextureView> depthTextureView;
+        Ref<RenderPass> mainRenderPass;
+        Ref<Framebuffer> mainFramebuffer;
     };
 }

@@ -7,7 +7,7 @@ namespace BZ {
     class TextureView;
     class Sampler;
 
-    enum class ShaderStageFlags {
+    enum class ShaderStageFlag {
         Vertex = 1,
         TesselationControl = 2,
         TesselationEvaluation = 4,
@@ -18,7 +18,7 @@ namespace BZ {
         All = GraphicsAll | Compute,
     };
 
-    EnumClassFlagOperators(ShaderStageFlags);
+    EnumClassFlagOperators(ShaderStageFlag);
 
     enum class DescriptorType {
         Sampler,

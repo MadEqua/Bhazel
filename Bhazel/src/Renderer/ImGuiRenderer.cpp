@@ -177,7 +177,7 @@ namespace BZ {
         }
 
         auto commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginRenderPass(commandBufferId);
+        Graphics::beginRenderPass(commandBufferId, Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer());
 
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
@@ -309,8 +309,8 @@ namespace BZ {
 
         //DescriptorSetLayout
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
         Ref<DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         Window &window = Application::getInstance().getWindow();
@@ -336,6 +336,9 @@ namespace BZ {
         pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { DynamicState::Scissor };
+        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
+        pipelineStateData.subPassIndex = 0;
+
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
 
         //Constant Buffer

@@ -15,10 +15,12 @@ namespace BZ {
 
     class VulkanRenderPass : public RenderPass, public VulkanGpuObject<RenderPassData> {
     public:
-        VulkanRenderPass(const std::initializer_list<AttachmentDescription> &descs);
+        VulkanRenderPass(const std::initializer_list<AttachmentDescription> &descs,
+                         const std::initializer_list<SubPassDescription> &subPassDescs,
+                         const std::initializer_list<SubPassDependency> &subPassDeps);
         ~VulkanRenderPass() override;
 
     private:
-        void init(const std::initializer_list<AttachmentDescription> &descs, bool forceClear);
+        void init(bool forceClear);
     };
 }

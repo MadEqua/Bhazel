@@ -146,33 +146,33 @@ namespace BZ {
         rendererData.entityConstantBufferPtr = rendererData.sceneConstantBufferPtr + ENTITY_CONSTANT_BUFFER_OFFSET;
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
         rendererData.globalDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::All), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), MAX_DIR_LIGHTS_PER_SCENE);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::All), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), MAX_DIR_LIGHTS_PER_SCENE);
         rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex | ShaderStageFlags::Geometry), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex | ShaderStageFlag::Geometry), 1);
         rendererData.passDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Fragment), 1);
         //Albedo, Normal, Metallic, Roughness, Height and AO.
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
         rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex | ShaderStageFlags::Geometry), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex | ShaderStageFlag::Geometry), 1);
         rendererData.entityDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         rendererData.entityDescriptorSet = DescriptorSet::create(rendererData.entityDescriptorSetLayout);
@@ -190,7 +190,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex | ShaderStageFlags::Geometry), SHADOW_MAPPING_CASCADE_COUNT);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex | ShaderStageFlag::Geometry), SHADOW_MAPPING_CASCADE_COUNT);
         rendererData.passDescriptorSetLayoutForDepthPass = descriptorSetLayoutBuilder.build();
 
         PipelineStateData pipelineStateData;
@@ -237,8 +237,13 @@ namespace BZ {
         depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
         depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
         depthStencilAttachmentDesc.clearValues.integer.y = 0;
-        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc });
+
+        SubPassDescription subPassDesc;
+        subPassDesc.depthStencilAttachmentsRef = { 0, TextureLayout::DepthStencilAttachmentOptimal };
+
+        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc });
         pipelineStateData.renderPass = rendererData.depthRenderPass;
+        pipelineStateData.subPassIndex = 0;
 
         rendererData.depthPassPipelineState = PipelineState::create(pipelineStateData);
 
@@ -297,6 +302,9 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
+        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getMainRenderPass();
+        pipelineStateData.subPassIndex = 0;
+
         rendererData.defaultPipelineState = PipelineState::create(pipelineStateData);
 
         Sampler::Builder samplerBuilder;
@@ -344,6 +352,9 @@ namespace BZ {
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
+
+        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getMainRenderPass();
+        pipelineStateData.subPassIndex = 0;
 
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
     }
@@ -437,7 +448,7 @@ namespace BZ {
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
-        Graphics::beginRenderPass(rendererData.commandBufferId);
+        Graphics::beginRenderPass(rendererData.commandBufferId, Application::getInstance().getGraphicsContext().getMainFramebuffer());
 
         if (scene.hasSkyBox()) {
             Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.skyBoxPipelineState);

@@ -40,5 +40,5 @@ namespace BZ {
     inline e_& operator|= (e_& a, e_ b){a = a | b; return a;}; \
     inline e_& operator&= (e_& a, e_ b) { a = a & b; return a; }; \
     inline e_  operator~ (e_ a) { return static_cast<e_>(~static_cast<int>(a));} \
-    inline bool isSet(uint8 mask, e_ flag) { return (mask & static_cast<uint8>(flag));} \
-    inline uint8 flagsToMask(e_ e) {return static_cast<uint8>(e);}
+    inline bool isSet(uint32 mask, e_ flag) { return (mask & static_cast<uint32>(flag));} \
+    inline uint32 flagsToMask(e_ e) {return static_cast<uint32>(e);}

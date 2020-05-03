@@ -157,11 +157,11 @@ namespace BZ {
         rendererData.whiteTexture = Texture2D::create(whiteTextureData, 1, 1, TextureFormatEnum::R8G8B8A8, MipmapData::Options::DoNothing);
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlags::Vertex), 1);
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex), 1);
         rendererData.constantsDescriptorSetLayout = descriptorSetLayoutBuilder.build();
 
         DescriptorSetLayout::Builder descriptorSetLayoutBuilder2;
-        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlags::Fragment), 1);
+        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
         rendererData.textureDescriptorSetLayout = descriptorSetLayoutBuilder2.build();
 
         const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
@@ -184,7 +184,7 @@ namespace BZ {
         //PushConstantDesc pushConstantDesc;
         //pushConstantDesc.offset = 0;
         //pushConstantDesc.size = sizeof(glm::vec4);
-        //pushConstantDesc.shaderStageMask = flagsToMask(ShaderStageFlags::Fragment);
+        //pushConstantDesc.shaderStageMask = flagsToMask(ShaderStageFlag::Fragment);
 
         //pipelineStateData.pushConstantDescs = { pushConstantDesc };
 
@@ -193,6 +193,10 @@ namespace BZ {
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.descriptorSetLayouts = { rendererData.constantsDescriptorSetLayout, rendererData.textureDescriptorSetLayout };
         pipelineStateData.blendingState = blendingState;
+
+        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
+        pipelineStateData.subPassIndex = 0;
+
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
 
         rendererData.constantBuffer = Buffer::create(BufferType::Constant, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
@@ -230,7 +234,7 @@ namespace BZ {
         memset(&rendererData.stats, 0, sizeof(Renderer2DStats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginRenderPass(rendererData.commandBufferId);
+        Graphics::beginRenderPass(rendererData.commandBufferId, Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer());
 
         glm::mat4 viewProjMatrix = camera.getProjectionMatrix() * camera.getViewMatrix();
         memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
@@ -307,7 +311,7 @@ namespace BZ {
                     }
 
                     //if (currentActiveTint != currentBatchTint) {
-                    //    Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlags::Fragment), &currentBatchTint.x, sizeof(glm::vec4), 0);
+                    //    Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlag::Fragment), &currentBatchTint.x, sizeof(glm::vec4), 0);
                     //    currentActiveTint = currentBatchTint;
                     //    stats.tintPushCount++;
                     //}

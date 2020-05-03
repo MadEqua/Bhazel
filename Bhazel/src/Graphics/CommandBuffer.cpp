@@ -29,6 +29,9 @@ namespace BZ {
             case CommandType::EndRenderPass:
                 endRenderPass();
                 break;
+            case CommandType::NextSubPass:
+                nextSubPass();
+                break;
             case CommandType::ClearColorAttachments:
                 clearColorAttachments(*cmd.clearAttachmentsData.framebuffer, cmd.clearAttachmentsData.clearValue);
                 break;

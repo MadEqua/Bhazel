@@ -26,6 +26,7 @@ namespace BZ {
         uint32 commandBufferCount;
         uint32 commandCount;
         uint32 renderPassCount;
+        uint32 subPassCount;
         uint32 drawCallCount;
         uint32 bufferBindCount;
         uint32 descriptorSetBindCount;
@@ -85,11 +86,11 @@ namespace BZ {
         data.stats.commandCount += data.commandBuffers[commandBufferId]->getCommandCount();
     }
 
-    void Graphics::beginRenderPass(uint32 commandBufferId) {
-        BZ_PROFILE_FUNCTION();
-
-        beginRenderPass(commandBufferId, data.graphicsContext->getCurrentSwapchainFramebuffer());
-    }
+    //void Graphics::beginRenderPass(uint32 commandBufferId) {
+    //    BZ_PROFILE_FUNCTION();
+    //
+    //    beginRenderPass(commandBufferId, data.graphicsContext->getCurrentSwapchainFramebuffer());
+    //}
 
     void Graphics::beginRenderPass(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer) {
         BZ_PROFILE_FUNCTION();
@@ -111,6 +112,15 @@ namespace BZ {
         commandBuffer->addCommand(CommandType::EndRenderPass);
 
         data.stats.renderPassCount++;
+    }
+
+    void Graphics::nextSubPass(uint32 commandBufferId) {
+        BZ_PROFILE_FUNCTION();
+
+        auto &commandBuffer = data.commandBuffers[commandBufferId];
+        commandBuffer->addCommand(CommandType::NextSubPass);
+
+        data.stats.subPassCount++;
     }
 
     void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {
@@ -379,7 +389,8 @@ namespace BZ {
             ImGui::Text("Stats:");
             ImGui::Text("CommandBuffer Count: %d", data.visibleStats.commandBufferCount);
             ImGui::Text("Command Count: %d", data.visibleStats.commandCount);
-            ImGui::Text("Render Pass Count: %d", data.visibleStats.renderPassCount);
+            ImGui::Text("RenderPass Count: %d", data.visibleStats.renderPassCount);
+            ImGui::Text("SubPass Count: %d", data.visibleStats.subPassCount);
             ImGui::Text("Draw Call Count: %d", data.visibleStats.drawCallCount);
             ImGui::Text("Buffer Bind Count: %d", data.visibleStats.bufferBindCount);
             ImGui::Text("DescriptorSet Bind Count: %d", data.visibleStats.descriptorSetBindCount);

@@ -15,6 +15,7 @@ namespace BZ {
     enum class CommandType {
         BeginRenderPass,
         EndRenderPass,
+        NextSubPass,
         ClearColorAttachments,
         ClearDepthStencilAttachment,
         BindBuffer,             //Vertex and Index
@@ -151,6 +152,8 @@ namespace BZ {
         /////////////////////////////////////////////////////////
         virtual void beginRenderPass(const Framebuffer &framebuffer, bool forceClearAttachments) = 0;
         virtual void endRenderPass() = 0;
+
+        virtual void nextSubPass() = 0;
 
         virtual void clearColorAttachments(const Framebuffer &framebuffer, const ClearValues &clearColor) = 0;
         virtual void clearDepthStencilAttachment(const Framebuffer&framebuffer, const ClearValues &clearValue) = 0;

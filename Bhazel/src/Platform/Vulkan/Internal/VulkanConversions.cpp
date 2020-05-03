@@ -347,15 +347,15 @@ namespace BZ {
         }
     }
 
-    VkColorComponentFlags colorMaskToVk(uint8 mask) {
+    VkColorComponentFlags colorMaskToVk(uint32 mask) {
         uint32 result = 0;
-        if(isSet(mask, ColorMaskFlags::Red))
+        if(isSet(mask, ColorMaskFlag::Red))
             result |= VK_COLOR_COMPONENT_R_BIT;
-        if(isSet(mask, ColorMaskFlags::Green))
+        if(isSet(mask, ColorMaskFlag::Green))
             result |= VK_COLOR_COMPONENT_G_BIT;
-        if(isSet(mask, ColorMaskFlags::Blue))
+        if(isSet(mask, ColorMaskFlag::Blue))
             result |= VK_COLOR_COMPONENT_B_BIT;
-        if(isSet(mask, ColorMaskFlags::Alpha))
+        if(isSet(mask, ColorMaskFlag::Alpha))
             result |= VK_COLOR_COMPONENT_A_BIT;
         return result;
     }
@@ -560,19 +560,19 @@ namespace BZ {
         }
     }
 
-    VkShaderStageFlags shaderStageMaskToVk(uint8 mask) {
+    VkShaderStageFlags shaderStageMaskToVk(uint32 mask) {
         uint32 result = 0;
-        if(isSet(mask, ShaderStageFlags::Vertex))
+        if(isSet(mask, ShaderStageFlag::Vertex))
             result |= VK_SHADER_STAGE_VERTEX_BIT;
-        if(isSet(mask, ShaderStageFlags::TesselationControl))
+        if(isSet(mask, ShaderStageFlag::TesselationControl))
             result |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-        if(isSet(mask, ShaderStageFlags::TesselationEvaluation))
+        if(isSet(mask, ShaderStageFlag::TesselationEvaluation))
             result |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-        if(isSet(mask, ShaderStageFlags::Geometry))
+        if(isSet(mask, ShaderStageFlag::Geometry))
             result |= VK_SHADER_STAGE_GEOMETRY_BIT;
-        if(isSet(mask, ShaderStageFlags::Fragment))
+        if(isSet(mask, ShaderStageFlag::Fragment))
             result |= VK_SHADER_STAGE_FRAGMENT_BIT;
-        if(isSet(mask, ShaderStageFlags::Compute))
+        if(isSet(mask, ShaderStageFlag::Compute))
             result |= VK_SHADER_STAGE_COMPUTE_BIT;
         return result;
     }
@@ -699,5 +699,82 @@ namespace BZ {
             BZ_ASSERT_ALWAYS_CORE("Unknown DynamicState!");
             return VK_DYNAMIC_STATE_SCISSOR;
         }
+    }
+
+    VkPipelineStageFlags pipelineStageMaskToVk(uint32 mask) {
+        uint32 result = 0;
+        if (isSet(mask, PipelineStageFlag::TopOfPipe))
+            result |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        if (isSet(mask, PipelineStageFlag::VertexInput))
+            result |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+        if (isSet(mask, PipelineStageFlag::VertexShader))
+            result |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+        if (isSet(mask, PipelineStageFlag::GeometryShader))
+            result |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+        if (isSet(mask, PipelineStageFlag::FragmentShader))
+            result |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        if (isSet(mask, PipelineStageFlag::EarlyFragmentTests))
+            result |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        if (isSet(mask, PipelineStageFlag::LateFragmentTests))
+            result |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        if (isSet(mask, PipelineStageFlag::ColorAttachmentOutput))
+            result |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        if (isSet(mask, PipelineStageFlag::BottomOfPipe))
+            result |= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        if (isSet(mask, PipelineStageFlag::AllGraphics))
+            result |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+        if (isSet(mask, PipelineStageFlag::AllCommands))
+            result |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        return result;
+    }
+
+    VkAccessFlags accessMaskToVk(uint32 mask) {
+        uint32 result = 0;
+        if (isSet(mask, AccessFlag::IndirectCommandRead))
+            result |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+        if (isSet(mask, AccessFlag::IndexRead))
+            result |= VK_ACCESS_INDEX_READ_BIT;
+        if (isSet(mask, AccessFlag::VertexAttrRead))
+            result |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+        if (isSet(mask, AccessFlag::UniformRead))
+            result |= VK_ACCESS_UNIFORM_READ_BIT;
+        if (isSet(mask, AccessFlag::InputAttachmentRead))
+            result |= VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+        if (isSet(mask, AccessFlag::ShaderRead))
+            result |= VK_ACCESS_SHADER_READ_BIT;
+        if (isSet(mask, AccessFlag::ShaderWrite))
+            result |= VK_ACCESS_SHADER_WRITE_BIT;
+        if (isSet(mask, AccessFlag::ColorAttachmentRead))
+            result |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        if (isSet(mask, AccessFlag::ColorAttachmentWrite))
+            result |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        if (isSet(mask, AccessFlag::DepthStencilAttachmentRead))
+            result |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        if (isSet(mask, AccessFlag::DepthStencilAttachmentWrite))
+            result |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        if (isSet(mask, AccessFlag::TransferRead))
+            result |= VK_ACCESS_TRANSFER_READ_BIT;
+        if (isSet(mask, AccessFlag::TransferWrite))
+            result |= VK_ACCESS_TRANSFER_WRITE_BIT;
+        if (isSet(mask, AccessFlag::HostRead))
+            result |= VK_ACCESS_HOST_READ_BIT;
+        if (isSet(mask, AccessFlag::HostWrite))
+            result |= VK_ACCESS_HOST_WRITE_BIT;
+        if (isSet(mask, AccessFlag::MemoryRead))
+            result |= VK_ACCESS_MEMORY_READ_BIT;
+        if (isSet(mask, AccessFlag::MemoryWrite))
+            result |= VK_ACCESS_MEMORY_WRITE_BIT;
+        return result;
+    }
+
+    VkDependencyFlags dependencyMaskToVk(uint32 mask) {
+        uint32 result = 0;
+        if (isSet(mask, DependencyFlag::ByRegion))
+            result |= VK_DEPENDENCY_BY_REGION_BIT;
+        if (isSet(mask, DependencyFlag::DeviceGroup))
+            result |= VK_DEPENDENCY_DEVICE_GROUP_BIT;
+        if (isSet(mask, DependencyFlag::ViewLocal))
+            result |= VK_DEPENDENCY_VIEW_LOCAL_BIT;
+        return result;
     }
 }

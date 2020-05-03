@@ -18,7 +18,7 @@ namespace BZ {
     };
 
     /*
-    * Abstract the Swapchain and respective Framebuffer creation, also manages the Depth Buffer texture for convenience.
+    * Abstract the Swapchain and respective Framebuffer creation. The RenderPass and Framebuffers reutilize the main (and only) DepthBuffer.
     * Only has one image aquired at any given time.
     */
     class VulkanSwapchain {

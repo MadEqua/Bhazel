@@ -132,11 +132,13 @@ namespace BZ {
         swapChainImages.resize(imageCount);
         BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device->getNativeHandle(), swapchain, &imageCount, swapChainImages.data()));
 
-        //Create the RenderPass
+        //Create the Swapchain RenderPass, reutilizing the main DepthBuffer (forcing a clear on the RenderPass).
+        VulkanContext &context = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
+
         AttachmentDescription colorAttachmentDesc;
         colorAttachmentDesc.format = vkFormatToTextureFormat(imageFormat);
         colorAttachmentDesc.samples = 1;
-        colorAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
+        colorAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Load;
         colorAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
         colorAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
         colorAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
@@ -144,28 +146,24 @@ namespace BZ {
         colorAttachmentDesc.finalLayout = TextureLayout::Present;
         colorAttachmentDesc.clearValues.floating = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-        AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = TextureFormatEnum::D24S8;
-        depthStencilAttachmentDesc.samples = 1;
-        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
-        depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
-        depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
-        depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::Store;
-        depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
-        depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
-        depthStencilAttachmentDesc.clearValues.integer.y = 0;
-        renderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc });
+        AttachmentDescription depthAttachmentDesc = *context.getMainRenderPass()->getDepthStencilAttachmentDescription();
+        depthAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
+        depthAttachmentDesc.loadOperatorStencil = LoadOperation::Clear;
+        depthAttachmentDesc.clearValues.floating.x = 1.0f;
+        depthAttachmentDesc.clearValues.integer.y = 0;
+
+        SubPassDescription subPassDesc;
+        subPassDesc.colorAttachmentsRefs = { { 0, TextureLayout::ColorAttachmentOptimal } };
+        subPassDesc.depthStencilAttachmentsRef = { 1, TextureLayout::DepthStencilAttachmentOptimal };
+
+        renderPass = RenderPass::create({ colorAttachmentDesc, depthAttachmentDesc }, { subPassDesc });
 
         //Create Views and Framebuffers for the images
-        auto depthTextureRef = Texture2D::createRenderTarget(extent.width, extent.height, 1, TextureFormatEnum::D24S8);
-        auto depthTexViewRef = TextureView::create(depthTextureRef);
-
         framebuffers.resize(imageCount);
         for(size_t i = 0; i < swapChainImages.size(); i++) {
             auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
             auto textureViewRef = TextureView::create(textureRef);
-            framebuffers[i] = Framebuffer::create(renderPass, { textureViewRef, depthTexViewRef }, glm::ivec3(extent.width, extent.height, 1));
+            framebuffers[i] = Framebuffer::create(renderPass, { textureViewRef, context.getDepthTextureView() }, glm::ivec3(extent.width, extent.height, 1));
         }
     }
 

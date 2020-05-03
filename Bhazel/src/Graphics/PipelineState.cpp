@@ -41,9 +41,7 @@ namespace BZ {
             data.scissorRects.size() == data.viewports.size(),
             "With non-dynamic Scissor and Viewports the number of Viewports must match the number of ScissorsRects!");
 
-        if (!data.renderPass)
-            data.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
-
+        BZ_ASSERT_CORE(data.renderPass, "PipelineState needs a RenderPass!");
         BZ_ASSERT_CORE(data.renderPass->getColorAttachmentCount() == data.blendingState.attachmentBlendingStates.size(),
             "The number of color attachments defined on the RenderPass must match the number of BlendingStates on PipelineState!");
 

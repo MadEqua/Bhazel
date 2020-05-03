@@ -20,7 +20,7 @@ namespace BZ {
    VkPolygonMode polygonModeToVk(PolygonMode mode);
    VkCullModeFlags cullModeToVk(CullMode mode);
    VkSampleCountFlagBits sampleCountToVk(uint8 count);
-   VkColorComponentFlags colorMaskToVk(uint8 mask);
+   VkColorComponentFlags colorMaskToVk(uint32 mask);
    VkBlendFactor blendingFactorToVk(BlendingFactor factor);
    VkBlendOp blendingOperationToVk(BlendingOperation operation);
    VkCompareOp compareFunctionToVk(CompareFunction function);
@@ -29,7 +29,7 @@ namespace BZ {
    VkAttachmentStoreOp storeOperationToVk(StoreOperation operation);
    VkImageLayout textureLayoutToVk(TextureLayout layout);
    VkShaderStageFlagBits shaderStageToVk(ShaderStage stage);
-   VkShaderStageFlags shaderStageMaskToVk(uint8 mask);
+   VkShaderStageFlags shaderStageMaskToVk(uint32 mask);
    VkDescriptorType descriptorTypeToVk(DescriptorType type);
    VkMemoryPropertyFlags memoryTypeToRequiredFlagsVk(MemoryType memoryType);
    VkMemoryPropertyFlags memoryTypeToPreferredFlagsVk(MemoryType memoryType);
@@ -37,4 +37,7 @@ namespace BZ {
    VkSamplerMipmapMode sampleMipmapModeToVk(FilterMode mode);
    VkSamplerAddressMode addressModeToVk(AddressMode mode);
    VkDynamicState dynamicStateToVk(DynamicState dynamicState);
+   VkPipelineStageFlags pipelineStageMaskToVk(uint32 mask);
+   VkAccessFlags accessMaskToVk(uint32 mask);
+   VkDependencyFlags dependencyMaskToVk(uint32 mask);
 }

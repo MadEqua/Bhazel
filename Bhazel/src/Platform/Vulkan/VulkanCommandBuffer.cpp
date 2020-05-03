@@ -73,6 +73,10 @@ namespace BZ {
         vkCmdEndRenderPass(nativeHandle);
     }
 
+    void VulkanCommandBuffer::nextSubPass() {
+        vkCmdNextSubpass(nativeHandle, VK_SUBPASS_CONTENTS_INLINE);
+    }
+
     void VulkanCommandBuffer::clearColorAttachments(const Framebuffer &framebuffer, const ClearValues &clearColor) {
         auto &vulkanFramebuffer = static_cast<const VulkanFramebuffer &>(framebuffer);
 

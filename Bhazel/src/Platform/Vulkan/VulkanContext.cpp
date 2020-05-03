@@ -6,6 +6,8 @@
 #include "Platform/Vulkan/VulkanContext.h"
 #include "Platform/Vulkan/VulkanCommandBuffer.h"
 #include "Platform/Vulkan/VulkanFramebuffer.h"
+#include "Platform/Vulkan/VulkanTexture.h"
+#include "Platform/Vulkan/VulkanRenderPass.h"
 
 #include "Graphics/Color.h"
 
@@ -20,6 +22,10 @@ namespace BZ {
     }
 
     VulkanContext::~VulkanContext() {
+        colorTextureView.reset();
+        depthTextureView.reset();
+        mainFramebuffer.reset();
+        mainRenderPass.reset();
         descriptorPool.destroy();
         cleanupFrameData();
         swapchain.destroy();
@@ -54,14 +60,54 @@ namespace BZ {
 
         createFrameData();
 
-        swapchain.init(device, surface);
-
         VulkanDescriptorPool::Builder builder;
         builder.addDescriptorTypeCount(DescriptorType::ConstantBuffer, 512);
         builder.addDescriptorTypeCount(DescriptorType::CombinedTextureSampler, 512);
         builder.addDescriptorTypeCount(DescriptorType::Sampler, 512);
         builder.addDescriptorTypeCount(DescriptorType::SampledTexture, 512);
         descriptorPool.init(device, builder);
+
+        //Create the RenderPass
+        AttachmentDescription colorAttachmentDesc;
+        colorAttachmentDesc.format = TextureFormatEnum::R32G32B32A32_SFLOAT;
+        colorAttachmentDesc.samples = 1;
+        colorAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Load;
+        colorAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
+        colorAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
+        colorAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
+        colorAttachmentDesc.initialLayout = TextureLayout::Undefined;
+        colorAttachmentDesc.finalLayout = TextureLayout::ShaderReadOnlyOptimal;
+        colorAttachmentDesc.clearValues.floating = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+        AttachmentDescription depthStencilAttachmentDesc;
+        depthStencilAttachmentDesc.format = TextureFormatEnum::D24S8;
+        depthStencilAttachmentDesc.samples = 1;
+        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Load;
+        depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
+        depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::Load;
+        depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::Store;
+        depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
+        depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
+        depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
+        depthStencilAttachmentDesc.clearValues.integer.y = 0;
+
+        SubPassDescription subPassDesc;
+        subPassDesc.colorAttachmentsRefs = { { 0, TextureLayout::ColorAttachmentOptimal } };
+        subPassDesc.depthStencilAttachmentsRef = { 1, TextureLayout::DepthStencilAttachmentOptimal };
+
+        mainRenderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc });
+
+        //TODO: get the dimensions from a better place
+        glm::ivec2 dimensions;
+        glfwGetWindowSize(windowHandle, &dimensions.x, &dimensions.y);
+        auto colorTexture = Texture2D::createRenderTarget(dimensions.x, dimensions.y, 1, colorAttachmentDesc.format);
+        colorTextureView = TextureView::create(colorTexture);
+        auto depthTexture = Texture2D::createRenderTarget(dimensions.x, dimensions.y, 1, depthStencilAttachmentDesc.format);
+        depthTextureView = TextureView::create(depthTexture);
+
+        mainFramebuffer = Framebuffer::create(mainRenderPass, { colorTextureView, depthTextureView }, glm::ivec3(dimensions.x, dimensions.y, 1));
+
+        swapchain.init(device, surface);
     }
 
     void VulkanContext::setVSync(bool enabled) {

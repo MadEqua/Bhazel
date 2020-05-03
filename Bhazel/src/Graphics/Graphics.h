@@ -32,9 +32,11 @@ namespace BZ {
         static uint32 beginCommandBuffer();
         static void endCommandBuffer(uint32 commandBufferId);
 
-        static void beginRenderPass(uint32 commandBufferId);
+        //static void beginRenderPass(uint32 commandBufferId);
         static void beginRenderPass(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer);
         static void endRenderPass(uint32 commandBufferId);
+
+        static void nextSubPass(uint32 commandBufferId);
 
         static void clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor);
         static void clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor);
