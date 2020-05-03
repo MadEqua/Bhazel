@@ -31,6 +31,7 @@ namespace BZ {
         virtual void submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) = 0;
         virtual void waitForDevice() = 0;
 
+        const Ref<TextureView>& getColorTextureView() const { return colorTextureView; }
         const Ref<TextureView>& getDepthTextureView() const { return depthTextureView; }
         const Ref<RenderPass>& getMainRenderPass() const { return mainRenderPass; }
         const Ref<Framebuffer>& getMainFramebuffer() const { return mainFramebuffer; }

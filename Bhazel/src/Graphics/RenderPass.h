@@ -42,7 +42,7 @@ namespace BZ {
         uint32 samples = 1;
         LoadOperation loadOperatorColorAndDepth = LoadOperation::DontCare;
         StoreOperation storeOperatorColorAndDepth = StoreOperation::Store;
-        LoadOperation loadOperatorStencil = LoadOperation::Clear;
+        LoadOperation loadOperatorStencil = LoadOperation::DontCare;
         StoreOperation storeOperatorStencil = StoreOperation::Store;
         TextureLayout initialLayout = TextureLayout::Undefined;
         TextureLayout finalLayout = TextureLayout::Undefined;

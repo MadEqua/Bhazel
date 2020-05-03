@@ -45,10 +45,12 @@ namespace BZ {
 
         static void initDepthPassData();
         static void initDefaultPassData();
+        static void initPostProcessPassData();
         static void initSkyBoxData();
 
         static void depthPass(const Scene &scene);
         static void colorPass(const Scene &scene);
+        static void postProcessPass();
 
         static void drawEntities(const Scene &scene, bool depthPass);
         static void drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool depthPass);

@@ -98,11 +98,13 @@ namespace BZ {
         Ref<DescriptorSetLayout> passDescriptorSetLayoutForDepthPass;
         Ref<DescriptorSetLayout> materialDescriptorSetLayout;
         Ref<DescriptorSetLayout> entityDescriptorSetLayout;
+        Ref<DescriptorSetLayout> postProcessPassDescriptorSetLayout;
 
         Ref<DescriptorSet> globalDescriptorSet;
         Ref<DescriptorSet> passDescriptorSet;
         Ref<DescriptorSet> passDescriptorSetForDepthPass;
         Ref<DescriptorSet> entityDescriptorSet;
+        Ref<DescriptorSet> postProcessDescriptorSet;
 
         Ref<Sampler> defaultSampler;
         Ref<Sampler> brdfLookupSampler;
@@ -111,6 +113,7 @@ namespace BZ {
         Ref<PipelineState> defaultPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
         Ref<PipelineState> depthPassPipelineState;
+        Ref<PipelineState> postProcessPipelineState;
 
         Ref<TextureView> brdfLookupTexture;
         Ref<TextureView> dummyTextureArrayView;
@@ -183,6 +186,7 @@ namespace BZ {
 
         initDepthPassData();
         initDefaultPassData();
+        initPostProcessPassData();
         initSkyBoxData();
     }
 
@@ -323,6 +327,46 @@ namespace BZ {
         rendererData.dummyTextureArrayView = TextureView::create(brdfLookupTexRef, 0, 1);
     }
 
+    void Renderer::initPostProcessPassData() {
+        BZ_PROFILE_FUNCTION();
+
+        PipelineStateData pipelineStateData;
+        pipelineStateData.dataLayout = {};
+
+        Shader::Builder shaderBuilder;
+        shaderBuilder.setName("PostProcess");
+        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/FullScreenQuadVert.spv");
+        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/ToneMapFrag.spv");
+        pipelineStateData.shader = shaderBuilder.build();
+
+        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
+
+        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
+        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
+        rendererData.postProcessPassDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+
+        pipelineStateData.descriptorSetLayouts = { rendererData.postProcessPassDescriptorSetLayout };
+
+        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
+        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
+
+        BlendingState blendingState;
+        BlendingStateAttachment blendingStateAttachment;
+        blendingState.attachmentBlendingStates = { blendingStateAttachment };
+        pipelineStateData.blendingState = blendingState;
+
+        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
+        pipelineStateData.subPassIndex = 0;
+
+        rendererData.postProcessPipelineState = PipelineState::create(pipelineStateData);
+
+        rendererData.postProcessDescriptorSet = DescriptorSet::create(rendererData.postProcessPassDescriptorSetLayout);
+        rendererData.postProcessDescriptorSet->setCombinedTextureSampler(Application::getInstance().getGraphicsContext().getColorTextureView(),
+            rendererData.defaultSampler, 0);
+    }
+
     void Renderer::initSkyBoxData() {
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexDataLayout;
@@ -370,15 +414,18 @@ namespace BZ {
         rendererData.passDescriptorSetLayoutForDepthPass.reset();
         rendererData.materialDescriptorSetLayout.reset();
         rendererData.entityDescriptorSetLayout.reset();
+        rendererData.postProcessPassDescriptorSetLayout.reset();
 
         rendererData.globalDescriptorSet.reset();
         rendererData.passDescriptorSet.reset();
         rendererData.passDescriptorSetForDepthPass.reset();
         rendererData.entityDescriptorSet.reset();
+        rendererData.postProcessDescriptorSet.reset();
 
         rendererData.defaultPipelineState.reset();
         rendererData.skyBoxPipelineState.reset();
         rendererData.depthPassPipelineState.reset();
+        rendererData.postProcessPipelineState.reset();
 
         rendererData.defaultSampler.reset();
         rendererData.brdfLookupSampler.reset();
@@ -410,6 +457,7 @@ namespace BZ {
 
         depthPass(scene);
         colorPass(scene);
+        postProcessPass();
 
         Graphics::endCommandBuffer(rendererData.commandBufferId);
     }
@@ -457,6 +505,16 @@ namespace BZ {
 
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.defaultPipelineState);
         drawEntities(scene, false);
+        Graphics::endRenderPass(rendererData.commandBufferId);
+    }
+
+    void Renderer::postProcessPass() {
+        BZ_PROFILE_FUNCTION();
+
+        Graphics::beginRenderPass(rendererData.commandBufferId, Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer());
+        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.postProcessPipelineState);
+        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
+        Graphics::draw(rendererData.commandBufferId, 3, 1, 0, 0);
         Graphics::endRenderPass(rendererData.commandBufferId);
     }
 
