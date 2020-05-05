@@ -37,7 +37,6 @@ VULKAN_SDK_DIR = os.getenv("VULKAN_SDK")
 include "Bhazel"
 include "Sandbox"
 include "BrickBreaker"
-include "Bhazel/vendor/glad"
 include "Bhazel/vendor/glfw_premake5.lua"
 include "Bhazel/vendor/imgui_premake5.lua"
 include "Bhazel/vendor/stb_image"

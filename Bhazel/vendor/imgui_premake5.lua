@@ -3,8 +3,8 @@ project "ImGui"
     language "C++"
     cppdialect "C++17"
 
-    targetdir "../bin/%{OUTPUT_DIR}/%{prj.name}"
-    objdir "../bin-int/%{OUTPUT_DIR}/%{prj.name}"
+    targetdir "../../bin/%{OUTPUT_DIR}/%{prj.name}"
+    objdir "../../bin-int/%{OUTPUT_DIR}/%{prj.name}"
 
     files {
         "%{prj.name}/imconfig.h",

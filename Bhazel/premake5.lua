@@ -18,7 +18,6 @@ project "Bhazel"
         "src",
         "vendor/spdlog/include",
         "vendor/GLFW/include",
-        "vendor/glad/include",
         "vendor/ImGui",
         "vendor/glm",
         "vendor/stb_image",
@@ -34,20 +33,11 @@ project "Bhazel"
 
     links {
         "GLFW",
-        "glad",
         "ImGui",
         "stb_image",
         "vulkan-1.lib",
-        "opengl32.lib",
     }
 
     defines {
         "GLFW_INCLUDE_NONE",
     }
-
-    filter "system:windows"
-        links {
-            "d3d11.lib",
-            "dxguid.lib",
-            "D3DCompiler.lib",
-        }

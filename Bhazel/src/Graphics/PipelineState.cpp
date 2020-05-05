@@ -7,8 +7,6 @@
 #include "Graphics/RenderPass.h"
 #include "Graphics/Shader.h"
 
-//#include "Platform/OpenGL/OpenGLPipelineState.h"
-//#include "Platform/D3D11/D3D11PipelineState.h"
 #include "Platform/Vulkan/VulkanPipelineState.h"
 
 
@@ -16,10 +14,6 @@ namespace BZ {
 
     Ref<PipelineState> PipelineState::create(PipelineStateData& data) {
         switch(Graphics::api) {
-            /*case Graphics::API::OpenGL:
-                return MakeRef<OpenGLPipelineState>(inData);
-            case Graphics::API::D3D11:
-                return MakeRef<D3D11PipelineState>(inData);*/
         case Graphics::API::Vulkan:
             return MakeRef<VulkanPipelineState>(data);
         default:

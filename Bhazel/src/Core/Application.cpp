@@ -23,15 +23,9 @@ namespace BZ {
 
         BZ_CRITICAL_ERROR_CORE(iniParser.parse("bhazel.ini"), "Failed to open \"bhazel.ini\" file.");
         auto &settings = iniParser.getParsedIniSettings();
-        std::string renderingAPIString = settings.getFieldAsString("renderingAPI", "");
-        if(renderingAPIString == "OpenGL" || renderingAPIString == "GL") 
-            Graphics::api = Graphics::API::OpenGL;
-        else if(renderingAPIString == "D3D" || renderingAPIString == "D3D11") 
-            Graphics::api = Graphics::API::D3D11;
-        else if(renderingAPIString == "VK" || renderingAPIString == "Vulkan") 
-            Graphics::api = Graphics::API::Vulkan;
-        else 
-            BZ_CRITICAL_ERROR_CORE("Invalid Rendering API on .ini file: {0}.", renderingAPIString);
+
+        //TODO: remove this
+        Graphics::api = Graphics::API::Vulkan;
 
         assetsPath = settings.getFieldAsString("assetsPath", "");
 

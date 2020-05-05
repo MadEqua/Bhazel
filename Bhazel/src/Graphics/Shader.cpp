@@ -4,8 +4,6 @@
 
 #include "Graphics/Graphics.h"
 
-#include "Platform/OpenGL/OpenGLShader.h"
-#include "Platform/D3D11/D3D11Shader.h"
 #include "Platform/Vulkan/VulkanShader.h"
 #include "Core/Utils.h"
 
@@ -59,10 +57,6 @@ namespace BZ {
 
     Ref<Shader> Shader::Builder::build() const {
         switch(Graphics::api) {
-            /*case Graphics::API::OpenGL:
-                return MakeRef<OpenGLTexture2D>(assetsPath + path);
-            case Graphics::API::D3D11:
-                return MakeRef<D3D11Texture2D>(assetsPath + path);*/
         case Graphics::API::Vulkan:
             return MakeRef<VulkanShader>(*this);
         default:
