@@ -180,7 +180,6 @@ namespace BZ {
         const QueueFamily *presentFamilyExclusive = nullptr;
         processFamilies(QueueProperty::Present, &presentFamily, &presentFamilyExclusive);
 
-
         //We know at this point that at least one of each family exists, so this is safe.
         std::set<uint32_t> uniqueQueueFamiliesIndices = { graphicsFamily->getIndex(),
                                                           computeFamily->getIndex(),

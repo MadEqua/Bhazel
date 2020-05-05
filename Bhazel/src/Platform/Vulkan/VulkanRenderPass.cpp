@@ -29,11 +29,11 @@ namespace BZ {
             VkAttachmentDescription vkAttachmentDesc = {};
             vkAttachmentDesc.format = textureFormatToVk(attDesc.format);
             vkAttachmentDesc.samples = sampleCountToVk(attDesc.samples);
-            vkAttachmentDesc.loadOp = forceClear ? VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR : loadOperationToVk(attDesc.loadOperatorColorAndDepth);
+            vkAttachmentDesc.loadOp = forceClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : loadOperationToVk(attDesc.loadOperatorColorAndDepth);
             vkAttachmentDesc.storeOp = storeOperationToVk(attDesc.storeOperatorColorAndDepth);
-            vkAttachmentDesc.stencilLoadOp = loadOperationToVk(attDesc.loadOperatorStencil);
+            vkAttachmentDesc.stencilLoadOp = forceClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : loadOperationToVk(attDesc.loadOperatorStencil);
             vkAttachmentDesc.stencilStoreOp = storeOperationToVk(attDesc.storeOperatorStencil);
-            vkAttachmentDesc.initialLayout = textureLayoutToVk(attDesc.initialLayout);
+            vkAttachmentDesc.initialLayout = forceClear ? VK_IMAGE_LAYOUT_UNDEFINED : textureLayoutToVk(attDesc.initialLayout);
             vkAttachmentDesc.finalLayout = textureLayoutToVk(attDesc.finalLayout);
             vkAttachmentDescriptions[i] = vkAttachmentDesc;
             i++;
@@ -98,8 +98,8 @@ namespace BZ {
         i = 0;
         for (const auto &subPassDep : subPassDeps) {
             VkSubpassDependency vkSubPassDependency;
-            vkSubPassDependency.srcSubpass = subPassDep.srcSubPassIndex;
-            vkSubPassDependency.dstSubpass = subPassDep.dstSubPassIndex;
+            vkSubPassDependency.srcSubpass = subPassDep.srcSubPassIndex < 0 ? VK_SUBPASS_EXTERNAL : subPassDep.srcSubPassIndex;
+            vkSubPassDependency.dstSubpass = subPassDep.dstSubPassIndex < 0 ? VK_SUBPASS_EXTERNAL : subPassDep.dstSubPassIndex;
             vkSubPassDependency.srcStageMask = pipelineStageMaskToVk(subPassDep.srcStageMask);
             vkSubPassDependency.dstStageMask = pipelineStageMaskToVk(subPassDep.dstStageMask);
             vkSubPassDependency.srcAccessMask = accessMaskToVk(subPassDep.srcAccessMask);

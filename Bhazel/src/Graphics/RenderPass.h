@@ -98,8 +98,8 @@ namespace BZ {
 
     struct SubPassDependency {
         //Indices refer to parent RenderPass SubPass list.
-        uint32 srcSubPassIndex;
-        uint32 dstSubPassIndex;
+        int32 srcSubPassIndex;
+        int32 dstSubPassIndex;
 
         uint8 srcStageMask;
         uint8 dstStageMask;

@@ -71,7 +71,7 @@ namespace BZ {
         AttachmentDescription colorAttachmentDesc;
         colorAttachmentDesc.format = TextureFormatEnum::R32G32B32A32_SFLOAT;
         colorAttachmentDesc.samples = 1;
-        colorAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Load;
+        colorAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
         colorAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
         colorAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
         colorAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
@@ -82,9 +82,9 @@ namespace BZ {
         AttachmentDescription depthStencilAttachmentDesc;
         depthStencilAttachmentDesc.format = TextureFormatEnum::D24S8;
         depthStencilAttachmentDesc.samples = 1;
-        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Load;
+        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
         depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
-        depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::Load;
+        depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::Clear;
         depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::Store;
         depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
         depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
@@ -272,7 +272,7 @@ namespace BZ {
         }
 
         VkSemaphore waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore.getNativeHandle() };
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         VkSemaphore signalSemaphores[] = { frameDatas[currentFrameIndex].renderFinishedSemaphore.getNativeHandle() };
 
         VkSubmitInfo submitInfo = {};

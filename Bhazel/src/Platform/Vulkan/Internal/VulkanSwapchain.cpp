@@ -132,7 +132,7 @@ namespace BZ {
         swapChainImages.resize(imageCount);
         BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device->getNativeHandle(), swapchain, &imageCount, swapChainImages.data()));
 
-        //Create the Swapchain RenderPass, reutilizing the main DepthBuffer (forcing a clear on the RenderPass).
+        //Create the Swapchain RenderPass, reutilizing the main DepthBuffer.
         VulkanContext &context = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
 
         AttachmentDescription colorAttachmentDesc;
@@ -142,15 +142,11 @@ namespace BZ {
         colorAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
         colorAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
         colorAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
-        colorAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        colorAttachmentDesc.finalLayout = TextureLayout::Present;
+        colorAttachmentDesc.initialLayout = TextureLayout::Present; //TODO: this is not correct.
+        colorAttachmentDesc.finalLayout = TextureLayout::Present; //TODO: probably it's better to transition manually at frame end, to avoid unecesary transitions.
         colorAttachmentDesc.clearValues.floating = { 0.0f, 0.0f, 0.0f, 1.0f };
 
         AttachmentDescription depthAttachmentDesc = *context.getMainRenderPass()->getDepthStencilAttachmentDescription();
-        depthAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
-        depthAttachmentDesc.loadOperatorStencil = LoadOperation::Clear;
-        depthAttachmentDesc.clearValues.floating.x = 1.0f;
-        depthAttachmentDesc.clearValues.integer.y = 0;
 
         SubPassDescription subPassDesc;
         subPassDesc.colorAttachmentsRefs = { { 0, TextureLayout::ColorAttachmentOptimal } };

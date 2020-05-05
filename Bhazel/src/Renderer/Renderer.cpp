@@ -218,7 +218,6 @@ namespace BZ {
 
         //To avoid shadow acne.
         pipelineStateData.rasterizerState.enableDepthBias = true;
-
         //pipelineStateData.rasterizerState.depthBiasConstantFactor = 0.0f;
         //pipelineStateData.rasterizerState.depthBiasSlopeFactor = 0.0f;
 
@@ -233,19 +232,37 @@ namespace BZ {
         AttachmentDescription depthStencilAttachmentDesc;
         depthStencilAttachmentDesc.format = TextureFormatEnum::D32_SFLOAT;
         depthStencilAttachmentDesc.samples = 1;
-        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::DontCare;
+        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
         depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
         depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
         depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
         depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        depthStencilAttachmentDesc.finalLayout = TextureLayout::DepthStencilAttachmentOptimal;
+        depthStencilAttachmentDesc.finalLayout = TextureLayout::ShaderReadOnlyOptimal;
         depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
         depthStencilAttachmentDesc.clearValues.integer.y = 0;
 
         SubPassDescription subPassDesc;
         subPassDesc.depthStencilAttachmentsRef = { 0, TextureLayout::DepthStencilAttachmentOptimal };
 
-        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc });
+        //SubPassDependency dependency1;
+        //dependency1.srcSubPassIndex = -1;
+        //dependency1.dstSubPassIndex = 0;
+        //dependency1.srcStageMask = flagsToMask(PipelineStageFlag::FragmentShader);
+        //dependency1.dstStageMask = flagsToMask(PipelineStageFlag::EarlyFragmentTests);
+        //dependency1.srcAccessMask = 0;
+        //dependency1.dstAccessMask = flagsToMask(AccessFlag::DepthStencilAttachmentWrite);
+        //dependency1.dependencyFlags = flagsToMask(DependencyFlag::ByRegion);
+
+        SubPassDependency dependency2;
+        dependency2.srcSubPassIndex = 0;
+        dependency2.dstSubPassIndex = -1;
+        dependency2.srcStageMask = flagsToMask(PipelineStageFlag::EarlyFragmentTests | PipelineStageFlag::LateFragmentTests);
+        dependency2.dstStageMask = flagsToMask(PipelineStageFlag::FragmentShader);
+        dependency2.srcAccessMask = flagsToMask(AccessFlag::DepthStencilAttachmentWrite);
+        dependency2.dstAccessMask = flagsToMask(AccessFlag::ShaderRead);
+        dependency2.dependencyFlags = flagsToMask(DependencyFlag::ByRegion);
+
+        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc }, { dependency2 });
         pipelineStateData.renderPass = rendererData.depthRenderPass;
         pipelineStateData.subPassIndex = 0;
 
@@ -481,9 +498,6 @@ namespace BZ {
             Graphics::beginRenderPass(rendererData.commandBufferId, dirLight.shadowMapFramebuffer);
             drawEntities(scene, true);
             Graphics::endRenderPass(rendererData.commandBufferId);
-
-            //Avoid starting the color pass before the depth pass is finished writing to the textures.
-            Graphics::pipelineBarrierTexture(rendererData.commandBufferId, dirLight.shadowMapFramebuffer->getDepthStencilTextureView()->getTexture());
 
             lightIdx++;
         }
