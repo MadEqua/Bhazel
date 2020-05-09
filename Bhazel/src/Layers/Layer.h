@@ -1,17 +1,14 @@
 #pragma once
 
-#include "Events/Event.h"
-
 
 namespace BZ {
 
     class Event;
     struct FrameStats;
-    class Application;
 
     class Layer {
     public:
-        Layer(const std::string &name = "Layer");
+        Layer(const char *name = "Layer");
         virtual ~Layer() = default;
         
         //On attach to the LayerStack
@@ -33,6 +30,5 @@ namespace BZ {
         
     protected:
         std::string debugName;
-        Application &application;
     };
 }

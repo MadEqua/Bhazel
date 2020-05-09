@@ -24,6 +24,7 @@ namespace BZ {
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class OrthographicCamera : public Camera {
     public:
         OrthographicCamera() = default;
@@ -45,6 +46,7 @@ namespace BZ {
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class PerspectiveCamera : public Camera {
     public:
         PerspectiveCamera() = default;

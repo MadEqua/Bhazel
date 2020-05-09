@@ -1,11 +1,13 @@
 #pragma once
 
-#include "Graphics/GraphicsContext.h"
-#include "Window.h"
+#include "Core/Window.h"
+
 #include "Core/Input.h"
-#include "Layers/LayerStack.h"
 #include "Core/Ini/IniParser.h"
 #include "Core/Timer.h"
+
+#include "Graphics/GraphicsContext.h"
+#include "Layers/LayerStack.h"
 #include "FileWatcher/FileWatcher.h"
 
 
@@ -14,7 +16,6 @@ namespace BZ {
     class Event;
     class WindowResizedEvent;
     class Layer;
-    class ImGuiLayer;
 
     struct FrameStats {
         TimeDuration lastFrameTime;
@@ -28,16 +29,16 @@ namespace BZ {
         Application();
         virtual ~Application();
 
+        BZ_NON_COPYABLE(Application);
+
         void run();
-        
         void onEvent(Event &ev);
 
         void pushLayer(Layer *layer);
         void pushOverlay(Layer *overlay);
 
-        Window& getWindow() { return *window; }
-        GraphicsContext& getGraphicsContext() { return *graphicsContext; }
-        Input& getInput() { return *input; }
+        Window& getWindow() { return window; }
+        GraphicsContext& getGraphicsContext() { return graphicsContext; }
 
         const FrameStats& getFrameStats() const { return frameStats; }
         const std::string& getAssetsPath() const { return assetsPath; }
@@ -45,20 +46,18 @@ namespace BZ {
 #ifdef BZ_HOT_RELOAD_SHADERS
         FileWatcher& getFileWatcher() { return fileWatcher; }
 #endif      
-        static Application& getInstance() { return *instance; }
+        static Application& get() { return *instance; }
 
     private:
         bool onWindowResized(const WindowResizedEvent &e);
 
-        std::unique_ptr<Window> window;
-        std::unique_ptr<GraphicsContext> graphicsContext;
-        std::unique_ptr<Input> input;
+        Window window;
+        GraphicsContext graphicsContext;
 
         LayerStack layerStack;
         IniParser iniParser;
         FrameStats frameStats;
 
-        ImGuiLayer* imGuiLayer;
         std::string assetsPath;
 
 #ifdef BZ_HOT_RELOAD_SHADERS

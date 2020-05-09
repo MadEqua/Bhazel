@@ -1,18 +1,15 @@
 #include "bzpch.h"
 
 #include "LayerStack.h"
-#include "Layer.h"
-#include "Graphics/Graphics.h"
+
+#include "Layers/Layer.h"
 #include "Events/Event.h"
 
 
 namespace BZ {
 
     LayerStack::~LayerStack() {
-        for(Layer *layer : layers) {
-            layer->onDetach();
-            delete layer;
-        }
+        clear();
     }
     
     void LayerStack::pushLayer(Layer *layer) {
@@ -41,6 +38,14 @@ namespace BZ {
             layers.erase(it);
             overlay->onDetach();
         }
+    }
+
+    void LayerStack::clear() {
+        for(Layer *layer : layers) {
+            layer->onDetach();
+            delete layer;
+        }
+        layers.clear();
     }
 
     void LayerStack::onGraphicsContextCreated() {

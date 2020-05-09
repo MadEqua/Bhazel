@@ -1,42 +1,41 @@
 #include "bzpch.h"
 
-#include "VulkanSwapchain.h"
+#include "Swapchain.h"
 
-#include "Platform/Vulkan/Internal/VulkanDevice.h"
-#include "Platform/Vulkan/VulkanTexture.h"
-#include "Platform/Vulkan/VulkanRenderPass.h"
-#include "Platform/Vulkan/VulkanFramebuffer.h"
-#include "Platform/Vulkan/Internal/VulkanSurface.h"
-#include "Platform/Vulkan/Internal/VulkanSync.h"
-#include "Platform/Vulkan/Internal/VulkanConversions.h"
+#include "Graphics/Internal/Device.h"
+#include "Graphics/Internal/Surface.h"
+#include "Graphics/Internal/Sync.h"
+
+#include "Graphics/Framebuffer.h"
+#include "Graphics/RenderPass.h"
+#include "Graphics/Texture.h"
 
 
 namespace BZ {
 
-    void VulkanSwapchain::init(const VulkanDevice &device, const VulkanSurface &surface) {
+    void Swapchain::init(const Device &device, const Surface &surface) {
         this->device = &device;
         this->surface = &surface;
         internalInit();
     }
 
-    void VulkanSwapchain::destroy() {
+    void Swapchain::destroy() {
         framebuffers.clear();
         renderPass.reset();
-        vkDestroySwapchainKHR(device->getNativeHandle(), swapchain, nullptr);
+        vkDestroySwapchainKHR(device->getHandle(), handle, nullptr);
         currentImageIndex = 0;
         aquired = false;
-        swapchain = VK_NULL_HANDLE;
     }
 
-    void VulkanSwapchain::recreate() {
+    void Swapchain::recreate() {
         destroy();
         internalInit();
     }
 
-    void VulkanSwapchain::aquireImage(const VulkanSemaphore &imageAvailableSemaphore) {
-        BZ_ASSERT_CORE(!aquired, "Aquiring image with one already aquired. Should present first!");
+    void Swapchain::aquireImage(const Semaphore &imageAvailableSemaphore) {
+        BZ_ASSERT_CORE(!aquired, "Aquiring image with one already aquired. Should present it first!");
 
-        VkResult result = vkAcquireNextImageKHR(device->getNativeHandle(), swapchain, 0, imageAvailableSemaphore.getNativeHandle(), VK_NULL_HANDLE, &currentImageIndex);
+        VkResult result = vkAcquireNextImageKHR(device->getHandle(), handle, 0, imageAvailableSemaphore.getHandle(), VK_NULL_HANDLE, &currentImageIndex);
         if(result < VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
             recreate();
@@ -49,11 +48,11 @@ namespace BZ {
         }
     }
 
-    void VulkanSwapchain::presentImage(const VulkanSemaphore &renderFinishedSemaphore) {
+    void Swapchain::presentImage(const Semaphore &renderFinishedSemaphore) {
         BZ_ASSERT_CORE(aquired, "Presenting image with none aquired. Aquire one first!");
 
-        VkSemaphore waitSemaphore[] = { renderFinishedSemaphore.getNativeHandle() };
-        VkSwapchainKHR swapchains[] = { swapchain };
+        VkSemaphore waitSemaphore[] = { renderFinishedSemaphore.getHandle() };
+        VkSwapchainKHR swapchains[] = { handle };
 
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -64,7 +63,7 @@ namespace BZ {
         presentInfo.pImageIndices = &currentImageIndex;
         presentInfo.pResults = nullptr;
 
-        VkResult result = vkQueuePresentKHR(device->getQueueContainer().present.getNativeHandle(), &presentInfo);
+        VkResult result = vkQueuePresentKHR(device->getQueueContainer().present().getHandle(), &presentInfo);
         if(result != VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to present image. Error: {}.", result);
             recreate();
@@ -74,25 +73,25 @@ namespace BZ {
         }
     }
 
-    void VulkanSwapchain::internalInit() {
+    void Swapchain::internalInit() {
         const SwapChainSupportDetails &swapchainSupport = device->getPhysicalDevice().getSwapChainSupportDetails();
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapchainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapchainSupport.presentModes);
-        extent = chooseSwapExtent(swapchainSupport.capabilities);
+        extent = chooseSwapExtent(swapchainSupport.surfaceCapabilities);
 
         //Try to go for 3 images minimum.
-        uint32_t imageCount = std::max(swapchainSupport.capabilities.minImageCount, 3u);
-        if(swapchainSupport.capabilities.maxImageCount > 0 && imageCount > swapchainSupport.capabilities.maxImageCount) {
-            imageCount = swapchainSupport.capabilities.maxImageCount;
+        uint32_t imageCount = std::max(swapchainSupport.surfaceCapabilities.minImageCount, 3u);
+        if(swapchainSupport.surfaceCapabilities.maxImageCount > 0 && imageCount > swapchainSupport.surfaceCapabilities.maxImageCount) {
+            imageCount = swapchainSupport.surfaceCapabilities.maxImageCount;
         }
 
         BZ_LOG_CORE_INFO("Swapchain needs a minImageCount of {} and a maxImageCount of {}. Picked an image count of {}.", 
-            swapchainSupport.capabilities.minImageCount, swapchainSupport.capabilities.maxImageCount, imageCount);
+            swapchainSupport.surfaceCapabilities.minImageCount, swapchainSupport.surfaceCapabilities.maxImageCount, imageCount);
 
         VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
         swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        swapChainCreateInfo.surface = surface->getNativeHandle();
+        swapChainCreateInfo.surface = surface->getHandle();
         swapChainCreateInfo.minImageCount = imageCount;
         swapChainCreateInfo.imageFormat = surfaceFormat.format;
         swapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -101,8 +100,8 @@ namespace BZ {
         swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         const QueueContainer &queueContainer = device->getQueueContainer();
-        if(queueContainer.graphics.getFamily().getIndex() != queueContainer.present.getFamily().getIndex()) {
-            uint32_t queueFamilyIndicesArr[] = { queueContainer.graphics.getFamily().getIndex(), queueContainer.present.getFamily().getIndex() };
+        if(queueContainer.graphics().getFamily().getIndex() != queueContainer.present().getFamily().getIndex()) {
+            uint32_t queueFamilyIndicesArr[] = { queueContainer.graphics().getFamily().getIndex(), queueContainer.present().getFamily().getIndex() };
             swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             swapChainCreateInfo.queueFamilyIndexCount = 2;
             swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndicesArr;
@@ -112,58 +111,58 @@ namespace BZ {
             swapChainCreateInfo.queueFamilyIndexCount = 0;
             swapChainCreateInfo.pQueueFamilyIndices = nullptr;
         }
-        swapChainCreateInfo.preTransform = swapchainSupport.capabilities.currentTransform;
+        swapChainCreateInfo.preTransform = swapchainSupport.surfaceCapabilities.currentTransform;
         swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         swapChainCreateInfo.presentMode = presentMode;
         swapChainCreateInfo.clipped = VK_TRUE;
         swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
-        BZ_ASSERT_VK(vkCreateSwapchainKHR(device->getNativeHandle(), &swapChainCreateInfo, nullptr, &swapchain));
+        BZ_ASSERT_VK(vkCreateSwapchainKHR(device->getHandle(), &swapChainCreateInfo, nullptr, &handle));
 
         imageFormat = surfaceFormat.format;
 
         createFramebuffers();
     }
 
-    void VulkanSwapchain::createFramebuffers() {
+    void Swapchain::createFramebuffers() {
         //Get the images created for the swapchain
         std::vector<VkImage> swapChainImages;
         uint32_t imageCount;
-        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device->getNativeHandle(), swapchain, &imageCount, nullptr));
+        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device->getHandle(), handle, &imageCount, nullptr));
         swapChainImages.resize(imageCount);
-        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device->getNativeHandle(), swapchain, &imageCount, swapChainImages.data()));
+        BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device->getHandle(), handle, &imageCount, swapChainImages.data()));
 
         //Create the Swapchain RenderPass, reutilizing the main DepthBuffer.
-        VulkanContext &context = static_cast<VulkanContext&>(Application::getInstance().getGraphicsContext());
+        GraphicsContext &context = Application::get().getGraphicsContext();
 
         AttachmentDescription colorAttachmentDesc;
-        colorAttachmentDesc.format = vkFormatToTextureFormat(imageFormat);
-        colorAttachmentDesc.samples = 1;
-        colorAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Load;
-        colorAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
-        colorAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
-        colorAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
-        colorAttachmentDesc.initialLayout = TextureLayout::Present; //TODO: this is not correct.
-        colorAttachmentDesc.finalLayout = TextureLayout::Present; //TODO: probably it's better to transition manually at frame end, to avoid unecesary transitions.
-        colorAttachmentDesc.clearValues.floating = { 0.0f, 0.0f, 0.0f, 1.0f };
+        colorAttachmentDesc.format = imageFormat;
+        colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
+        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; //TODO: this is not correct.
+        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; //TODO: probably it's better to transition manually at frame end, to avoid unecesary transitions.
+        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
         AttachmentDescription depthAttachmentDesc = *context.getMainRenderPass()->getDepthStencilAttachmentDescription();
 
         SubPassDescription subPassDesc;
-        subPassDesc.colorAttachmentsRefs = { { 0, TextureLayout::ColorAttachmentOptimal } };
-        subPassDesc.depthStencilAttachmentsRef = { 1, TextureLayout::DepthStencilAttachmentOptimal };
+        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+        subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
         renderPass = RenderPass::create({ colorAttachmentDesc, depthAttachmentDesc }, { subPassDesc });
 
         //Create Views and Framebuffers for the images
         framebuffers.resize(imageCount);
         for(size_t i = 0; i < swapChainImages.size(); i++) {
-            auto textureRef = VulkanTexture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
+            auto textureRef = Texture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
             auto textureViewRef = TextureView::create(textureRef);
             framebuffers[i] = Framebuffer::create(renderPass, { textureViewRef, context.getDepthTextureView() }, glm::ivec3(extent.width, extent.height, 1));
         }
     }
 
-    VkSurfaceFormatKHR VulkanSwapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+    VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
         for(const auto &availableFormat : availableFormats) {
             if(availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 BZ_LOG_CORE_INFO("Found SRGB Surface format for Swapchain.");
@@ -174,7 +173,7 @@ namespace BZ {
         return availableFormats[0];
     }
 
-    VkPresentModeKHR VulkanSwapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
+    VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
         for(const auto &availablePresentMode : availablePresentModes) {
             if(availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
                 BZ_LOG_CORE_INFO("Found Mailbox present mode for Swapchain.");
@@ -185,21 +184,15 @@ namespace BZ {
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    VkExtent2D VulkanSwapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {
-        if(capabilities.currentExtent.width != UINT32_MAX) {
-            return capabilities.currentExtent;
+    VkExtent2D Swapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &surfaceCapabilities) {
+        if(surfaceCapabilities.currentExtent.width != UINT32_MAX) {
+            return surfaceCapabilities.currentExtent;
         }
         else {
+            //This case means that surface size will be determined by the extent of the swapchain.
+            //Should never happen because we already created a surface with the size of the window.
             BZ_ASSERT_ALWAYS_CORE("Not implemented!");
-            //TODO
-            /*int w, h;
-            glfwGetFramebufferSize(windowHandle, &w, &h);
-            VkExtent2D actualExtent = { w, h };
-
-            actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
-            actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
-
-            return actualExtent;*/
+            return {0, 0};
         }
     }
 }

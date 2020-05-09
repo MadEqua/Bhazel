@@ -1,9 +1,12 @@
 #include "bzpch.h"
 
 #include "CameraController.h"
+
 #include "Core/Application.h"
+
 #include "Events/WindowEvent.h"
 #include "Events/MouseEvent.h"
+
 #include "Core/Input.h"
 #include "Core/KeyCodes.h"
 
@@ -26,33 +29,31 @@ namespace BZ {
     }
 
     void CameraController2D::onUpdate(const FrameStats &frameStats) {
-        Input &input = Application::getInstance().getInput();
-
         if (enableRotation) {
-            if (input.isKeyPressed(BZ_KEY_Q)) {
+            if (Input::isKeyPressed(BZ_KEY_Q)) {
                 camera->getTransform().roll(cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
             }
-            if (input.isKeyPressed(BZ_KEY_E)) {
+            if (Input::isKeyPressed(BZ_KEY_E)) {
                 camera->getTransform().roll(-cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
             }
         }
 
         bool positionChanged = false;
         glm::vec3 movementDir = {};
-        if (input.isKeyPressed(BZ_KEY_A)) {
+        if (Input::isKeyPressed(BZ_KEY_A)) {
             movementDir.x -= 1.0f;
             positionChanged = true;
         }
-        if (input.isKeyPressed(BZ_KEY_D)) {
+        if (Input::isKeyPressed(BZ_KEY_D)) {
             movementDir.x += 1.0f;
             positionChanged = true;
         }
 
-        if (input.isKeyPressed(BZ_KEY_W)) {
+        if (Input::isKeyPressed(BZ_KEY_W)) {
             movementDir.y += 1.0f;
             positionChanged = true;
         }
-        if (input.isKeyPressed(BZ_KEY_S)) {
+        if (Input::isKeyPressed(BZ_KEY_S)) {
             movementDir.y -= 1.0f;
             positionChanged = true;
         }
@@ -103,6 +104,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     FreeCameraController::FreeCameraController(PerspectiveCamera &camera, float cameraMoveSpeed) :
         CameraController(camera),
         originalParameters(camera.getParameters()),
@@ -110,14 +112,13 @@ namespace BZ {
     }
 
     void FreeCameraController::onUpdate(const FrameStats &frameStats) {
-        Input &input = Application::getInstance().getInput();
-        auto mousePosition = input.getMousePosition();
-        const auto windowSize = Application::getInstance().getWindow().getDimensions();
+        auto mousePosition = Input::getMousePosition();
+        const auto windowSize = Application::get().getWindow().getDimensions();
 
         if(mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if(lastMousePosition.x != -1 && lastMousePosition.y != -1) {
                 auto dif = mousePosition - lastMousePosition;
-                if(input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
+                if(Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
                     camera->getTransform().yaw(-static_cast<float>(dif.x) * 0.2f, Space::Parent);
                     camera->getTransform().pitch(static_cast<float>(dif.y) * 0.2f, Space::Local);
                 }
@@ -131,20 +132,20 @@ namespace BZ {
         bool positionChanged = false;
         glm::vec3 movementDir = {};
 
-        if(input.isKeyPressed(BZ_KEY_A)) {
+        if(Input::isKeyPressed(BZ_KEY_A)) {
             movementDir.x -= 1.0f;
             positionChanged = true;
         }
-        if(input.isKeyPressed(BZ_KEY_D)) {
+        if(Input::isKeyPressed(BZ_KEY_D)) {
             movementDir.x += 1.0;
             positionChanged = true;
         }
 
-        if(input.isKeyPressed(BZ_KEY_W)) {
+        if(Input::isKeyPressed(BZ_KEY_W)) {
             movementDir.z -= 1.0f;
             positionChanged = true;
         }
-        if(input.isKeyPressed(BZ_KEY_S)) {
+        if(Input::isKeyPressed(BZ_KEY_S)) {
             movementDir.z += 1.0f;
             positionChanged = true;
         }
@@ -152,8 +153,8 @@ namespace BZ {
 
         if(positionChanged) {
             float mult = 1.0f;
-            if (input.isKeyPressed(BZ_KEY_LEFT_SHIFT)) mult = 10.0f;
-            if (input.isKeyPressed(BZ_KEY_LEFT_CONTROL)) mult = 0.05f;
+            if (Input::isKeyPressed(BZ_KEY_LEFT_SHIFT)) mult = 10.0f;
+            if (Input::isKeyPressed(BZ_KEY_LEFT_CONTROL)) mult = 0.05f;
             float speed = cameraMoveSpeed * mult;
             glm::vec3 movementScaled = movementDir * speed * frameStats.lastFrameTime.asSeconds();
             camera->getTransform().translate(movementScaled, Space::Local);
@@ -183,6 +184,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     RotateCameraController::RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed, float cameraRotationAccel) :
         CameraController(camera),
         originalParameters(camera.getParameters()),
@@ -199,9 +201,8 @@ namespace BZ {
     }
 
     void RotateCameraController::onUpdate(const FrameStats &frameStats) {
-        Input &input = Application::getInstance().getInput();
-        auto mousePosition = input.getMousePosition();
-        const auto windowSize = Application::getInstance().getWindow().getDimensions();
+        auto mousePosition = Input::getMousePosition();
+        const auto windowSize = Application::get().getWindow().getDimensions();
 
         thetaAccel = 0.0f;
         zAccel = 0.0f;
@@ -209,7 +210,7 @@ namespace BZ {
         if (mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
             if (lastMousePosition.x != -1 && lastMousePosition.y != -1) {
                 auto dif = mousePosition - lastMousePosition;
-                if (input.isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT)) {
+                if (Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT)) {
                     if (dif.x != 0.0f) {
                         thetaAccel = dif.x * cameraRotationAccel;
                     }

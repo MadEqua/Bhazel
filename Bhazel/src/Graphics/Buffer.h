@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Graphics/Internal/VulkanIncludes.h"
+#include "Graphics/GpuObject.h"
+
 
 namespace BZ {
 
@@ -15,26 +18,24 @@ namespace BZ {
         Mat2, Mat3, Mat4
     };
 
-    enum class DataRate {
-        PerVertex, PerInstance
-    };
-
-
     class DataElement {
     public:
-        DataType dataType;
-        DataElements dataElements;
-        std::string name;
-        bool normalized;
+        DataElement(DataType dataType, DataElements dataElements, bool normalized = false);
 
-        DataElement(DataType dataType, DataElements dataElements, const char *name, bool normalized = false);
+        const DataType& getDataType() const { return dataType; }
 
         uint32 getDataTypeSizeBytes() const;
         uint32 getElementCount() const;
         uint32 getSizeBytes() const { return sizeBytes; }
         uint32 getOffsetBytes() const { return offsetBytes; }
 
+        VkFormat toVkFormat() const;
+
     private:
+        DataType dataType;
+        DataElements dataElements;
+        bool normalized;
+
         uint32 sizeBytes;
         uint32 offsetBytes;
 
@@ -42,15 +43,16 @@ namespace BZ {
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class DataLayout {
     public:
         DataLayout() = default;
-        DataLayout(const std::initializer_list<DataElement>& elements, DataRate dataRate = DataRate::PerVertex);
+        DataLayout(const std::initializer_list<DataElement>& elements, VkVertexInputRate vertexInputRate = VK_VERTEX_INPUT_RATE_VERTEX);
 
         const auto& getElements() const { return elements; }
         uint32 getElementCount() const { return static_cast<uint32>(elements.size()); }
         uint32 getSizeBytes() const { return sizeBytes; }
-        DataRate getDataRate() const { return dataRate; }
+        VkVertexInputRate getVertexInputRate() const { return vertexInputRate; }
 
         std::vector<DataElement>::iterator begin() { return elements.begin(); }
         std::vector<DataElement>::iterator end() { return elements.end(); }
@@ -60,24 +62,14 @@ namespace BZ {
     private:
         std::vector<DataElement> elements;
         uint32 sizeBytes;
-        DataRate dataRate;
+        VkVertexInputRate vertexInputRate;
 
         void calculateOffsetsAndStride();
     };
 
-    enum class BufferType {
-        Vertex,
-        Index,
-        Constant
-    };
-
-    enum class MemoryType {
-        GpuOnly,
-        CpuToGpu,
-        GpuToCpu
-    };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class Buffer;
 
     /*
@@ -93,8 +85,8 @@ namespace BZ {
         operator byte*() const;
 
     private:
-        Buffer *buffer;
-        byte* basePtr;
+        Buffer *buffer = nullptr;
+        byte* basePtr = nullptr;
 
         friend BufferPtr operator+(const BufferPtr &lhs, uint32 offset);
         friend BufferPtr operator-(const BufferPtr &lhs, uint32 offset);
@@ -104,14 +96,29 @@ namespace BZ {
     BufferPtr operator-(const BufferPtr &lhs, uint32 offset);
 
 
+    /*-------------------------------------------------------------------------------------------*/
+    
+    enum class MemoryType {
+        GpuOnly,
+        CpuToGpu,
+        GpuToCpu
+    };
+
+    struct BufferHandles {
+        VkBuffer bufferHandle;
+        VmaAllocation allocationHandle;
+    };
+
     /*
     * Generic buffer of data. Will replicate data if considered dynamic (one replica per frame in-flight) to avoid race conditions.
-    * Dynamic buffers assume that the data will change *every* frame, so the buffer client must set new data every frame.
     */
-    class Buffer {
+    class Buffer : public GpuObject<BufferHandles> {
     public:
-        static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType);
-        static Ref<Buffer> create(BufferType type, uint32 size, MemoryType memoryType, const DataLayout &layout);
+        static Ref<Buffer> create(VkBufferUsageFlags usageFlags, uint32 size, MemoryType memoryType);
+        static Ref<Buffer> create(VkBufferUsageFlags usageFlags, uint32 size, MemoryType memoryType, const DataLayout &layout);
+
+        Buffer(VkBufferUsageFlags usageFlags, uint32 size, MemoryType memoryType, const DataLayout *layout);
+        ~Buffer();
 
         void setData(const void *data, uint32 dataSize, uint32 offset);
         BufferPtr map(uint32 offset);
@@ -124,26 +131,24 @@ namespace BZ {
         const DataLayout& getLayout() const { return layout; }
 
         uint32 getCurrentBaseOfReplicaOffset() const;
-        BufferType getType() const { return type; }
 
-    protected:
-        BufferType type;
+        //VkBufferUsageFlags getUsageFlags() const { return usageFlags; }
+        bool isVertex() const { return BZ_FLAG_CHECK(usageFlags, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT); }
+        bool isIndex() const { return BZ_FLAG_CHECK(usageFlags, VK_BUFFER_USAGE_INDEX_BUFFER_BIT); }
+        bool isUniform() const { return BZ_FLAG_CHECK(usageFlags, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT); }
+
+    private:
+        VkBufferUsageFlags usageFlags;
+        MemoryType memoryType;
 
         uint32 size;
         uint32 realSize;
 
         DataLayout layout;
-        MemoryType memoryType;
 
         bool isMapped = false;
 
-        Buffer(BufferType type, uint32 size, MemoryType memoryType, const DataLayout *layout);
-        virtual ~Buffer() = default;
-
-        //void initBufferData(const void *data);
-
-        virtual void internalSetData(const void *data, uint32 dataSize, uint32 offset) = 0;
-        virtual BufferPtr internalMap(uint32 offset) = 0;
-        virtual void internalUnmap() = 0;
+        VkBufferUsageFlags toRequiredVkBufferUsageFlags() const;
+        VkBufferUsageFlags toPreferredVkBufferUsageFlags() const;
     };
 }

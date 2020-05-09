@@ -1,7 +1,7 @@
 #include "bzpch.h"
 
-#include "VulkanQueue.h"
-#include "Platform/Vulkan/Internal/VulkanDevice.h"
+#include "Queue.h"
+#include "Graphics/Internal/Device.h"
 
 
 namespace BZ {
@@ -14,6 +14,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     void QueueFamilyContainer::addFamily(const QueueFamily &family) {
         families.push_back(family);
         cummulativeProperties |= family.properties;
@@ -40,16 +41,20 @@ namespace BZ {
     }
 
 
-    /*VulkanQueue::VulkanQueue(const VulkanDevice &device, const QueueFamily &family) {
-        init(device, family);
-    }*/
-
-    void VulkanQueue::init(const VulkanDevice &device, const QueueFamily &family) {
-        BZ_ASSERT_CORE(queue == VK_NULL_HANDLE, "Queue is already inited!");
-
+    /*-------------------------------------------------------------------------------------------*/
+    void Queue::init(const Device &device, const QueueFamily &family) {
         this->family = family;
-        family.setInUse();
 
-        vkGetDeviceQueue(device.getNativeHandle(), family.getIndex(), 0, &queue);
+        vkGetDeviceQueue(device.getHandle(), family.getIndex(), 0, &handle);
+    }
+
+
+    /*-------------------------------------------------------------------------------------------*/
+    std::set<uint32> QueueContainer::getFamilyIndexesInUse() const {
+        std::set<uint32> ret;
+        for(uint32 i = 0; i < static_cast<uint32>(QueueProperty::Count); ++i) {
+            ret.insert(queues[i].getFamily().getIndex());
+        }
+        return ret;
     }
 }

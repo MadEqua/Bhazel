@@ -113,7 +113,7 @@ namespace BZ {
             return false;
             });
 
-        Window &window = Application::getInstance().getWindow();
+        Window &window = Application::get().getWindow();
         dispatcher.dispatch<MouseMovedEvent>([&window](const MouseMovedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
             io.MouseHoveredViewport = 0;
@@ -142,7 +142,7 @@ namespace BZ {
 
     void ImGuiRenderer::begin() {
         ImGuiIO &io = ImGui::GetIO();
-        Window &window = Application::getInstance().getWindow();
+        Window &window = Application::get().getWindow();
         io.DisplaySize = ImVec2(static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()));
 
         ImGui::NewFrame();
@@ -177,7 +177,7 @@ namespace BZ {
         }
 
         auto commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginRenderPass(commandBufferId, Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer());
+        Graphics::beginRenderPass(commandBufferId, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
 
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
@@ -201,11 +201,11 @@ namespace BZ {
             const ImDrawList *cmdList = imDrawData->CmdLists[i];
             for(int j = 0; j < cmdList->CmdBuffer.Size; ++j) {
                 const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
-                ScissorRect scissorRect;
-                scissorRect.rect.left = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);
-                scissorRect.rect.top = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
-                scissorRect.rect.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
-                scissorRect.rect.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
+                VkRect2D scissorRect;
+                scissorRect.offset.x = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);
+                scissorRect.offset.y = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
+                scissorRect.extent.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
+                scissorRect.extent.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
                 Graphics::setScissorRects(commandBufferId, 0, &scissorRect, 1);
                 Graphics::drawIndexed(commandBufferId, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
 
@@ -282,67 +282,64 @@ namespace BZ {
         unsigned char *fontData;
         int texWidth, texHeight;
         io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
-        auto fontTextureRef = Texture2D::create(fontData, texWidth, texHeight, TextureFormatEnum::R8G8B8A8, MipmapData::Options::DoNothing);
+        auto fontTextureRef = Texture2D::create(fontData, texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, MipmapData::Options::DoNothing);
         rendererData.fontTextureView = TextureView::create(fontTextureRef);
         rendererData.fontTextureSampler = Sampler::Builder().build();
 
         //VertexLayout
         DataLayout vertexLayout = {
-            {DataType::Float32, DataElements::Vec2, "POSITION"},
-            {DataType::Float32, DataElements::Vec2, "TEXCOORD"},
-            {DataType::Uint8, DataElements::Vec4, "COLOR", true},
+            { DataType::Float32, DataElements::Vec2 },
+            { DataType::Float32, DataElements::Vec2 },
+            { DataType::Uint8, DataElements::Vec4, true },
         };
 
         //Buffers
         const uint32 MAX_INDICES = 1 << (sizeof(ImDrawIdx) * 8);
-        rendererData.vertexBuffer = Buffer::create(BufferType::Vertex, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
-        rendererData.indexBuffer = Buffer::create(BufferType::Index, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { {DataType::Uint16, DataElements::Scalar, ""} });
+        rendererData.vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
+        rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { {DataType::Uint16, DataElements::Scalar, ""} });
         
         rendererData.vertexBufferPtr = rendererData.vertexBuffer->map(0);
         rendererData.indexBufferPtr = rendererData.indexBuffer->map(0);
 
         //Shaders
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("ImGui");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/ImGuiVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/ImGuiFrag.spv");
+        Ref<Shader> shader = Shader::create({ { "Bhazel/shaders/bin/ImGuiVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                              { "Bhazel/shaders/bin/ImGuiFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
         //DescriptorSetLayout
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        Ref<DescriptorSetLayout> descriptorSetLayout = descriptorSetLayoutBuilder.build();
+        Ref<DescriptorSetLayout> descriptorSetLayout = 
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
-        Window &window = Application::getInstance().getWindow();
+        Window &window = Application::get().getWindow();
 
         //PipelineStateData
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingStateAttachment.enableBlending = true;
-        blendingStateAttachment.srcColorBlendingFactor = BlendingFactor::SourceAlpha;
-        blendingStateAttachment.dstColorBlendingFactor = BlendingFactor::OneMinusSourceAlpha;
-        blendingStateAttachment.colorBlendingOperation = BlendingOperation::Add;
-        blendingStateAttachment.srcAlphaBlendingFactor = BlendingFactor::SourceAlpha;
-        blendingStateAttachment.dstAlphaBlendingFactor = BlendingFactor::OneMinusSourceAlpha;
-        blendingStateAttachment.alphaBlendingOperation = BlendingOperation::Add;
+        blendingStateAttachment.srcColorBlendingFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        blendingStateAttachment.dstColorBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blendingStateAttachment.colorBlendingOperation = VK_BLEND_OP_ADD;
+        blendingStateAttachment.srcAlphaBlendingFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        blendingStateAttachment.dstAlphaBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blendingStateAttachment.alphaBlendingOperation = VK_BLEND_OP_ADD;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexLayout;
-        pipelineStateData.shader = shaderBuilder.build();
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
+        pipelineStateData.shader = shader;
+        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
-        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()) } };
+        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()), 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };
         pipelineStateData.blendingState = blendingState;
-        pipelineStateData.dynamicStates = { DynamicState::Scissor };
-        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
+        pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_SCISSOR };
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
 
         //Constant Buffer
-        rendererData.constantBuffer = Buffer::create(BufferType::Constant, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
+        rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
         rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
 
         //DescriptorSet

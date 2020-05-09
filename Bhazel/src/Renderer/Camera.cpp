@@ -3,8 +3,6 @@
 #include "Camera.h"
 #include "Core/Utils.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-
 
 namespace BZ {
 
@@ -23,6 +21,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     PerspectiveCamera::PerspectiveCamera(float fovy, float aspectRatio, float near, float far) {
         parameters.fovy = fovy;
         parameters.aspectRatio = aspectRatio;

@@ -1,4 +1,5 @@
 #include "bzpch.h"
+
 #include "Timer.h"
 
 
@@ -78,6 +79,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     Timer::Timer() {
         reset();
     }
@@ -109,6 +111,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     ScopedTimer::ScopedTimer(Fn&& callback) :
         callback(std::move(callback)) {
         timer.start();

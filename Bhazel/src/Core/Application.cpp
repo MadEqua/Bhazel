@@ -1,8 +1,7 @@
 #include "bzpch.h"
 
-#include "Core/Application.h"
+#include "Application.h"
 
-#include "Window.h"
 #include "Layers/Layer.h"
 #include "Events/WindowEvent.h"
 #include "Graphics/Graphics.h"
@@ -10,10 +9,16 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/ImGuiRenderer.h"
 
+#include <GLFW/glfw3.h>
+
 
 namespace BZ {
 
     Application* Application::instance = nullptr;
+
+    static void GLFWErrorCallback(int error, const char* description) {
+        BZ_LOG_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
+    }
 
     Application::Application() {
         BZ_PROFILE_FUNCTION();
@@ -21,26 +26,25 @@ namespace BZ {
         BZ_ASSERT_CORE(!instance, "Application already exists");
         instance = this;
 
+        glfwSetErrorCallback(GLFWErrorCallback);
+        int success = glfwInit();
+        BZ_CRITICAL_ERROR_CORE(success, "Could not intialize GLFW!");
+
         BZ_CRITICAL_ERROR_CORE(iniParser.parse("bhazel.ini"), "Failed to open \"bhazel.ini\" file.");
         auto &settings = iniParser.getParsedIniSettings();
-
-        //TODO: remove this
-        Graphics::api = Graphics::API::Vulkan;
 
         assetsPath = settings.getFieldAsString("assetsPath", "");
 
         WindowData windowData;
         windowData.dimensions.x = settings.getFieldAsBasicType<uint32>("width", 1280);
         windowData.dimensions.y = settings.getFieldAsBasicType<uint32>("height", 800);
-        windowData.title = settings.getFieldAsString("title", "Bhazel Engine Application");
+        windowData.title = settings.getFieldAsString("title", "Bhazel Engine Untitled Application");
         //windowData.fullScreen = settings.getFieldAsBasicType<bool>("fullScreen", false);
 
-        window = std::unique_ptr<Window>(Window::create(windowData, BZ_BIND_EVENT_FN(Application::onEvent)));
-        graphicsContext = std::unique_ptr<GraphicsContext>(GraphicsContext::create(window->getNativeHandle()));
-        graphicsContext->setVSync(settings.getFieldAsBasicType<bool>("vsync", true));
-        graphicsContext->init();
-        input = std::unique_ptr<Input>(Input::create(window->getNativeHandle()));
+        window.init(windowData, BZ_BIND_EVENT_FN(Application::onEvent));
+        graphicsContext.init();
 
+        Input::init();
         Graphics::init();
         ImGuiRenderer::init();
         Renderer2D::init();
@@ -55,10 +59,17 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         Graphics::waitForDevice();
-        Renderer::destroy();
-        Renderer2D::destroy();
-        ImGuiRenderer::destroy();
         Graphics::destroy();
+        ImGuiRenderer::destroy();
+        Renderer2D::destroy();
+        Renderer::destroy();
+
+        layerStack.clear();
+
+        graphicsContext.destroy();
+        window.destroy();
+
+        glfwTerminate();
     }
 
     void Application::run() {
@@ -69,12 +80,12 @@ namespace BZ {
         Timer frameTimer;
         frameStats = {};
 
-        while(!window->isClosed()) {
+        while(!window.isClosed()) {
             frameTimer.start();
 
-            window->pollEvents();
+            window.pollEvents();
 
-            if(!window->isMinimized()) {
+            if(!window.isMinimized()) {
 
                 Graphics::beginFrame();
 
@@ -125,7 +136,7 @@ namespace BZ {
     }
 
     bool Application::onWindowResized(const WindowResizedEvent &e) {
-        graphicsContext->onWindowResize(e);
+        graphicsContext.onWindowResize(e);
         Graphics::onWindowResize(e);
         return false;
     }

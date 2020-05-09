@@ -2,6 +2,7 @@
 
 #include "ParticleSystem2D.h"
 #include "Core/Application.h"
+#include "Graphics/Texture.h"
 
 
 namespace BZ {
@@ -17,6 +18,8 @@ namespace BZ {
         tintAndAlphaRange(glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), glm::vec4(1.0f)) {
     }
 
+
+    /*-------------------------------------------------------------------------------------------*/
     Emitter2D::Emitter2D(ParticleSystem2D &parent, const glm::vec2 &positionOffset, uint32 particlesPerSec, float totalLifeSecs, Particle2DRanges &ranges, const Ref<Texture2D> &texture) :
         parent(parent),
         positionOffset(positionOffset),
@@ -94,7 +97,9 @@ namespace BZ {
         activeParticles.push_back(particle);
     }
 
-    ParticleSystem2D::ParticleSystem2D() : 
+
+    /*-------------------------------------------------------------------------------------------*/
+    ParticleSystem2D::ParticleSystem2D() :
         position({0.0f}) {
     }
 

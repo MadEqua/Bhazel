@@ -2,6 +2,7 @@
 
 #include "Event.h"
 
+
 namespace BZ {
 
     class AppInitializedEvent : public Event {

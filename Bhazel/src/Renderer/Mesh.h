@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Graphics/Buffer.h"
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
@@ -9,6 +7,8 @@
 
 
 namespace BZ {
+
+    class Buffer;
 
     class Mesh {
     public:

@@ -13,11 +13,11 @@ namespace BZ {
 
     enum EventCategory {
         EventCategoryNone =          0,
-        EventCategoryApplication =   BIT(0),
-        EventCategoryWindow =        BIT(1),
-        EventCategoryInput =         BIT(2),
-        EventCategoryKeyboard =      BIT(3),
-        EventCategoryMouse =         BIT(4)
+        EventCategoryApplication =   BZ_BIT(0),
+        EventCategoryWindow =        BZ_BIT(1),
+        EventCategoryInput =         BZ_BIT(2),
+        EventCategoryKeyboard =      BZ_BIT(3),
+        EventCategoryMouse =         BZ_BIT(4)
     };
 
 #define EVENT_CLASS_TYPE(type) static EventType getStaticType() { return EventType::##type; }\
@@ -43,6 +43,7 @@ namespace BZ {
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class EventDispatcher {
         template<typename T>
         using EventFn = std::function<bool(const T&)>;

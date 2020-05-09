@@ -1,5 +1,7 @@
 #pragma once
 
+struct GLFWwindow;
+
 
 namespace BZ {
 
@@ -15,15 +17,16 @@ namespace BZ {
     class Window {
     public:
         using EventCallbackFn = std::function<void(Event&)>;
-        static Window* create(const WindowData &data, EventCallbackFn eventCallback = [](Event&) {});
 
-        virtual ~Window() = default;
+        Window() = default;
 
-        EventCallbackFn eventCallback;
-        WindowData data;
+        BZ_NON_COPYABLE(Window);
 
-        virtual void pollEvents() = 0;
-        virtual void* getNativeHandle() const = 0;
+        void init(const WindowData &data, EventCallbackFn eventCallback);
+        void destroy();
+
+        void pollEvents();
+        GLFWwindow* getNativeHandle() const { return window; }
 
         uint32 getWidth() const { return data.dimensions.x; }
         uint32 getHeight() const {return data.dimensions.y;}
@@ -33,16 +36,18 @@ namespace BZ {
 
         bool isMinimized() const { return minimized; }
         bool isClosed() const { return closed; }
-        
-        void setBaseTitle(const char* title) { data.title = title; }
-        const std::string& getBaseTitle() const {return data.title;}
-        
-        virtual void setTitle(const char* title) = 0;
 
-    protected:
-        Window(const WindowData &data, EventCallbackFn eventCallback);
+        void setTitle(const char* title);
+
+        EventCallbackFn eventCallback;
+        WindowData data;
+
+    private:
+        bool initialized = false;
 
         bool minimized = false;
         bool closed = false;
+
+        GLFWwindow* window;
     };
 }

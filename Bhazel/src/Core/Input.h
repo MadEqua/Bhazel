@@ -3,14 +3,19 @@
 
 namespace BZ {
 
+    class Window;
+
     class Input {
     public:
-        virtual bool isKeyPressed(int keycode) = 0;
-        virtual bool isMouseButtonPressed(int button) = 0;
-        virtual glm::ivec2 getMousePosition() = 0;
-        virtual int getMouseX() = 0;
-        virtual int getMouseY() = 0;
+        static bool isKeyPressed(int keycode);
+        static bool isMouseButtonPressed(int button);
+        static glm::ivec2 getMousePosition();
+        static int getMouseX();
+        static int getMouseY();
 
-        static Input* create(void* nativeWindowHandle);
+    private:
+        static void init();
+
+        friend class Application;
     };
 }

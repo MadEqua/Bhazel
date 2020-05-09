@@ -1,18 +1,18 @@
 #pragma once
 
-#include "VulkanIncludes.h"
+#include "Graphics/Internal/VulkanIncludes.h"
 
 
 namespace BZ {
 
     class Framebuffer;
     class RenderPass;
-    class VulkanDevice;
-    class VulkanSurface;
-    class VulkanSemaphore;
+    class Device;
+    class Surface;
+    class Semaphore;
 
     struct SwapChainSupportDetails {
-        VkSurfaceCapabilitiesKHR capabilities;
+        VkSurfaceCapabilitiesKHR surfaceCapabilities;
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
     };
@@ -21,29 +21,31 @@ namespace BZ {
     * Abstract the Swapchain and respective Framebuffer creation. The RenderPass and Framebuffers reutilize the main (and only) DepthBuffer.
     * Only has one image aquired at any given time.
     */
-    class VulkanSwapchain {
+    class Swapchain {
     public:
-        VulkanSwapchain() = default;
+        Swapchain() = default;
 
-        void init(const VulkanDevice &device, const VulkanSurface &surface);
+        BZ_NON_COPYABLE(Swapchain);
+
+        void init(const Device &device, const Surface &surface);
         void destroy();
 
         void recreate();
 
-        void aquireImage(const VulkanSemaphore &imageAvailableSemaphore);
-        void presentImage(const VulkanSemaphore &renderFinishedSemaphore);
+        void aquireImage(const Semaphore &imageAvailableSemaphore);
+        void presentImage(const Semaphore &renderFinishedSemaphore);
 
-        VkSwapchainKHR getNativeHandle() const { return swapchain; }
+        VkSwapchainKHR getHandle() const { return handle; }
 
-        const Ref<Framebuffer>& getCurrentFramebuffer() const { return framebuffers[currentImageIndex]; }
+        const Ref<Framebuffer>& getAquiredImageFramebuffer() const { return framebuffers[currentImageIndex]; }
         const Ref<RenderPass>& getRenderPass() const { return renderPass; }
         glm::ivec2 getDimensions() const { return { extent.width, extent.height }; }
 
     private:
-        const VulkanDevice *device;
-        const VulkanSurface *surface;
+        const Device *device;
+        const Surface *surface;
 
-        VkSwapchainKHR swapchain;
+        VkSwapchainKHR handle;
 
         Ref<RenderPass> renderPass;
         std::vector<Ref<Framebuffer>> framebuffers;
@@ -60,6 +62,6 @@ namespace BZ {
 
         static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
         static VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
-        static VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
+        static VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &surfaceCapabilities);
     };
 }

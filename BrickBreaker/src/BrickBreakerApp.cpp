@@ -21,7 +21,7 @@ void Ball::init(const BZ::Ref<BZ::Texture2D> &ballTexture, const BZ::Ref<BZ::Tex
 }
 
 void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &paddle) {
-    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
 
     sprite.position += velocity * frameStats.lastFrameTime.asSeconds();
 
@@ -91,7 +91,7 @@ void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle
 }
 
 void Ball::setToInitialPosition() {
-    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
     const auto WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
 
     sprite.position = { WINDOW_HALF_DIMS.x, PADDLE_Y + BRICK_MARGIN };
@@ -99,7 +99,7 @@ void Ball::setToInitialPosition() {
 }
 
 void Paddle::init(const BZ::Ref<BZ::Texture2D> &texture) {
-    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
     const auto WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
 
     sprite.position = { WINDOW_HALF_DIMS.x, PADDLE_Y };
@@ -110,13 +110,12 @@ void Paddle::init(const BZ::Ref<BZ::Texture2D> &texture) {
 }
 
 void Paddle::onUpdate(const BZ::FrameStats &frameStats) {
-    const auto WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
 
-    auto &input = BZ::Application::getInstance().getInput();
-    if (input.isKeyPressed(BZ_KEY_LEFT)) {
+    if (BZ::Input::isKeyPressed(BZ_KEY_LEFT)) {
         sprite.position.x -= PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
     }
-    if (input.isKeyPressed(BZ_KEY_RIGHT)) {
+    if (BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) {
         sprite.position.x += PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
     }
 
@@ -133,7 +132,7 @@ void Paddle::onUpdate(const BZ::FrameStats &frameStats) {
 }
 
 void BrickMap::init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ::Texture2D> &explosionTexture) {
-    const auto &WINDOW_DIMS = BZ::Application::getInstance().getWindow().getDimensions();
+    const auto &WINDOW_DIMS = BZ::Application::get().getWindow().getDimensions();
 
     bool flip = true;
     for (float x = BRICK_MARGIN + BRICK_HALF_DIMS.x; x < WINDOW_DIMS.x - BRICK_HALF_DIMS.x; x += BRICK_DIMS.x + BRICK_MARGIN) {
@@ -209,18 +208,18 @@ void MainLayer::onAttach() {
 }
 
 void MainLayer::onGraphicsContextCreated() {
-    const auto WINDOW_DIMS = application.getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
 
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
     camera.getTransform().setTranslation(WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f, BZ::Space::Parent);
     cameraController = BZ::CameraController2D(camera, 400.0f, true, 45.0f);
 
-    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
 
     brickMap.init(brickTexture, brickExplosionTexture);
     paddle.init(paddleTexture);

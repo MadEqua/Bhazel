@@ -3,18 +3,15 @@
 Work in progress game engine written in C++.
 
 # Current features:
+-  Built on top of Vulkan.
 -  Physically-based renderer with image-based indirect lighting.
--  Shadow mapping and parallax occlusion mapping.
--  Central event dispatching system for keyboard, mouse and window events.
--  Input polling facilities.
--  Layer stack system allowing the application to receive events within a certain order. Layers also have a specified update and render order.
--  Support for multiple rendering APIs (OpenGL, Direct3D 11 and Vulkan) and platforms (GLFW and Win32).
--  Thin abstraction of the rendering API objects and command buffer generation.
--  2D Renderer with batching written on top of the rendering API abstraction.
+-  Cascaded shadow mapping and parallax occlusion mapping.
+-  2D batch renderer.
+-  Central event dispatching and polling for keyboard, mouse and window events.
+-  Layer stack system allowing the application to receive events within a certain order.
 -  Camera abstractions and simple controllers.
 -  Simple instrumentation for function and scope profiling.
 -  ImGui integration through the engine APIs (both rendering and input).
--  Example Sandbox application for experimentation as a client application.
 -  Example Brick Breaker game as a demo and test case for 2D rendering.
 -  Premake build system.
 

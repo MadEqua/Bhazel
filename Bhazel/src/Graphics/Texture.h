@@ -2,29 +2,15 @@
 
 #include "PipelineState.h"
 
+#include "Graphics/Internal/VulkanIncludes.h"
+#include "Graphics/GpuObject.h"
+
 
 namespace BZ {
 
-    enum class TextureFormatEnum {
-        Undefined,
-        R8, R8_SRGB,
-        R8G8, R8G8_SRGB,
-        R8G8B8, R8G8B8_SRGB,
-        R8G8B8A8, R8G8B8A8_SRGB,
-        B8G8R8A8, B8G8R8A8_SRGB,
-
-        R16_SFLOAT, R32_SFLOAT,
-        R16G16_SFLOAT, R32G32_SFLOAT,
-        R16G16B16_SFLOAT, R32G32B32_SFLOAT,
-        R16G16B16A16_SFLOAT, R32G32B32A32_SFLOAT,
-
-        D32_SFLOAT, D16S8, D24S8,
-    };
-
     struct TextureFormat {
-        TextureFormat(TextureFormatEnum formaEnum);
+        TextureFormat(VkFormat format);
 
-        //TextureFormat operator()() { return format; }
         bool isColor() const;
         bool isDepth() const;
         bool isStencil() const;
@@ -38,15 +24,14 @@ namespace BZ {
         int getSizePerTexel() const;
 
         bool operator==(const TextureFormat &other) const {
-            return formatEnum == other.formatEnum;
+            return format == other.format;
         }
 
-        TextureFormatEnum getEnum() const { return formatEnum; }
+        operator VkFormat() const { return format; }
 
     private:
-        TextureFormatEnum formatEnum;
+        VkFormat format;
     };
-
 
     struct MipmapData {
         enum class Options {
@@ -60,9 +45,17 @@ namespace BZ {
         uint32 mipLevels; //Used when Load is the option.
     };
 
-    class Texture {
+    struct TextureHandles {
+        VkImage imageHandle;
+        VmaAllocation allocationHandle;
+
+        VkBuffer stagingBufferHandle;
+        VmaAllocation stagingBufferAllocationHandle;
+    };
+
+    class Texture : public GpuObject<TextureHandles> {
     public:
-        virtual ~Texture() = default;
+        ~Texture();
 
         const TextureFormat& getFormat() const { return format; }
 
@@ -88,100 +81,113 @@ namespace BZ {
         glm::ivec3 dimensions = { 1, 1, 1 };
         uint32 layers = 1;
         uint32 mipLevels = 1;
+
+        bool isWrapping = false;
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class Texture2D : public Texture {
     public:
         static Ref<Texture2D> create(const char *path, TextureFormat format, MipmapData mipmapData);
         static Ref<Texture2D> create(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
-        
+
         static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, uint32 layers, TextureFormat format);
 
-    protected:
-        explicit Texture2D(TextureFormat format);
+        static Ref<Texture2D> wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
+
+        Texture2D(const char *path, TextureFormat format, MipmapData mipmapData);
+        Texture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
+        Texture2D(uint32 width, uint32 height, uint32 layers, TextureFormat format);
+
+    private:
+        void createImage(bool hasData, MipmapData mipmapData);
+
+        //Coming from an already existent VkImage. Used on the swapchain images.
+        Texture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class TextureCube : public Texture {
     public:
         //fileNames -> +x, -x, +y, -y, +z, -z
         static Ref<TextureCube> create(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData);
  
-    protected:
-        explicit TextureCube(TextureFormat format);
+        TextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData);
+
+    private:
+        void createImage(bool hasData, MipmapData mipmapData);
     };
 
 
-    class TextureView {
+    /*-------------------------------------------------------------------------------------------*/
+    class TextureView : public GpuObject<VkImageView> {
     public:
         static Ref<TextureView> create(const Ref<Texture2D> &texture2D);
         static Ref<TextureView> create(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount);
         static Ref<TextureView> create(const Ref<TextureCube> &textureCube);
 
+        explicit TextureView(const Ref<Texture2D> &texture2D);
+        TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount);
+        explicit TextureView(const Ref<TextureCube> &textureCube);
+
+        ~TextureView();
+
         //const TextureFormat& getFormat() const { return texture->getFormat(); } TODO: TextureView own format
         const TextureFormat& getTextureFormat() const { return texture->getFormat(); }
         Ref<Texture> getTexture() const { return texture; }
 
-    protected:
-        explicit TextureView(const Ref<Texture> &texture);
-        virtual ~TextureView() = default;
+    private:
+        void init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount);
 
         Ref<Texture> texture;
     };
 
 
-    enum class FilterMode {
-        Nearest, Linear
-    };
-
-    enum class AddressMode {
-        Repeat,
-        MirroredRepeat,
-        ClampToEdge,
-        ClampToBorder,
-        MirrorClampToEdge
-    };
-
-    class Sampler {
+    /*-------------------------------------------------------------------------------------------*/
+    class Sampler : public GpuObject<VkSampler> {
     public:
         class Builder {
         public:
-            void setMinFilterMode(FilterMode filterMode) { minFilter = filterMode; }
-            void setMagFilterMode(FilterMode filterMode) { magFilter = filterMode; }
+            void setMinFilterMode(VkFilter filter) { minFilter = filter; }
+            void setMagFilterMode(VkFilter filter) { magFilter = filter; }
 
-            void setMipmapFilterMode(FilterMode filterMode) { mipmapFilter = filterMode; }
+            void setMipmapFilter(VkSamplerMipmapMode filter) { mipmapFilter = filter; }
             void setMinMipmap(uint32 min) { minMipmap = min; };
             void setMaxMipmap(uint32 max) { maxMipmap = max; };
 
-            void setAddressModeAll(AddressMode addressMode) { addressModeU = addressMode; addressModeV = addressMode; addressModeW = addressMode; }
-            void setAddressModeU(AddressMode addressMode) { addressModeU = addressMode; }
-            void setAddressModeV(AddressMode addressMode) { addressModeV = addressMode; }
-            void setAddressModeW(AddressMode addressMode) { addressModeW = addressMode; }
+            void setAddressModeAll(VkSamplerAddressMode addressMode) { addressModeU = addressMode; addressModeV = addressMode; addressModeW = addressMode; }
+            void setAddressModeU(VkSamplerAddressMode addressMode) { addressModeU = addressMode; }
+            void setAddressModeV(VkSamplerAddressMode addressMode) { addressModeV = addressMode; }
+            void setAddressModeW(VkSamplerAddressMode addressMode) { addressModeW = addressMode; }
 
             void setUnnormalizedCoordinates(bool enable) { unnormalizedCoordinate = enable; }
 
-            void enableCompare(CompareFunction compareFunction) { compareEnabled = true; this->compareFunction = compareFunction; }
+            void enableCompare(VkCompareOp compareOp) { compareEnabled = true; this->compareOp = compareOp; }
+
+            void setBorderColor(VkBorderColor borderColor) { this->borderColor = borderColor; }
 
             Ref<Sampler> build() const;
 
         private:
-            FilterMode minFilter = FilterMode::Linear;
-            FilterMode magFilter = FilterMode::Linear;
-            FilterMode mipmapFilter = FilterMode::Linear;
+            VkFilter minFilter = VK_FILTER_LINEAR;
+            VkFilter magFilter = VK_FILTER_LINEAR;
+            VkSamplerMipmapMode mipmapFilter = VK_SAMPLER_MIPMAP_MODE_LINEAR;
             uint32 minMipmap = 0;
             uint32 maxMipmap = 0xffffffff;
-            AddressMode addressModeU  = AddressMode::Repeat;
-            AddressMode addressModeV = AddressMode::Repeat;
-            AddressMode addressModeW = AddressMode::Repeat;
+            VkSamplerAddressMode addressModeU  = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            VkSamplerAddressMode addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            VkSamplerAddressMode addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
             bool unnormalizedCoordinate = false;
             bool compareEnabled = false;
-            CompareFunction compareFunction = CompareFunction::Always;
+            VkCompareOp compareOp = VK_COMPARE_OP_ALWAYS;
+            VkBorderColor borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-            friend class VulkanSampler;
+            friend class Sampler;
         };
 
-    protected:
-        virtual ~Sampler() = default;
+        Sampler(const Builder &builder);
+        ~Sampler();
     };
 }

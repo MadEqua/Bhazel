@@ -30,6 +30,7 @@ namespace BZ {
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class ProfilerTimer {
     public:
         ProfilerTimer(const char* name);

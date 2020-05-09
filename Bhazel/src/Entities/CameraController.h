@@ -48,6 +48,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class CameraController2D : public CameraController<OrthographicCamera> {
     public:
         CameraController2D() = default;
@@ -68,6 +69,7 @@ namespace BZ {
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class FreeCameraController : public CameraController<PerspectiveCamera> {
     public:
         FreeCameraController() = default;
@@ -85,6 +87,8 @@ namespace BZ {
         glm::ivec2 lastMousePosition = {-1, -1};
     };
 
+
+    /*-------------------------------------------------------------------------------------------*/
     /*
     * Camera that rotates around and looks at the origin.
     * Using cilindrical coordinates to achieve that.

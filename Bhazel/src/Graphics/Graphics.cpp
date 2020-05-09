@@ -10,7 +10,6 @@
 #include "Graphics/PipelineState.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Shader.h"
-#include "Graphics/Color.h"
 #include "Graphics/CommandBuffer.h"
 #include "Graphics/Texture.h"
 
@@ -58,7 +57,7 @@ namespace BZ {
     void Graphics::init() {
         BZ_PROFILE_FUNCTION();
 
-        data.graphicsContext = &Application::getInstance().getGraphicsContext();  
+        data.graphicsContext = &Application::get().getGraphicsContext();  
     }
 
     void Graphics::destroy() {
@@ -70,8 +69,9 @@ namespace BZ {
     uint32 Graphics::beginCommandBuffer() {
         BZ_PROFILE_FUNCTION();
 
-        auto &commandBuffer = data.graphicsContext->getCurrentFrameCommandBuffer();
-        commandBuffer->resetIndex();
+        auto &commandBuffer = data.graphicsContext->getCurrentFrameCommandBuffer(QueueProperty::Graphics, false);
+        commandBuffer->begin();
+        //commandBuffer->resetIndex();
         data.commandBuffers[data.nextCommandBufferIndex] = commandBuffer;
         return data.nextCommandBufferIndex++;
     }
@@ -80,7 +80,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
-        data.commandBuffers[commandBufferId]->optimizeAndGenerate();
+        data.commandBuffers[commandBufferId]->end();
 
         data.stats.commandBufferCount++;
         data.stats.commandCount += data.commandBuffers[commandBufferId]->getCommandCount();
@@ -98,9 +98,11 @@ namespace BZ {
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::BeginRenderPass);
-        command.beginRenderPassData.framebuffer = framebuffer.get();
-        command.beginRenderPassData.forceClearAttachments = data.clearedFramebuffers.find(framebuffer) == data.clearedFramebuffers.end();
+        commandBuffer->beginRenderPass(framebuffer, data.clearedFramebuffers.find(framebuffer) == data.clearedFramebuffers.end());
+
+        //auto &command = commandBuffer->addCommand(CommandType::BeginRenderPass);
+        //command.beginRenderPassData.framebuffer = framebuffer.get();
+        //command.beginRenderPassData.forceClearAttachments = data.clearedFramebuffers.find(framebuffer) == data.clearedFramebuffers.end();
 
         data.clearedFramebuffers.emplace(framebuffer);
     }
@@ -109,7 +111,9 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        commandBuffer->addCommand(CommandType::EndRenderPass);
+        commandBuffer->endRenderPass();
+
+        //commandBuffer->addCommand(CommandType::EndRenderPass);
 
         data.stats.renderPassCount++;
     }
@@ -118,65 +122,77 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        commandBuffer->addCommand(CommandType::NextSubPass);
+        commandBuffer->nextSubPass();
+        //commandBuffer->addCommand(CommandType::NextSubPass);
 
         data.stats.subPassCount++;
     }
 
-    void Graphics::clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor) {
+    void Graphics::clearColorAttachments(uint32 commandBufferId, const VkClearColorValue &clearColor) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::ClearColorAttachments);
-        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer().get();
-        command.clearAttachmentsData.clearValue = clearColor;
+        commandBuffer->clearColorAttachments(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), clearColor);
+
+        //auto &command = commandBuffer->addCommand(CommandType::ClearColorAttachments);
+        //command.clearAttachmentsData.framebuffer = Application::get().getGraphicsContext().getCurrentSwapchainFramebuffer().get();
+        //command.clearAttachmentsData.clearValue = clearColor;
     }
 
-    void Graphics::clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor) {
+    void Graphics::clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const VkClearColorValue &clearColor) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::ClearColorAttachments);
-        command.clearAttachmentsData.framebuffer = framebuffer.get();
-        command.clearAttachmentsData.clearValue = clearColor;
+        commandBuffer->clearColorAttachments(framebuffer, clearColor);
+
+
+        //auto &command = commandBuffer->addCommand(CommandType::ClearColorAttachments);
+        //command.clearAttachmentsData.framebuffer = framebuffer.get();
+        //command.clearAttachmentsData.clearValue = clearColor;
     }
 
-    void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue) {
+    void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const VkClearDepthStencilValue &clearValue) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::ClearDepthStencilAttachment);
-        command.clearAttachmentsData.framebuffer = Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer().get();
-        command.clearAttachmentsData.clearValue = clearValue;
+        commandBuffer->clearDepthStencilAttachment(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), clearValue);
+
+        //auto &command = commandBuffer->addCommand(CommandType::ClearDepthStencilAttachment);
+        //command.clearAttachmentsData.framebuffer = Application::get().getGraphicsContext().getCurrentSwapchainFramebuffer().get();
+        //command.clearAttachmentsData.clearValue = clearValue;
     }
 
-    void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue) {
+    void Graphics::clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const VkClearDepthStencilValue &clearValue) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::ClearDepthStencilAttachment);
-        command.clearAttachmentsData.framebuffer = framebuffer.get();
-        command.clearAttachmentsData.clearValue = clearValue;
+        commandBuffer->clearDepthStencilAttachment(framebuffer, clearValue);
+
+        //auto &command = commandBuffer->addCommand(CommandType::ClearDepthStencilAttachment);
+        //command.clearAttachmentsData.framebuffer = framebuffer.get();
+        //command.clearAttachmentsData.clearValue = clearValue;
     }
 
     void Graphics::bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset) {
         BZ_PROFILE_FUNCTION();
 
-        BZ_ASSERT_CORE(buffer->getType() == BufferType::Vertex || buffer->getType() == BufferType::Index, "Invalid Buffer type!");
+        BZ_ASSERT_CORE(buffer->isVertex() || buffer->isIndex(), "Invalid Buffer type!");
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::BindBuffer);
-        command.bindBufferData.buffer = buffer.get();
-        command.bindBufferData.offset = buffer->getCurrentBaseOfReplicaOffset() + offset;
+        commandBuffer->bindBuffer(buffer, offset);
+
+        //auto &command = commandBuffer->addCommand(CommandType::BindBuffer);
+        //command.bindBufferData.buffer = buffer.get();
+        //command.bindBufferData.offset = buffer->getCurrentBaseOfReplicaOffset() + offset;
 
         data.stats.bufferBindCount++;
     }
@@ -187,8 +203,10 @@ namespace BZ {
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::BindPipelineState);
-        command.bindPipelineStateData.pipelineState = pipelineState.get();
+        commandBuffer->bindPipelineState(pipelineState);
+
+        //auto &command = commandBuffer->addCommand(CommandType::BindPipelineState);
+        //command.bindPipelineStateData.pipelineState = pipelineState.get();
 
         data.stats.pipelineStateBindCount++;
     }
@@ -212,7 +230,7 @@ namespace BZ {
         uint32 userIndex = 0;
         uint32 binding = 0;
         for(const auto &desc : descriptorSet->getLayout()->getDescriptorDescs()) {
-            if(desc.type == DescriptorType::ConstantBufferDynamic || desc.type == DescriptorType::StorageBufferDynamic) {
+            if(desc.type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || desc.type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
                 const auto *dynBufferData = descriptorSet->getDynamicBufferDataByBinding(binding);
                 BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
 
@@ -231,12 +249,14 @@ namespace BZ {
         }
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
-        command.bindDescriptorSetData.descriptorSet = descriptorSet.get();
-        command.bindDescriptorSetData.pipelineState = pipelineState.get();
-        command.bindDescriptorSetData.setIndex = setIndex;
-        memcpy(command.bindDescriptorSetData.dynamicBufferOffsets, finalDynamicBufferOffsets, index * sizeof(uint32));
-        command.bindDescriptorSetData.dynamicBufferCount = index;
+        commandBuffer->bindDescriptorSet(descriptorSet, pipelineState, setIndex, finalDynamicBufferOffsets, index);
+
+        //auto &command = commandBuffer->addCommand(CommandType::BindDescriptorSet);
+        //command.bindDescriptorSetData.descriptorSet = descriptorSet.get();
+        //command.bindDescriptorSetData.pipelineState = pipelineState.get();
+        //command.bindDescriptorSetData.setIndex = setIndex;
+        //memcpy(command.bindDescriptorSetData.dynamicBufferOffsets, finalDynamicBufferOffsets, index * sizeof(uint32));
+        //command.bindDescriptorSetData.dynamicBufferCount = index;
 
         data.stats.descriptorSetBindCount++;
     }
@@ -250,12 +270,14 @@ namespace BZ {
         BZ_ASSERT_CORE(size <= MAX_PUSH_CONSTANT_SIZE, "Push constant size must be less or equal than {}. Sending size: {}!", MAX_PUSH_CONSTANT_SIZE, size);
 
         auto& commandBuffer = BZ::data.commandBuffers[commandBufferId];
-        auto& command = commandBuffer->addCommand(CommandType::SetPushConstants);
-        command.setPushConstantsData.pipelineState = pipelineState.get();
-        command.setPushConstantsData.shaderStageMask = shaderStageMask;
-        memcpy(&command.setPushConstantsData.data, data, size);
-        command.setPushConstantsData.size = size;
-        command.setPushConstantsData.offset = offset;
+        commandBuffer->setPushConstants(pipelineState, shaderStageMask, data, size, offset);
+
+        //auto& command = commandBuffer->addCommand(CommandType::SetPushConstants);
+        //command.setPushConstantsData.pipelineState = pipelineState.get();
+        //command.setPushConstantsData.shaderStageMask = shaderStageMask;
+        //memcpy(&command.setPushConstantsData.data, data, size);
+        //command.setPushConstantsData.size = size;
+        //command.setPushConstantsData.offset = offset;
     }
 
     void Graphics::draw(uint32 commandBufferId, uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
@@ -264,11 +286,13 @@ namespace BZ {
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::Draw);
-        command.drawData.vertexCount = vertexCount;
-        command.drawData.instanceCount = instanceCount;
-        command.drawData.firstVertex = firstVertex;
-        command.drawData.firstInstance = firstInstance;
+        commandBuffer->draw(vertexCount, instanceCount, firstVertex, firstInstance);
+
+        //auto &command = commandBuffer->addCommand(CommandType::Draw);
+        //command.drawData.vertexCount = vertexCount;
+        //command.drawData.instanceCount = instanceCount;
+        //command.drawData.firstVertex = firstVertex;
+        //command.drawData.firstInstance = firstInstance;
 
         data.stats.drawCallCount++;
     }
@@ -279,40 +303,46 @@ namespace BZ {
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::DrawIndexed);
-        command.drawIndexedData.indexCount = indexCount;
-        command.drawIndexedData.instanceCount = instanceCount;
-        command.drawIndexedData.firstIndex = firstIndex;
-        command.drawIndexedData.vertexOffset = vertexOffset;
-        command.drawIndexedData.firstInstance = firstInstance;
+        commandBuffer->drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+
+        //auto &command = commandBuffer->addCommand(CommandType::DrawIndexed);
+        //command.drawIndexedData.indexCount = indexCount;
+        //command.drawIndexedData.instanceCount = instanceCount;
+        //command.drawIndexedData.firstIndex = firstIndex;
+        //command.drawIndexedData.vertexOffset = vertexOffset;
+        //command.drawIndexedData.firstInstance = firstInstance;
 
         data.stats.drawCallCount++;
     }
 
-    void Graphics::setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount) {
+    void Graphics::setViewports(uint32 commandBufferId, uint32 firstIndex, const VkViewport viewports[], uint32 viewportCount) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(viewportCount < MAX_VIEWPORTS, "Invalid viewportCount: {}!", viewportCount);
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::SetViewports);
-        command.setViewportsData.firstIndex = firstIndex;
-        memcpy(command.setViewportsData.viewports, viewports, viewportCount * sizeof(Viewport));
-        command.setViewportsData.viewportCount = viewportCount;
+        commandBuffer->setViewports(firstIndex, viewports, viewportCount);
+
+        //auto &command = commandBuffer->addCommand(CommandType::SetViewports);
+        //command.setViewportsData.firstIndex = firstIndex;
+        //memcpy(command.setViewportsData.viewports, viewports, viewportCount * sizeof(Viewport));
+        //command.setViewportsData.viewportCount = viewportCount;
     }
 
-    void Graphics::setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount) {
+    void Graphics::setScissorRects(uint32 commandBufferId, uint32 firstIndex, const VkRect2D rects[], uint32 rectCount) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(rectCount < MAX_VIEWPORTS, "Invalid rectCount: {}!", rectCount);
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::SetScissorRects);
-        command.setScissorRectsData.firstIndex = firstIndex;
-        memcpy(command.setScissorRectsData.rects, rects, rectCount * sizeof(ScissorRect));
-        command.setScissorRectsData.rectCount = rectCount;
+        commandBuffer->setScissorRects(firstIndex, rects, rectCount);
+
+        //auto &command = commandBuffer->addCommand(CommandType::SetScissorRects);
+        //command.setScissorRectsData.firstIndex = firstIndex;
+        //memcpy(command.setScissorRectsData.rects, rects, rectCount * sizeof(ScissorRect));
+        //command.setScissorRectsData.rectCount = rectCount;
     }
 
     void Graphics::setDepthBias(uint32 commandBufferId, float constantFactor, float clamp, float slopeFactor) {
@@ -321,10 +351,12 @@ namespace BZ {
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::SetDepthBias);
-        command.setDepthBiasData.constantFactor = constantFactor;
-        command.setDepthBiasData.clamp = clamp;
-        command.setDepthBiasData.slopeFactor = slopeFactor;
+        commandBuffer->setDepthBias(constantFactor, clamp, slopeFactor);
+
+        //auto &command = commandBuffer->addCommand(CommandType::SetDepthBias);
+        //command.setDepthBiasData.constantFactor = constantFactor;
+        //command.setDepthBiasData.clamp = clamp;
+        //command.setDepthBiasData.slopeFactor = slopeFactor;
     }
 
     void Graphics::pipelineBarrierTexture(uint32 commandBufferId, const Ref<Texture> &texture) {
@@ -333,8 +365,10 @@ namespace BZ {
         BZ_ASSERT_CORE(commandBufferId < MAX_COMMAND_BUFFERS, "Invalid commandBufferId: {}!", commandBufferId);
 
         auto &commandBuffer = data.commandBuffers[commandBufferId];
-        auto &command = commandBuffer->addCommand(CommandType::PipelineBarrierTexture);
-        command.pipelineBarrierTexture.texture = texture.get();
+        commandBuffer->pipelineBarrierTexture(texture);
+
+        //auto &command = commandBuffer->addCommand(CommandType::PipelineBarrierTexture);
+        //command.pipelineBarrierTexture.texture = texture.get();
     }
 
     void Graphics::waitForDevice() {
@@ -357,7 +391,7 @@ namespace BZ {
     void Graphics::endFrame() {
         BZ_PROFILE_FUNCTION();
 
-        data.graphicsContext->submitCommandBuffersAndFlush(data.commandBuffers, data.nextCommandBufferIndex);
+        data.graphicsContext->submitCommandBuffers(data.commandBuffers, data.nextCommandBufferIndex);
         //No need to delete CommandBuffers. The pools are responsible for that.
     }
 

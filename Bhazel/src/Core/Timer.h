@@ -44,6 +44,7 @@ namespace BZ {
     bool operator>=(const TimeDuration &lhs, const TimeDuration &rhs);
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class Timer {
     public:
         Timer();
@@ -65,6 +66,7 @@ namespace BZ {
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     class ScopedTimer {
     public:
         using Fn = std::function<void(const TimeDuration&)>;

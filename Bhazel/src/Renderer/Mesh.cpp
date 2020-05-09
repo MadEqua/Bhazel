@@ -5,6 +5,8 @@
 #include "Core/Application.h"
 #include "Core/Utils.h"
 
+#include "Graphics/Buffer.h"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
@@ -162,7 +164,7 @@ namespace BZ {
         std::vector<tinyobj::material_t> materials;
         std::string warn, err;
 
-        std::string fullPath = Application::getInstance().getAssetsPath() + path;
+        std::string fullPath = Application::get().getAssetsPath() + path;
         auto fullPathWithoutFileName = Utils::removeFileNameFromPath(fullPath);
 
         if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, fullPath.c_str(), fullPathWithoutFileName.c_str())) {
@@ -254,8 +256,8 @@ namespace BZ {
             BZ_LOG_CORE_WARN("Not computing tangents for mesh: {}. There are no texcoords or no normals.", path);
         }
 
-        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
-        indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
+        vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
+        indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
 
         vertexBuffer->setData(vertices.data(), sizeof(Vertex) * vertexCount, 0);
         indexBuffer->setData(indices.data(), sizeof(uint32) * indexCount, 0);
@@ -263,7 +265,7 @@ namespace BZ {
 
     Mesh::Mesh(Vertex vertices[], uint32 vertexCount, const Material &material) :
         vertexCount(vertexCount), indexCount(0) {
-        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
+        vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
         vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
 
         SubMesh submesh;
@@ -277,8 +279,8 @@ namespace BZ {
 
     Mesh::Mesh(Vertex vertices[], uint32 vertexCount, uint32 indices[], uint32 indexCount, const Material &material) :
         vertexCount(vertexCount), indexCount(indexCount) {
-        vertexBuffer = Buffer::create(BufferType::Vertex, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
-        indexBuffer = Buffer::create(BufferType::Index, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
+        vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
+        indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
 
         vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
         indexBuffer->setData(indices, sizeof(uint32) * indexCount, 0);

@@ -1,8 +1,6 @@
 #include "bzpch.h"
 
 #include "Utils.h"
-#include "Graphics/Graphics.h"
-#include  <glm/gtc/matrix_transform.hpp>
 
 
 namespace BZ::Utils {
@@ -51,36 +49,15 @@ namespace BZ::Utils {
     }
 
     glm::mat4 ortho(float left, float right, float bottom, float top, float near, float far) {
-        if(Graphics::api == Graphics::API::OpenGL)
-            return glm::orthoRH_NO(left, right, bottom, top, near, far);
-        else if(Graphics::api == Graphics::API::D3D11 || Graphics::api == Graphics::API::Vulkan)
-            return glm::orthoRH_ZO(left, right, bottom, top, near, far);
-        else {
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return glm::mat4();
-        }
+        return glm::orthoRH_ZO(left, right, bottom, top, near, far);
     }
 
     glm::mat4 frustum(float left, float right, float bottom, float top, float near, float far) {
-        if(Graphics::api == Graphics::API::OpenGL)
-            return glm::frustumRH_NO(left, right, bottom, top, near, far);
-        else if(Graphics::api == Graphics::API::D3D11 || Graphics::api == Graphics::API::Vulkan)
-            return glm::frustumRH_ZO(left, right, bottom, top, near, far);
-        else {
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return glm::mat4();
-        }
+        return glm::frustumRH_ZO(left, right, bottom, top, near, far);
     }
 
     glm::mat4 perspective(float fovy, float aspectRatio, float near, float far) {
-        if(Graphics::api == Graphics::API::OpenGL)
-            return glm::perspectiveRH_NO(glm::radians(fovy), aspectRatio, near, far);
-        else if(Graphics::api == Graphics::API::D3D11 || Graphics::api == Graphics::API::Vulkan)
-            return glm::perspectiveRH_ZO(glm::radians(fovy), aspectRatio, near, far);
-        else {
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return glm::mat4();
-        }
+        return glm::perspectiveRH_ZO(glm::radians(fovy), aspectRatio, near, far);
     }
 
     std::size_t hashCombine(std::size_t hash1, std::size_t hash2) {

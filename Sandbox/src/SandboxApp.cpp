@@ -11,14 +11,14 @@ void ParticleLayer::onAttach() {
 }
 
 void ParticleLayer::onGraphicsContextCreated() {
-    const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
+    const auto &WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
     camera.getTransform().setTranslation(WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f, BZ::Space::Parent);
     cameraController = BZ::CameraController2D(camera, 400.0f, true, 45.0f);
 
-    tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", BZ::TextureFormatEnum::R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    tex1 = BZ::Texture2D::create("Sandbox/textures/alphatest.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    tex2 = BZ::Texture2D::create("Sandbox/textures/particle.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
 
     particleSystem.setPosition({ WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y});
     BZ::Particle2DRanges ranges;
@@ -46,7 +46,7 @@ void ParticleLayer::onGraphicsContextCreated() {
 void ParticleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     BZ_PROFILE_FUNCTION();
 
-    auto WINDOW_DIMS = application.getWindow().getDimensions();
+    auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensions();
 
     cameraController.onUpdate(frameStats);
 
@@ -85,11 +85,11 @@ void Layer3D::onAttach() {
 }
 
 void Layer3D::onGraphicsContextCreated() {
-    const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
+    const auto &WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     orthoCamera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);
 
-    camera = BZ::PerspectiveCamera(50.0f, application.getWindow().getAspectRatio(), 0.1f, 600.0f);
+    camera = BZ::PerspectiveCamera(50.0f, BZ::Application::get().getWindow().getAspectRatio(), 0.1f, 600.0f);
     camera.getTransform().setTranslation(0.0f, 100.0f, 100.0f, BZ::Space::Parent);
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
@@ -284,7 +284,7 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     BZ::Renderer2D::begin(orthoCamera);
     //BZ::Renderer2D::drawQuad(glm::vec2(100.0f, 0.0f), glm::vec2(200.0f, 200.0f), 0.0f, glm::vec4(1, 1, 1, 1));
 
-    const auto &WINDOW_DIMS = application.getWindow().getDimensionsFloat();
+    const auto &WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
     const glm::vec2 SIZE = { 256, 256 };
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     glm::vec2 pos = -WINDOW_HALF_DIMS + SIZE * 0.5f;

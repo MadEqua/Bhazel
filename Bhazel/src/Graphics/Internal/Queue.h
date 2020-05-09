@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Platform/Vulkan/Internal/VulkanIncludes.h"
-//#include "Platform/Vulkan/Internal/VulkanGpuObject.h"
+#include "Graphics/Internal/VulkanIncludes.h"
 
 
 namespace BZ {
+
+    class Device;
 
     enum class QueueProperty {
         Graphics,
@@ -27,19 +28,16 @@ namespace BZ {
         uint32 getPropertyCount() const { return static_cast<uint32>(properties.count()); }
         bool hasExclusiveProperty() const { return properties.count() == 1; }
 
-        void setInUse() const { inUse = true; }
-        bool isInUse() const { return inUse; }
-
     private:
         uint32 index;
         uint32 queueCount;
         std::bitset<static_cast<uint32>(QueueProperty::Count)> properties;
-        mutable bool inUse = false;
 
         friend class QueueFamilyContainer;
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     //Contains the families present on a Device.
     class QueueFamilyContainer {
     public:
@@ -49,7 +47,7 @@ namespace BZ {
         std::vector<const QueueFamily*> getFamiliesThatContain(QueueProperty property) const;
         std::vector<const QueueFamily*> getFamiliesThatContainExclusively(QueueProperty property) const;
 
-        bool hasAllProperties() const;
+         bool hasAllProperties() const;
 
         uint32 getCount() const { return static_cast<uint32>(families.size()); }
 
@@ -63,28 +61,47 @@ namespace BZ {
         std::bitset<static_cast<uint32>(QueueProperty::Count)> cummulativeProperties;
     };
 
-    class VulkanDevice;
 
-    class VulkanQueue {
+    /*-------------------------------------------------------------------------------------------*/
+    class Queue {
     public:
-        VulkanQueue() = default;
-        //VulkanQueue(const VulkanDevice &device, const QueueFamily &family);
+        Queue() = default;
 
-        void init(const VulkanDevice &device, const QueueFamily &family);
+        BZ_NON_COPYABLE(Queue);
+
+        void init(const Device &device, const QueueFamily &family);
 
         const QueueFamily& getFamily() const { return family; }
-        VkQueue getNativeHandle() const { return queue; }
+        VkQueue getHandle() const { return handle; }
 
     private:
-        VkQueue queue = VK_NULL_HANDLE;
+        VkQueue handle;
         QueueFamily family;
     };
 
+
+    /*-------------------------------------------------------------------------------------------*/
     //The handles may point to the same queues with no restrictions.
-    struct QueueContainer {
-        VulkanQueue graphics;
-        VulkanQueue compute;
-        VulkanQueue transfer;
-        VulkanQueue present;
+    class QueueContainer {
+    public:
+        const Queue& graphics() const { return queues[static_cast<int>(QueueProperty::Graphics)]; }
+        Queue& graphics() { return queues[static_cast<int>(QueueProperty::Graphics)]; }
+        
+        const Queue& compute() const { return queues[static_cast<int>(QueueProperty::Compute)]; }
+        Queue& compute() { return queues[static_cast<int>(QueueProperty::Compute)]; }
+        
+        const Queue& transfer() const { return queues[static_cast<int>(QueueProperty::Transfer)]; }
+        Queue& transfer() { return queues[static_cast<int>(QueueProperty::Transfer)]; }
+        
+        const Queue& present() const { return queues[static_cast<int>(QueueProperty::Present)]; }
+        Queue& present() { return queues[static_cast<int>(QueueProperty::Present)]; }
+
+        const Queue& getQueueByProperty(QueueProperty property) const { return queues[static_cast<int>(property)]; }
+        Queue& getQueueByProperty(QueueProperty property) { return queues[static_cast<int>(property)]; }
+
+        std::set<uint32> getFamilyIndexesInUse() const;
+
+    private:
+        Queue queues[static_cast<int>(QueueProperty::Count)];
     };
 }

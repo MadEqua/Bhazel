@@ -3,77 +3,234 @@
 #include "CommandBuffer.h"
 
 #include "Graphics/DescriptorSet.h"
+#include "Graphics/Buffer.h"
+#include "Graphics/Framebuffer.h"
+#include "Graphics/PipelineState.h"
+#include "Graphics/RenderPass.h"
+#include "Graphics/Texture.h"
 
 
 namespace BZ {
 
-    Command& CommandBuffer::addCommand(CommandType type) {
-        BZ_ASSERT_CORE(nextCommandIndex < MAX_COMMANDS_PER_BUFFER, "Invalid nextCommandIndex: {}!", nextCommandIndex);
-        Command &cmd = commands[nextCommandIndex++];
-        cmd.type = type;
-        return cmd;
+    Ref<CommandBuffer> CommandBuffer::wrap(VkCommandBuffer vkCommandBuffer) {
+        return MakeRef<CommandBuffer>(new CommandBuffer(vkCommandBuffer));
     }
 
-    void CommandBuffer::optimizeAndGenerate() {
-        //TODO: optimize commands
+    CommandBuffer::CommandBuffer(VkCommandBuffer vkCommandBuffer) {
+        handle = vkCommandBuffer;
+    }
 
-        begin();
+    void CommandBuffer::begin() {
+        VkCommandBufferBeginInfo beginInfo = {};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; //Disallowing command buffer reusage
+        beginInfo.pInheritanceInfo = nullptr;
 
-        for(uint32 cmdIdx = 0; cmdIdx < nextCommandIndex; ++cmdIdx) {
-            Command &cmd = commands[cmdIdx];
+        BZ_ASSERT_VK(vkBeginCommandBuffer(handle, &beginInfo));
 
-            switch(cmd.type) {
-            case CommandType::BeginRenderPass:
-                beginRenderPass(*cmd.beginRenderPassData.framebuffer, cmd.beginRenderPassData.forceClearAttachments);
-                break;
-            case CommandType::EndRenderPass:
-                endRenderPass();
-                break;
-            case CommandType::NextSubPass:
-                nextSubPass();
-                break;
-            case CommandType::ClearColorAttachments:
-                clearColorAttachments(*cmd.clearAttachmentsData.framebuffer, cmd.clearAttachmentsData.clearValue);
-                break;
-            case CommandType::ClearDepthStencilAttachment:
-                clearDepthStencilAttachment(*cmd.clearAttachmentsData.framebuffer, cmd.clearAttachmentsData.clearValue);
-                break;
-            case CommandType::BindBuffer:
-                bindBuffer(*cmd.bindBufferData.buffer, cmd.bindBufferData.offset);
-                break;
-            case CommandType::BindPipelineState:
-                bindPipelineState(*cmd.bindPipelineStateData.pipelineState);
-                break;
-            case CommandType::BindDescriptorSet:
-                bindDescriptorSet(*cmd.bindDescriptorSetData.descriptorSet, *cmd.bindDescriptorSetData.pipelineState, cmd.bindDescriptorSetData.setIndex, cmd.bindDescriptorSetData.dynamicBufferOffsets, cmd.bindDescriptorSetData.dynamicBufferCount);
-                break;
-            case CommandType::SetPushConstants:
-                setPushConstants(*cmd.setPushConstantsData.pipelineState, cmd.setPushConstantsData.shaderStageMask, cmd.setPushConstantsData.data, cmd.setPushConstantsData.size, cmd.setPushConstantsData.offset);
-                break;
-            case CommandType::Draw:
-                draw(cmd.drawData.vertexCount, cmd.drawData.instanceCount, cmd.drawData.firstVertex, cmd.drawData.firstInstance);
-                break;
-            case CommandType::DrawIndexed:
-                drawIndexed(cmd.drawIndexedData.indexCount, cmd.drawIndexedData.instanceCount, cmd.drawIndexedData.firstIndex, cmd.drawIndexedData.vertexOffset, cmd.drawIndexedData.firstInstance);
-                break;
-            case CommandType::SetViewports:
-                setViewports(cmd.setViewportsData.firstIndex, cmd.setViewportsData.viewports, cmd.setViewportsData.viewportCount);
-                break;
-            case CommandType::SetScissorRects:
-                setScissorRects(cmd.setScissorRectsData.firstIndex, cmd.setScissorRectsData.rects, cmd.setScissorRectsData.rectCount);
-                break;
-            case CommandType::SetDepthBias:
-                setDepthBias(cmd.setDepthBiasData.constantFactor, cmd.setDepthBiasData.clamp, cmd.setDepthBiasData.slopeFactor);
-                break;
-            case CommandType::PipelineBarrierTexture:
-                pipelineBarrierTexture(*cmd.pipelineBarrierTexture.texture);
-                break;
-            default:
-                BZ_ASSERT_ALWAYS("Invalid Command Type!");
-                break;
+        commandCount = 0;
+    }
+
+    void CommandBuffer::end() {
+        BZ_ASSERT_VK(vkEndCommandBuffer(handle));
+    }
+
+    void CommandBuffer::beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments) {
+        auto &renderPass = framebuffer->getRenderPass();
+
+        //We know that the color attachments will be first and then the depthstencil
+        VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        uint32 i;
+        for (i = 0; i < renderPass->getColorAttachmentCount(); ++i) {
+            const auto &attDesc = renderPass->getColorAttachmentDescription(i);
+            if (attDesc.loadOperatorColorAndDepth == VK_ATTACHMENT_LOAD_OP_CLEAR || forceClearAttachments) {
+                clearValues[i].color = attDesc.clearValue.color;
+            }
+        }
+        if (renderPass->hasDepthStencilAttachment()) {
+            const auto attDesc = renderPass->getDepthStencilAttachmentDescription();
+            if (attDesc->loadOperatorStencil == VK_ATTACHMENT_LOAD_OP_CLEAR || forceClearAttachments) {
+                clearValues[i].depthStencil = attDesc->clearValue.depthStencil;
             }
         }
 
-        end();
+        VkRenderPassBeginInfo renderPassBeginInfo = {};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass = forceClearAttachments ? renderPass->getHandle().forceClear : renderPass->getHandle().original;
+        renderPassBeginInfo.framebuffer = framebuffer->getHandle();
+        renderPassBeginInfo.renderArea.offset = {};
+        renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(framebuffer->getDimensionsAndLayers().x), static_cast<uint32_t>(framebuffer->getDimensionsAndLayers().y) };
+        renderPassBeginInfo.clearValueCount = renderPass->getAttachmentCount();
+        renderPassBeginInfo.pClearValues = clearValues;
+        vkCmdBeginRenderPass(handle, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        commandCount++;
+    }
+
+    void CommandBuffer::endRenderPass() {
+        vkCmdEndRenderPass(handle);
+        commandCount++;
+    }
+
+    void CommandBuffer::nextSubPass() {
+        vkCmdNextSubpass(handle, VK_SUBPASS_CONTENTS_INLINE);
+        commandCount++;
+    }
+
+    void CommandBuffer::clearColorAttachments(const Ref<Framebuffer> &framebuffer, const VkClearColorValue &clearColor) {
+        VkRect2D vkRect;
+        vkRect.offset = { 0, 0 };
+        vkRect.extent = { static_cast<uint32>(framebuffer->getDimensionsAndLayers().x), static_cast<uint32>(framebuffer->getDimensionsAndLayers().y) };
+
+        VkClearRect clearRect;
+        clearRect.baseArrayLayer = 0;
+        clearRect.layerCount = 1;
+        clearRect.rect = vkRect;
+
+        VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        uint32 i = 0;
+        for (; i < framebuffer->getRenderPass()->getColorAttachmentCount(); i++) {
+            vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            vkClearAttchments[i].colorAttachment = i;
+            vkClearAttchments[i].clearValue.color = clearColor;
+        }
+
+        vkCmdClearAttachments(handle, i, vkClearAttchments, 1, &clearRect);
+        commandCount++;
+    }
+
+    void CommandBuffer::clearDepthStencilAttachment(const Ref<Framebuffer> &framebuffer, const VkClearDepthStencilValue &clearValue) {
+        VkRect2D vkRect;
+        vkRect.offset = { 0, 0 };
+        vkRect.extent = { static_cast<uint32>(framebuffer->getDimensionsAndLayers().x), static_cast<uint32>(framebuffer->getDimensionsAndLayers().y) };
+
+        VkClearRect clearRect;
+        clearRect.baseArrayLayer = 0;
+        clearRect.layerCount = 1;
+        clearRect.rect = vkRect;
+
+        VkClearAttachment vkClearAttchments;
+        vkClearAttchments.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        vkClearAttchments.colorAttachment = 0; //Irrelevant
+        vkClearAttchments.clearValue.depthStencil = clearValue;
+
+        vkCmdClearAttachments(handle, 1, &vkClearAttchments, 1, &clearRect);
+        commandCount++;
+    }
+
+    void CommandBuffer::bindBuffer(const Ref<Buffer> &buffer, uint32 offset) {
+        if (buffer->isVertex()) {
+            VkBuffer vkBuffers [] = { buffer->getHandle().bufferHandle };
+            VkDeviceSize offsets [] = { offset };
+            vkCmdBindVertexBuffers(handle, 0, 1, vkBuffers, offsets);
+        }
+        else if (buffer->isIndex()) {
+            VkBuffer vkBuffer = buffer->getHandle().bufferHandle;
+            VkIndexType type = buffer->getLayout().begin()->getDataType() == DataType::Uint16 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+            vkCmdBindIndexBuffer(handle, vkBuffer, offset, type);
+        }
+        commandCount++;
+    }
+
+    void CommandBuffer::bindPipelineState(const Ref<PipelineState> &pipelineState) {
+        vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState->getHandle().pipeline);
+        commandCount++;
+    }
+
+    void CommandBuffer::bindDescriptorSet(const Ref<DescriptorSet> &descriptorSet,
+        const Ref<PipelineState> &pipelineState, uint32 setIndex,
+        uint32 dynamicBufferOffsets [], uint32 dynamicBufferCount) {
+
+        VkDescriptorSet descSets[] = { descriptorSet->getHandle() };
+        vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineState->getHandle().pipelineLayout, setIndex,
+            1, descSets, dynamicBufferCount, dynamicBufferOffsets);
+        commandCount++;
+    }
+
+    void CommandBuffer::setPushConstants(const Ref<PipelineState> &pipelineState, VkShaderStageFlags shaderStageFlags, const void* data, uint32 size, uint32 offset) {
+        vkCmdPushConstants(handle, pipelineState->getHandle().pipelineLayout, shaderStageFlags, offset, size, data);
+        commandCount++;
+    }
+
+    void CommandBuffer::draw(uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance) {
+        vkCmdDraw(handle, vertexCount, instanceCount, firstVertex, firstInstance);
+        commandCount++;
+    }
+
+    void CommandBuffer::drawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance) {
+        vkCmdDrawIndexed(handle, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+        commandCount++;
+    }
+
+    void CommandBuffer::setViewports(uint32 firstIndex, const VkViewport viewports[], uint32 viewportCount) {
+        vkCmdSetViewport(handle, firstIndex, viewportCount, viewports);
+        commandCount++;
+    }
+
+    void CommandBuffer::setScissorRects(uint32 firstIndex, const VkRect2D rects[], uint32 rectCount) {
+        vkCmdSetScissor(handle, firstIndex, rectCount, rects);
+        commandCount++;
+    }
+
+    void CommandBuffer::setDepthBias(float constantFactor, float clamp, float slopeFactor) {
+        vkCmdSetDepthBias(handle, constantFactor, clamp, slopeFactor);
+        commandCount++;
+    }
+
+    void CommandBuffer::pipelineBarrierTexture(const Ref<Texture> &texture) {
+        GraphicsContext &context = getGraphicsContext();
+
+        VkImageMemoryBarrier imageMemoryBarrier = {};
+        imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+        if (texture->getFormat().isColor())
+            imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        else if (texture->getFormat().isDepth() || texture->getFormat().isStencil())
+            imageMemoryBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        //Making some assumptions here...
+        if (texture->getFormat().isColor())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        /*else if (texture.getFormat().isDepth())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+        else if (texture.getFormat().isStencil())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;*/
+        else if (texture->getFormat().isDepth() || texture->getFormat().isStencil())
+            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        uint32 graphicsQueueFamily = context.getDevice().getQueueContainer().graphics().getFamily().getIndex();
+        imageMemoryBarrier.srcQueueFamilyIndex = graphicsQueueFamily;
+        imageMemoryBarrier.dstQueueFamilyIndex = graphicsQueueFamily;
+
+        imageMemoryBarrier.image = texture->getHandle().imageHandle;
+
+        VkImageSubresourceRange subResourceRange;
+        subResourceRange.aspectMask = 0;
+        if (texture->getFormat().isColor())
+            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
+        if (texture->getFormat().isDepth())
+            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+        if (texture->getFormat().isStencil())
+            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        subResourceRange.baseMipLevel = 0;
+        subResourceRange.levelCount = texture->getMipLevels();
+        subResourceRange.baseArrayLayer = 0;
+        subResourceRange.layerCount = texture->getLayers();
+
+        imageMemoryBarrier.subresourceRange = subResourceRange;
+
+        VkPipelineStageFlags srcStageMask;
+        if (texture->getFormat().isColor())
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        else if (texture->getFormat().isDepth() || texture->getFormat().isStencil())
+            srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+        VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        vkCmdPipelineBarrier(handle, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+        commandCount++;
     }
 }

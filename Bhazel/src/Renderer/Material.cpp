@@ -3,6 +3,10 @@
 #include "Material.h"
 #include "Renderer.h"
 
+#include "Graphics/Texture.h"
+#include "Graphics/DescriptorSet.h"
+
+
 
 namespace BZ {
 
@@ -28,31 +32,31 @@ namespace BZ {
     Material::Material(const char *albedoTexturePath, const char *normalTexturePath,
                        const char *metallicTexturePath, const char *roughnessTexturePath,
                        const char *heightTexturePath, const char *aoTexturePath) {
-        auto albedoTexture = Texture2D::create(albedoTexturePath, TextureFormatEnum::R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        auto albedoTexture = Texture2D::create(albedoTexturePath, VK_FORMAT_R8G8B8A8_SRGB, MipmapData::Options::Generate);
         albedoTextureView = TextureView::create(albedoTexture);
 
         if (normalTexturePath) {
-            auto normalTexture = Texture2D::create(normalTexturePath, TextureFormatEnum::R8G8B8A8, MipmapData::Options::Generate);
+            auto normalTexture = Texture2D::create(normalTexturePath, VK_FORMAT_R8G8B8A8_UNORM, MipmapData::Options::Generate);
             normalTextureView = TextureView::create(normalTexture);
         }
 
         if (metallicTexturePath) {
-            auto metallicTexture = Texture2D::create(metallicTexturePath, TextureFormatEnum::R8, MipmapData::Options::Generate);
+            auto metallicTexture = Texture2D::create(metallicTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
             metallicTextureView = TextureView::create(metallicTexture);
         }
 
         if (roughnessTexturePath) {
-            auto roughnessTexture = Texture2D::create(roughnessTexturePath, TextureFormatEnum::R8, MipmapData::Options::Generate);
+            auto roughnessTexture = Texture2D::create(roughnessTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
             roughnessTextureView = TextureView::create(roughnessTexture);
         }
 
         if (heightTexturePath) {
-            auto heightTexture = Texture2D::create(heightTexturePath, TextureFormatEnum::R8, MipmapData::Options::Generate);
+            auto heightTexture = Texture2D::create(heightTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
             heightTextureView = TextureView::create(heightTexture);
         }
 
         if (aoTexturePath) {
-            auto aoTexture = Texture2D::create(aoTexturePath, TextureFormatEnum::R8, MipmapData::Options::Generate);
+            auto aoTexture = Texture2D::create(aoTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
             aoTextureView = TextureView::create(aoTexture);
         }
 

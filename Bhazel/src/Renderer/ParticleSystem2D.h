@@ -1,12 +1,9 @@
 #pragma once
 
-#include "Graphics/Texture.h"
 #include <glm/gtc/random.hpp>
 
 
 namespace BZ {
-
-    struct FrameStats;
 
     template <typename T>
     struct Range {
@@ -49,7 +46,12 @@ namespace BZ {
         glm::vec2 acceleration;
     };
 
+
+    /*-------------------------------------------------------------------------------------------*/
     class ParticleSystem2D;
+    struct FrameStats;
+    class Texture2D;
+
 
     class Emitter2D {
     public:
@@ -80,6 +82,8 @@ namespace BZ {
         void emitParticle();
     };
 
+
+    /*-------------------------------------------------------------------------------------------*/
     /*
     * Works on World coordinates. Meant to be rendered through a Renderer2D which can take a ParticleSystem2D and perform batching.
     */

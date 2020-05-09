@@ -5,7 +5,7 @@
 #include "VulkanDebug.h"
 
 
-#ifndef BZ_DIST
+#ifdef BZ_GRAPHICS_DEBUG
 
 namespace BZ {
     VKAPI_ATTR VkBool32 VKAPI_CALL vulkanCallbackFunction(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

@@ -44,7 +44,6 @@ namespace BZ {
         //outputStream.flush();
     }
 
-
     void Profiler::writeHeader() {
         outputStream << "{\"otherData\": {},\"traceEvents\":[";
         //outputStream.flush();
@@ -56,6 +55,7 @@ namespace BZ {
     }
 
 
+    /*-------------------------------------------------------------------------------------------*/
     ProfilerTimer::ProfilerTimer(const char *name) :
         name(name), 
         start(std::chrono::high_resolution_clock::now()) {

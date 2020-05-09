@@ -7,14 +7,18 @@ namespace filewatch {
 }
 
 namespace BZ {
+
     class Shader;
     class PipelineState;
 
-    constexpr float TIME_TO_DEBOUNCE_CALLBACK_S = 0.1f;
+    constexpr uint32 TIME_TO_DEBOUNCE_CALLBACK_MS = 200;
 
     class FileWatcher {
     public:
+        FileWatcher() = default;
         ~FileWatcher();
+
+        BZ_NON_COPYABLE(FileWatcher);
 
         void startWatching();
 

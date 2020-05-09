@@ -1,58 +1,18 @@
 #pragma once
 
+#include "Graphics/Internal/VulkanIncludes.h"
+#include "Graphics/GpuObject.h"
+
 #include "Graphics/Buffer.h"
 
 
 namespace BZ {
 
-    enum class CompareFunction {
-        Always, Never,
-        Less, LessOrEqual,
-        Greater, GreaterOrEqual,
-        Equal, NotEqual
-    };
-
-    enum class PrimitiveTopology {
-        Points,
-        Lines,
-        Triangles,
-        LineStrip,
-        TriangleStrip
-    };
-
-    template<typename T>
-    struct Rect {
-        T left, top, width, height;
-    };
-
-    struct Viewport {
-        Rect<float> rect = { 0, 0, 800, 600 };
-        float minDepth = 0.0f;
-        float maxDepth = 1.0f;
-    };
-
-    struct ScissorRect {
-        Rect<uint32> rect = { 0 };
-    };
-
-    enum class PolygonMode {
-        Fill,
-        Line,
-        Point
-    };
-
-    enum class CullMode {
-        None,
-        Front,
-        Back,
-        FrontAndBack
-    };
-
     struct RasterizerState {
         bool enableDepthClamp = false;
         bool enableRasterizerDiscard = false;
-        PolygonMode polygonMode = PolygonMode::Fill;
-        CullMode cullMode = CullMode::None;
+        VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL;
+        VkCullModeFlags cullMode = VK_CULL_MODE_NONE;
         bool frontFaceCounterClockwise = true;
         bool enableDepthBias = false;
         float depthBiasConstantFactor = 0.0f;
@@ -62,36 +22,25 @@ namespace BZ {
     };
 
     struct MultisampleState {
-        uint32 sampleCount = 1; //Multiple of two
+        VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
         bool enableSampleShading = false;
         float minSampleShading = 0.0f;
-        //TODO missing sample mask
+        //VkSampleMask sampleMask; TODO
         bool enableAlphaToCoverage = false;
         bool enableAlphaToOne = false;
     };
 
-    enum class StencilOperation {
-        Keep,
-        Zero,
-        Replace,
-        IncrementAndClamp,
-        DecrementAndClamp,
-        IncrementAndWrap,
-        DecrementAndWrap,
-        Invert
-    };
-
     struct StencilOperationState {
-        StencilOperation failOp = StencilOperation::Keep;
-        StencilOperation depthFailOp = StencilOperation::Keep;
-        StencilOperation passOp = StencilOperation::Keep;
-        CompareFunction compareFunction = CompareFunction::Never;
+        VkStencilOp failOp = VK_STENCIL_OP_KEEP;
+        VkStencilOp depthFailOp = VK_STENCIL_OP_KEEP;
+        VkStencilOp passOp = VK_STENCIL_OP_KEEP;
+        VkCompareOp compareOp = VK_COMPARE_OP_NEVER;
     };
 
     struct DepthStencilState {
         bool enableDepthTest = false;
         bool enableDepthWrite = false;
-        CompareFunction depthCompareFunction = CompareFunction::Never;
+        VkCompareOp depthCompareOp = VK_COMPARE_OP_NEVER;
         bool enableDepthBoundsTest = false;
         bool enableStencilTest = false;
         StencilOperationState frontStencilOperation;
@@ -100,60 +49,15 @@ namespace BZ {
         float maxDepthBounds = 0.0f;
     };
 
-    enum class BlendingFactor {
-        Zero,
-        One,
-        SourceColor,
-        OneMinusSourceColor,
-        DestinationColor,
-        OneMinusDestinationColor,
-        SourceAlpha,
-        OneMinusSourceAlpha,
-        DestinationAlpha,
-        OneMinusDestinationAlpha,
-        ConstantColor,
-        OneMinusConstantColor,
-        ConstantAlpha,
-        OneMinusConstantAlpha,
-        AlphaSaturate, //(R, G, B) = (f, f, f) with f = min(As, 1 - Ad). A = 1
-
-        //Dual Source Blending (Fragment shader outputting 2 colors to the same buffer)
-        Source1Color,
-        OneMinusSource1Color,
-        Source1Alpha,
-        OneMinusSource1Alpha
-    };
-
-    enum class BlendingOperation {
-        Add,
-        SourceMinusDestination,
-        DestinationMinusSource,
-
-        //Ignores BlendingFunction
-        Min,
-        Max
-    };
-
-    enum class ColorMaskFlag {
-        Disable = 0,
-        Red = 1,
-        Green = 2,
-        Blue = 4,
-        Alpha = 8,
-        All = Red | Green | Blue | Alpha
-    };
-
-    EnumClassFlagOperators(ColorMaskFlag);
-
     struct BlendingStateAttachment {
         bool enableBlending = false;
-        BlendingFactor srcColorBlendingFactor = BlendingFactor::SourceAlpha;
-        BlendingFactor dstColorBlendingFactor = BlendingFactor::OneMinusSourceAlpha;
-        BlendingOperation colorBlendingOperation = BlendingOperation::Add;
-        BlendingFactor srcAlphaBlendingFactor = BlendingFactor::One;
-        BlendingFactor dstAlphaBlendingFactor = BlendingFactor::One;
-        BlendingOperation alphaBlendingOperation = BlendingOperation::Add;
-        uint8 writeMask = flagsToMask(ColorMaskFlag::All);
+        VkBlendFactor srcColorBlendingFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        VkBlendFactor dstColorBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        VkBlendOp colorBlendingOperation = VK_BLEND_OP_ADD;
+        VkBlendFactor srcAlphaBlendingFactor = VK_BLEND_FACTOR_ONE;
+        VkBlendFactor dstAlphaBlendingFactor = VK_BLEND_FACTOR_ONE;
+        VkBlendOp alphaBlendingOperation = VK_BLEND_OP_ADD;
+        VkColorComponentFlags writeMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     };
 
     struct BlendingState {
@@ -162,24 +66,6 @@ namespace BZ {
         //LogicOperation logicOperation; 
         std::vector<BlendingStateAttachment> attachmentBlendingStates;
         glm::vec4 blendingConstants = {};
-    };
-
-    enum class DynamicState {
-        Viewport,
-        Scissor,
-        LineWidth,
-        DepthBias,
-        BlendConstants,
-        DepthBounds,
-        StencilCompareMask,
-        StencilWriteMask,
-        StencilReference
-    };
-
-    struct PushConstantDesc {
-        uint8 shaderStageMask;
-        uint32 offset;
-        uint32 size;
     };
 
     class Shader;
@@ -192,37 +78,41 @@ namespace BZ {
         DataLayout dataLayout;
 
         Ref<Shader> shader;
-        PrimitiveTopology primitiveTopology;
+        VkPrimitiveTopology primitiveTopology;
         std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
-        std::vector<PushConstantDesc> pushConstantDescs;
-        std::vector<Viewport> viewports;
-        std::vector<ScissorRect> scissorRects;
+        std::vector<VkPushConstantRange> pushConstants;
+        std::vector<VkViewport> viewports;
+        std::vector<VkRect2D> scissorRects;
         RasterizerState rasterizerState;
         MultisampleState multiSampleState;
         DepthStencilState depthStencilState;
         BlendingState blendingState;
-        std::vector<DynamicState> dynamicStates;
+        std::vector<VkDynamicState> dynamicStates;
         Ref<RenderPass> renderPass;
         uint32 subPassIndex = 0;
     };
 
-    class PipelineState {
+    struct PipelineStateHandles {
+        VkPipeline pipeline;
+        VkPipelineLayout pipelineLayout;
+    };
+
+    class PipelineState : public GpuObject<PipelineStateHandles> {
     public:
         static Ref<PipelineState> create(PipelineStateData &data);
+
+        explicit PipelineState(PipelineStateData &inData);
+        ~PipelineState();
 
         const PipelineStateData& getData() const { return data; }
 
         //Used with the FileWatcher for Shader hot-reloading.
         void reload();
 
-    protected:
-        explicit PipelineState(PipelineStateData &inData);
-        virtual ~PipelineState() = default;
+    private:
+        void init();
+        void destroy();
 
-        virtual void init() = 0;
-        virtual void destroy() = 0;
-
-    protected:
         PipelineStateData data;
     };
 }

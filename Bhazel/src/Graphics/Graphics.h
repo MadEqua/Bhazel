@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Graphics/Internal/VulkanIncludes.h"
+
 
 namespace BZ {
 
@@ -8,8 +10,6 @@ namespace BZ {
     class PipelineState;
     class DescriptorSet;
     union ClearValues;
-    struct Viewport;
-    struct ScissorRect;
     struct FrameStats;
     class Texture;
     
@@ -38,10 +38,10 @@ namespace BZ {
 
         static void nextSubPass(uint32 commandBufferId);
 
-        static void clearColorAttachments(uint32 commandBufferId, const ClearValues &clearColor);
-        static void clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearColor);
-        static void clearDepthStencilAttachment(uint32 commandBufferId, const ClearValues &clearValue);
-        static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const ClearValues &clearValue);
+        static void clearColorAttachments(uint32 commandBufferId, const VkClearColorValue &clearColor);
+        static void clearColorAttachments(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const VkClearColorValue &clearColor);
+        static void clearDepthStencilAttachment(uint32 commandBufferId, const VkClearDepthStencilValue &clearValue);
+        static void clearDepthStencilAttachment(uint32 commandBufferId, const Ref<Framebuffer> &framebuffer, const VkClearDepthStencilValue &clearValue);
 
         //Vertex or index buffer
         static void bindBuffer(uint32 commandBufferId, const Ref<Buffer> &buffer, uint32 offset);
@@ -59,8 +59,8 @@ namespace BZ {
         static void drawIndexed(uint32 commandBufferId, uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);
 
         //Pipeline dynamic state changes
-        static void setViewports(uint32 commandBufferId, uint32 firstIndex, const Viewport viewports[], uint32 viewportCount);
-        static void setScissorRects(uint32 commandBufferId, uint32 firstIndex, const ScissorRect rects[], uint32 rectCount);
+        static void setViewports(uint32 commandBufferId, uint32 firstIndex, const VkViewport viewports[], uint32 viewportCount);
+        static void setScissorRects(uint32 commandBufferId, uint32 firstIndex, const VkRect2D rects[], uint32 rectCount);
         static void setDepthBias(uint32 commandBufferId, float constantFactor, float clamp, float slopeFactor);
 
         //Sync

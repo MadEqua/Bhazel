@@ -1,23 +1,15 @@
 #include "bzpch.h"
 
 #include "Framebuffer.h"
-#include "Graphics/Graphics.h"
-#include "Graphics/Texture.h"
-#include "Graphics/RenderPass.h"
 
-#include "Platform/Vulkan/VulkanFramebuffer.h"
+#include "Graphics/RenderPass.h"
+#include "Graphics/Texture.h"
 
 
 namespace BZ {
 
     Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) {
-        switch (Graphics::api) {
-        case Graphics::API::Vulkan:
-            return MakeRef<VulkanFramebuffer>(renderPass, textureViews, dimensionsAndLayers);
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return nullptr;
-        }
+        return MakeRef<Framebuffer>(renderPass, textureViews, dimensionsAndLayers);
     }
 
     Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) :
@@ -41,5 +33,33 @@ namespace BZ {
                 depthStencilTextureView = texView;
             }
         }
+
+        std::vector<VkImageView> vkImageViews(textureViews.size());
+
+        //First color attachments, then depthstencil, if applicable.
+        uint32 i = 0;
+        for (const auto &colorTexView : colorTextureViews) {
+            vkImageViews[i] = colorTexView->getHandle();
+            i++;
+        }
+
+        if (depthStencilTextureView) {
+            vkImageViews[i] = depthStencilTextureView->getHandle();
+        }
+
+        VkFramebufferCreateInfo framebufferInfo = {};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass->getHandle().original;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(vkImageViews.size());
+        framebufferInfo.pAttachments = vkImageViews.data();
+        framebufferInfo.width = dimensionsAndLayers.x;
+        framebufferInfo.height = dimensionsAndLayers.y;
+        framebufferInfo.layers = dimensionsAndLayers.z;
+
+        BZ_ASSERT_VK(vkCreateFramebuffer(getVkDevice(), &framebufferInfo, nullptr, &handle));
+    }
+
+    Framebuffer::~Framebuffer() {
+        vkDestroyFramebuffer(getVkDevice(), handle, nullptr);
     }
 }

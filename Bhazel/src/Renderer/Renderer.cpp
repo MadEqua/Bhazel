@@ -66,10 +66,10 @@ namespace BZ {
     constexpr uint32 SHADOW_MAP_SIZE = 1024;
 
     static DataLayout vertexDataLayout = {
-        { DataType::Float32, DataElements::Vec3, "POSITION" },
-        { DataType::Float32, DataElements::Vec3, "NORMAL" },
-        { DataType::Float32, DataElements::Vec4, "TANGENT" },
-        { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
+        { DataType::Float32, DataElements::Vec3 },
+        { DataType::Float32, DataElements::Vec3 },
+        { DataType::Float32, DataElements::Vec4 },
+        { DataType::Uint16, DataElements::Vec2, true },
     };
 
     static DataLayout indexDataLayout = {
@@ -139,7 +139,7 @@ namespace BZ {
 
         rendererData.commandBufferId = -1;
 
-        rendererData.constantBuffer = Buffer::create(BufferType::Constant, 
+        rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             SCENE_CONSTANT_BUFFER_SIZE + PASS_CONSTANT_BUFFER_SIZE + MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE,
             MemoryType::CpuToGpu);
 
@@ -148,35 +148,30 @@ namespace BZ {
         rendererData.materialConstantBufferPtr = rendererData.sceneConstantBufferPtr + MATERIAL_CONSTANT_BUFFER_OFFSET;
         rendererData.entityConstantBufferPtr = rendererData.sceneConstantBufferPtr + ENTITY_CONSTANT_BUFFER_OFFSET;
 
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        rendererData.globalDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.globalDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
-        descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::All), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), MAX_DIR_LIGHTS_PER_SCENE);
-        rendererData.sceneDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.sceneDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_ALL, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, MAX_DIR_LIGHTS_PER_SCENE } });
 
-        descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex | ShaderStageFlag::Geometry), 1);
-        rendererData.passDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.passDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, 1 } });
 
-        descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Fragment), 1);
-        //Albedo, Normal, Metallic, Roughness, Height and AO.
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        rendererData.materialDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.materialDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          //Albedo, Normal, Metallic, Roughness, Height and AO.
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
-        descriptorSetLayoutBuilder.reset();
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex | ShaderStageFlag::Geometry), 1);
-        rendererData.entityDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.entityDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, 1 } });
 
         rendererData.entityDescriptorSet = DescriptorSet::create(rendererData.entityDescriptorSetLayout);
         rendererData.entityDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, ENTITY_CONSTANT_BUFFER_OFFSET, sizeof(EntityConstantBufferData));
@@ -193,24 +188,20 @@ namespace BZ {
     void Renderer::initDepthPassData() {
         BZ_PROFILE_FUNCTION();
 
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex | ShaderStageFlag::Geometry), SHADOW_MAPPING_CASCADE_COUNT);
-        rendererData.passDescriptorSetLayoutForDepthPass = descriptorSetLayoutBuilder.build();
+        rendererData.passDescriptorSetLayoutForDepthPass =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, SHADOW_MAPPING_CASCADE_COUNT } });
 
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexDataLayout;
 
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("DepthPass");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/DepthPassVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Geometry, "Bhazel/shaders/bin/DepthPassGeo.spv");
-        pipelineStateData.shader = shaderBuilder.build();
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/DepthPassVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/DepthPassGeo.spv", VK_SHADER_STAGE_GEOMETRY_BIT } });
 
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
+        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
                                                    rendererData.passDescriptorSetLayoutForDepthPass, rendererData.materialDescriptorSetLayout,
                                                    rendererData.entityDescriptorSetLayout };
-        pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
+        pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
 
         //To disable clipping on z axis. Geometry behind "light camera" will still cast shadows.
@@ -224,25 +215,25 @@ namespace BZ {
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
         depthStencilState.enableDepthWrite = true;
-        depthStencilState.depthCompareFunction = CompareFunction::Less;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
         pipelineStateData.depthStencilState = depthStencilState;
 
-        pipelineStateData.dynamicStates = { DynamicState::DepthBias };
+        pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_DEPTH_BIAS };
 
         AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = TextureFormatEnum::D32_SFLOAT;
-        depthStencilAttachmentDesc.samples = 1;
-        depthStencilAttachmentDesc.loadOperatorColorAndDepth = LoadOperation::Clear;
-        depthStencilAttachmentDesc.storeOperatorColorAndDepth = StoreOperation::Store;
-        depthStencilAttachmentDesc.loadOperatorStencil = LoadOperation::DontCare;
-        depthStencilAttachmentDesc.storeOperatorStencil = StoreOperation::DontCare;
-        depthStencilAttachmentDesc.initialLayout = TextureLayout::Undefined;
-        depthStencilAttachmentDesc.finalLayout = TextureLayout::ShaderReadOnlyOptimal;
-        depthStencilAttachmentDesc.clearValues.floating.x = 1.0f;
-        depthStencilAttachmentDesc.clearValues.integer.y = 0;
+        depthStencilAttachmentDesc.format = VK_FORMAT_D32_SFLOAT;
+        depthStencilAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthStencilAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthStencilAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        depthStencilAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        depthStencilAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthStencilAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depthStencilAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        depthStencilAttachmentDesc.clearValue.depthStencil.depth = 1.0f;
+        depthStencilAttachmentDesc.clearValue.depthStencil.stencil = 0;
 
         SubPassDescription subPassDesc;
-        subPassDesc.depthStencilAttachmentsRef = { 0, TextureLayout::DepthStencilAttachmentOptimal };
+        subPassDesc.depthStencilAttachmentsRef = { 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
         //SubPassDependency dependency1;
         //dependency1.srcSubPassIndex = -1;
@@ -255,12 +246,12 @@ namespace BZ {
 
         SubPassDependency dependency2;
         dependency2.srcSubPassIndex = 0;
-        dependency2.dstSubPassIndex = -1;
-        dependency2.srcStageMask = flagsToMask(PipelineStageFlag::EarlyFragmentTests | PipelineStageFlag::LateFragmentTests);
-        dependency2.dstStageMask = flagsToMask(PipelineStageFlag::FragmentShader);
-        dependency2.srcAccessMask = flagsToMask(AccessFlag::DepthStencilAttachmentWrite);
-        dependency2.dstAccessMask = flagsToMask(AccessFlag::ShaderRead);
-        dependency2.dependencyFlags = flagsToMask(DependencyFlag::ByRegion);
+        dependency2.dstSubPassIndex = VK_SUBPASS_EXTERNAL;
+        dependency2.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependency2.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependency2.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependency2.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
         rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc }, { dependency2 });
         pipelineStateData.renderPass = rendererData.depthRenderPass;
@@ -280,8 +271,9 @@ namespace BZ {
         rendererData.passDescriptorSetForDepthPass->setConstantBuffers(constantBuffers, SHADOW_MAPPING_CASCADE_COUNT, 0, 0, offsets, sizes);
 
         Sampler::Builder samplerBuilder;
-        samplerBuilder.setAddressModeAll(AddressMode::ClampToBorder);
-        samplerBuilder.enableCompare(CompareFunction::Less);
+        samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+        samplerBuilder.setBorderColor(VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE);
+        samplerBuilder.enableCompare(VK_COMPARE_OP_LESS);
         rendererData.shadowSampler = samplerBuilder.build();
     }
 
@@ -291,31 +283,28 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexDataLayout;
 
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("DefaultRenderer");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/RendererVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/RendererFrag.spv");
-        pipelineStateData.shader = shaderBuilder.build();
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/RendererVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/RendererFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
+        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
                                                    rendererData.passDescriptorSetLayout, rendererData.materialDescriptorSetLayout,
                                                    rendererData.entityDescriptorSetLayout };
 
-        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
 
         RasterizerState rasterizerState;
-        rasterizerState.cullMode = CullMode::Back;
+        rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
         rasterizerState.frontFaceCounterClockwise = true;
         pipelineStateData.rasterizerState = rasterizerState;
 
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
         depthStencilState.enableDepthWrite = true;
-        depthStencilState.depthCompareFunction = CompareFunction::Less;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
         pipelineStateData.depthStencilState = depthStencilState;
 
         BlendingState blendingState;
@@ -323,16 +312,16 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getMainRenderPass();
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getMainRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.defaultPipelineState = PipelineState::create(pipelineStateData);
 
         Sampler::Builder samplerBuilder;
-        samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
+        samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
         rendererData.brdfLookupSampler = samplerBuilder.build();
 
-        auto brdfLookupTexRef = Texture2D::create(reinterpret_cast<const byte*>(brdfLut), brdfLutSize, brdfLutSize, TextureFormatEnum::R16G16_SFLOAT, MipmapData::Options::DoNothing);
+        auto brdfLookupTexRef = Texture2D::create(reinterpret_cast<const byte*>(brdfLut), brdfLutSize, brdfLutSize, VK_FORMAT_R16G16_SFLOAT, MipmapData::Options::DoNothing);
         rendererData.brdfLookupTexture = TextureView::create(brdfLookupTexRef);
 
         rendererData.globalDescriptorSet = DescriptorSet::create(rendererData.globalDescriptorSetLayout);
@@ -350,23 +339,19 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = {};
 
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("PostProcess");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/FullScreenQuadVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/ToneMapFrag.spv");
-        pipelineStateData.shader = shaderBuilder.build();
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/ToneMapFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
+        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        rendererData.postProcessPassDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.postProcessPassDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1} });
 
         pipelineStateData.descriptorSetLayouts = { rendererData.postProcessPassDescriptorSetLayout };
 
-        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
 
         BlendingState blendingState;
@@ -374,13 +359,13 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.postProcessPipelineState = PipelineState::create(pipelineStateData);
 
         rendererData.postProcessDescriptorSet = DescriptorSet::create(rendererData.postProcessPassDescriptorSetLayout);
-        rendererData.postProcessDescriptorSet->setCombinedTextureSampler(Application::getInstance().getGraphicsContext().getColorTextureView(),
+        rendererData.postProcessDescriptorSet->setCombinedTextureSampler(Application::get().getGraphicsContext().getColorTextureView(),
             rendererData.defaultSampler, 0);
     }
 
@@ -388,24 +373,21 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexDataLayout;
 
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("SkyBox");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/SkyBoxVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/SkyBoxFrag.spv");
-        pipelineStateData.shader = shaderBuilder.build();
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/SkyBoxVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/SkyBoxFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
+        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
                                                    rendererData.passDescriptorSetLayout, rendererData.materialDescriptorSetLayout,
                                                    rendererData.entityDescriptorSetLayout };
 
-        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
 
         RasterizerState rasterizerState;
-        rasterizerState.cullMode = CullMode::Back;
+        rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
         rasterizerState.frontFaceCounterClockwise = true;
         pipelineStateData.rasterizerState = rasterizerState;
 
@@ -414,7 +396,7 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getMainRenderPass();
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getMainRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
@@ -510,7 +492,7 @@ namespace BZ {
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
-        Graphics::beginRenderPass(rendererData.commandBufferId, Application::getInstance().getGraphicsContext().getMainFramebuffer());
+        Graphics::beginRenderPass(rendererData.commandBufferId, Application::get().getGraphicsContext().getMainFramebuffer());
 
         if (scene.hasSkyBox()) {
             Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.skyBoxPipelineState);
@@ -525,7 +507,7 @@ namespace BZ {
     void Renderer::postProcessPass() {
         BZ_PROFILE_FUNCTION();
 
-        Graphics::beginRenderPass(rendererData.commandBufferId, Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer());
+        Graphics::beginRenderPass(rendererData.commandBufferId, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
         Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.postProcessPipelineState);
         Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
         Graphics::draw(rendererData.commandBufferId, 3, 1, 0, 0);

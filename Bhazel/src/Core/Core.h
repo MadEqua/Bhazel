@@ -6,6 +6,7 @@
     #define BZ_ASSERTS
     #define BZ_FULL_LOGGER
     #define BZ_HOT_RELOAD_SHADERS
+    #define BZ_GRAPHICS_DEBUG
 
     #if ENABLE_PROFILER
         #define BZ_PROFILER
@@ -13,8 +14,9 @@
 #endif
 
 
-#define BIT(x) (1 << x)
+#define BZ_BIT(x) (1 << x)
 #define BZ_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
+#define BZ_FLAG_CHECK(mask, flag) static_cast<bool>(mask & flag)
 
 namespace BZ {
 
@@ -31,14 +33,14 @@ namespace BZ {
     inline Ref<T> MakeRef(Args&&... args) { return std::make_shared<T>(std::forward<Args>(args)...); }
 
     template<typename T>
+    inline Ref<T> MakeRef(T *obj) { return std::shared_ptr<T>(obj); }
+
+    template<typename T>
     inline Ref<T> MakeRefNull() { return std::shared_ptr<T>(); }
 }
 
-#define EnumClassFlagOperators(e_) \
-    inline e_ operator& (e_ a, e_ b){return static_cast<e_>(static_cast<int>(a)& static_cast<int>(b));} \
-    inline e_ operator| (e_ a, e_ b){return static_cast<e_>(static_cast<int>(a)| static_cast<int>(b));} \
-    inline e_& operator|= (e_& a, e_ b){a = a | b; return a;}; \
-    inline e_& operator&= (e_& a, e_ b) { a = a & b; return a; }; \
-    inline e_  operator~ (e_ a) { return static_cast<e_>(~static_cast<int>(a));} \
-    inline bool isSet(uint32 mask, e_ flag) { return (mask & static_cast<uint32>(flag));} \
-    inline uint32 flagsToMask(e_ e) {return static_cast<uint32>(e);}
+#define BZ_NON_COPYABLE(T) \
+    T(const T&) = delete; \
+    void operator=(const T&) = delete; \
+    T(const T&&) = delete; \
+    void operator=(const T&&) = delete;

@@ -31,23 +31,23 @@ namespace BZ {
     constexpr uint32 MAX_RENDERER2D_SPRITES = 100'000;
 
     static DataLayout vertexLayout = {
-        { DataType::Float32, DataElements::Vec2, "POSITION" },
-        { DataType::Uint16, DataElements::Vec2, "TEXCOORD", true },
-        { DataType::Uint32, DataElements::Scalar, "COLOR"},
+        { DataType::Float32, DataElements::Vec2 },
+        { DataType::Uint16, DataElements::Vec2, true },
+        { DataType::Uint32, DataElements::Scalar },
     };
 
     static DataLayout indexLayout = {
         {DataType::Uint32, DataElements::Scalar, ""},
     };
 
-    struct Vertex {
+    struct VertexData {
         float pos[2];
         uint16 texCoord[2];
         uint32 colorAndAlpha;
     };
 
     constexpr uint16 UINT16_MAX_VALUE = 0xffff;
-    static Vertex quadVertices[4] = {
+    static VertexData quadVertices[4] = {
         {
             { -0.5f, -0.5f },
             { 0, 0 },
@@ -135,47 +135,41 @@ namespace BZ {
 
         rendererData.commandBufferId = -1;
 
-        Shader::Builder shaderBuilder;
-        shaderBuilder.setName("Renderer2D");
-        shaderBuilder.fromBinaryFile(ShaderStage::Vertex, "Bhazel/shaders/bin/Renderer2DVert.spv");
-        shaderBuilder.fromBinaryFile(ShaderStage::Fragment, "Bhazel/shaders/bin/Renderer2DFrag.spv");
-
         PipelineStateData pipelineStateData;
-        pipelineStateData.shader = shaderBuilder.build();
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/Renderer2DVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/Renderer2DFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
-        rendererData.vertexBuffer = Buffer::create(BufferType::Vertex, 4 * sizeof(Vertex) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, vertexLayout);
-        rendererData.indexBuffer = Buffer::create(BufferType::Index, 6 * sizeof(uint32) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, indexLayout);
+        rendererData.vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 4 * sizeof(VertexData) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, vertexLayout);
+        rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 6 * sizeof(uint32) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, indexLayout);
 
         rendererData.vertexBufferPtr = rendererData.vertexBuffer->map(0);
         rendererData.indexBufferPtr = rendererData.indexBuffer->map(0);
 
         Sampler::Builder samplerBuilder;
-        samplerBuilder.setAddressModeAll(AddressMode::ClampToEdge);
+        samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
         rendererData.sampler = samplerBuilder.build();
 
         byte whiteTextureData[] = {255, 255, 255, 255};
-        rendererData.whiteTexture = Texture2D::create(whiteTextureData, 1, 1, TextureFormatEnum::R8G8B8A8, MipmapData::Options::DoNothing);
+        rendererData.whiteTexture = Texture2D::create(whiteTextureData, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, MipmapData::Options::DoNothing);
 
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder;
-        descriptorSetLayoutBuilder.addDescriptorDesc(DescriptorType::ConstantBufferDynamic, flagsToMask(ShaderStageFlag::Vertex), 1);
-        rendererData.constantsDescriptorSetLayout = descriptorSetLayoutBuilder.build();
+        rendererData.constantsDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1 } });
 
-        DescriptorSetLayout::Builder descriptorSetLayoutBuilder2;
-        descriptorSetLayoutBuilder2.addDescriptorDesc(DescriptorType::CombinedTextureSampler, flagsToMask(ShaderStageFlag::Fragment), 1);
-        rendererData.textureDescriptorSetLayout = descriptorSetLayoutBuilder2.build();
+        rendererData.textureDescriptorSetLayout =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
-        const auto WINDOW_DIMS_INT = Application::getInstance().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::getInstance().getWindow().getDimensionsFloat();
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
 
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingStateAttachment.enableBlending = true;
-        blendingStateAttachment.srcColorBlendingFactor = BlendingFactor::SourceAlpha;
-        blendingStateAttachment.dstColorBlendingFactor = BlendingFactor::OneMinusSourceAlpha;
-        blendingStateAttachment.colorBlendingOperation = BlendingOperation::Add;
-        blendingStateAttachment.srcAlphaBlendingFactor = BlendingFactor::SourceAlpha;
-        blendingStateAttachment.dstAlphaBlendingFactor = BlendingFactor::OneMinusSourceAlpha;
-        blendingStateAttachment.alphaBlendingOperation = BlendingOperation::Add;
+        blendingStateAttachment.srcColorBlendingFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        blendingStateAttachment.dstColorBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blendingStateAttachment.colorBlendingOperation = VK_BLEND_OP_ADD;
+        blendingStateAttachment.srcAlphaBlendingFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        blendingStateAttachment.dstAlphaBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blendingStateAttachment.alphaBlendingOperation = VK_BLEND_OP_ADD;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
         pipelineStateData.dataLayout = vertexLayout;
@@ -188,18 +182,18 @@ namespace BZ {
 
         //pipelineStateData.pushConstantDescs = { pushConstantDesc };
 
-        pipelineStateData.primitiveTopology = PrimitiveTopology::Triangles;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y } };
+        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.descriptorSetLayouts = { rendererData.constantsDescriptorSetLayout, rendererData.textureDescriptorSetLayout };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::getInstance().getGraphicsContext().getSwapchainRenderPass();
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
 
-        rendererData.constantBuffer = Buffer::create(BufferType::Constant, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
+        rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
         rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
 
         rendererData.constantsDescriptorSet = DescriptorSet::create(rendererData.constantsDescriptorSetLayout);
@@ -234,7 +228,7 @@ namespace BZ {
         memset(&rendererData.stats, 0, sizeof(Renderer2DStats));
 
         rendererData.commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginRenderPass(rendererData.commandBufferId, Application::getInstance().getGraphicsContext().getCurrentSwapchainFramebuffer());
+        Graphics::beginRenderPass(rendererData.commandBufferId, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
 
         glm::mat4 viewProjMatrix = camera.getProjectionMatrix() * camera.getViewMatrix();
         memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
@@ -275,7 +269,7 @@ namespace BZ {
                     float c = glm::cos(glm::radians(spr.rotationDeg));
                     float s = glm::sin(glm::radians(spr.rotationDeg));
 
-                    Vertex vertices[4];
+                    VertexData vertices[4];
                     uint32 indices[6];
                     uint32 packedColor = Utils::packColor(spr.tintAndAlpha);
                     for (int i = 0; i < 4; ++i) {

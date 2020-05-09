@@ -8,7 +8,7 @@
 
 namespace BZ {
 
-    bool IniParser::parse(const std::string &filePath) {
+    bool IniParser::parse(const char *filePath) {
         std::ifstream inFile(filePath, std::ios::in);
         if(!inFile.is_open()) {
             BZ_LOG_CORE_ERROR("IniParser failed opening file {0}.", filePath);

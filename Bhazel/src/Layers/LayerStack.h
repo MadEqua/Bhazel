@@ -16,6 +16,8 @@ namespace BZ {
         void popLayer(Layer *layer);
         void popOverlay(Layer *overlay);
 
+        void clear();
+
         void onGraphicsContextCreated();
         void onUpdate(const FrameStats& frameStats);
         void onImGuiRender(const FrameStats& frameStats);

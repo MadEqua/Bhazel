@@ -10,6 +10,7 @@ namespace BZ {
     template uint32 IniSettings::getFieldAsBasicType<uint32>(const std::string &fieldName, uint32 defaultValue) const;
     template float IniSettings::getFieldAsBasicType<float>(const std::string &fieldName, float defaultValue) const;
 
+
     bool IniSettings::containsField(const std::string &name) const {
         return fields.find(name) != fields.end();
     }

@@ -1,38 +1,33 @@
 #include "bzpch.h"
 
-#include "VulkanDevice.h"
-#include "Platform/Vulkan/Internal/VulkanSurface.h"
-#include "Platform/Vulkan/Internal/VulkanConversions.h"
+#include "Device.h"
+
+#include "Graphics/Internal/Surface.h"
+#include "Graphics/Internal/Instance.h"
 
 
 namespace BZ {
 
-    /*VulkanPhysicalDevice::VulkanPhysicalDevice(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions) {
-        init(instance, surface, requiredDeviceExtensions);
-    }*/
-
-    void VulkanPhysicalDevice::init(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions) {
-        BZ_ASSERT_CORE(physicalDevice == VK_NULL_HANDLE, "PhysicalDevice is already inited!");
-
+    void PhysicalDevice::init(const Instance &instance, const Surface &surface, const std::vector<const char *> &requiredDeviceExtensions) {
         uint32_t deviceCount = 0;
-        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
+        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance.getHandle(), &deviceCount, nullptr));
 
-        std::vector<VkPhysicalDevice> devices(deviceCount);
-        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
-        for(const auto &device : devices) {
-            queueFamilyContainer = getQueueFamilies(device, surface.getNativeHandle());
-            swapChainSupportDetails = querySwapChainSupport(device, surface.getNativeHandle());
+        std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
+        BZ_ASSERT_VK(vkEnumeratePhysicalDevices(instance.getHandle(), &deviceCount, physicalDevices.data()));
+        for(const auto &physicalDevice : physicalDevices) {
+            queueFamilyContainer = getQueueFamilies(physicalDevice, surface.getHandle());
+            swapChainSupportDetails = querySwapChainSupport(physicalDevice, surface.getHandle());
 
-            if(isPhysicalDeviceSuitable(device, swapChainSupportDetails, queueFamilyContainer, requiredDeviceExtensions)) {
-                physicalDevice = device;
+            if(isPhysicalDeviceSuitable(physicalDevice, swapChainSupportDetails, queueFamilyContainer, requiredDeviceExtensions)) {
+                handle = physicalDevice;
                 break;
             }
         }
 
-        BZ_ASSERT_CORE(physicalDevice != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
+        BZ_ASSERT_CORE(handle != VK_NULL_HANDLE, "Couldn't find a suitable physical device!");
 
         VkPhysicalDeviceProperties physicalDeviceProperties;
-        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+        vkGetPhysicalDeviceProperties(handle, &physicalDeviceProperties);
         BZ_LOG_CORE_INFO("Vulkan PhysicalDevice selected:");
         BZ_LOG_CORE_INFO("  Device Name: {}.", physicalDeviceProperties.deviceName);
         BZ_LOG_CORE_INFO("  Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion), VK_VERSION_MINOR(physicalDeviceProperties.apiVersion), VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
@@ -41,7 +36,7 @@ namespace BZ {
         BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
     }
 
-    QueueFamilyContainer VulkanPhysicalDevice::getQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
+    QueueFamilyContainer PhysicalDevice::getQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
         QueueFamilyContainer queueFamilyContainer;
 
         uint32_t queueFamilyCount = 0;
@@ -49,7 +44,7 @@ namespace BZ {
 
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-        int idx = 0, propsIdx = 0;
+        uint32 idx = 0;
         for(const auto &vkQueueFamilyProps : queueFamilies) {
             std::vector<QueueProperty> properties;
 
@@ -66,7 +61,7 @@ namespace BZ {
                 if(presentSupport)
                     properties.push_back(QueueProperty::Present);
 
-                queueFamilyContainer.addFamily(QueueFamily(idx, vkQueueFamilyProps.queueCount, properties));
+                queueFamilyContainer.addFamily({ idx, vkQueueFamilyProps.queueCount, properties });
             }
             idx++;
         }
@@ -74,10 +69,10 @@ namespace BZ {
         return queueFamilyContainer;
     }
 
-    SwapChainSupportDetails VulkanPhysicalDevice::querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+    SwapChainSupportDetails PhysicalDevice::querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
         SwapChainSupportDetails details;
 
-        BZ_ASSERT_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities));
+        BZ_ASSERT_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.surfaceCapabilities));
 
         uint32_t formatCount;
         BZ_ASSERT_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr));
@@ -96,7 +91,7 @@ namespace BZ {
         return details;
     }
 
-    bool VulkanPhysicalDevice::isPhysicalDeviceSuitable(VkPhysicalDevice device, const SwapChainSupportDetails &swapChainSupportDetails, const QueueFamilyContainer &queueFamilyContainer, const std::vector<const char *> &requiredExtensions) {
+    bool PhysicalDevice::isPhysicalDeviceSuitable(VkPhysicalDevice device, const SwapChainSupportDetails &swapChainSupportDetails, const QueueFamilyContainer &queueFamilyContainer, const std::vector<const char *> &requiredExtensions) {
         VkPhysicalDeviceProperties deviceProperties;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
@@ -118,7 +113,7 @@ namespace BZ {
             hasRequiredExtensions && isSwapChainAdequate;
     }
 
-    bool VulkanPhysicalDevice::checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char *> &requiredExtensions) {
+    bool PhysicalDevice::checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char *> &requiredExtensions) {
         uint32_t extensionCount;
         BZ_ASSERT_VK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr));
 
@@ -141,17 +136,8 @@ namespace BZ {
     }
 
 
-    /*VulkanDevice::VulkanDevice(const VulkanPhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions) {
-        init(physicalDevice, requiredDeviceExtensions);
-    }
-
-    VulkanDevice::~VulkanDevice() {
-        destroy();
-    }*/
-
-    void VulkanDevice::init(const VulkanPhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions) {
-        BZ_ASSERT_CORE(device == VK_NULL_HANDLE, "Device is already inited!");
-
+    /*-------------------------------------------------------------------------------------------*/
+    void Device::init(const PhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions) {
         this->physicalDevice = &physicalDevice;
 
         auto processFamilies = [this, &physicalDevice](QueueProperty property, const QueueFamily **family, const QueueFamily **familyExclusive) {
@@ -215,22 +201,21 @@ namespace BZ {
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
         deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size());
         deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
-        BZ_ASSERT_VK(vkCreateDevice(physicalDevice.getNativeHandle(), &deviceCreateInfo, nullptr, &device));
+        BZ_ASSERT_VK(vkCreateDevice(physicalDevice.getHandle(), &deviceCreateInfo, nullptr, &handle));
 
-        queueContainer.graphics.init(*this, *graphicsFamily);
-        queueContainer.compute.init(*this, *computeFamily);
-        queueContainer.transfer.init(*this, *transferFamily);
-        queueContainer.present.init(*this, *presentFamily);
+        queueContainer.graphics().init(*this, *graphicsFamily);
+        queueContainer.compute().init(*this, *computeFamily);
+        queueContainer.transfer().init(*this, *transferFamily);
+        queueContainer.present().init(*this, *presentFamily);
 
         //If there is no exclusive queue, then fill with the same data as the non-exclusive queue.
-        queueContainerExclusive.graphics.init(*this, graphicsFamilyExclusive ? *graphicsFamilyExclusive : *graphicsFamily);
-        queueContainerExclusive.compute.init(*this, computeFamilyExclusive ? *computeFamilyExclusive : *computeFamily);
-        queueContainerExclusive.transfer.init(*this, transferFamilyExclusive ? *transferFamilyExclusive : *transferFamily);
-        queueContainerExclusive.present.init(*this, presentFamilyExclusive ? *presentFamilyExclusive : *presentFamily);
+        queueContainerExclusive.graphics().init(*this, graphicsFamilyExclusive ? *graphicsFamilyExclusive : *graphicsFamily);
+        queueContainerExclusive.compute().init(*this, computeFamilyExclusive ? *computeFamilyExclusive : *computeFamily);
+        queueContainerExclusive.transfer().init(*this, transferFamilyExclusive ? *transferFamilyExclusive : *transferFamily);
+        queueContainerExclusive.present().init(*this, presentFamilyExclusive ? *presentFamilyExclusive : *presentFamily);
     }
 
-    void VulkanDevice::destroy() {
-        vkDestroyDevice(device, nullptr);
-        device = VK_NULL_HANDLE;
+    void Device::destroy() {
+        vkDestroyDevice(handle, nullptr);
     }
 }

@@ -1,13 +1,15 @@
 #pragma once
 
-#include "Graphics/Texture.h"
-#include "Graphics/DescriptorSet.h"
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
 
 namespace BZ {
+
+    class TextureView;
+    class Texture2D;
+    class TextureCube;
+    class DescriptorSet;
 
     class Material {
     public:

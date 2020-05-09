@@ -18,7 +18,7 @@ namespace BZ {
 
     void FileWatcher::startWatching() {
 
-        const auto &watchFolder = Application::getInstance().getAssetsPath();
+        const auto &watchFolder = Application::get().getAssetsPath();
 
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
         std::wstring wideWatchFolder = converter.from_bytes(watchFolder);
@@ -26,24 +26,24 @@ namespace BZ {
         //Filter bursts of callbacks. Happens a lot on Windows.
         timer.start();
 
-        //This lambda will be called on a worker thread from filewatch
+        //This lambda will be called on a worker thread from filewatch.
         fileWatcher = new filewatch::FileWatch<std::wstring>(wideWatchFolder,
-            [this](const std::wstring &path, const filewatch::Event change_type) {
-                float timeSinceLast = timer.getCountedTime().asSeconds();
-                if (timeSinceLast > TIME_TO_DEBOUNCE_CALLBACK_S && change_type == filewatch::Event::modified) {
-                    timer.start();
+            [this, &converter](const std::wstring &path, const filewatch::Event change_type) {
+                uint32 timeSinceLast = timer.getCountedTime().asMillisecondsUint32();
+                if(timeSinceLast > TIME_TO_DEBOUNCE_CALLBACK_MS && change_type == filewatch::Event::modified) {
 
-                    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
                     std::string pathString = converter.to_bytes(path);
                     std::replace(pathString.begin(), pathString.end(), '\\', '/');
 
                     for (auto &pair : pipelineStateRegistry) {
-                        if (pathString.find(pair.first) != std::wstring::npos) {
-                            //BZ_LOG_CORE_INFO("FileWatcher detected shader change: {}.", path);
+                        if (pathString.find(pair.first) != std::string::npos) {
+                            BZ_LOG_CORE_INFO("FileWatcher detected shader change: {}. Scheduling reload.", pathString);
                             pipelinesToReload.insert(pair.second);
                         }
                     }
                 }
+
+                timer.start();
             });
 
         BZ_LOG_CORE_INFO("FileWatcher is watching {}.", watchFolder);

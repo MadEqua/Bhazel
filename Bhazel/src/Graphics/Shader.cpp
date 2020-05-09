@@ -2,227 +2,80 @@
 
 #include "Shader.h"
 
-#include "Graphics/Graphics.h"
-
-#include "Platform/Vulkan/VulkanShader.h"
-#include "Core/Utils.h"
-
 #include <fstream>
 
 
 namespace BZ {
 
-    //Shader::Builder& Shader::Builder::fromSingleSourceFile(const char *filePath) {
-    //    BZ_ASSERT_CORE(!useBinaryBlob.has_value() || !useBinaryBlob.value(), "Shader is already using binary data!");
-    //
-    //    std::string fullPath = Application::getInstance().getAssetsPath() + filePath;
-    //    readAndPreprocessSingleSourceFile(fullPath.c_str(), codeStrings);
-    //    useBinaryBlob = false;
-    //    this->filePath = filePath;
-    //    return *this;
-    //}
-    //
-    //Shader::Builder& Shader::Builder::fromString(ShaderStage type, const char *code) {
-    //    BZ_ASSERT_CORE(!useBinaryBlob.has_value() || !useBinaryBlob.value(), "Shader is already using binary data!");
-    //
-    //    codeStrings[static_cast<int>(type)] = code;
-    //    useBinaryBlob = false;
-    //    return *this;
-    //}
-
-    Shader::Builder& Shader::Builder::fromBinaryFile(ShaderStage type, const char *filePath) {
-        //BZ_ASSERT_CORE(!useBinaryBlob.has_value() || useBinaryBlob.value(), "Shader is already using text data!")
-
-        std::string fullPath = Application::getInstance().getAssetsPath() + filePath;
-        binaryBlobs[static_cast<int>(type)] = readBinaryFile(fullPath.c_str());
-        //useBinaryBlob = true;
-        filePaths[static_cast<int>(type)] = filePath;
-        return *this;
+    Ref<Shader> Shader::create(const std::initializer_list<ShaderStage>& shaderStages) {
+        return MakeRef<Shader>(shaderStages);
     }
 
-    //Shader::Builder& Shader::Builder::fromSourceFile(ShaderStage type, const char *filePath) {
-    //    BZ_ASSERT_CORE(!useBinaryBlob.has_value() || !useBinaryBlob.value(), "Shader is already using binary data!");
-    //
-    //    std::string fullPath = Application::getInstance().getAssetsPath() + filePath;
-    //    codeStrings[static_cast<int>(type)] = readSourceFile(fullPath.c_str());
-    //    useBinaryBlob = false;
-    //    this->filePath = filePath;
-    //    return *this;
-    //}
+    Shader::Shader(const std::initializer_list<ShaderStage>& shaderStages) {
+        BZ_ASSERT_CORE(shaderStages.size() > 0, "Can't create a Shader with no Stages!");
 
-    Shader::Builder& Shader::Builder::setName(const char *name) {
-        this->name = name;
-        return *this;
-    }
-
-    Ref<Shader> Shader::Builder::build() const {
-        switch(Graphics::api) {
-        case Graphics::API::Vulkan:
-            return MakeRef<VulkanShader>(*this);
-        default:
-            BZ_ASSERT_ALWAYS_CORE("Unknown RendererAPI.");
-            return nullptr;
+        for(auto &stage : shaderStages) {
+            stages[stageCount++] = stage;
         }
+
+        init();
     }
 
-    //void Shader::Builder::readAndPreprocessSingleSourceFile(const char *filePath, std::array<std::string, SHADER_STAGES_COUNT> &out) {
-    //    std::ifstream file(filePath, std::ios::in);
-    //    BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
-    //
-    //    const char *typeToken = "#type";
-    //    const size_t typeTokenLength = strlen(typeToken);
-    //
-    //    std::stringstream sstream;
-    //    std::string line;
-    //    std::optional<ShaderStage> currentType;
-    //
-    //    while(std::getline(file, line)) {
-    //        if(!line.empty()) {
-    //            if(line.find(typeToken) == 0) {
-    //                if(currentType.has_value()) {
-    //                    out[static_cast<int>(*currentType)] = sstream.str();
-    //                    sstream.str("");
-    //                    sstream.clear();
-    //                }
-    //                std::string typeString = Utils::trim(line.substr(typeTokenLength, std::string::npos));
-    //                currentType = shaderTypeFromString(typeString);
-    //            }
-    //            else if(currentType.has_value()) {
-    //                sstream << line << std::endl;
-    //            }
-    //        }
-    //    }
-    //    out[static_cast<int>(*currentType)] = sstream.str();
-    //    file.close();
-    //}
-
-    std::vector<char> Shader::Builder::readBinaryFile(const char *filePath) {
-        std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-        BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
-
-        size_t fileSize = (size_t)file.tellg();
-        std::vector<char> buffer(fileSize);
-        file.seekg(0);
-        file.read(buffer.data(), fileSize);
-        file.close();
-        return buffer;
-    }
-
-    //std::string Shader::Builder::readSourceFile(const char *filePath) {
-    //    std::ifstream file(filePath, std::ios::in);
-    //    BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
-    //
-    //    size_t fileSize = (size_t)file.tellg();
-    //    std::string content;
-    //    content.reserve(fileSize);
-    //    file.seekg(0);
-    //    content.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
-    //    file.close();
-    //    return content;
-    //}
-    //
-    //ShaderStage Shader::Builder::shaderTypeFromString(const std::string &string) {
-    //    if(string == "Vertex" || string == "vertex")
-    //        return ShaderStage::Vertex;
-    //    else if(string == "TesselationEvaluation" || string == "TE")
-    //        return ShaderStage::TesselationEvaluation;
-    //    else if(string == "TesselationControl" || string == "TC")
-    //        return ShaderStage::TesselationControl;
-    //    else if(string == "Geometry" || string == "geometry")
-    //        return ShaderStage::Geometry;
-    //    else if(string == "Fragment" || string == "fragment" || string == "Pixel" || string == "pixel")
-    //        return ShaderStage::Fragment;
-    //    else if(string == "Compute" || string == "compute")
-    //        return ShaderStage::Compute;
-    //    else {
-    //        BZ_ASSERT_ALWAYS_CORE("Unknown shader type string: '{}'", string);
-    //        return ShaderStage::Vertex;
-    //    }
-    //}
-
-
-    Shader::Shader(const Builder &builder) :
-        name(builder.name) {
-        init(builder);
-    }
-
-    void Shader::init(const Builder &builder) {
-        //BZ_ASSERT_CORE(builder.useBinaryBlob.has_value(), "No shader data was set on the Builder!");
-        BZ_ASSERT_CORE(builder.name, "Shader needs a name!");
-
-       //if (builder.useBinaryBlob) {
-       //    for (int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-       //        stages[i] = !builder.binaryBlobs[i].empty();
-       //    }
-       //}
-       //else {
-       //    for (int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-       //        stages[i] = !builder.codeStrings[i].empty();
-       //    }
-       //}
-
-        for (int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-            stages[i] = !builder.binaryBlobs[i].empty();
-            if (stages[i]) {
-                filePaths[i] = builder.filePaths[i];
-            }
-        }
-    }
-
-    uint32 Shader::getStageCount() const {
-        uint32 count = 0;
-        for(int i = 0; i < SHADER_STAGES_COUNT; ++i)
-            if(stages[i]) count++;
-        return count;
-    }
-
-    bool Shader::isStagePresent(ShaderStage stage) const {
-        return stages[static_cast<int>(stage)];
-    }
-
-    const std::string& Shader::getFilePathOfStage(ShaderStage stage) const {
-        return filePaths[static_cast<int>(stage)];
-    }
-
-    const std::vector<std::string> Shader::getAllFilePaths() const {
-        std::vector<std::string> ret;
-        for (int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-            if (isStagePresent(static_cast<ShaderStage>(i))) {
-                ret.push_back(filePaths[i]);
-            }
-        }
-        return ret;
+    Shader::~Shader() {
+        for (uint32 i = 0; i < stageCount; ++i)
+            vkDestroyShaderModule(getVkDevice(), handle.modules[i], nullptr);
     }
 
     void Shader::reload() {
         destroy();
-        
-        Builder builder;
-        for (int i = 0; i < SHADER_STAGES_COUNT; ++i) {
-            if (stages[i]) {
-                builder.fromBinaryFile(static_cast<ShaderStage>(i), filePaths[i].c_str());
-            }
+        init();
+    }
+
+    void Shader::init() {
+        auto &assetsPath = Application::get().getAssetsPath();
+        for (uint32 i = 0; i < stageCount; ++i) {
+            handle.modules[i] = createShaderModuleFromBinaryBlob(readBinaryFile((assetsPath  + stages[i].path).c_str()));
         }
-        init(builder);
     }
 
-
-
-    void ShaderLibrary::add(const char *name, const Ref<Shader> &shader) {
-        BZ_ASSERT_CORE(!exists(name), "Adding name already in use!");
-        shaders[name] = shader;
+    void Shader::destroy() {
+        for (uint32 i = 0; i < stageCount; ++i)
+            vkDestroyShaderModule(getVkDevice(), handle.modules[i], nullptr);
     }
 
-    void ShaderLibrary::add(const Ref<Shader> &shader) {
-        add(shader->getName().c_str(), shader);
+    const ShaderStage &Shader::getStageData(uint32 stageIndex) const {
+        BZ_ASSERT_CORE(stageIndex < stageCount, "Invalid index!");
+        return stages[stageIndex];
     }
 
-    Ref<Shader> ShaderLibrary::get(const char *name) {
-        BZ_ASSERT_CORE(exists(name), "A shader with name '{}' doesn't exist on the shader library!", name)
-        return shaders[name];
+    VkShaderModule Shader::createShaderModuleFromBinaryBlob(const std::vector<byte> &binaryBlob) {
+        VkShaderModuleCreateInfo createInfo = {};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = binaryBlob.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(binaryBlob.data());
+
+        VkShaderModule shaderModule;
+        BZ_ASSERT_VK(vkCreateShaderModule(getVkDevice(), &createInfo, nullptr, &shaderModule));
+        return shaderModule;
     }
 
-    bool ShaderLibrary::exists(const char *name) const {
-        return shaders.find(name) != shaders.end();
+    const std::vector<std::string> Shader::getAllFilePaths() const {
+        std::vector<std::string> ret;
+        for (uint32 i = 0; i < stageCount; ++i) {
+            ret.push_back(stages[i].path);
+        }
+        return ret;
+    }
+
+    std::vector<byte> Shader::readBinaryFile(const char *filePath) {
+        std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+        BZ_CRITICAL_ERROR_CORE(file, "Failed to load file '{}'!", filePath);
+
+        size_t fileSize = (size_t)file.tellg();
+        std::vector<byte> buffer(fileSize);
+        file.seekg(0);
+        file.read(reinterpret_cast<char*>(buffer.data()), fileSize);
+        file.close();
+        return buffer;
     }
 }

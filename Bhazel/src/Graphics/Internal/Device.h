@@ -2,30 +2,32 @@
 
 #include "VulkanIncludes.h"
 
-#include "Platform/Vulkan/Internal/VulkanQueue.h"
-#include "Platform/Vulkan/Internal/VulkanSwapchain.h"
+#include "Graphics/Internal/Queue.h"
+#include "Graphics/Internal/Swapchain.h"
 
 
 namespace BZ {
     
-    class VulkanSurface;
+    class Surface;
+    class Instance;
     enum class MemoryType;
 
-
     //Will pick and store an appropriate physical device to use, if available.
-    class VulkanPhysicalDevice {
+    class PhysicalDevice {
     public:
-        VulkanPhysicalDevice() = default;
-        //VulkanPhysicalDevice(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions);
+        PhysicalDevice() = default;
 
-        void init(VkInstance instance, const VulkanSurface &surface, const std::vector<const char *> &requiredDeviceExtensions);
+        BZ_NON_COPYABLE(PhysicalDevice);
+
+        void init(const Instance &instance, const Surface &surface, const std::vector<const char *> &requiredDeviceExtensions);
 
         const QueueFamilyContainer& getQueueFamilyContainer() const { return queueFamilyContainer; }
         const SwapChainSupportDetails& getSwapChainSupportDetails() const { return swapChainSupportDetails; }
-        VkPhysicalDevice getNativeHandle() const { return physicalDevice; }
+        VkPhysicalDevice getHandle() const { return handle; }
 
     private:
-        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        VkPhysicalDevice handle = VK_NULL_HANDLE;
+
         QueueFamilyContainer queueFamilyContainer;
         SwapChainSupportDetails swapChainSupportDetails;
 
@@ -34,30 +36,30 @@ namespace BZ {
         static bool isPhysicalDeviceSuitable(VkPhysicalDevice device, const SwapChainSupportDetails &swapChainSupportDetails, const QueueFamilyContainer &queueFamilyContainer, const std::vector<const char *> &requiredExtensions);
         static bool checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char *> &requiredExtensions);
 
-        friend class VulkanDevice;
+        friend class Device;
     };
 
 
+    /*-------------------------------------------------------------------------------------------*/
     //Representing a logical device.
-    class VulkanDevice {
+    class Device {
     public:
-        VulkanDevice() = default;
-        //VulkanDevice(const VulkanPhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions);
-        //~VulkanDevice();
+        Device() = default;
 
-        void init(const VulkanPhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions);
+        BZ_NON_COPYABLE(Device);
+
+        void init(const PhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions);
         void destroy();
 
-        VkDevice getNativeHandle() const { return device; }
+        VkDevice getHandle() const { return handle; }
 
-        const QueueContainer &getQueueContainer() const { return queueContainer; }
-        const QueueContainer &getQueueContainerExclusive() const { return queueContainerExclusive; }
-        const VulkanPhysicalDevice &getPhysicalDevice() const { return *physicalDevice; }
+        const QueueContainer& getQueueContainer() const { return queueContainer; }
+        const QueueContainer& getQueueContainerExclusive() const { return queueContainerExclusive; }
+        const PhysicalDevice &getPhysicalDevice() const { return *physicalDevice; }
 
     private:
-        const VulkanPhysicalDevice *physicalDevice = nullptr;
-
-        VkDevice device = VK_NULL_HANDLE;
+        VkDevice handle = VK_NULL_HANDLE;
+        const PhysicalDevice *physicalDevice;
 
         QueueContainer queueContainer;
 

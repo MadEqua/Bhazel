@@ -7,9 +7,13 @@ namespace BZ {
 
     class IniParser {
     public:
-        bool parse(const std::string &filePath);
+        IniParser() = default;
 
-        inline const IniSettings& getParsedIniSettings() { return out; }
+        BZ_NON_COPYABLE(IniParser);
+
+        bool parse(const char *filePath);
+
+        const IniSettings& getParsedIniSettings() { return out; }
 
     private:
         IniSettings out;

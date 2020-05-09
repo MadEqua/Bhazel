@@ -1,5 +1,14 @@
 #pragma once
 
+#include "Graphics/Internal/VulkanIncludes.h"
+#include "Graphics/Internal/Instance.h"
+#include "Graphics/Internal/Device.h"
+#include "Graphics/Internal/Swapchain.h"
+#include "Graphics/Internal/Surface.h"
+#include "Graphics/Internal/Sync.h"
+#include "Graphics/Internal/CommandPool.h"
+#include "Graphics/Internal/DescriptorPool.h"
+
 
 namespace BZ {
 
@@ -9,41 +18,71 @@ namespace BZ {
     class CommandBuffer;
     class TextureView;
 
+    struct FrameData {
+        //One command pool per frame (and per family) makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
+        std::unordered_map<uint32, CommandPool> commandPoolsByFamily;
+
+        //GPU-GPU sync.
+        Semaphore imageAvailableSemaphore;
+        Semaphore renderFinishedSemaphore;
+
+        //CPU-GPU sync, to stop the CPU from piling up more than MAX_FRAMES_IN_FLIGHT frames when the app is GPU-bound.
+        Fence renderFinishedFence;
+    };
+
     class GraphicsContext {
     public:
-        static GraphicsContext* create(void *windowHandle);
+        GraphicsContext() = default;
 
-        virtual void init() = 0;
-
-        virtual ~GraphicsContext() = default;
+        BZ_NON_COPYABLE(GraphicsContext);
         
-        virtual void onWindowResize(const WindowResizedEvent& e) {};
+        void init();
+        void destroy();
 
-        virtual void setVSync(bool enabled) { vsync = enabled; };
-        bool isVSync() const { return vsync; }
+        void onWindowResize(const WindowResizedEvent& e);
 
-        virtual uint32 getCurrentFrameIndex() const = 0;
-        virtual const Ref<Framebuffer>& getCurrentSwapchainFramebuffer() const = 0;
-        virtual const Ref<RenderPass>& getSwapchainRenderPass() const = 0;  
-        virtual Ref<CommandBuffer> getCurrentFrameCommandBuffer() = 0;
-
-        virtual void beginFrame() = 0;
-        virtual void submitCommandBuffersAndFlush(const Ref<CommandBuffer> commandBuffers[], uint32 count) = 0;
-        virtual void waitForDevice() = 0;
+        void beginFrame();
+        void submitCommandBuffers(const Ref<CommandBuffer> commandBuffers[], uint32 count);
+        void waitForDevice();
 
         const Ref<TextureView>& getColorTextureView() const { return colorTextureView; }
         const Ref<TextureView>& getDepthTextureView() const { return depthTextureView; }
         const Ref<RenderPass>& getMainRenderPass() const { return mainRenderPass; }
         const Ref<Framebuffer>& getMainFramebuffer() const { return mainFramebuffer; }
 
-    protected:
-        GraphicsContext() = default;
+        Ref<CommandBuffer> getCurrentFrameCommandBuffer(QueueProperty property, bool exclusive);
+        CommandPool& getCurrentFrameCommandPool(QueueProperty property, bool exclusive);
+        DescriptorPool& getDescriptorPool() { return descriptorPool; }
+        VmaAllocator getMemoryAllocator() const { return memoryAllocator; }
 
-        bool vsync = true;
+        uint32 getCurrentFrameIndex() const { return currentFrameIndex; }
 
+        const Ref<Framebuffer>& getSwapchainAquiredImageFramebuffer() const { return swapchain.getAquiredImageFramebuffer(); }
+        const Ref<RenderPass>& getSwapchainRenderPass() const { return swapchain.getRenderPass(); }
+
+        Device& getDevice() { return device; }
+
+    private:
+        Instance instance;
+        Surface surface;
+        PhysicalDevice physicalDevice;
+        Device device;
+        Swapchain swapchain;
+
+        DescriptorPool descriptorPool;
+
+        FrameData frameDatas[MAX_FRAMES_IN_FLIGHT];
+        uint32 currentFrameIndex = 0;
+
+        VmaAllocator memoryAllocator;
+
+        //The main framebuffer stuff.
         Ref<TextureView> colorTextureView;
         Ref<TextureView> depthTextureView;
         Ref<RenderPass> mainRenderPass;
         Ref<Framebuffer> mainFramebuffer;
+
+        void createFrameData();
+        void cleanupFrameData();
     };
 }

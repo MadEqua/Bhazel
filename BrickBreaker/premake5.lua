@@ -18,6 +18,8 @@ project "BrickBreaker"
         "../Bhazel/vendor/spdlog/include",
         "../Bhazel/vendor/glm",
         "../Bhazel/vendor/ImGui",
+        "../Bhazel/vendor/VulkanMemoryAllocator",
+        "%{VULKAN_SDK_DIR}/Include",
     }
 
     links {

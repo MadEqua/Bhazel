@@ -4,11 +4,11 @@
 #include "Camera.h"
 #include "Transform.h"
 
-#include "Graphics/DescriptorSet.h"
-#include "Graphics/Framebuffer.h"
-
 
 namespace BZ {
+
+    class DescriptorSet;
+    class Framebuffer;
 
     class DirectionalLight {
     public:
