@@ -2,6 +2,9 @@
 
 #include "PipelineState.h"
 
+#include "Core/Application.h"
+
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/Shader.h"
 #include "Graphics/RenderPass.h"
 #include "Graphics/DescriptorSet.h"
@@ -202,7 +205,7 @@ namespace BZ {
         pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32>(data.pushConstants.size());
         pipelineLayoutInfo.pPushConstantRanges = data.pushConstants.data();
 
-        BZ_ASSERT_VK(vkCreatePipelineLayout(getVkDevice(), &pipelineLayoutInfo, nullptr, &handle.pipelineLayout));
+        BZ_ASSERT_VK(vkCreatePipelineLayout(BZ_GRAPHICS_DEVICE.getHandle(), &pipelineLayoutInfo, nullptr, &handle.pipelineLayout));
 
         //Shader setup
         std::array<VkPipelineShaderStageCreateInfo, MAX_SHADER_STAGE_COUNT> shaderStagesCreateInfos;
@@ -241,11 +244,11 @@ namespace BZ {
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
 
-        BZ_ASSERT_VK(vkCreateGraphicsPipelines(getVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &handle.pipeline));
+        BZ_ASSERT_VK(vkCreateGraphicsPipelines(BZ_GRAPHICS_DEVICE.getHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &handle.pipeline));
     }
 
     void PipelineState::destroy() {
-        vkDestroyPipeline(getVkDevice(), handle.pipeline, nullptr);
-        vkDestroyPipelineLayout(getVkDevice(), handle.pipelineLayout, nullptr);
+        vkDestroyPipeline(BZ_GRAPHICS_DEVICE.getHandle(), handle.pipeline, nullptr);
+        vkDestroyPipelineLayout(BZ_GRAPHICS_DEVICE.getHandle(), handle.pipelineLayout, nullptr);
     }
 }

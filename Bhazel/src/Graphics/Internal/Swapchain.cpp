@@ -2,10 +2,13 @@
 
 #include "Swapchain.h"
 
+#include "Core/Application.h"
+
 #include "Graphics/Internal/Device.h"
 #include "Graphics/Internal/Surface.h"
 #include "Graphics/Internal/Sync.h"
 
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/Framebuffer.h"
 #include "Graphics/RenderPass.h"
 #include "Graphics/Texture.h"

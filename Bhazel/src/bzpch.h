@@ -22,12 +22,10 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Core/Singleton.h"
 #include "Core/Types.h"
+#include "Constants.h"
 #include "Core/Core.h"
 #include "Core/Log.h"
 #include "Core/AssertsAndErrors.h"
 #include "Core/Timer.h"
 #include "Core/Profiler.h"
-
-#include "Constants.h"

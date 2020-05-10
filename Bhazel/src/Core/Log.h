@@ -2,6 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Core/Singleton.h"
+
 
 namespace BZ {
 

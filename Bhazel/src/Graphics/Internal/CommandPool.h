@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Graphics/Internal/VulkanIncludes.h"
+#include "Graphics/CommandBuffer.h"
 
 
 namespace BZ {
 
     class Device;
-    class CommandBuffer;
 
     //Allocates CommandBuffers from a certain family. Internal only, not exposed to upper layers.
     class CommandPool {
@@ -18,7 +18,8 @@ namespace BZ {
         void init(const Device &device, uint32 familyIndex);
         void destroy();
 
-        Ref<CommandBuffer> getCommandBuffer();
+        //The return CommandBuffer is only valid until submission. WIll be reset at the end of the frame.
+        CommandBuffer& getCommandBuffer();
 
         //The caller has the responsability to call when it's safe to reset the command buffers.
         void reset();
@@ -29,7 +30,7 @@ namespace BZ {
         VkCommandPool handle;
         const Device *device;
 
-        std::vector<Ref<CommandBuffer>> buffersInUse;
-        std::vector<Ref<CommandBuffer>> buffersFree;
+        std::vector<CommandBuffer> buffersInUse;
+        std::vector<CommandBuffer> buffersFree;
     };
 }

@@ -16,6 +16,8 @@ namespace BZ {
         Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensions);
         ~Framebuffer();
 
+        BZ_NON_COPYABLE(Framebuffer);
+
         const glm::ivec3& getDimensionsAndLayers() const { return dimensionsAndLayers; }
         const Ref<RenderPass>& getRenderPass() const { return renderPass; }
 

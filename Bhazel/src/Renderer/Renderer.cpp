@@ -4,7 +4,6 @@
 
 #include "BRDFLookup.h"
 
-#include "Graphics/Graphics.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Texture.h"
 #include "Graphics/Buffer.h"
@@ -12,6 +11,7 @@
 #include "Graphics/PipelineState.h"
 #include "Graphics/RenderPass.h"
 #include "Graphics/Framebuffer.h"
+#include "Graphics/CommandBuffer.h"
 
 #include "Core/Application.h"
 #include "Core/Window.h"
@@ -84,7 +84,7 @@ namespace BZ {
     };
 
     static struct RendererData {
-        uint32 commandBufferId;
+        CommandBuffer *commandBuffer;
 
         Ref<Buffer> constantBuffer;
         BufferPtr sceneConstantBufferPtr;
@@ -137,7 +137,7 @@ namespace BZ {
     void Renderer::init() {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBufferId = -1;
+        rendererData.commandBuffer = nullptr;
 
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             SCENE_CONSTANT_BUFFER_SIZE + PASS_CONSTANT_BUFFER_SIZE + MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE,
@@ -445,27 +445,24 @@ namespace BZ {
  
         fillConstants(scene);
 
-        rendererData.commandBufferId = Graphics::beginCommandBuffer();
+        rendererData.commandBuffer = &CommandBuffer::begin(QueueProperty::Graphics);
 
         //Bind stuff that will not change.
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.globalDescriptorSet,
-            rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
-        
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, scene.getDescriptorSet(),
-            rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
+        rendererData.commandBuffer->bindDescriptorSet(rendererData.globalDescriptorSet, rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
+        rendererData.commandBuffer->bindDescriptorSet(scene.getDescriptorSet(), rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
 
         depthPass(scene);
         colorPass(scene);
         postProcessPass();
 
-        Graphics::endCommandBuffer(rendererData.commandBufferId);
+        rendererData.commandBuffer->endAndSubmit();
     }
 
     void Renderer::depthPass(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
-        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.depthPassPipelineState);
-        Graphics::setDepthBias(rendererData.commandBufferId, rendererData.depthBiasData.x, rendererData.depthBiasData.y, rendererData.depthBiasData.z);
+        rendererData.commandBuffer->bindPipelineState(rendererData.depthPassPipelineState);
+        rendererData.commandBuffer->setDepthBias(rendererData.depthBiasData.x, rendererData.depthBiasData.y, rendererData.depthBiasData.z);
 
         uint32 lightIdx = 0;
         for (auto &dirLight : scene.getDirectionalLights()) {
@@ -474,12 +471,12 @@ namespace BZ {
             for (uint32 i = 0; i < SHADOW_MAPPING_CASCADE_COUNT; ++i) {
                 lightOffsetArr[i] = lightOffset;
             }
-            Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSetForDepthPass,
+            rendererData.commandBuffer->bindDescriptorSet(rendererData.passDescriptorSetForDepthPass,
                 rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
 
-            Graphics::beginRenderPass(rendererData.commandBufferId, dirLight.shadowMapFramebuffer);
+            rendererData.commandBuffer->beginRenderPass(dirLight.shadowMapFramebuffer, true);
             drawEntities(scene, true);
-            Graphics::endRenderPass(rendererData.commandBufferId);
+            rendererData.commandBuffer->endRenderPass();
 
             lightIdx++;
         }
@@ -489,29 +486,29 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.passDescriptorSet,
+        rendererData.commandBuffer->bindDescriptorSet(rendererData.passDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
-        Graphics::beginRenderPass(rendererData.commandBufferId, Application::get().getGraphicsContext().getMainFramebuffer());
+        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getMainFramebuffer(), false);
 
         if (scene.hasSkyBox()) {
-            Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.skyBoxPipelineState);
+            rendererData.commandBuffer->bindPipelineState(rendererData.skyBoxPipelineState);
             drawMesh(scene.getSkyBox().mesh, Material(), false);
         }
 
-        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.defaultPipelineState);
+        rendererData.commandBuffer->bindPipelineState(rendererData.defaultPipelineState);
         drawEntities(scene, false);
-        Graphics::endRenderPass(rendererData.commandBufferId);
+        rendererData.commandBuffer->endRenderPass();
     }
 
     void Renderer::postProcessPass() {
         BZ_PROFILE_FUNCTION();
 
-        Graphics::beginRenderPass(rendererData.commandBufferId, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
-        Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.postProcessPipelineState);
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
-        Graphics::draw(rendererData.commandBufferId, 3, 1, 0, 0);
-        Graphics::endRenderPass(rendererData.commandBufferId);
+        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), true);
+        rendererData.commandBuffer->bindPipelineState(rendererData.postProcessPipelineState);
+        rendererData.commandBuffer->bindDescriptorSet(rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
+        rendererData.commandBuffer->draw(3, 1, 0, 0);
+        rendererData.commandBuffer->endRenderPass();
     }
 
     void Renderer::drawEntities(const Scene &scene, bool depthPass) {
@@ -521,7 +518,7 @@ namespace BZ {
         for (const auto &entity : scene.getEntities()) {
             if (!depthPass || entity.castShadow) {
                 uint32 entityOffset = entityIndex * sizeof(EntityConstantBufferData);
-                Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.entityDescriptorSet,
+                rendererData.commandBuffer->bindDescriptorSet(rendererData.entityDescriptorSet,
                     depthPass ? rendererData.depthPassPipelineState : rendererData.defaultPipelineState,
                     RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
 
@@ -534,25 +531,25 @@ namespace BZ {
     void Renderer::drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool depthPass) {
         BZ_PROFILE_FUNCTION();
 
-        Graphics::bindBuffer(rendererData.commandBufferId, mesh.getVertexBuffer(), 0);
+        rendererData.commandBuffer->bindBuffer(mesh.getVertexBuffer(), 0);
         
         if (mesh.hasIndices())
-            Graphics::bindBuffer(rendererData.commandBufferId, mesh.getIndexBuffer(), 0);
+            rendererData.commandBuffer->bindBuffer(mesh.getIndexBuffer(), 0);
 
         for (const auto &submesh : mesh.getSubmeshes()) {
             if (!depthPass) {
                 const Material &materialToUse = overrideMaterial.isValid() ? overrideMaterial : submesh.material;
 
                 uint32 materialOffset = rendererData.materialOffsetMap[materialToUse];
-                Graphics::bindDescriptorSet(rendererData.commandBufferId, materialToUse.getDescriptorSet(),
+                rendererData.commandBuffer->bindDescriptorSet(materialToUse.getDescriptorSet(),
                     depthPass ? rendererData.depthPassPipelineState : rendererData.defaultPipelineState,
                     RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
             }
 
             if (mesh.hasIndices())
-                Graphics::drawIndexed(rendererData.commandBufferId, submesh.indexCount, 1, submesh.indexOffset, 0, 0);
+                rendererData.commandBuffer->drawIndexed(submesh.indexCount, 1, submesh.indexOffset, 0, 0);
             else
-                Graphics::draw(rendererData.commandBufferId, submesh.vertexCount, 1, submesh.vertexOffset, 1);
+                rendererData.commandBuffer->draw(submesh.vertexCount, 1, submesh.vertexOffset, 1);
 
             rendererData.stats.drawCallCount++;
         }

@@ -8,20 +8,6 @@
 
 namespace BZ {
 
-    struct AttachmentDescription {
-        TextureFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-        VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
-        VkAttachmentLoadOp loadOperatorColorAndDepth;
-        VkAttachmentStoreOp storeOperatorColorAndDepth;
-        VkAttachmentLoadOp loadOperatorStencil;
-        VkAttachmentStoreOp storeOperatorStencil;
-        VkImageLayout initialLayout;
-        VkImageLayout finalLayout;
-        VkClearValue clearValue = {}; //RGBA or Depth/Stencil.
-    };
-
-
-    /*-------------------------------------------------------------------------------------------*/
     struct SubPassDependency {
         //Indices refer to parent RenderPass SubPass list, or VK_SUBPASS_EXTERNAL.
         int32 srcSubPassIndex;
@@ -60,6 +46,18 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
+    struct AttachmentDescription {
+        TextureFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+        VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
+        VkAttachmentLoadOp loadOperatorColorAndDepth;
+        VkAttachmentStoreOp storeOperatorColorAndDepth;
+        VkAttachmentLoadOp loadOperatorStencil;
+        VkAttachmentStoreOp storeOperatorStencil;
+        VkImageLayout initialLayout;
+        VkImageLayout finalLayout;
+        VkClearValue clearValue = {}; //RGBA or Depth/Stencil.
+    };
+
     struct RenderPassData {
         VkRenderPass original;
         VkRenderPass forceClear;
@@ -84,6 +82,8 @@ namespace BZ {
                    const std::initializer_list<SubPassDescription> &subPassDescs,
                    const std::initializer_list<SubPassDependency> &subPassDeps);
         ~RenderPass();
+
+        BZ_NON_COPYABLE(RenderPass);
 
     private:
         void init(bool forceClear);

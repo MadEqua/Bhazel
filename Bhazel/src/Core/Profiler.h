@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#include "Core/Singleton.h"
+
 
 #ifdef BZ_PROFILER
 

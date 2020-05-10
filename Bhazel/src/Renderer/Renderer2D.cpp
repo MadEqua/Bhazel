@@ -2,12 +2,12 @@
 
 #include "Renderer2D.h"
 
-#include "Graphics/Graphics.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Texture.h"
 #include "Graphics/Buffer.h"
 #include "Graphics/PipelineState.h"
 #include "Graphics/Shader.h"
+#include "Graphics/CommandBuffer.h"
 
 #include "Core/Application.h"
 #include "Core/Utils.h"
@@ -87,7 +87,7 @@ namespace BZ {
     };
 
     static struct Renderer2DData {
-        uint32 commandBufferId;
+        const OrthographicCamera *camera;
 
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
@@ -132,8 +132,6 @@ namespace BZ {
 
     void Renderer2D::init() {
         BZ_PROFILE_FUNCTION();
-
-        rendererData.commandBufferId = -1;
 
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/Renderer2DVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
@@ -221,24 +219,14 @@ namespace BZ {
     void Renderer2D::begin(const OrthographicCamera &camera) {
         BZ_PROFILE_FUNCTION();
 
-        BZ_ASSERT_CORE(rendererData.commandBufferId == -1, "There's already an unended Scene!");
-
         rendererData.nextSprite = 0;
+        rendererData.camera = &camera;
 
         memset(&rendererData.stats, 0, sizeof(Renderer2DStats));
-
-        rendererData.commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginRenderPass(rendererData.commandBufferId, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
-
-        glm::mat4 viewProjMatrix = camera.getProjectionMatrix() * camera.getViewMatrix();
-        memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
-        Graphics::bindDescriptorSet(rendererData.commandBufferId, rendererData.constantsDescriptorSet, rendererData.pipelineState, 0, nullptr, 0);
     }
 
     void Renderer2D::end() {
         BZ_PROFILE_FUNCTION();
-
-        BZ_ASSERT_CORE(rendererData.commandBufferId != -1, "There's not a started Scene!");
 
         if (rendererData.nextSprite > 0) {
             //Sort objects to minimize state changes when rendering. Sorted by Texture and then by tint.
@@ -246,9 +234,16 @@ namespace BZ {
                 return a.sortKey < b.sortKey;
             });
 
-            Graphics::bindBuffer(rendererData.commandBufferId, rendererData.vertexBuffer, 0);
-            Graphics::bindBuffer(rendererData.commandBufferId, rendererData.indexBuffer, 0);
-            Graphics::bindPipelineState(rendererData.commandBufferId, rendererData.pipelineState);
+            CommandBuffer &commandBuffer = CommandBuffer::begin(QueueProperty::Graphics);
+            commandBuffer.beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), false);
+
+            glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
+            memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
+            commandBuffer.bindDescriptorSet(rendererData.constantsDescriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+
+            commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
+            commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
+            commandBuffer.bindPipelineState(rendererData.pipelineState);
 
             uint32 spritesInBatch = 0;
             uint32 nextBatchOffset = 0;
@@ -299,7 +294,7 @@ namespace BZ {
                 if (texChanged  || isLastIteration) {
                     if (currentBoundTexHash != currentBatchTexHash) {
                         const TexData& texData = rendererData.texDataStorage[currentBatchTexHash];
-                        Graphics::bindDescriptorSet(rendererData.commandBufferId, texData.descriptorSet, rendererData.pipelineState, 1, nullptr, 0);
+                        commandBuffer.bindDescriptorSet(texData.descriptorSet, rendererData.pipelineState, 1, nullptr, 0);
                         currentBoundTexHash = currentBatchTexHash;
                         rendererData.stats.descriptorSetBindCount++;
                     }
@@ -310,7 +305,7 @@ namespace BZ {
                     //    stats.tintPushCount++;
                     //}
 
-                    Graphics::drawIndexed(rendererData.commandBufferId, spritesInBatch * 6, 1, nextBatchOffset * 6, 0, 0);
+                    commandBuffer.drawIndexed(spritesInBatch * 6, 1, nextBatchOffset * 6, 0, 0);
                     nextBatchOffset = objIdx;
                     spritesInBatch = 0;
 
@@ -321,11 +316,10 @@ namespace BZ {
                 }
                 spritesInBatch++;
             }
-        }
 
-        Graphics::endRenderPass(rendererData.commandBufferId);
-        Graphics::endCommandBuffer(rendererData.commandBufferId);
-        rendererData.commandBufferId = -1;
+            commandBuffer.endRenderPass();
+            commandBuffer.endAndSubmit();
+        }
     }
 
     void Renderer2D::drawSprite(const Sprite &sprite) {
@@ -343,7 +337,6 @@ namespace BZ {
     void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha) {
         BZ_PROFILE_FUNCTION();
 
-        BZ_ASSERT_CORE(rendererData.commandBufferId != -1, "There's not a started Scene!");
         BZ_ASSERT_CORE(rendererData.nextSprite < MAX_RENDERER2D_SPRITES, "nextSprite exceeded MAX_RENDERER2D_SPRITES!");
 
         InternalSprite &spr = rendererData.sprites[rendererData.nextSprite++];

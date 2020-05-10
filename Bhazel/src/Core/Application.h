@@ -17,13 +17,6 @@ namespace BZ {
     class WindowResizedEvent;
     class Layer;
 
-    struct FrameStats {
-        TimeDuration lastFrameTime;
-        uint64 frameCount;
-        TimeDuration runningTime;
-    };
-
-
     class Application {
     public:
         Application();

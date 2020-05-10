@@ -2,6 +2,9 @@
 
 #include "DescriptorSet.h"
 
+#include "Core/Application.h"
+
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/Buffer.h"
 #include "Graphics/Texture.h"
 
@@ -36,11 +39,11 @@ namespace BZ {
         createInfo.bindingCount = static_cast<uint32>(vkDescriptorSetLayoutBindings.size());
         createInfo.pBindings = vkDescriptorSetLayoutBindings.data();
 
-        BZ_ASSERT_VK(vkCreateDescriptorSetLayout(getVkDevice(), &createInfo, nullptr, &handle));
+        BZ_ASSERT_VK(vkCreateDescriptorSetLayout(BZ_GRAPHICS_DEVICE.getHandle(), &createInfo, nullptr, &handle));
     }
 
     DescriptorSetLayout::~DescriptorSetLayout() {
-        vkDestroyDescriptorSetLayout(getVkDevice(), handle, nullptr);
+        vkDestroyDescriptorSetLayout(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
     }
 
 
@@ -56,11 +59,11 @@ namespace BZ {
 
         VkDescriptorSetAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = getGraphicsContext().getDescriptorPool().getHandle();
+        allocInfo.descriptorPool = BZ_GRAPHICS_CTX.getDescriptorPool().getHandle();
         allocInfo.descriptorSetCount = 1;
         allocInfo.pSetLayouts = layouts;
 
-        BZ_ASSERT_VK(vkAllocateDescriptorSets(getVkDevice(), &allocInfo, &handle));
+        BZ_ASSERT_VK(vkAllocateDescriptorSets(BZ_GRAPHICS_DEVICE.getHandle(), &allocInfo, &handle));
     }
 
     void DescriptorSet::setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) {
@@ -95,7 +98,7 @@ namespace BZ {
         write.descriptorCount = srcArrayCount;
         write.descriptorType = layout->getDescriptorDescs()[binding].type;
         write.pBufferInfo = bufferInfos.data();
-        vkUpdateDescriptorSets(getVkDevice(), 1, &write, 0, nullptr);
+        vkUpdateDescriptorSets(BZ_GRAPHICS_DEVICE.getHandle(), 1, &write, 0, nullptr);
     }
 
     void DescriptorSet::setCombinedTextureSampler(const Ref<TextureView> &textureView, const Ref<Sampler> &sampler, uint32 binding) {
@@ -124,7 +127,7 @@ namespace BZ {
         write.descriptorCount = srcArrayCount;
         write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         write.pImageInfo = imageInfos.data();
-        vkUpdateDescriptorSets(getVkDevice(), 1, &write, 0, nullptr);
+        vkUpdateDescriptorSets(BZ_GRAPHICS_DEVICE.getHandle(), 1, &write, 0, nullptr);
     }
 
     void DescriptorSet::setSampledTexture(const Ref<TextureView>& textureView, uint32 binding) {
@@ -151,7 +154,7 @@ namespace BZ {
         write.descriptorCount = srcArrayCount;
         write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         write.pImageInfo = imageInfos.data();
-        vkUpdateDescriptorSets(getVkDevice(), 1, &write, 0, nullptr);
+        vkUpdateDescriptorSets(BZ_GRAPHICS_DEVICE.getHandle(), 1, &write, 0, nullptr);
     }
 
     void DescriptorSet::setSampler(const Ref<Sampler>& sampler, uint32 binding) {
@@ -177,7 +180,7 @@ namespace BZ {
         write.descriptorCount = srcArrayCount;
         write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
         write.pImageInfo = imageInfos.data();
-        vkUpdateDescriptorSets(getVkDevice(), 1, &write, 0, nullptr);
+        vkUpdateDescriptorSets(BZ_GRAPHICS_DEVICE.getHandle(), 1, &write, 0, nullptr);
     }
 
     const DescriptorSet::DynBufferData* DescriptorSet::getDynamicBufferDataByBinding(uint32 binding) const {

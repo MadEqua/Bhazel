@@ -2,6 +2,9 @@
 
 #include "Framebuffer.h"
 
+#include "Core/Application.h"
+
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/RenderPass.h"
 #include "Graphics/Texture.h"
 
@@ -56,10 +59,10 @@ namespace BZ {
         framebufferInfo.height = dimensionsAndLayers.y;
         framebufferInfo.layers = dimensionsAndLayers.z;
 
-        BZ_ASSERT_VK(vkCreateFramebuffer(getVkDevice(), &framebufferInfo, nullptr, &handle));
+        BZ_ASSERT_VK(vkCreateFramebuffer(BZ_GRAPHICS_DEVICE.getHandle(), &framebufferInfo, nullptr, &handle));
     }
 
     Framebuffer::~Framebuffer() {
-        vkDestroyFramebuffer(getVkDevice(), handle, nullptr);
+        vkDestroyFramebuffer(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
     }
 }

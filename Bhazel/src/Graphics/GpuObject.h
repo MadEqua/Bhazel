@@ -1,27 +1,14 @@
 #pragma once
 
-#include "Core/Application.h"
-#include "Graphics/GraphicsContext.h"
-
+#define BZ_GRAPHICS_CTX BZ::Application::get().getGraphicsContext()
+#define BZ_GRAPHICS_DEVICE BZ::Application::get().getGraphicsContext().getDevice()
+#define BZ_MEM_ALLOCATOR BZ::Application::get().getGraphicsContext().getMemoryAllocator()
 
 namespace BZ {
 
     template<typename HandleT>
-    struct GpuObject {
-
-        GpuObject() = default;
-        ~GpuObject() = default;
-
-        BZ_NON_COPYABLE(GpuObject);
-
-        static GraphicsContext& getGraphicsContext() {
-            return Application::get().getGraphicsContext();
-        }
-
-        static VkDevice getVkDevice() {
-            return Application::get().getGraphicsContext().getDevice().getHandle();
-        }
-
+    class GpuObject {
+    public:
         HandleT getHandle() const {
             return handle;
         }

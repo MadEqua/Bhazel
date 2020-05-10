@@ -2,6 +2,9 @@
 
 #include "Buffer.h"
 
+#include "Core/Application.h"
+#include "Graphics/GraphicsContext.h"
+
 
 namespace BZ {
 
@@ -295,14 +298,14 @@ namespace BZ {
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = toRequiredVkBufferUsageFlags();
         allocInfo.preferredFlags = toPreferredVkBufferUsageFlags();
-        BZ_ASSERT_VK(vmaCreateBuffer(getGraphicsContext().getMemoryAllocator(), &bufferInfo, &allocInfo, &handle.bufferHandle, &handle.allocationHandle, nullptr));
+        BZ_ASSERT_VK(vmaCreateBuffer(BZ_MEM_ALLOCATOR, &bufferInfo, &allocInfo, &handle.bufferHandle, &handle.allocationHandle, nullptr));
     }
 
     Buffer::~Buffer() {
         if(isMapped)
             unmap();
 
-        vmaDestroyBuffer(getGraphicsContext().getMemoryAllocator(), handle.bufferHandle, handle.allocationHandle);
+        vmaDestroyBuffer(BZ_MEM_ALLOCATOR, handle.bufferHandle, handle.allocationHandle);
     }
 
     void Buffer::setData(const void *data, uint32 dataSize, uint32 offset) {
@@ -320,11 +323,11 @@ namespace BZ {
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = getGraphicsContext().getCurrentFrameCommandPool(QueueProperty::Transfer, true).getHandle();
+            allocInfo.commandPool = BZ_GRAPHICS_CTX.getCurrentFrameCommandPool(QueueProperty::Transfer, true).getHandle();
             allocInfo.commandBufferCount = 1;
 
             VkCommandBuffer commandBuffer;
-            vkAllocateCommandBuffers(getVkDevice(), &allocInfo, &commandBuffer);
+            vkAllocateCommandBuffers(BZ_GRAPHICS_DEVICE.getHandle(), &allocInfo, &commandBuffer);
 
             VkCommandBufferBeginInfo beginInfo = {};
             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -343,17 +346,17 @@ namespace BZ {
             submitInfo.commandBufferCount = 1;
             submitInfo.pCommandBuffers = &commandBuffer;
 
-            auto transferQueueHandle = getGraphicsContext().getDevice().getQueueContainerExclusive().transfer().getHandle();
+            auto transferQueueHandle = BZ_GRAPHICS_DEVICE.getQueueContainerExclusive().transfer().getHandle();
             vkQueueSubmit(transferQueueHandle, 1, &submitInfo, VK_NULL_HANDLE);
             vkQueueWaitIdle(transferQueueHandle);
 
-            vkFreeCommandBuffers(getVkDevice(), allocInfo.commandPool, 1, &commandBuffer);
+            vkFreeCommandBuffers(BZ_GRAPHICS_DEVICE.getHandle(), allocInfo.commandPool, 1, &commandBuffer);
         }
         else {
             void *ptr;
-            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.allocationHandle, &ptr));
+            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.allocationHandle, &ptr));
             memcpy(static_cast<byte*>(ptr) + offset, data, dataSize);
-            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.allocationHandle);
+            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.allocationHandle);
         }
     }
 
@@ -365,7 +368,7 @@ namespace BZ {
         isMapped = true;
 
         void *ptr;
-        BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.allocationHandle, &ptr));
+        BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.allocationHandle, &ptr));
         return BufferPtr(*this, static_cast<byte*>(ptr) + offset);
     }
 
@@ -373,11 +376,11 @@ namespace BZ {
         BZ_ASSERT_CORE(isMapped, "Buffer not mapped!");
 
         isMapped = false;
-        vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.allocationHandle);
+        vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.allocationHandle);
     }
 
     uint32 Buffer::getCurrentBaseOfReplicaOffset() const {
-        return isDynamic() ? getGraphicsContext().getCurrentFrameIndex() * this->size : 0;
+        return isDynamic() ? BZ_GRAPHICS_CTX.getCurrentFrameIndex() * this->size : 0;
     }
 
     VkMemoryPropertyFlags Buffer::toRequiredVkBufferUsageFlags() const {

@@ -12,10 +12,7 @@ constexpr static uint32 APP_FIRST_DESCRIPTOR_SET_IDX = 5;
 
 constexpr static uint32 SHADOW_MAPPING_CASCADE_COUNT = 4;
 
-constexpr static uint32 MAX_VIEWPORTS = 16;
-
-constexpr static uint32 MAX_COMMAND_BUFFERS = 8;
-constexpr static uint32 MAX_COMMANDS_PER_BUFFER = 1024 * 4;
+constexpr static uint32 MAX_COMMAND_BUFFERS_PER_FRAME = 8;
 constexpr static uint32 MAX_DESCRIPTOR_DYNAMIC_OFFSETS = 8;
 
 constexpr static uint32 MAX_DIR_LIGHTS_PER_SCENE = 2;

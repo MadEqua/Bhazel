@@ -4,10 +4,10 @@
 
 #include "Graphics/Internal/Device.h"
 
-#include "Graphics/CommandBuffer.h"
-
 
 namespace BZ {
+
+    constexpr uint32 ALLOCATE_BATCH_COUNT = 4;
 
     void CommandPool::init(const Device &device, uint32 familyIndex) {
         this->device = &device;
@@ -24,29 +24,28 @@ namespace BZ {
         vkDestroyCommandPool(device->getHandle(), handle, nullptr);
     }
 
-    Ref<CommandBuffer> CommandPool::getCommandBuffer() {
+    CommandBuffer& CommandPool::getCommandBuffer() {
         if(buffersFree.empty()) {
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.commandPool = handle;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandBufferCount = 1;
+            allocInfo.commandBufferCount = ALLOCATE_BATCH_COUNT;
 
-            VkCommandBuffer commandBuffer;
-            BZ_ASSERT_VK(vkAllocateCommandBuffers(device->getHandle(), &allocInfo, &commandBuffer));
+            VkCommandBuffer commandBuffers[ALLOCATE_BATCH_COUNT];
+            BZ_ASSERT_VK(vkAllocateCommandBuffers(device->getHandle(), &allocInfo, commandBuffers));
 
-            auto &ret = CommandBuffer::wrap(commandBuffer);
-            buffersInUse.push_back(ret);
-            return ret;
+            for(uint32 i = 1; i < ALLOCATE_BATCH_COUNT; ++i) {
+                buffersFree.push_back(CommandBuffer(commandBuffers[i]));
+            }
+
+            buffersInUse.push_back(CommandBuffer(commandBuffers[0]));
         }
         else {
-            auto &freeBuffer = buffersFree.back();
-
-            buffersInUse.push_back(freeBuffer);
+            buffersInUse.push_back(buffersFree.back());
             buffersFree.pop_back();
-
-            return freeBuffer;
         }
+        return buffersInUse.back();
     }
 
     void CommandPool::reset() {

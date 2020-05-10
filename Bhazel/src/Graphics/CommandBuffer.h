@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Graphics/Internal/VulkanIncludes.h"
+#include "Graphics/Internal/Queue.h"
+
 #include "Graphics/GpuObject.h"
 
 
@@ -11,14 +13,21 @@ namespace BZ {
     class Texture;
     class Buffer;
     class DescriptorSet;
+    class PipelineState;
 
     /*
     * CommandPools create the CommandBuffers.
     */
     class CommandBuffer : public GpuObject<VkCommandBuffer> {
     public:
+        static CommandBuffer& begin(QueueProperty property, bool exclusiveQueue = false);
+
+        void endAndSubmit();
+
         void begin();
         void end();
+
+        void submit();
 
         void beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments);
         void endRenderPass();
@@ -55,9 +64,10 @@ namespace BZ {
     private:
         uint32 commandCount;
 
-        static Ref<CommandBuffer> wrap(VkCommandBuffer vkCommandBuffer);
+        CommandBuffer() = default;
         explicit CommandBuffer(VkCommandBuffer vkCommandBuffer);
 
         friend class CommandPool;
+        friend class GraphicsContext;
     };
 }

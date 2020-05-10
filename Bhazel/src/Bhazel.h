@@ -16,7 +16,7 @@
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 
-#include "Graphics/Graphics.h"
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/CommandBuffer.h"
 #include "Graphics/PipelineState.h"
 #include "Graphics/Buffer.h"

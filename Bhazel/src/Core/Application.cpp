@@ -4,7 +4,6 @@
 
 #include "Layers/Layer.h"
 #include "Events/WindowEvent.h"
-#include "Graphics/Graphics.h"
 #include "Renderer/Renderer2D.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/ImGuiRenderer.h"
@@ -45,7 +44,6 @@ namespace BZ {
         graphicsContext.init();
 
         Input::init();
-        Graphics::init();
         ImGuiRenderer::init();
         Renderer2D::init();
         Renderer::init();
@@ -58,8 +56,7 @@ namespace BZ {
     Application::~Application() {
         BZ_PROFILE_FUNCTION();
 
-        Graphics::waitForDevice();
-        Graphics::destroy();
+        graphicsContext.waitForDevice();
         ImGuiRenderer::destroy();
         Renderer2D::destroy();
         Renderer::destroy();
@@ -87,18 +84,18 @@ namespace BZ {
 
             if(!window.isMinimized()) {
 
-                Graphics::beginFrame();
+                graphicsContext.beginFrame();
 
                 layerStack.onUpdate(frameStats);
 
                 ImGuiRenderer::begin();
-                Graphics::onImGuiRender(frameStats);
+                graphicsContext.onImGuiRender(frameStats);
                 Renderer::onImGuiRender(frameStats);
                 Renderer2D::onImGuiRender(frameStats);
                 layerStack.onImGuiRender(frameStats);
                 ImGuiRenderer::end();
 
-                Graphics::endFrame();
+                graphicsContext.endFrame();
 
                 auto frameDuration = frameTimer.getCountedTime();
                 frameStats.lastFrameTime = frameDuration;
@@ -107,7 +104,7 @@ namespace BZ {
 
 #ifdef BZ_HOT_RELOAD_SHADERS
                 if (fileWatcher.hasPipelineStatesToReload()) {
-                    Graphics::waitForDevice();
+                    graphicsContext.waitForDevice();
                     fileWatcher.performReloads();
                 }
 #endif
@@ -137,7 +134,6 @@ namespace BZ {
 
     bool Application::onWindowResized(const WindowResizedEvent &e) {
         graphicsContext.onWindowResize(e);
-        Graphics::onWindowResize(e);
         return false;
     }
 }

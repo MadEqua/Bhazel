@@ -104,6 +104,8 @@ namespace BZ {
         explicit PipelineState(PipelineStateData &inData);
         ~PipelineState();
 
+        BZ_NON_COPYABLE(PipelineState);
+
         const PipelineStateData& getData() const { return data; }
 
         //Used with the FileWatcher for Shader hot-reloading.

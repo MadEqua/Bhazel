@@ -18,6 +18,14 @@
 #define BZ_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 #define BZ_FLAG_CHECK(mask, flag) static_cast<bool>(mask & flag)
 
+#define BZ_NON_COPYABLE(T) \
+    T(const T&) = delete; \
+    void operator=(const T&) = delete; \
+    T(const T&&) = delete; \
+    void operator=(const T&&) = delete;
+
+#define BZ_APP BZ::Application::get()
+
 namespace BZ {
 
     template<typename T>
@@ -38,9 +46,3 @@ namespace BZ {
     template<typename T>
     inline Ref<T> MakeRefNull() { return std::shared_ptr<T>(); }
 }
-
-#define BZ_NON_COPYABLE(T) \
-    T(const T&) = delete; \
-    void operator=(const T&) = delete; \
-    T(const T&&) = delete; \
-    void operator=(const T&&) = delete;

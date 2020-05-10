@@ -57,6 +57,8 @@ namespace BZ {
     public:
         ~Texture();
 
+        BZ_NON_COPYABLE(Texture);
+
         const TextureFormat& getFormat() const { return format; }
 
         const glm::ivec3& getDimensions() const { return dimensions; }

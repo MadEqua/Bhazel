@@ -2,12 +2,12 @@
 
 #include "ImGuiRenderer.h"
 
-#include "Graphics/Graphics.h"
 #include "Graphics/Buffer.h"
 #include "Graphics/Texture.h"
 #include "Graphics/Shader.h"
 #include "Graphics/PipelineState.h"
 #include "Graphics/DescriptorSet.h"
+#include "Graphics/CommandBuffer.h"
 
 #include "Core/Application.h"
 #include "Core/Input.h"
@@ -176,8 +176,8 @@ namespace BZ {
             idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
         }
 
-        auto commandBufferId = Graphics::beginCommandBuffer();
-        Graphics::beginRenderPass(commandBufferId, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
+        CommandBuffer &commandBuffer = CommandBuffer::begin(QueueProperty::Graphics);
+        commandBuffer.beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), false);
 
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
@@ -188,14 +188,14 @@ namespace BZ {
 
         memcpy(rendererData.constantBufferPtr, &projMatrix[0], sizeof(glm::mat4));
 
-        Graphics::bindPipelineState(commandBufferId, rendererData.pipelineState);
-        Graphics::bindDescriptorSet(commandBufferId, rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+        commandBuffer.bindPipelineState(rendererData.pipelineState);
+        commandBuffer.bindDescriptorSet(rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
 
         int vertexOffset = 0;
         int indexOffset = 0;
 
-        Graphics::bindBuffer(commandBufferId, rendererData.vertexBuffer, 0);
-        Graphics::bindBuffer(commandBufferId, rendererData.indexBuffer, 0);
+        commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
+        commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
 
         for(int i = 0; i < imDrawData->CmdListsCount; ++i) {
             const ImDrawList *cmdList = imDrawData->CmdLists[i];
@@ -206,16 +206,16 @@ namespace BZ {
                 scissorRect.offset.y = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
                 scissorRect.extent.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
                 scissorRect.extent.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
-                Graphics::setScissorRects(commandBufferId, 0, &scissorRect, 1);
-                Graphics::drawIndexed(commandBufferId, pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
+                commandBuffer.setScissorRects(0, &scissorRect, 1);
+                commandBuffer.drawIndexed(pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
 
                 indexOffset += pcmd->ElemCount;
             }
             vertexOffset += cmdList->VtxBuffer.Size;
         }
 
-        Graphics::endRenderPass(commandBufferId);
-        Graphics::endCommandBuffer(commandBufferId);
+        commandBuffer.endRenderPass();
+        commandBuffer.endAndSubmit();
     }
 
     void ImGuiRenderer::initInput() {

@@ -2,6 +2,9 @@
 
 #include "CommandBuffer.h"
 
+#include "Core/Application.h"
+
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Buffer.h"
 #include "Graphics/Framebuffer.h"
@@ -12,12 +15,19 @@
 
 namespace BZ {
 
-    Ref<CommandBuffer> CommandBuffer::wrap(VkCommandBuffer vkCommandBuffer) {
-        return MakeRef<CommandBuffer>(new CommandBuffer(vkCommandBuffer));
+    CommandBuffer& CommandBuffer::begin(QueueProperty property, bool exclusiveQueue) {
+        auto &buf = BZ_GRAPHICS_CTX.getCurrentFrameCommandPool(property, exclusiveQueue).getCommandBuffer();
+        buf.begin();
+        return buf;
     }
-
+    
     CommandBuffer::CommandBuffer(VkCommandBuffer vkCommandBuffer) {
         handle = vkCommandBuffer;
+    }
+
+    void CommandBuffer::endAndSubmit() {
+        end();
+        submit();
     }
 
     void CommandBuffer::begin() {
@@ -33,6 +43,10 @@ namespace BZ {
 
     void CommandBuffer::end() {
         BZ_ASSERT_VK(vkEndCommandBuffer(handle));
+    }
+
+    void CommandBuffer::submit() {
+        BZ_GRAPHICS_CTX.submitCommandBuffers(this, 1);
     }
 
     void CommandBuffer::beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments) {
@@ -118,6 +132,8 @@ namespace BZ {
     }
 
     void CommandBuffer::bindBuffer(const Ref<Buffer> &buffer, uint32 offset) {
+        BZ_ASSERT_CORE(buffer->isVertex() || buffer->isIndex(), "Invalid Buffer type!");
+
         if (buffer->isVertex()) {
             VkBuffer vkBuffers [] = { buffer->getHandle().bufferHandle };
             VkDeviceSize offsets [] = { offset };
@@ -138,16 +154,46 @@ namespace BZ {
 
     void CommandBuffer::bindDescriptorSet(const Ref<DescriptorSet> &descriptorSet,
         const Ref<PipelineState> &pipelineState, uint32 setIndex,
-        uint32 dynamicBufferOffsets [], uint32 dynamicBufferCount) {
+        uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
+
+        BZ_ASSERT_CORE(dynamicBufferCount <= MAX_DESCRIPTOR_DYNAMIC_OFFSETS && dynamicBufferCount <= descriptorSet->getDynamicBufferCount(),
+            "Invalid dynamicBufferCount: {}!", dynamicBufferCount);
+
+        //Mix correctly the dynamicBufferOffsets coming from the user with the ones that the engine needs to send behind the scenes for dynamic buffers.
+        uint32 finalDynamicBufferOffsets[MAX_DESCRIPTOR_DYNAMIC_OFFSETS];
+        uint32 index = 0;
+        uint32 userIndex = 0;
+        uint32 binding = 0;
+        for(const auto &desc : descriptorSet->getLayout()->getDescriptorDescs()) {
+            if(desc.type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || desc.type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
+                const auto *dynBufferData = descriptorSet->getDynamicBufferDataByBinding(binding);
+                BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
+
+                for(uint32 i = 0; i < dynBufferData->arrayCount; ++i) {
+                    finalDynamicBufferOffsets[index] = dynBufferData->buffers[i]->getCurrentBaseOfReplicaOffset();
+                    if(userIndex < dynamicBufferCount) {
+                        finalDynamicBufferOffsets[index] += dynamicBufferOffsets[userIndex++];
+                    }
+                    else if(dynamicBufferCount > 0) {
+                        BZ_LOG_CORE_WARN("Graphics::bindDescriptorSet(): there are more dynamic buffers on the DescriptorSet than the number of offsets sent to the bind function. Might be an error.");
+                    }
+                    index++;
+                }
+            }
+            binding++;
+        }
 
         VkDescriptorSet descSets[] = { descriptorSet->getHandle() };
-        vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pipelineState->getHandle().pipelineLayout, setIndex,
-            1, descSets, dynamicBufferCount, dynamicBufferOffsets);
+        vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState->getHandle().pipelineLayout, setIndex,
+                                1, descSets, index, finalDynamicBufferOffsets);
         commandCount++;
     }
 
     void CommandBuffer::setPushConstants(const Ref<PipelineState> &pipelineState, VkShaderStageFlags shaderStageFlags, const void* data, uint32 size, uint32 offset) {
+        BZ_ASSERT_CORE(size % 4 == 0, "Size must be a multiple of 4!");
+        BZ_ASSERT_CORE(offset % 4 == 0, "Offset must be a multiple of 4!");
+        BZ_ASSERT_CORE(size <= MAX_PUSH_CONSTANT_SIZE, "Push constant size must be less or equal than {}. Sending size: {}!", MAX_PUSH_CONSTANT_SIZE, size);
+
         vkCmdPushConstants(handle, pipelineState->getHandle().pipelineLayout, shaderStageFlags, offset, size, data);
         commandCount++;
     }
@@ -178,8 +224,6 @@ namespace BZ {
     }
 
     void CommandBuffer::pipelineBarrierTexture(const Ref<Texture> &texture) {
-        GraphicsContext &context = getGraphicsContext();
-
         VkImageMemoryBarrier imageMemoryBarrier = {};
         imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 
@@ -202,7 +246,7 @@ namespace BZ {
 
         imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-        uint32 graphicsQueueFamily = context.getDevice().getQueueContainer().graphics().getFamily().getIndex();
+        uint32 graphicsQueueFamily = BZ_GRAPHICS_DEVICE.getQueueContainer().graphics().getFamily().getIndex();
         imageMemoryBarrier.srcQueueFamilyIndex = graphicsQueueFamily;
         imageMemoryBarrier.dstQueueFamilyIndex = graphicsQueueFamily;
 

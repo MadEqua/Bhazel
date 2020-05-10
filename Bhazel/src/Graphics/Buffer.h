@@ -120,6 +120,8 @@ namespace BZ {
         Buffer(VkBufferUsageFlags usageFlags, uint32 size, MemoryType memoryType, const DataLayout *layout);
         ~Buffer();
 
+        BZ_NON_COPYABLE(Buffer);
+
         void setData(const void *data, uint32 dataSize, uint32 offset);
         BufferPtr map(uint32 offset);
         void unmap();

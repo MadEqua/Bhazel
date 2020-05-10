@@ -24,6 +24,8 @@ namespace BZ {
         explicit Shader(const std::initializer_list<ShaderStage> &shaderStages);
         ~Shader();
 
+        BZ_NON_COPYABLE(Shader);
+
         uint32 getStageCount() const { return stageCount; }
         const ShaderStage& getStageData(uint32 stageIndex) const;
         const std::vector<std::string> getAllFilePaths() const;

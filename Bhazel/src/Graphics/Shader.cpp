@@ -2,6 +2,8 @@
 
 #include "Shader.h"
 
+#include "Core/Application.h"
+#include "Graphics/GraphicsContext.h"
 #include <fstream>
 
 
@@ -23,7 +25,7 @@ namespace BZ {
 
     Shader::~Shader() {
         for (uint32 i = 0; i < stageCount; ++i)
-            vkDestroyShaderModule(getVkDevice(), handle.modules[i], nullptr);
+            vkDestroyShaderModule(BZ_GRAPHICS_DEVICE.getHandle(), handle.modules[i], nullptr);
     }
 
     void Shader::reload() {
@@ -40,7 +42,7 @@ namespace BZ {
 
     void Shader::destroy() {
         for (uint32 i = 0; i < stageCount; ++i)
-            vkDestroyShaderModule(getVkDevice(), handle.modules[i], nullptr);
+            vkDestroyShaderModule(BZ_GRAPHICS_DEVICE.getHandle(), handle.modules[i], nullptr);
     }
 
     const ShaderStage &Shader::getStageData(uint32 stageIndex) const {
@@ -55,7 +57,7 @@ namespace BZ {
         createInfo.pCode = reinterpret_cast<const uint32_t*>(binaryBlob.data());
 
         VkShaderModule shaderModule;
-        BZ_ASSERT_VK(vkCreateShaderModule(getVkDevice(), &createInfo, nullptr, &shaderModule));
+        BZ_ASSERT_VK(vkCreateShaderModule(BZ_GRAPHICS_DEVICE.getHandle(), &createInfo, nullptr, &shaderModule));
         return shaderModule;
     }
 

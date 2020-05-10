@@ -2,6 +2,10 @@
 
 #include "RenderPass.h"
 
+#include "Core/Application.h"
+
+#include "Graphics/GraphicsContext.h"
+
 
 namespace BZ {
 
@@ -30,8 +34,8 @@ namespace BZ {
     }
 
     RenderPass::~RenderPass() {
-        vkDestroyRenderPass(getVkDevice(), handle.original, nullptr);
-        vkDestroyRenderPass(getVkDevice(), handle.forceClear, nullptr);
+        vkDestroyRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), handle.original, nullptr);
+        vkDestroyRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), handle.forceClear, nullptr);
     }
 
     Ref<RenderPass> RenderPass::create(const std::initializer_list<AttachmentDescription> &descs,
@@ -149,6 +153,6 @@ namespace BZ {
         vkRrenderPassInfo.dependencyCount = static_cast<uint32>(subPassDeps.size());
         vkRrenderPassInfo.pDependencies = vkSubpassDependencies.data();
 
-        BZ_ASSERT_VK(vkCreateRenderPass(getVkDevice(), &vkRrenderPassInfo, nullptr, forceClear ? &handle.forceClear : &handle.original));
+        BZ_ASSERT_VK(vkCreateRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), &vkRrenderPassInfo, nullptr, forceClear ? &handle.forceClear : &handle.original));
     }
 }

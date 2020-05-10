@@ -12,6 +12,12 @@
 
 namespace BZ {
 
+    struct FrameStats {
+        TimeDuration lastFrameTime;
+        uint64 frameCount;
+        TimeDuration runningTime;
+    };
+
     class WindowResizedEvent;
     class Framebuffer;
     class RenderPass;
@@ -19,7 +25,7 @@ namespace BZ {
     class TextureView;
 
     struct FrameData {
-        //One command pool per frame (and per family) makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
+        //One command pool per frame (per family) makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
         std::unordered_map<uint32, CommandPool> commandPoolsByFamily;
 
         //GPU-GPU sync.
@@ -39,18 +45,21 @@ namespace BZ {
         void init();
         void destroy();
 
-        void onWindowResize(const WindowResizedEvent& e);
-
         void beginFrame();
-        void submitCommandBuffers(const Ref<CommandBuffer> commandBuffers[], uint32 count);
+        void endFrame();
+
+        void submitCommandBuffers(const CommandBuffer commandBuffers[], uint32 count);
+        
         void waitForDevice();
+
+        void onWindowResize(const WindowResizedEvent& e);
+        void onImGuiRender(const FrameStats &frameStats); //For statistics.
 
         const Ref<TextureView>& getColorTextureView() const { return colorTextureView; }
         const Ref<TextureView>& getDepthTextureView() const { return depthTextureView; }
         const Ref<RenderPass>& getMainRenderPass() const { return mainRenderPass; }
         const Ref<Framebuffer>& getMainFramebuffer() const { return mainFramebuffer; }
 
-        Ref<CommandBuffer> getCurrentFrameCommandBuffer(QueueProperty property, bool exclusive);
         CommandPool& getCurrentFrameCommandPool(QueueProperty property, bool exclusive);
         DescriptorPool& getDescriptorPool() { return descriptorPool; }
         VmaAllocator getMemoryAllocator() const { return memoryAllocator; }
@@ -63,6 +72,9 @@ namespace BZ {
         Device& getDevice() { return device; }
 
     private:
+        void createFrameData();
+        void cleanupFrameData();
+
         Instance instance;
         Surface surface;
         PhysicalDevice physicalDevice;
@@ -82,7 +94,25 @@ namespace BZ {
         Ref<RenderPass> mainRenderPass;
         Ref<Framebuffer> mainFramebuffer;
 
-        void createFrameData();
-        void cleanupFrameData();
+        //CommandBuffers to be submitted at frame end.
+        CommandBuffer pendingCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
+        uint32 pendingCommandBufferIndex;
+
+        //Statistics stuff.
+        struct GraphicsStats {
+            FrameStats frameStats;
+            uint32 commandBufferCount;
+            uint32 commandCount;
+        };
+
+        GraphicsStats stats;
+        GraphicsStats visibleStats;
+
+        uint32 statsRefreshPeriodMs = 250;
+        uint32 statsTimeAcumMs;
+
+        constexpr static int FRAME_HISTORY_SIZE = 100;
+        float frameTimeHistory[FRAME_HISTORY_SIZE] = {};
+        uint32 frameTimeHistoryIdx = 0;
     };
 }

@@ -2,7 +2,10 @@
 
 #include "Texture.h"
 
+#include "Core/Application.h"
 #include "Core/Utils.h"
+
+#include "Graphics/GraphicsContext.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -517,7 +520,7 @@ namespace BZ {
 
     Texture::~Texture() {
         if (!isWrapping)
-            vmaDestroyImage(getGraphicsContext().getMemoryAllocator(), handle.imageHandle, handle.allocationHandle);
+            vmaDestroyImage(BZ_MEM_ALLOCATOR, handle.imageHandle, handle.allocationHandle);
     }
 
     Texture::FileData Texture::loadFile(const char* path, int desiredChannels, bool flip, float isFloatingPoint) {
@@ -591,7 +594,7 @@ namespace BZ {
             transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
             initStagingBuffer(totalSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
 
             uint32 stagingOffset = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
@@ -602,7 +605,7 @@ namespace BZ {
                 stagingOffset += dataSize;
             }
 
-            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle);
+            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
             transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             submitCommandBuffer(commBuffer);
             destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
@@ -625,11 +628,11 @@ namespace BZ {
             uint32 dataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
             initStagingBuffer(dataSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
 
-            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
             memcpy(stagingPtr, fileData.data, dataSize);
             freeData(fileData);
             copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, 0, fileData.width, fileData.height, 0);
-            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle);
+            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
 
             if (mipmapData.option == MipmapData::Options::Generate) {
                 generateMipmaps(*this, handle.imageHandle, commBuffer);
@@ -668,7 +671,7 @@ namespace BZ {
             transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
             initStagingBuffer(totalSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
 
             uint32 stagingOffset = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
@@ -678,7 +681,7 @@ namespace BZ {
                 stagingOffset += dataSize;
             }
 
-            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle);
+            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
             transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             submitCommandBuffer(commBuffer);
             destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
@@ -697,10 +700,10 @@ namespace BZ {
             uint32 dataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
             initStagingBuffer(dataSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
 
-            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
             memcpy(stagingPtr, data, dataSize);
             copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, 0, dimensions.x, dimensions.y, 0);
-            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle);
+            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
 
             if (mipmapData.option == MipmapData::Options::Generate) {
                 generateMipmaps(*this, handle.imageHandle, commBuffer);
@@ -770,7 +773,7 @@ namespace BZ {
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         allocInfo.preferredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-        BZ_ASSERT_VK(vmaCreateImage(getGraphicsContext().getMemoryAllocator(), &imageInfo, &allocInfo, &handle.imageHandle, &handle.allocationHandle, nullptr));
+        BZ_ASSERT_VK(vmaCreateImage(BZ_MEM_ALLOCATOR, &imageInfo, &allocInfo, &handle.imageHandle, &handle.allocationHandle, nullptr));
     }
 
 
@@ -812,7 +815,7 @@ namespace BZ {
             transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
             initStagingBuffer(totalSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
 
             uint32 faceOffset = 0;
             uint32 copyOffset = 0;
@@ -830,7 +833,7 @@ namespace BZ {
                 copyOffset = faceOffset;
             }
 
-            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle);
+            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
             transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             submitCommandBuffer(commBuffer);
             destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
@@ -858,7 +861,7 @@ namespace BZ {
             uint32 faceDataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
             initStagingBuffer(faceDataSize * 6, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
 
-            BZ_ASSERT_VK(vmaMapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
 
             uint32 stagingOffset = 0;
             for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
@@ -868,7 +871,7 @@ namespace BZ {
             }
             copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, 0, dimensions.x, dimensions.y, 0);
 
-            vmaUnmapMemory(getGraphicsContext().getMemoryAllocator(), handle.stagingBufferAllocationHandle);
+            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
 
             if (mipmapData.option == MipmapData::Options::Generate) {
                 generateMipmaps(*this, handle.imageHandle, commBuffer);
@@ -913,7 +916,7 @@ namespace BZ {
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         allocInfo.preferredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-        BZ_ASSERT_VK(vmaCreateImage(getGraphicsContext().getMemoryAllocator(), &imageInfo, &allocInfo, &handle.imageHandle, &handle.allocationHandle, nullptr));
+        BZ_ASSERT_VK(vmaCreateImage(BZ_MEM_ALLOCATOR, &imageInfo, &allocInfo, &handle.imageHandle, &handle.allocationHandle, nullptr));
     }
 
 
@@ -949,7 +952,7 @@ namespace BZ {
     }
 
     TextureView::~TextureView() {
-        vkDestroyImageView(getVkDevice(), handle, nullptr);
+        vkDestroyImageView(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
     }
 
     void TextureView::init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount) {
@@ -977,7 +980,7 @@ namespace BZ {
         imageViewCreateInfo.subresourceRange.levelCount = texture->getMipLevels();
         imageViewCreateInfo.subresourceRange.baseArrayLayer = baseLayer;
         imageViewCreateInfo.subresourceRange.layerCount = layerCount;
-        BZ_ASSERT_VK(vkCreateImageView(getVkDevice(), &imageViewCreateInfo, nullptr, &handle));
+        BZ_ASSERT_VK(vkCreateImageView(BZ_GRAPHICS_DEVICE.getHandle(), &imageViewCreateInfo, nullptr, &handle));
     }
 
 
@@ -1004,10 +1007,10 @@ namespace BZ {
         samplerInfo.borderColor = builder.borderColor;
         samplerInfo.unnormalizedCoordinates = builder.unnormalizedCoordinate ? VK_TRUE : VK_FALSE;
 
-        BZ_ASSERT_VK(vkCreateSampler(getVkDevice(), &samplerInfo, nullptr, &handle));
+        BZ_ASSERT_VK(vkCreateSampler(BZ_GRAPHICS_DEVICE.getHandle(), &samplerInfo, nullptr, &handle));
     }
 
     Sampler::~Sampler() {
-        vkDestroySampler(getVkDevice(), handle, nullptr);
+        vkDestroySampler(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
     }
 }
