@@ -67,7 +67,7 @@ namespace BZ {
             "Binding {} is not of type ConstantBuffer!", binding);
         BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].arrayCount >= dstArrayOffset + srcArrayCount, "Overflowing the array for binding {}!", binding);
         BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
-        BZ_ASSERT_CORE(!buffers[0]->isDynamic() || (buffers[0]->isDynamic() && layout->getDescriptorDescs()[binding].type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC),
+        BZ_ASSERT_CORE(!buffers[0]->isReplicated() || (buffers[0]->isReplicated() && layout->getDescriptorDescs()[binding].type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC),
             "The buffer is effectively \"dynamic\" (there are internally created replicas because of memory type), so the type on the layout needs to be VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC.");
 
         dynamicBuffers.emplace_back(binding, buffers, srcArrayCount);

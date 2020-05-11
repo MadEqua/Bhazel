@@ -238,66 +238,81 @@ namespace BZ {
         commandCount++;
     }
 
-    void CommandBuffer::pipelineBarrierTexture(const Ref<Texture> &texture) {
-        VkImageMemoryBarrier imageMemoryBarrier = {};
-        imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    void CommandBuffer::pipelineBarrierTexture(const Ref<Texture> &texture,
+                                               VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
+                                               VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
+                                               VkImageLayout oldLayout, VkImageLayout newLayout,
+                                               uint32 baseMipLevel, uint32 mipLevels) {
 
-        if (texture->getFormat().isColor())
-            imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        else if (texture->getFormat().isDepth() || texture->getFormat().isStencil())
-            imageMemoryBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        pipelineBarrierTexture(*texture, srcStage, dstStage, srcAccessMask, dstAccessMask, oldLayout, newLayout, baseMipLevel, mipLevels);
+    }
 
-        imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    void CommandBuffer::pipelineBarrierTexture(const Texture &texture,
+                                               VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
+                                               VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
+                                               VkImageLayout oldLayout, VkImageLayout newLayout,
+                                               uint32 baseMipLevel, uint32 mipLevels) {
 
-        //Making some assumptions here...
-        if (texture->getFormat().isColor())
-            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        /*else if (texture.getFormat().isDepth())
-            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-        else if (texture.getFormat().isStencil())
-            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;*/
-        else if (texture->getFormat().isDepth() || texture->getFormat().isStencil())
-            imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        VkImageMemoryBarrier barrier = {};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = newLayout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = texture.getHandle().imageHandle;
 
-        imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.subresourceRange.aspectMask = 0;
+        if(texture.getFormat().isColor())
+            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
+        if(texture.getFormat().isDepth())
+            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+        if(texture.getFormat().isStencil())
+            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 
-        uint32 graphicsQueueFamily = BZ_GRAPHICS_DEVICE.getQueueContainer().graphics().getFamily().getIndex();
-        imageMemoryBarrier.srcQueueFamilyIndex = graphicsQueueFamily;
-        imageMemoryBarrier.dstQueueFamilyIndex = graphicsQueueFamily;
+        barrier.subresourceRange.baseMipLevel = baseMipLevel;
+        barrier.subresourceRange.levelCount = mipLevels;
+        //TODO: those may be parameters
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = texture.getLayers();
 
-        imageMemoryBarrier.image = texture->getHandle().imageHandle;
+        barrier.srcAccessMask = srcAccessMask;
+        barrier.dstAccessMask = dstAccessMask;
 
-        VkImageSubresourceRange subResourceRange;
-        subResourceRange.aspectMask = 0;
-        if (texture->getFormat().isColor())
-            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
-        if (texture->getFormat().isDepth())
-            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
-        if (texture->getFormat().isStencil())
-            subResourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-        subResourceRange.baseMipLevel = 0;
-        subResourceRange.levelCount = texture->getMipLevels();
-        subResourceRange.baseArrayLayer = 0;
-        subResourceRange.layerCount = texture->getLayers();
+        vkCmdPipelineBarrier(handle,
+            srcStage, dstStage,
+            0, //TODO: this may be a parameter
+            0, nullptr,
+            0, nullptr,
+            1, &barrier
+        );
 
-        imageMemoryBarrier.subresourceRange = subResourceRange;
-
-        VkPipelineStageFlags srcStageMask;
-        if (texture->getFormat().isColor())
-            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        else if (texture->getFormat().isDepth() || texture->getFormat().isStencil())
-            srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-
-        VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        vkCmdPipelineBarrier(handle, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
         commandCount++;
     }
 
-    void CommandBuffer::copyBuffer(const Ref<Buffer> &src, const Ref<Buffer> &dst, VkBufferCopy regions[], uint32 regionCount) {
-        copyBuffer(*src, *dst, regions, regionCount);
+    void CommandBuffer::copyBufferToBuffer(const Ref<Buffer> &src, const Ref<Buffer> &dst, VkBufferCopy regions[], uint32 regionCount) {
+        copyBufferToBuffer(*src, *dst, regions, regionCount);
     }
 
-    void CommandBuffer::copyBuffer(const Buffer &src, const Buffer &dst, VkBufferCopy regions[], uint32 regionCount) {
+    void CommandBuffer::copyBufferToBuffer(const Buffer &src, const Buffer &dst, VkBufferCopy regions[], uint32 regionCount) {
         vkCmdCopyBuffer(handle, src.getHandle().bufferHandle, dst.getHandle().bufferHandle, regionCount, regions);
+        commandCount++;
+    }
+
+    void CommandBuffer::copyBufferToTexture(const Ref<Buffer> &src, const Ref<Texture> &dst, VkImageLayout imageLayout, const VkBufferImageCopy regions[], uint32 regionCount) {
+        copyBufferToTexture(*src, *dst, imageLayout, regions, regionCount);
+    }
+
+    void CommandBuffer::copyBufferToTexture(const Buffer &src, const Texture &dst, VkImageLayout imageLayout, const VkBufferImageCopy regions[], uint32 regionCount) {
+        vkCmdCopyBufferToImage(handle, src.getHandle().bufferHandle, dst.getHandle().imageHandle, imageLayout, regionCount, regions);
+        commandCount++;
+    }
+
+    void CommandBuffer::blitTexture(const Ref<Texture> &src, const Ref<Texture> &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter) {
+        blitTexture(*src, *dst, srcLayout, dstLayout, blit, blitCount, filter);
+    }
+
+    void CommandBuffer::blitTexture(const Texture &src, const Texture &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter) {
+        vkCmdBlitImage(handle, src.getHandle().imageHandle, srcLayout, dst.getHandle().imageHandle, dstLayout, blitCount, blit, filter);
+        commandCount++;
     }
 }

@@ -6,6 +6,7 @@
 #include "Core/Utils.h"
 
 #include "Graphics/GraphicsContext.h"
+#include "Graphics/CommandBuffer.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -13,42 +14,26 @@
 
 namespace BZ {
 
-    static void generateMipmaps(const Texture &texture, VkImage vkImage, VkCommandBuffer commandBuffer) {
-        auto &graphicsContext = Application::get().getGraphicsContext();
-
+    static void generateMipmaps(CommandBuffer &comBuffer, const Texture &texture) {
         // Check if image format supports linear blitting
         VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(graphicsContext.getDevice().getPhysicalDevice().getHandle(),
-            texture.getFormat(), &formatProperties);
+        vkGetPhysicalDeviceFormatProperties(BZ_GRAPHICS_DEVICE.getPhysicalDevice().getHandle(), texture.getFormat(), &formatProperties);
 
         BZ_CRITICAL_ERROR(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT,
             "Linear interpolation for blitting is not supported. Cannot generate mipmaps!");
 
-        VkImageMemoryBarrier barrier = {};
-        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.image = vkImage;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = texture.getLayers();
-        barrier.subresourceRange.levelCount = 1;
+        int mipWidth = texture.getDimensions().x;
+        int mipHeight = texture.getDimensions().y;
 
-        int32_t mipWidth = texture.getDimensions().x;
-        int32_t mipHeight = texture.getDimensions().y;
+        uint32 i;
+        for (i = 1; i < texture.getMipLevels(); ++i) {
 
-        for (uint32_t i = 1; i < texture.getMipLevels(); i++) {
-            barrier.subresourceRange.baseMipLevel = i - 1;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-            vkCmdPipelineBarrier(commandBuffer,
-                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-                0, nullptr,
-                0, nullptr,
-                1, &barrier);
+            //Layout transition previous mipmap from DST_OPTIMAL to SRC_OPTIMAL.
+            comBuffer.pipelineBarrierTexture(texture,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                i - 1, 1);
 
             VkImageBlit blit = {};
             blit.srcOffsets[0] = { 0, 0, 0 };
@@ -64,82 +49,30 @@ namespace BZ {
             blit.dstSubresource.baseArrayLayer = 0;
             blit.dstSubresource.layerCount = texture.getLayers();
 
-            vkCmdBlitImage(commandBuffer,
-                vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                1, &blit,
-                VK_FILTER_LINEAR);
+            comBuffer.blitTexture(texture, texture, 
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                &blit, 1, VK_FILTER_LINEAR);
 
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-            vkCmdPipelineBarrier(commandBuffer,
-                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                0, nullptr,
-                0, nullptr,
-                1, &barrier);
+            //Layout transition previous mipmap from SRC_OPTIMAL to SHADER_READ_ONLY_OPTIMAL.
+            comBuffer.pipelineBarrierTexture(texture,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                i - 1, 1);
 
             if (mipWidth > 1) mipWidth /= 2;
             if (mipHeight > 1) mipHeight /= 2;
         }
 
-        barrier.subresourceRange.baseMipLevel = texture.getMipLevels() - 1;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        vkCmdPipelineBarrier(commandBuffer,
-            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-            0, nullptr,
-            0, nullptr,
-            1, &barrier);
+        //Layout transition last mipmap from DST_OPTIMAL to SHADER_READ_ONLY_OPTIMAL.
+        comBuffer.pipelineBarrierTexture(texture,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            i - 1, 1);
     }
 
-    static void initStagingBuffer(uint32 size, VkBuffer *vkBuffer, VmaAllocation *vmaAllocation) {
-        auto &graphicsContext = Application::get().getGraphicsContext();
-
-        VkBufferCreateInfo bufferInfo = {};
-        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = size;
-        bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        allocInfo.preferredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        BZ_ASSERT_VK(vmaCreateBuffer(graphicsContext.getMemoryAllocator(), &bufferInfo, &allocInfo, vkBuffer, vmaAllocation, nullptr));
-    }
-
-    static void destroyStagingBuffer(VkBuffer vkBuffer, VmaAllocation vmaAllocation) {
-        auto &graphicsContext = Application::get().getGraphicsContext();
-        vmaDestroyBuffer(graphicsContext.getMemoryAllocator(), vkBuffer, vmaAllocation);
-    }
-
-    static VkCommandBuffer beginCommandBuffer() {
-        auto &graphicsContext = Application::get().getGraphicsContext();
-
-        //Graphics queue (and not transfer) because of the layout transition operations.
-        VkCommandBufferAllocateInfo commandBufferAllocInfo = {};
-        commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        commandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocInfo.commandPool = graphicsContext.getCurrentFrameCommandPool(QueueProperty::Graphics, false).getHandle();
-        commandBufferAllocInfo.commandBufferCount = 1;
-
-        VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(graphicsContext.getDevice().getHandle(), &commandBufferAllocInfo, &commandBuffer);
-
-        VkCommandBufferBeginInfo beginInfo = {};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
-        return commandBuffer;
-    }
-
-    static void copyBufferToImage(const Texture &texture, VkBuffer vkBuffer, VkImage vkImage, VkCommandBuffer commandBuffer, uint32 bufferOffset, uint32 width, uint32 height, uint32 mipLevel) {
+    static void copyBufferToImage(CommandBuffer &comBuffer, const Buffer &buffer, const Texture &texture, uint32 bufferOffset, uint32 mipLevel, uint32 width, uint32 height) {
         VkBufferImageCopy region = {};
         region.bufferOffset = bufferOffset;
         region.bufferRowLength = 0;
@@ -151,73 +84,8 @@ namespace BZ {
         region.imageOffset = { 0, 0, 0 };
         region.imageExtent = { width, height, 1 };
 
-        vkCmdCopyBufferToImage(commandBuffer, vkBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        comBuffer.copyBufferToTexture(buffer, texture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &region, 1);
     }
-
-    static void transitionImageLayout(const Texture &texture, VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
-        VkImageMemoryBarrier barrier = {};
-        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.oldLayout = oldLayout;
-        barrier.newLayout = newLayout;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image;
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = texture.getMipLevels();
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = texture.getLayers();
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = 0;
-
-        VkPipelineStageFlags sourceStage;
-        VkPipelineStageFlags destinationStage;
-
-        if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-            barrier.srcAccessMask = 0;
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        }
-        else {
-            BZ_ASSERT_ALWAYS_CORE("Unsupported layout transition!");
-        }
-
-        vkCmdPipelineBarrier(commandBuffer,
-            sourceStage, destinationStage,
-            0,
-            0, nullptr,
-            0, nullptr,
-            1, &barrier
-        );
-    }
-
-    static void submitCommandBuffer(VkCommandBuffer commandBuffer) {
-        auto &graphicsContext = Application::get().getGraphicsContext();
-
-        vkEndCommandBuffer(commandBuffer);
-
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
-
-        auto queueHandle = graphicsContext.getDevice().getQueueContainerExclusive().graphics().getHandle();
-        vkQueueSubmit(queueHandle, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(queueHandle);
-
-        VkCommandPool cmdPool = graphicsContext.getCurrentFrameCommandPool(QueueProperty::Graphics, false).getHandle();
-        vkFreeCommandBuffers(graphicsContext.getDevice().getHandle(), cmdPool, 1, &commandBuffer);
-    }
-
 
     /*-------------------------------------------------------------------------------------------*/
     TextureFormat::TextureFormat(VkFormat format) :
@@ -570,8 +438,9 @@ namespace BZ {
     Texture2D::Texture2D(const char *path, TextureFormat format, MipmapData mipmapData) :
         Texture(format) {
 
-        VkCommandBuffer commBuffer = beginCommandBuffer();
-        byte *stagingPtr;
+        //Graphics queue (and not transfer) because of the layout transition operations.
+        CommandBuffer &commBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        BufferPtr stagingPtr;
 
         if (mipmapData.option == MipmapData::Options::Load) {
             mipLevels = mipmapData.mipLevels;
@@ -591,24 +460,28 @@ namespace BZ {
             dimensions.y = fileDatas[0].height;
 
             createImage(true, mipmapData);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-            initStagingBuffer(totalSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                              0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                              VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
+
+            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, totalSize, MemoryType::Staging, nullptr);
+            stagingPtr = stagingBuffer.map(0);
 
             uint32 stagingOffset = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
                 uint32 dataSize = fileDatas[mipIdx].width * fileDatas[mipIdx].height * format.getSizePerTexel();
                 memcpy(stagingPtr + stagingOffset, fileDatas[mipIdx].data, dataSize);
                 freeData(fileDatas[mipIdx]);
-                copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, stagingOffset, fileDatas[mipIdx].width, fileDatas[mipIdx].height, mipIdx);
+                copyBufferToImage(commBuffer, stagingBuffer, *this, stagingOffset, mipIdx, fileDatas[0].width, fileDatas[0].height);
                 stagingOffset += dataSize;
             }
 
-            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            submitCommandBuffer(commBuffer);
-            destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                               VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
+            commBuffer.endAndSubmitImmediately();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics, false);
         }
         else {
             const FileData fileData = loadFile(path, format.getChannelCount(), true, format.isFloatingPoint());
@@ -623,34 +496,38 @@ namespace BZ {
             }
 
             createImage(true, mipmapData);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                               0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                               VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
 
             uint32 dataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
-            initStagingBuffer(dataSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-
-            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, dataSize, MemoryType::Staging, nullptr);
+            stagingPtr = stagingBuffer.map(0);
             memcpy(stagingPtr, fileData.data, dataSize);
             freeData(fileData);
-            copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, 0, fileData.width, fileData.height, 0);
-            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
+
+            copyBufferToImage(commBuffer, stagingBuffer, *this, 0, 0, fileData.width, fileData.height);
 
             if (mipmapData.option == MipmapData::Options::Generate) {
-                generateMipmaps(*this, handle.imageHandle, commBuffer);
+                generateMipmaps(commBuffer, *this);
             }
             else {
                 //Mipmap generation already does the transition.
-                transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                                   VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             }
-            submitCommandBuffer(commBuffer);
-            destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
+            commBuffer.endAndSubmitImmediately();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics, false);
         }
     }
 
     Texture2D::Texture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData) :
         Texture(format) {
 
-        VkCommandBuffer commBuffer = beginCommandBuffer();
-        byte *stagingPtr;
+        //Graphics queue (and not transfer) because of the layout transition operations.
+        CommandBuffer &commBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        BufferPtr stagingPtr;
 
         dimensions.x = width;
         dimensions.y = height;
@@ -668,23 +545,26 @@ namespace BZ {
             }
 
             createImage(true, mipmapData);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                               0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                               VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
 
-            initStagingBuffer(totalSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, totalSize, MemoryType::Staging, nullptr);
+            stagingPtr = stagingBuffer.map(0);
 
             uint32 stagingOffset = 0;
             for (uint32 mipIdx = 0; mipIdx < mipLevels; ++mipIdx) {
                 uint32 dataSize = datas[mipIdx].width * datas[mipIdx].height * format.getSizePerTexel();
                 memcpy(stagingPtr + stagingOffset, datas[mipIdx].data, dataSize);
-                copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, stagingOffset, datas[mipIdx].width, datas[mipIdx].height, mipIdx);
+                copyBufferToImage(commBuffer, stagingBuffer, *this, stagingOffset, mipIdx, width, height);
                 stagingOffset += dataSize;
             }
 
-            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            submitCommandBuffer(commBuffer);
-            destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                              VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
+            commBuffer.endAndSubmitImmediately();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics, false);
         }
         else {
             if (mipmapData.option == MipmapData::Options::Generate) {
@@ -695,25 +575,28 @@ namespace BZ {
             }
 
             createImage(true, mipmapData);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                              0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                              VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
+            
             uint32 dataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
-            initStagingBuffer(dataSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-
-            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, dataSize, MemoryType::Staging, nullptr);
+            stagingPtr = stagingBuffer.map(0);
             memcpy(stagingPtr, data, dataSize);
-            copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, 0, dimensions.x, dimensions.y, 0);
-            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
+
+            copyBufferToImage(commBuffer, stagingBuffer, *this, 0, 0, width, height);
 
             if (mipmapData.option == MipmapData::Options::Generate) {
-                generateMipmaps(*this, handle.imageHandle, commBuffer);
+                generateMipmaps(commBuffer, *this);
             }
             else {
                 //Mipmap generation already does the transition.
-                transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                                  VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             }
-            submitCommandBuffer(commBuffer);
-            destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
+            commBuffer.endAndSubmitImmediately();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics, false);
         }
     }
 
@@ -788,8 +671,9 @@ namespace BZ {
 
         layers = 6;
 
-        VkCommandBuffer commBuffer = beginCommandBuffer();
-        byte *stagingPtr;
+        //Graphics queue (and not transfer) because of the layout transition operations.
+        CommandBuffer &commBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        BufferPtr stagingPtr;
 
         if (mipmapData.option == MipmapData::Options::Load) {
             mipLevels = mipmapData.mipLevels;
@@ -812,10 +696,12 @@ namespace BZ {
             dimensions.y = fileDatas[0].height;
 
             createImage(true, mipmapData);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                              0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                              VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
 
-            initStagingBuffer(totalSize, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, totalSize, MemoryType::Staging, nullptr);
+            stagingPtr = stagingBuffer.map(0);
 
             uint32 faceOffset = 0;
             uint32 copyOffset = 0;
@@ -829,14 +715,15 @@ namespace BZ {
                     faceOffset += faceSize;
                 }
 
-                copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, copyOffset, fileDatas[mipIdx * 6].width, fileDatas[mipIdx * 6].height, mipIdx);
+                copyBufferToImage(commBuffer, stagingBuffer, *this, copyOffset, mipIdx, fileDatas[mipIdx * 6].width, fileDatas[mipIdx * 6].height);
                 copyOffset = faceOffset;
             }
 
-            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-            submitCommandBuffer(commBuffer);
-            destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                              VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
+            commBuffer.endAndSubmitImmediately();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics, false);
         }
         else {
             std::vector<FileData> fileDatas(6);
@@ -856,12 +743,13 @@ namespace BZ {
             }
 
             createImage(true, mipmapData);
-            transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                              0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                              VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
 
             uint32 faceDataSize = dimensions.x * dimensions.y * format.getSizePerTexel();
-            initStagingBuffer(faceDataSize * 6, &handle.stagingBufferHandle, &handle.stagingBufferAllocationHandle);
-
-            BZ_ASSERT_VK(vmaMapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle, reinterpret_cast<void**>(&stagingPtr)));
+            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, faceDataSize * 6, MemoryType::Staging, nullptr);
+            stagingPtr = stagingBuffer.map(0);
 
             uint32 stagingOffset = 0;
             for (uint32 faceIdx = 0; faceIdx < 6; ++faceIdx) {
@@ -869,19 +757,19 @@ namespace BZ {
                 freeData(fileDatas[faceIdx]);
                 stagingOffset += faceDataSize;
             }
-            copyBufferToImage(*this, handle.stagingBufferHandle, handle.imageHandle, commBuffer, 0, dimensions.x, dimensions.y, 0);
-
-            vmaUnmapMemory(BZ_MEM_ALLOCATOR, handle.stagingBufferAllocationHandle);
+            copyBufferToImage(commBuffer, stagingBuffer, *this, 0, 0, fileDatas[0].width, fileDatas[0].height);
 
             if (mipmapData.option == MipmapData::Options::Generate) {
-                generateMipmaps(*this, handle.imageHandle, commBuffer);
+                generateMipmaps(commBuffer, *this);
             }
             else {
                 //Mipmap generation already does the transition.
-                transitionImageLayout(*this, commBuffer, handle.imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                                  VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             }
-            submitCommandBuffer(commBuffer);
-            destroyStagingBuffer(handle.stagingBufferHandle, handle.stagingBufferAllocationHandle);
+            commBuffer.endAndSubmitImmediately();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics, false);
         }
     }
 

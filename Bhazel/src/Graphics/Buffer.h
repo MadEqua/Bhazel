@@ -97,11 +97,11 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
-    
     enum class MemoryType {
         GpuOnly,
         CpuToGpu,
-        GpuToCpu
+        GpuToCpu,
+        Staging //Same as CpuToGpu but without the replicas.
     };
 
     struct BufferHandles {
@@ -129,7 +129,9 @@ namespace BZ {
         uint32 getDimensions() const { return size; }
         uint32 getRealSize() const { return realSize; }
 
-        bool isDynamic() const { return memoryType != MemoryType::GpuOnly; }
+        bool isReplicated() const { return memoryType == MemoryType::CpuToGpu || memoryType == MemoryType::GpuToCpu; }
+        bool isMappable() const { return memoryType == MemoryType::CpuToGpu || memoryType == MemoryType::GpuToCpu || memoryType == MemoryType::Staging; }
+
         const DataLayout& getLayout() const { return layout; }
 
         uint32 getCurrentBaseOfReplicaOffset() const;

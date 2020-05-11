@@ -48,9 +48,6 @@ namespace BZ {
     struct TextureHandles {
         VkImage imageHandle;
         VmaAllocation allocationHandle;
-
-        VkBuffer stagingBufferHandle;
-        VmaAllocation stagingBufferAllocationHandle;
     };
 
     class Texture : public GpuObject<TextureHandles> {

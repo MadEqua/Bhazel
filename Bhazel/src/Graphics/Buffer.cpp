@@ -271,7 +271,7 @@ namespace BZ {
     Buffer::Buffer(VkBufferUsageFlags usageFlags, uint32 size, MemoryType memoryType, const DataLayout *layout) :
         usageFlags(usageFlags), size(size), memoryType(memoryType) {
 
-        if(isDynamic())
+        if(isReplicated())
             realSize = size * MAX_FRAMES_IN_FLIGHT;
         else
             realSize = size;
@@ -316,7 +316,7 @@ namespace BZ {
         BZ_ASSERT_CORE(!isMapped, "Buffer is being mapped!");
 
         if(memoryType == MemoryType::GpuOnly) {
-            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, dataSize, MemoryType::CpuToGpu, nullptr);
+            Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, dataSize, MemoryType::Staging, nullptr);
             stagingBuffer.setData(data, dataSize, 0);
 
             CommandBuffer &comBuffer = CommandBuffer::getAndBegin(QueueProperty::Transfer, true);
@@ -325,7 +325,7 @@ namespace BZ {
             copyRegion.srcOffset = 0;
             copyRegion.dstOffset = offset;
             copyRegion.size = dataSize;
-            comBuffer.copyBuffer(stagingBuffer, *this, &copyRegion, 1);
+            comBuffer.copyBufferToBuffer(stagingBuffer, *this, &copyRegion, 1);
 
             comBuffer.endAndSubmitImmediately();
 
@@ -342,7 +342,7 @@ namespace BZ {
     BufferPtr Buffer::map(uint32 offset) {
         BZ_ASSERT_CORE(offset >= 0 && offset < this->size, "Offset is not valid!");
         BZ_ASSERT_CORE(!isMapped, "Buffer already mapped!");
-        BZ_ASSERT_CORE(isDynamic(), "Can't map buffer marked with non-dynamic.");
+        BZ_ASSERT_CORE(isMappable(), "Can't map this buffer.");
 
         isMapped = true;
 
@@ -359,7 +359,7 @@ namespace BZ {
     }
 
     uint32 Buffer::getCurrentBaseOfReplicaOffset() const {
-        return isDynamic() ? BZ_GRAPHICS_CTX.getCurrentFrameIndex() * this->size : 0;
+        return isReplicated() ? BZ_GRAPHICS_CTX.getCurrentFrameIndex() * this->size : 0;
     }
 
     VkMemoryPropertyFlags Buffer::toRequiredVkBufferUsageFlags() const {
@@ -367,6 +367,7 @@ namespace BZ {
             case MemoryType::GpuOnly:
                 return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
             case MemoryType::CpuToGpu:
+            case MemoryType::Staging:
                 return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
             case MemoryType::GpuToCpu:
                 return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
@@ -380,6 +381,7 @@ namespace BZ {
         switch(memoryType) {
             case MemoryType::GpuOnly:
             case MemoryType::CpuToGpu:
+            case MemoryType::Staging:
                 return 0;
             case MemoryType::GpuToCpu:
                 return VK_MEMORY_PROPERTY_HOST_CACHED_BIT;

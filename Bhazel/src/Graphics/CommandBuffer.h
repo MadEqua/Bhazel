@@ -60,12 +60,27 @@ namespace BZ {
         void setScissorRects(uint32 firstIndex, const VkRect2D rects[], uint32 rectCount);
         void setDepthBias(float constantFactor, float clamp, float slopeFactor);
 
-        //Sync
-        void pipelineBarrierTexture(const Ref<Texture> &texture);
+        //Sync and Transitions
+        void pipelineBarrierTexture(const Ref<Texture> &texture,
+                                    VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
+                                    VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
+                                    VkImageLayout oldLayout, VkImageLayout newLayout,
+                                    uint32 baseMipLevel, uint32 mipLevels);
+        void pipelineBarrierTexture(const Texture &texture,
+                                    VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
+                                    VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
+                                    VkImageLayout oldLayout, VkImageLayout newLayout,
+                                    uint32 baseMipLevel, uint32 mipLevels);
 
         //Transfer
-        void copyBuffer(const Ref<Buffer> &src, const Ref<Buffer> &dst, VkBufferCopy regions[], uint32 regionCount);
-        void copyBuffer(const Buffer &src, const Buffer &dst, VkBufferCopy regions[], uint32 regionCount);
+        void copyBufferToBuffer(const Ref<Buffer> &src, const Ref<Buffer> &dst, VkBufferCopy regions[], uint32 regionCount);
+        void copyBufferToBuffer(const Buffer &src, const Buffer &dst, VkBufferCopy regions[], uint32 regionCount);
+
+        void copyBufferToTexture(const Ref<Buffer> &src, const Ref<Texture> &dst, VkImageLayout imageLayout, const VkBufferImageCopy regions[], uint32 regionCount);
+        void copyBufferToTexture(const Buffer &src, const Texture &dst, VkImageLayout imageLayout, const VkBufferImageCopy regions[], uint32 regionCount);
+
+        void blitTexture(const Ref<Texture> &src, const Ref<Texture> &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter);
+        void blitTexture(const Texture &src, const Texture &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter);
 
         uint32 getCommandCount() const { return commandCount; }
         QueueProperty getQueueProperty() const { return queueProperty; }
