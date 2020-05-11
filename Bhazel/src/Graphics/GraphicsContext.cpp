@@ -149,6 +149,7 @@ namespace BZ {
     }
 
     void GraphicsContext::submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count) {
+        BZ_ASSERT_CORE(count > 0, "Invalid count!");
         BZ_ASSERT_CORE(pendingCommandBufferIndex + count <= MAX_COMMAND_BUFFERS_PER_FRAME, "Exceeding maximum command buffers per frame!");
 
         for(uint32 i = 0; i < count; ++i) {
@@ -160,12 +161,41 @@ namespace BZ {
         stats.commandBufferCount += count;
     }
 
+    void GraphicsContext::submitImmediatelyCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count) {
+        BZ_ASSERT_CORE(count > 0, "Invalid count!");
+
+        VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
+        for(uint32 idx = 0; idx < count; ++idx) {
+            vkCommandBuffers[idx] = commandBuffers[idx]->getHandle();
+        }
+
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.waitSemaphoreCount = 0;
+        submitInfo.pWaitSemaphores = nullptr;
+        submitInfo.pWaitDstStageMask = nullptr;
+        submitInfo.commandBufferCount = count;
+        submitInfo.pCommandBuffers = vkCommandBuffers;
+        submitInfo.signalSemaphoreCount = 0;
+        submitInfo.pSignalSemaphores = nullptr;
+
+        const QueueContainer &container = commandBuffers[0]->isExclusiveQueue() ? device.getQueueContainerExclusive() : device.getQueueContainer();
+        const Queue &queue = container.getQueueByProperty(commandBuffers[0]->getQueueProperty());
+        BZ_ASSERT_VK(vkQueueSubmit(queue.getHandle(), 1, &submitInfo, VK_NULL_HANDLE));
+    }
+
     void GraphicsContext::waitForDevice() {
         BZ_ASSERT_VK(vkDeviceWaitIdle(device.getHandle()));
     }
 
+    void GraphicsContext::waitForQueue(QueueProperty queueProperty, bool exclusiveQueue) {
+        const QueueContainer &container = exclusiveQueue ? device.getQueueContainerExclusive() : device.getQueueContainer();
+        const Queue &queue = container.getQueueByProperty(queueProperty);
+        BZ_ASSERT_VK(vkQueueWaitIdle(queue.getHandle()));
+    }
+
     void GraphicsContext::onWindowResize(const WindowResizedEvent& e) {
-        BZ_ASSERT_VK(vkDeviceWaitIdle(device.getHandle()));
+        waitForDevice();
 
         swapchain.recreate();
         cleanupFrameData();

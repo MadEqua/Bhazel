@@ -49,8 +49,10 @@ namespace BZ {
         void endFrame();
 
         void submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count);
+        void submitImmediatelyCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count);
         
         void waitForDevice();
+        void waitForQueue(QueueProperty queueProperty, bool exclusiveQueue);
 
         void onWindowResize(const WindowResizedEvent& e);
         void onImGuiRender(const FrameStats &frameStats); //For statistics.

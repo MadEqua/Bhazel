@@ -8,7 +8,7 @@ namespace BZ {
 
     class Device;
 
-    //Allocates CommandBuffers from a certain family. Internal only, not exposed to upper layers.
+    //Allocates CommandBuffers from a specific family. Internal only, not exposed to upper layers.
     class CommandPool {
     public:
         CommandPool() = default;
@@ -19,7 +19,7 @@ namespace BZ {
         void destroy();
 
         //The returned CommandBuffer is only valid until submission.
-        CommandBuffer& getCommandBuffer();
+        CommandBuffer& getCommandBuffer(QueueProperty queueProperty, bool exclusiveQueue);
 
         //The caller has the responsability to call when it's safe to reset the command buffers.
         void reset();

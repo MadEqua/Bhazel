@@ -317,40 +317,19 @@ namespace BZ {
 
         if(memoryType == MemoryType::GpuOnly) {
             Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, dataSize, MemoryType::CpuToGpu, nullptr);
-            stagingBuffer.setData(data, dataSize, offset);
+            stagingBuffer.setData(data, dataSize, 0);
 
-            //Transfer from staging buffer to device local buffer.
-            VkCommandBufferAllocateInfo allocInfo = {};
-            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = BZ_GRAPHICS_CTX.getCurrentFrameCommandPool(QueueProperty::Transfer, true).getHandle();
-            allocInfo.commandBufferCount = 1;
+            CommandBuffer &comBuffer = CommandBuffer::getAndBegin(QueueProperty::Transfer, true);
 
-            VkCommandBuffer commandBuffer;
-            vkAllocateCommandBuffers(BZ_GRAPHICS_DEVICE.getHandle(), &allocInfo, &commandBuffer);
-
-            VkCommandBufferBeginInfo beginInfo = {};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-            vkBeginCommandBuffer(commandBuffer, &beginInfo);
-            VkBufferCopy copyRegion = {};
+            VkBufferCopy copyRegion;
             copyRegion.srcOffset = 0;
             copyRegion.dstOffset = offset;
             copyRegion.size = dataSize;
-            vkCmdCopyBuffer(commandBuffer, stagingBuffer.handle.bufferHandle, handle.bufferHandle, 1, &copyRegion);
-            vkEndCommandBuffer(commandBuffer);
+            comBuffer.copyBuffer(stagingBuffer, *this, &copyRegion, 1);
 
-            VkSubmitInfo submitInfo = {};
-            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &commandBuffer;
+            comBuffer.endAndSubmitImmediately();
 
-            auto transferQueueHandle = BZ_GRAPHICS_DEVICE.getQueueContainerExclusive().transfer().getHandle();
-            vkQueueSubmit(transferQueueHandle, 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(transferQueueHandle);
-
-            vkFreeCommandBuffers(BZ_GRAPHICS_DEVICE.getHandle(), allocInfo.commandPool, 1, &commandBuffer);
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Transfer, true);
         }
         else {
             void *ptr;

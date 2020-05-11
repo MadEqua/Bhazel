@@ -15,20 +15,18 @@
 
 namespace BZ {
 
-    CommandBuffer& CommandBuffer::begin(QueueProperty property, bool exclusiveQueue) {
-        auto &buf = BZ_GRAPHICS_CTX.getCurrentFrameCommandPool(property, exclusiveQueue).getCommandBuffer();
+    CommandBuffer& CommandBuffer::getAndBegin(QueueProperty queueProperty, bool exclusiveQueue) {
+        auto &buf = BZ_GRAPHICS_CTX.getCurrentFrameCommandPool(queueProperty, exclusiveQueue).getCommandBuffer(queueProperty, exclusiveQueue);
         buf.begin();
         return buf;
     }
     
-    void CommandBuffer::init(VkCommandBuffer vkCommandBuffer) {
+    void CommandBuffer::init(VkCommandBuffer vkCommandBuffer, QueueProperty queueProperty, bool exclusiveQueue) {
+        this->queueProperty = queueProperty;
+        this->exclusiveQueue = exclusiveQueue;
+
         handle = vkCommandBuffer;
         commandCount = 0;
-    }
-
-    void CommandBuffer::endAndSubmit() {
-        end();
-        submit();
     }
 
     void CommandBuffer::begin() {
@@ -46,9 +44,24 @@ namespace BZ {
         BZ_ASSERT_VK(vkEndCommandBuffer(handle));
     }
 
+    void CommandBuffer::endAndSubmit() {
+        end();
+        submit();
+    }
+
+    void CommandBuffer::endAndSubmitImmediately() {
+        end();
+        submitImmediately();
+    }
+
     void CommandBuffer::submit() {
         const CommandBuffer* arr[] = { this };
         BZ_GRAPHICS_CTX.submitCommandBuffers(arr, 1);
+    }
+
+    void CommandBuffer::submitImmediately() {
+        const CommandBuffer* arr[] = { this };
+        BZ_GRAPHICS_CTX.submitImmediatelyCommandBuffers(arr, 1);
     }
 
     void CommandBuffer::beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments) {
@@ -278,5 +291,13 @@ namespace BZ {
         VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         vkCmdPipelineBarrier(handle, srcStageMask, dstStageMask, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
         commandCount++;
+    }
+
+    void CommandBuffer::copyBuffer(const Ref<Buffer> &src, const Ref<Buffer> &dst, VkBufferCopy regions[], uint32 regionCount) {
+        copyBuffer(*src, *dst, regions, regionCount);
+    }
+
+    void CommandBuffer::copyBuffer(const Buffer &src, const Buffer &dst, VkBufferCopy regions[], uint32 regionCount) {
+        vkCmdCopyBuffer(handle, src.getHandle().bufferHandle, dst.getHandle().bufferHandle, regionCount, regions);
     }
 }

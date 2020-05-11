@@ -439,7 +439,7 @@ namespace BZ {
  
         fillConstants(scene);
 
-        rendererData.commandBuffer = &CommandBuffer::begin(QueueProperty::Graphics);
+        rendererData.commandBuffer = &CommandBuffer::getAndBegin(QueueProperty::Graphics);
 
         //Bind stuff that will not change.
         rendererData.commandBuffer->bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);

@@ -27,7 +27,7 @@ namespace BZ {
         vkDestroyCommandPool(device->getHandle(), handle, nullptr);
     }
 
-    CommandBuffer& CommandPool::getCommandBuffer() {
+    CommandBuffer& CommandPool::getCommandBuffer(QueueProperty queueProperty, bool exclusiveQueue) {
         BZ_ASSERT_CORE(nextFreeIndex < MAX_COMMAND_BUFFERS_PER_FRAME, "CommandPool has reached maximum capacity!");
 
         //The next free CommandBuffer is still not allocated/initialized, so allocate a batch.
@@ -46,7 +46,7 @@ namespace BZ {
             BZ_LOG_CORE_INFO("Allocated {} CommandBuffers.", toAllocateCount);
 
             for(uint32 i = 0; i < toAllocateCount; ++i) {
-                buffers[toAllocateIndex + i].init(newCommandBuffers[i]);
+                buffers[toAllocateIndex + i].init(newCommandBuffers[i], queueProperty, exclusiveQueue);
             }
 
             toAllocateIndex += toAllocateCount;

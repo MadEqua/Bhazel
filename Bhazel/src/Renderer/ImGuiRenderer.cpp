@@ -175,7 +175,7 @@ namespace BZ {
             idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
         }
 
-        CommandBuffer &commandBuffer = CommandBuffer::begin(QueueProperty::Graphics);
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
         commandBuffer.beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), false);
 
         ImGuiIO &io = ImGui::GetIO();

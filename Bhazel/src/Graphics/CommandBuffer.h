@@ -20,16 +20,18 @@ namespace BZ {
     */
     class CommandBuffer : public GpuObject<VkCommandBuffer> {
     public:
-        static CommandBuffer& begin(QueueProperty property, bool exclusiveQueue = false);
+        static CommandBuffer& getAndBegin(QueueProperty queueProperty, bool exclusiveQueue = false);
 
         BZ_NON_COPYABLE(CommandBuffer);
 
-        void endAndSubmit();
-
         void begin();
+
         void end();
+        void endAndSubmit();
+        void endAndSubmitImmediately();
 
         void submit();
+        void submitImmediately();
 
         void beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments);
         void endRenderPass();
@@ -61,13 +63,23 @@ namespace BZ {
         //Sync
         void pipelineBarrierTexture(const Ref<Texture> &texture);
 
+        //Transfer
+        void copyBuffer(const Ref<Buffer> &src, const Ref<Buffer> &dst, VkBufferCopy regions[], uint32 regionCount);
+        void copyBuffer(const Buffer &src, const Buffer &dst, VkBufferCopy regions[], uint32 regionCount);
+
         uint32 getCommandCount() const { return commandCount; }
+        QueueProperty getQueueProperty() const { return queueProperty; }
+        bool isExclusiveQueue() const { return exclusiveQueue; }
 
     private:
         uint32 commandCount;
 
+        //The queue which this Buffer will be submitted.
+        QueueProperty queueProperty;
+        bool exclusiveQueue;
+
         CommandBuffer() = default;
-        void init(VkCommandBuffer vkCommandBuffer);
+        void init(VkCommandBuffer vkCommandBuffer, QueueProperty queueProperty, bool exclusiveQueue);
 
         friend class CommandPool;
     };
