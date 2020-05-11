@@ -34,7 +34,7 @@ namespace BZ {
         Ref<Sampler> fontTextureSampler;
 
         Ref<PipelineState> pipelineState;
-        Ref<DescriptorSet> descriptorSet;
+        DescriptorSet *descriptorSet;
     } rendererData;
 
 
@@ -64,7 +64,6 @@ namespace BZ {
         rendererData.fontTextureSampler.reset();
 
         rendererData.pipelineState.reset();
-        rendererData.descriptorSet.reset();
 
         ImGui::DestroyContext();
     }
@@ -189,7 +188,7 @@ namespace BZ {
         memcpy(rendererData.constantBufferPtr, &projMatrix[0], sizeof(glm::mat4));
 
         commandBuffer.bindPipelineState(rendererData.pipelineState);
-        commandBuffer.bindDescriptorSet(rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
 
         int vertexOffset = 0;
         int indexOffset = 0;
@@ -343,7 +342,7 @@ namespace BZ {
         rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
 
         //DescriptorSet
-        rendererData.descriptorSet = DescriptorSet::create(descriptorSetLayout);
+        rendererData.descriptorSet = &DescriptorSet::get(descriptorSetLayout);
         rendererData.descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, 0, sizeof(glm::mat4));
         rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler, 1);
     }

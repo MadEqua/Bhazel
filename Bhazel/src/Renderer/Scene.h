@@ -71,7 +71,7 @@ namespace BZ {
         Camera& getCamera() { return *camera; }
         const Camera& getCamera() const { return *camera; }
 
-        const Ref<DescriptorSet>& getDescriptorSet() const { return descriptorSet; }
+        const DescriptorSet& getDescriptorSet() const { return *descriptorSet; }
 
     private:
         std::vector<Entity> entities;
@@ -80,6 +80,6 @@ namespace BZ {
         Camera *camera = nullptr;
         SkyBox skyBox;
 
-        Ref<DescriptorSet> descriptorSet;
+        DescriptorSet *descriptorSet = nullptr;
     };
 }

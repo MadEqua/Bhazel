@@ -18,7 +18,7 @@ namespace BZ {
         void init(const Device &device, uint32 familyIndex);
         void destroy();
 
-        //The return CommandBuffer is only valid until submission. WIll be reset at the end of the frame.
+        //The returned CommandBuffer is only valid until submission.
         CommandBuffer& getCommandBuffer();
 
         //The caller has the responsability to call when it's safe to reset the command buffers.
@@ -30,7 +30,8 @@ namespace BZ {
         VkCommandPool handle;
         const Device *device;
 
-        std::vector<CommandBuffer> buffersInUse;
-        std::vector<CommandBuffer> buffersFree;
+        CommandBuffer buffers[MAX_COMMAND_BUFFERS_PER_FRAME];
+        uint32 nextFreeIndex;
+        uint32 toAllocateIndex;
     };
 }

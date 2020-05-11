@@ -122,7 +122,7 @@ namespace BZ {
     void GraphicsContext::endFrame() {
         VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
         for(uint32 idx = 0; idx < pendingCommandBufferIndex; ++idx) {
-            vkCommandBuffers[idx] = pendingCommandBuffers[idx].getHandle();
+            vkCommandBuffers[idx] = pendingCommandBuffers[idx]->getHandle();
         }
 
         VkSemaphore waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore.getHandle() };
@@ -148,12 +148,12 @@ namespace BZ {
         currentFrameIndex = (currentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-    void GraphicsContext::submitCommandBuffers(const CommandBuffer commandBuffers[], uint32 count) {
+    void GraphicsContext::submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count) {
         BZ_ASSERT_CORE(pendingCommandBufferIndex + count <= MAX_COMMAND_BUFFERS_PER_FRAME, "Exceeding maximum command buffers per frame!");
 
         for(uint32 i = 0; i < count; ++i) {
             pendingCommandBuffers[pendingCommandBufferIndex + i] = commandBuffers[i];
-            stats.commandCount += commandBuffers[i].getCommandCount();
+            stats.commandCount += commandBuffers[i]->getCommandCount();
         }
 
         pendingCommandBufferIndex += count;

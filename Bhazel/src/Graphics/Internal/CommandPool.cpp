@@ -12,6 +12,9 @@ namespace BZ {
     void CommandPool::init(const Device &device, uint32 familyIndex) {
         this->device = &device;
 
+        nextFreeIndex = 0;
+        toAllocateIndex = 0;
+
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = familyIndex;
@@ -25,33 +28,35 @@ namespace BZ {
     }
 
     CommandBuffer& CommandPool::getCommandBuffer() {
-        if(buffersFree.empty()) {
+        BZ_ASSERT_CORE(nextFreeIndex < MAX_COMMAND_BUFFERS_PER_FRAME, "CommandPool has reached maximum capacity!");
+
+        //The next free CommandBuffer is still not allocated/initialized, so allocate a batch.
+        if(nextFreeIndex == toAllocateIndex) {
+            uint32 toAllocateCount = std::min(ALLOCATE_BATCH_COUNT, MAX_COMMAND_BUFFERS_PER_FRAME - toAllocateIndex);
+
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.commandPool = handle;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandBufferCount = ALLOCATE_BATCH_COUNT;
+            allocInfo.commandBufferCount = toAllocateCount;
 
-            VkCommandBuffer commandBuffers[ALLOCATE_BATCH_COUNT];
-            BZ_ASSERT_VK(vkAllocateCommandBuffers(device->getHandle(), &allocInfo, commandBuffers));
+            VkCommandBuffer newCommandBuffers[ALLOCATE_BATCH_COUNT];
+            BZ_ASSERT_VK(vkAllocateCommandBuffers(device->getHandle(), &allocInfo, newCommandBuffers));
 
-            for(uint32 i = 1; i < ALLOCATE_BATCH_COUNT; ++i) {
-                buffersFree.push_back(CommandBuffer(commandBuffers[i]));
+            BZ_LOG_CORE_INFO("Allocated {} CommandBuffers.", toAllocateCount);
+
+            for(uint32 i = 0; i < toAllocateCount; ++i) {
+                buffers[toAllocateIndex + i].init(newCommandBuffers[i]);
             }
 
-            buffersInUse.push_back(CommandBuffer(commandBuffers[0]));
+            toAllocateIndex += toAllocateCount;
         }
-        else {
-            buffersInUse.push_back(buffersFree.back());
-            buffersFree.pop_back();
-        }
-        return buffersInUse.back();
+
+        return buffers[nextFreeIndex++];
     }
 
     void CommandPool::reset() {
-        std::move(buffersInUse.begin(), buffersInUse.end(), std::back_inserter(buffersFree));
-        buffersInUse.clear();
-
         BZ_ASSERT_VK(vkResetCommandPool(device->getHandle(), handle, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT));
+        nextFreeIndex = 0;
     }
 }

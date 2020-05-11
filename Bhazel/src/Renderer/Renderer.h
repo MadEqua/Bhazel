@@ -27,8 +27,8 @@ namespace BZ {
         static const DataLayout& getIndexDataLayout();
 
         //Pre-filled DescriptorSets to be used on Scenes and Materials. They will fill the remaining bindings.
-        static Ref<DescriptorSet> createSceneDescriptorSet();
-        static Ref<DescriptorSet> createMaterialDescriptorSet();
+        static DescriptorSet& createSceneDescriptorSet();
+        static DescriptorSet& createMaterialDescriptorSet();
         static Ref<Framebuffer> createShadowMapFramebuffer();
 
         static const Ref<Sampler>& getDefaultSampler();

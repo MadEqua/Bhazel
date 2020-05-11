@@ -22,6 +22,8 @@ namespace BZ {
     public:
         static CommandBuffer& begin(QueueProperty property, bool exclusiveQueue = false);
 
+        BZ_NON_COPYABLE(CommandBuffer);
+
         void endAndSubmit();
 
         void begin();
@@ -41,7 +43,7 @@ namespace BZ {
 
         void bindPipelineState(const Ref<PipelineState> &pipelineState);
         //void bindDescriptorSets(const Ref<DescriptorSet> &descriptorSet);
-        void bindDescriptorSet(const Ref<DescriptorSet> &descriptorSet,
+        void bindDescriptorSet(const DescriptorSet &descriptorSet,
                                const Ref<PipelineState> &pipelineState, uint32 setIndex,
                                uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
 
@@ -65,9 +67,8 @@ namespace BZ {
         uint32 commandCount;
 
         CommandBuffer() = default;
-        explicit CommandBuffer(VkCommandBuffer vkCommandBuffer);
+        void init(VkCommandBuffer vkCommandBuffer);
 
         friend class CommandPool;
-        friend class GraphicsContext;
     };
 }

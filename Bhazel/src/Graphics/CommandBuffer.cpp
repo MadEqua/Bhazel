@@ -21,8 +21,9 @@ namespace BZ {
         return buf;
     }
     
-    CommandBuffer::CommandBuffer(VkCommandBuffer vkCommandBuffer) {
+    void CommandBuffer::init(VkCommandBuffer vkCommandBuffer) {
         handle = vkCommandBuffer;
+        commandCount = 0;
     }
 
     void CommandBuffer::endAndSubmit() {
@@ -46,7 +47,8 @@ namespace BZ {
     }
 
     void CommandBuffer::submit() {
-        BZ_GRAPHICS_CTX.submitCommandBuffers(this, 1);
+        const CommandBuffer* arr[] = { this };
+        BZ_GRAPHICS_CTX.submitCommandBuffers(arr, 1);
     }
 
     void CommandBuffer::beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments) {
@@ -152,11 +154,11 @@ namespace BZ {
         commandCount++;
     }
 
-    void CommandBuffer::bindDescriptorSet(const Ref<DescriptorSet> &descriptorSet,
+    void CommandBuffer::bindDescriptorSet(const DescriptorSet &descriptorSet,
         const Ref<PipelineState> &pipelineState, uint32 setIndex,
         uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
 
-        BZ_ASSERT_CORE(dynamicBufferCount <= MAX_DESCRIPTOR_DYNAMIC_OFFSETS && dynamicBufferCount <= descriptorSet->getDynamicBufferCount(),
+        BZ_ASSERT_CORE(dynamicBufferCount <= MAX_DESCRIPTOR_DYNAMIC_OFFSETS && dynamicBufferCount <= descriptorSet.getDynamicBufferCount(),
             "Invalid dynamicBufferCount: {}!", dynamicBufferCount);
 
         //Mix correctly the dynamicBufferOffsets coming from the user with the ones that the engine needs to send behind the scenes for dynamic buffers.
@@ -164,12 +166,12 @@ namespace BZ {
         uint32 index = 0;
         uint32 userIndex = 0;
         uint32 binding = 0;
-        for(const auto &desc : descriptorSet->getLayout()->getDescriptorDescs()) {
+        for(const auto &desc : descriptorSet.getLayout()->getDescriptorDescs()) {
             if(desc.type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || desc.type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) {
-                const auto *dynBufferData = descriptorSet->getDynamicBufferDataByBinding(binding);
+                const auto *dynBufferData = descriptorSet.getDynamicBufferDataByBinding(binding);
                 BZ_ASSERT_CORE(dynBufferData, "Non-existent binding should not happen!");
 
-                for(uint32 i = 0; i < dynBufferData->arrayCount; ++i) {
+                for(uint32 i = 0; i < static_cast<uint32>(dynBufferData->buffers.size()); ++i) {
                     finalDynamicBufferOffsets[index] = dynBufferData->buffers[i]->getCurrentBaseOfReplicaOffset();
                     if(userIndex < dynamicBufferCount) {
                         finalDynamicBufferOffsets[index] += dynamicBufferOffsets[userIndex++];
@@ -183,7 +185,7 @@ namespace BZ {
             binding++;
         }
 
-        VkDescriptorSet descSets[] = { descriptorSet->getHandle() };
+        VkDescriptorSet descSets[] = { descriptorSet.getHandle() };
         vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState->getHandle().pipelineLayout, setIndex,
                                 1, descSets, index, finalDynamicBufferOffsets);
         commandCount++;

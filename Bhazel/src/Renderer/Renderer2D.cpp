@@ -83,7 +83,7 @@ namespace BZ {
 
     struct TexData {
         Ref<TextureView> textureView;
-        Ref<DescriptorSet> descriptorSet;
+        DescriptorSet *descriptorSet;
     };
 
     static struct Renderer2DData {
@@ -103,7 +103,7 @@ namespace BZ {
 
         Ref<DescriptorSetLayout> constantsDescriptorSetLayout;
         Ref<DescriptorSetLayout> textureDescriptorSetLayout;
-        Ref<DescriptorSet> constantsDescriptorSet;
+        DescriptorSet *constantsDescriptorSet;
 
         std::unordered_map<uint64, TexData> texDataStorage;
 
@@ -123,7 +123,7 @@ namespace BZ {
         uint64 hash = reinterpret_cast<uint64>(texture.get()); //TODO: something better
         if (rendererData.texDataStorage.find(hash) == rendererData.texDataStorage.end()) {
             auto texViewRef = TextureView::create(texture);
-            auto descSetRef = DescriptorSet::create(rendererData.textureDescriptorSetLayout);
+            auto descSetRef = &DescriptorSet::get(rendererData.textureDescriptorSetLayout);
             descSetRef->setCombinedTextureSampler(texViewRef, rendererData.sampler, 0);
             rendererData.texDataStorage.emplace(hash, TexData{ texViewRef, descSetRef });
         }
@@ -194,7 +194,7 @@ namespace BZ {
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
         rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
 
-        rendererData.constantsDescriptorSet = DescriptorSet::create(rendererData.constantsDescriptorSetLayout);
+        rendererData.constantsDescriptorSet = &DescriptorSet::get(rendererData.constantsDescriptorSetLayout);
         rendererData.constantsDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, 0, sizeof(glm::mat4));
     }
 
@@ -211,7 +211,6 @@ namespace BZ {
         rendererData.sampler.reset();
         rendererData.whiteTexture.reset();
 
-        rendererData.constantsDescriptorSet.reset();
         rendererData.constantsDescriptorSetLayout.reset();
         rendererData.textureDescriptorSetLayout.reset();
     }
@@ -239,7 +238,7 @@ namespace BZ {
 
             glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
             memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
-            commandBuffer.bindDescriptorSet(rendererData.constantsDescriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+            commandBuffer.bindDescriptorSet(*rendererData.constantsDescriptorSet, rendererData.pipelineState, 0, nullptr, 0);
 
             commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
             commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
@@ -294,7 +293,7 @@ namespace BZ {
                 if (texChanged  || isLastIteration) {
                     if (currentBoundTexHash != currentBatchTexHash) {
                         const TexData& texData = rendererData.texDataStorage[currentBatchTexHash];
-                        commandBuffer.bindDescriptorSet(texData.descriptorSet, rendererData.pipelineState, 1, nullptr, 0);
+                        commandBuffer.bindDescriptorSet(*texData.descriptorSet, rendererData.pipelineState, 1, nullptr, 0);
                         currentBoundTexHash = currentBatchTexHash;
                         rendererData.stats.descriptorSetBindCount++;
                     }

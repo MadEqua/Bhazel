@@ -31,12 +31,12 @@ namespace BZ {
 
 
     Scene::Scene() {
-        descriptorSet = Renderer::createSceneDescriptorSet();
+        descriptorSet = &Renderer::createSceneDescriptorSet();
     }
 
     Scene::Scene(Camera &camera) :
         camera(&camera) {
-        descriptorSet = Renderer::createSceneDescriptorSet();
+        descriptorSet = &Renderer::createSceneDescriptorSet();
     }
 
     void Scene::addEntity(Mesh &mesh, Transform &transform, bool castShadow) {

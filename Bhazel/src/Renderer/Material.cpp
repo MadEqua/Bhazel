@@ -64,7 +64,7 @@ namespace BZ {
     }
 
     void Material::init() {
-        descriptorSet = Renderer::createMaterialDescriptorSet();
+        descriptorSet = &Renderer::createMaterialDescriptorSet();
         descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 1);
 
         if(normalTextureView)

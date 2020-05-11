@@ -48,22 +48,13 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
-    Ref<DescriptorSet> DescriptorSet::create(const Ref<DescriptorSetLayout> &layout) {
-        return MakeRef<DescriptorSet>(layout);
+    DescriptorSet& DescriptorSet::get(const Ref<DescriptorSetLayout> &layout) {
+        return BZ_GRAPHICS_CTX.getDescriptorPool().getDescriptorSet(layout);
     }
 
-    DescriptorSet::DescriptorSet(const Ref<DescriptorSetLayout> &layout) :
-        layout(layout) {
-
-        VkDescriptorSetLayout layouts [] = { layout->getHandle() };
-
-        VkDescriptorSetAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = BZ_GRAPHICS_CTX.getDescriptorPool().getHandle();
-        allocInfo.descriptorSetCount = 1;
-        allocInfo.pSetLayouts = layouts;
-
-        BZ_ASSERT_VK(vkAllocateDescriptorSets(BZ_GRAPHICS_DEVICE.getHandle(), &allocInfo, &handle));
+    void DescriptorSet::init(VkDescriptorSet vkDescriptorSet, const Ref<DescriptorSetLayout>& layout) {
+        handle = vkDescriptorSet;
+        this->layout = layout;
     }
 
     void DescriptorSet::setConstantBuffer(const Ref<Buffer> &buffer, uint32 binding, uint32 offset, uint32 size) {
@@ -77,7 +68,7 @@ namespace BZ {
         BZ_ASSERT_CORE(layout->getDescriptorDescs()[binding].arrayCount >= dstArrayOffset + srcArrayCount, "Overflowing the array for binding {}!", binding);
         BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
         BZ_ASSERT_CORE(!buffers[0]->isDynamic() || (buffers[0]->isDynamic() && layout->getDescriptorDescs()[binding].type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC),
-            "The buffer is effectively \"dynamic\" (there are internally created replicas because of memory type), so the type on the layout needs to be DescriptorType::ConstantBufferDynamic.");
+            "The buffer is effectively \"dynamic\" (there are internally created replicas because of memory type), so the type on the layout needs to be VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC.");
 
         dynamicBuffers.emplace_back(binding, buffers, srcArrayCount);
 
@@ -186,7 +177,8 @@ namespace BZ {
     const DescriptorSet::DynBufferData* DescriptorSet::getDynamicBufferDataByBinding(uint32 binding) const {
         BZ_ASSERT_CORE(binding < layout->getDescriptorDescs().size(), "Binding {} does not exist on the layout for this DescriptorSet!", binding);
         for(const auto &dynBufData : dynamicBuffers) {
-            if(dynBufData.binding == binding) return &dynBufData;
+            if(dynBufData.binding == binding) 
+                return &dynBufData;
         }
         return nullptr;
     }
@@ -194,14 +186,13 @@ namespace BZ {
     uint32 DescriptorSet::getDynamicBufferCount() const {
         uint32 count = 0;
         for(const auto &data : dynamicBuffers) {
-            count += data.arrayCount;
+            count += static_cast<uint32>(data.buffers.size());
         }
         return count;
     }
 
-
     DescriptorSet::DynBufferData::DynBufferData(uint32 binding, const Ref<Buffer> *buffers, uint32 arrayCount) :
-        binding(binding), arrayCount(arrayCount) {
+        binding(binding) {
         for(uint32 i = 0; i < arrayCount; ++i)
             this->buffers.push_back(buffers[i]);
     }

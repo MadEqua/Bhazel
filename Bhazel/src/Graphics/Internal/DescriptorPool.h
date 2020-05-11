@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics/Internal/VulkanIncludes.h"
+#include "Graphics/DescriptorSet.h"
 
 
 namespace BZ {
@@ -22,6 +23,8 @@ namespace BZ {
         void init(const Device &device, const std::initializer_list<DescriptorPoolInitData> &initDatas, uint32 maxSets);
         void destroy();
 
+        DescriptorSet& getDescriptorSet(const Ref<DescriptorSetLayout> &layout);
+
         void reset();
 
         VkDescriptorPool getHandle() const { return handle; }
@@ -29,5 +32,10 @@ namespace BZ {
     private:
         const Device *device;
         VkDescriptorPool handle;
+
+        uint32 maxSets;
+
+        DescriptorSet *sets;
+        uint32 nextFreeIndex;
     };
 }

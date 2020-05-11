@@ -32,7 +32,7 @@ namespace BZ {
                  const char *aoTexturePath = nullptr);
 
         bool isValid() const { return static_cast<bool>(descriptorSet); }
-        const Ref<DescriptorSet>& getDescriptorSet() const { return descriptorSet; }
+        const DescriptorSet& getDescriptorSet() const { return *descriptorSet; }
 
         const Ref<TextureView>& getAlbedoTextureView() const { return albedoTextureView; }
         const Ref<TextureView>& getNormalTextureView() const { return normalTextureView; }
@@ -70,7 +70,7 @@ namespace BZ {
         Ref<TextureView> heightTextureView;
         Ref<TextureView> aoTextureView;
 
-        Ref<DescriptorSet> descriptorSet;
+        DescriptorSet *descriptorSet = nullptr;
 
         //Valid if no respective textures are present.
         float metallic = 1.0f;

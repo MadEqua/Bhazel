@@ -48,7 +48,7 @@ namespace BZ {
         void beginFrame();
         void endFrame();
 
-        void submitCommandBuffers(const CommandBuffer commandBuffers[], uint32 count);
+        void submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count);
         
         void waitForDevice();
 
@@ -95,7 +95,7 @@ namespace BZ {
         Ref<Framebuffer> mainFramebuffer;
 
         //CommandBuffers to be submitted at frame end.
-        CommandBuffer pendingCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
+        const CommandBuffer* pendingCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
         uint32 pendingCommandBufferIndex;
 
         //Statistics stuff.

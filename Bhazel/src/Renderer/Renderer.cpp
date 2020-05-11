@@ -100,11 +100,11 @@ namespace BZ {
         Ref<DescriptorSetLayout> entityDescriptorSetLayout;
         Ref<DescriptorSetLayout> postProcessPassDescriptorSetLayout;
 
-        Ref<DescriptorSet> globalDescriptorSet;
-        Ref<DescriptorSet> passDescriptorSet;
-        Ref<DescriptorSet> passDescriptorSetForDepthPass;
-        Ref<DescriptorSet> entityDescriptorSet;
-        Ref<DescriptorSet> postProcessDescriptorSet;
+        DescriptorSet *globalDescriptorSet;
+        DescriptorSet *passDescriptorSet;
+        DescriptorSet *passDescriptorSetForDepthPass;
+        DescriptorSet *entityDescriptorSet;
+        DescriptorSet *postProcessDescriptorSet;
 
         Ref<Sampler> defaultSampler;
         Ref<Sampler> brdfLookupSampler;
@@ -123,7 +123,7 @@ namespace BZ {
         Ref<RenderPass> depthRenderPass;
 
         //ConstantFactor, clamp and slopeFactor
-        glm::vec3 depthBiasData = {1.0f, 0.0f, 2.5f};
+        glm::vec3 depthBiasData = { 1.0f, 0.0f, 2.5f };
 
         //Stats
         RendererStats stats;
@@ -173,7 +173,7 @@ namespace BZ {
         rendererData.entityDescriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, 1 } });
 
-        rendererData.entityDescriptorSet = DescriptorSet::create(rendererData.entityDescriptorSetLayout);
+        rendererData.entityDescriptorSet = &DescriptorSet::get(rendererData.entityDescriptorSetLayout);
         rendererData.entityDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, ENTITY_CONSTANT_BUFFER_OFFSET, sizeof(EntityConstantBufferData));
 
         Sampler::Builder samplerBuilder;
@@ -259,7 +259,7 @@ namespace BZ {
 
         rendererData.depthPassPipelineState = PipelineState::create(pipelineStateData);
 
-        rendererData.passDescriptorSetForDepthPass = DescriptorSet::create(rendererData.passDescriptorSetLayoutForDepthPass);
+        rendererData.passDescriptorSetForDepthPass = &DescriptorSet::get(rendererData.passDescriptorSetLayoutForDepthPass);
         Ref<Buffer> constantBuffers[SHADOW_MAPPING_CASCADE_COUNT];
         uint32 offsets[SHADOW_MAPPING_CASCADE_COUNT];
         uint32 sizes[SHADOW_MAPPING_CASCADE_COUNT];
@@ -324,10 +324,10 @@ namespace BZ {
         auto brdfLookupTexRef = Texture2D::create(reinterpret_cast<const byte*>(brdfLut), brdfLutSize, brdfLutSize, VK_FORMAT_R16G16_SFLOAT, MipmapData::Options::DoNothing);
         rendererData.brdfLookupTexture = TextureView::create(brdfLookupTexRef);
 
-        rendererData.globalDescriptorSet = DescriptorSet::create(rendererData.globalDescriptorSetLayout);
+        rendererData.globalDescriptorSet = &DescriptorSet::get(rendererData.globalDescriptorSetLayout);
         rendererData.globalDescriptorSet->setCombinedTextureSampler(rendererData.brdfLookupTexture, rendererData.brdfLookupSampler, 0);
 
-        rendererData.passDescriptorSet = DescriptorSet::create(rendererData.passDescriptorSetLayout);
+        rendererData.passDescriptorSet = &DescriptorSet::get(rendererData.passDescriptorSetLayout);
         rendererData.passDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, PASS_CONSTANT_BUFFER_OFFSET, sizeof(PassConstantBufferData));
 
         rendererData.dummyTextureArrayView = TextureView::create(brdfLookupTexRef, 0, 1);
@@ -364,7 +364,7 @@ namespace BZ {
 
         rendererData.postProcessPipelineState = PipelineState::create(pipelineStateData);
 
-        rendererData.postProcessDescriptorSet = DescriptorSet::create(rendererData.postProcessPassDescriptorSetLayout);
+        rendererData.postProcessDescriptorSet = &DescriptorSet::get(rendererData.postProcessPassDescriptorSetLayout);
         rendererData.postProcessDescriptorSet->setCombinedTextureSampler(Application::get().getGraphicsContext().getColorTextureView(),
             rendererData.defaultSampler, 0);
     }
@@ -415,12 +415,6 @@ namespace BZ {
         rendererData.entityDescriptorSetLayout.reset();
         rendererData.postProcessPassDescriptorSetLayout.reset();
 
-        rendererData.globalDescriptorSet.reset();
-        rendererData.passDescriptorSet.reset();
-        rendererData.passDescriptorSetForDepthPass.reset();
-        rendererData.entityDescriptorSet.reset();
-        rendererData.postProcessDescriptorSet.reset();
-
         rendererData.defaultPipelineState.reset();
         rendererData.skyBoxPipelineState.reset();
         rendererData.depthPassPipelineState.reset();
@@ -448,7 +442,7 @@ namespace BZ {
         rendererData.commandBuffer = &CommandBuffer::begin(QueueProperty::Graphics);
 
         //Bind stuff that will not change.
-        rendererData.commandBuffer->bindDescriptorSet(rendererData.globalDescriptorSet, rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
+        rendererData.commandBuffer->bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
         rendererData.commandBuffer->bindDescriptorSet(scene.getDescriptorSet(), rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
 
         depthPass(scene);
@@ -471,7 +465,7 @@ namespace BZ {
             for (uint32 i = 0; i < SHADOW_MAPPING_CASCADE_COUNT; ++i) {
                 lightOffsetArr[i] = lightOffset;
             }
-            rendererData.commandBuffer->bindDescriptorSet(rendererData.passDescriptorSetForDepthPass,
+            rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSetForDepthPass,
                 rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
 
             rendererData.commandBuffer->beginRenderPass(dirLight.shadowMapFramebuffer, true);
@@ -486,7 +480,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
-        rendererData.commandBuffer->bindDescriptorSet(rendererData.passDescriptorSet,
+        rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
         rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getMainFramebuffer(), false);
@@ -506,7 +500,7 @@ namespace BZ {
 
         rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), true);
         rendererData.commandBuffer->bindPipelineState(rendererData.postProcessPipelineState);
-        rendererData.commandBuffer->bindDescriptorSet(rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
+        rendererData.commandBuffer->bindDescriptorSet(*rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
         rendererData.commandBuffer->draw(3, 1, 0, 0);
         rendererData.commandBuffer->endRenderPass();
     }
@@ -518,7 +512,7 @@ namespace BZ {
         for (const auto &entity : scene.getEntities()) {
             if (!depthPass || entity.castShadow) {
                 uint32 entityOffset = entityIndex * sizeof(EntityConstantBufferData);
-                rendererData.commandBuffer->bindDescriptorSet(rendererData.entityDescriptorSet,
+                rendererData.commandBuffer->bindDescriptorSet(*rendererData.entityDescriptorSet,
                     depthPass ? rendererData.depthPassPipelineState : rendererData.defaultPipelineState,
                     RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
 
@@ -783,15 +777,15 @@ namespace BZ {
         return indexDataLayout;
     }
 
-    Ref<DescriptorSet> Renderer::createSceneDescriptorSet() {
-        auto descriptorSet = DescriptorSet::create(rendererData.sceneDescriptorSetLayout);
-        descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, SCENE_CONSTANT_BUFFER_OFFSET, sizeof(SceneConstantBufferData));
+    DescriptorSet& Renderer::createSceneDescriptorSet() {
+        auto &descriptorSet = DescriptorSet::get(rendererData.sceneDescriptorSetLayout);
+        descriptorSet.setConstantBuffer(rendererData.constantBuffer, 0, SCENE_CONSTANT_BUFFER_OFFSET, sizeof(SceneConstantBufferData));
         return descriptorSet;
     }
 
-    Ref<DescriptorSet> Renderer::createMaterialDescriptorSet() {
-        auto descriptorSet = DescriptorSet::create(rendererData.materialDescriptorSetLayout);
-        descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, MATERIAL_CONSTANT_BUFFER_OFFSET, sizeof(MaterialConstantBufferData));
+    DescriptorSet& Renderer::createMaterialDescriptorSet() {
+        auto &descriptorSet = DescriptorSet::get(rendererData.materialDescriptorSetLayout);
+        descriptorSet.setConstantBuffer(rendererData.constantBuffer, 0, MATERIAL_CONSTANT_BUFFER_OFFSET, sizeof(MaterialConstantBufferData));
         return descriptorSet;
     }
 
