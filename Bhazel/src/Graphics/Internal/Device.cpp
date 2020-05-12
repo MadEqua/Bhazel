@@ -140,49 +140,77 @@ namespace BZ {
     void Device::init(const PhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions) {
         this->physicalDevice = &physicalDevice;
 
-        auto processFamilies = [this, &physicalDevice](QueueProperty property, const QueueFamily **family, const QueueFamily **familyExclusive) {
-            auto families = physicalDevice.getQueueFamilyContainer().getFamiliesThatContain(property);
-            for(const QueueFamily *fam : families) {
-                if(!*family)
-                    *family = fam;
-                if(!*familyExclusive && fam->hasExclusiveProperty())
-                    *familyExclusive = fam;
+        constexpr int QUEUE_PROPS_COUNT = static_cast<int>(QueueProperty::Count);
+        int maxScores[QUEUE_PROPS_COUNT] = {};
+        const QueueFamily *selectedFamilies[QUEUE_PROPS_COUNT];
+
+        for(const QueueFamily &fam : physicalDevice.getQueueFamilyContainer()) {
+            int scores[QUEUE_PROPS_COUNT] = {};
+
+            constexpr int GRAPHICS = static_cast<int>(QueueProperty::Graphics);
+            if(fam.hasProperty(QueueProperty::Present))
+                scores[GRAPHICS] += 5;
+            if(fam.hasProperty(QueueProperty::Compute))
+                scores[GRAPHICS] += 1;
+            if(fam.hasProperty(QueueProperty::Transfer))
+                scores[GRAPHICS] += 1;
+
+            if(scores[GRAPHICS] >= maxScores[GRAPHICS]) {
+                maxScores[GRAPHICS] = scores[GRAPHICS];
+                selectedFamilies[GRAPHICS] = &fam;
             }
-        };
 
-        const QueueFamily *graphicsFamily = nullptr;
-        const QueueFamily *graphicsFamilyExclusive = nullptr;
-        processFamilies(QueueProperty::Graphics, &graphicsFamily, &graphicsFamilyExclusive);
+            constexpr int COMPUTE = static_cast<int>(QueueProperty::Compute);
+            if(fam.hasProperty(QueueProperty::Present))
+                scores[COMPUTE] += 5;
+            if(fam.hasProperty(QueueProperty::Graphics))
+                scores[COMPUTE] += 1;
+            if(fam.hasProperty(QueueProperty::Transfer))
+                scores[COMPUTE] += 1;
 
-        const QueueFamily *computeFamily = nullptr;
-        const QueueFamily *computeFamilyExclusive = nullptr;
-        processFamilies(QueueProperty::Compute, &computeFamily, &computeFamilyExclusive);
+            if(scores[COMPUTE] >= maxScores[COMPUTE]) {
+                maxScores[COMPUTE] = scores[COMPUTE];
+                selectedFamilies[COMPUTE] = &fam;
+            }
 
-        const QueueFamily *transferFamily = nullptr;
-        const QueueFamily *transferFamilyExclusive = nullptr;
-        processFamilies(QueueProperty::Transfer, &transferFamily, &transferFamilyExclusive);
+            constexpr int TRANSFER = static_cast<int>(QueueProperty::Transfer);
+            if(!fam.hasProperty(QueueProperty::Present))
+                scores[TRANSFER] += 1;
+            if(!fam.hasProperty(QueueProperty::Graphics))
+                scores[TRANSFER] += 1;
+            if(!fam.hasProperty(QueueProperty::Compute))
+                scores[TRANSFER] += 1;
 
-        const QueueFamily *presentFamily = nullptr;
-        const QueueFamily *presentFamilyExclusive = nullptr;
-        processFamilies(QueueProperty::Present, &presentFamily, &presentFamilyExclusive);
+            if(scores[TRANSFER] >= maxScores[TRANSFER]) {
+                maxScores[TRANSFER] = scores[TRANSFER];
+                selectedFamilies[TRANSFER] = &fam;
+            }
 
-        //We know at this point that at least one of each family exists, so this is safe.
-        std::set<uint32_t> uniqueQueueFamiliesIndices = { graphicsFamily->getIndex(),
-                                                          computeFamily->getIndex(),
-                                                          transferFamily->getIndex(),
-                                                          presentFamily->getIndex() };
+            constexpr int PRESENT = static_cast<int>(QueueProperty::Present);
+            if(fam.hasProperty(QueueProperty::Graphics))
+                scores[PRESENT] += 5;
+            if(fam.hasProperty(QueueProperty::Compute))
+                scores[PRESENT] += 4;
+            if(fam.hasProperty(QueueProperty::Transfer))
+                scores[PRESENT] += 1;
 
-        if(graphicsFamilyExclusive) uniqueQueueFamiliesIndices.insert(graphicsFamilyExclusive->getIndex());
-        if(computeFamilyExclusive) uniqueQueueFamiliesIndices.insert(computeFamilyExclusive->getIndex());
-        if(transferFamilyExclusive) uniqueQueueFamiliesIndices.insert(transferFamilyExclusive->getIndex());
-        if(presentFamilyExclusive) uniqueQueueFamiliesIndices.insert(presentFamilyExclusive->getIndex());
+            if(scores[PRESENT] >= maxScores[PRESENT]) {
+                maxScores[PRESENT] = scores[PRESENT];
+                selectedFamilies[PRESENT] = &fam;
+            }
+        }
+
+        std::set<uint32> uniqueQueueFamiliesIndices;
+        for(uint32 i = 0; i < QUEUE_PROPS_COUNT; ++i) {
+            uniqueQueueFamiliesIndices.insert(selectedFamilies[i]->getIndex());
+        }
 
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         float queuePriority = 1.0f;
-        for(uint32_t queueFamily : uniqueQueueFamiliesIndices) {
+        for(uint32_t queueFamilyIdx : uniqueQueueFamiliesIndices) {
             VkDeviceQueueCreateInfo queueCreateInfo = {};
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queueCreateInfo.queueFamilyIndex = queueFamily;
+            queueCreateInfo.queueFamilyIndex = queueFamilyIdx;
             queueCreateInfo.queueCount = 1;
             queueCreateInfo.pQueuePriorities = &queuePriority;
             queueCreateInfos.push_back(queueCreateInfo);
@@ -203,16 +231,10 @@ namespace BZ {
         deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
         BZ_ASSERT_VK(vkCreateDevice(physicalDevice.getHandle(), &deviceCreateInfo, nullptr, &handle));
 
-        queueContainer.graphics().init(*this, *graphicsFamily);
-        queueContainer.compute().init(*this, *computeFamily);
-        queueContainer.transfer().init(*this, *transferFamily);
-        queueContainer.present().init(*this, *presentFamily);
-
-        //If there is no exclusive queue, then fill with the same data as the non-exclusive queue.
-        queueContainerExclusive.graphics().init(*this, graphicsFamilyExclusive ? *graphicsFamilyExclusive : *graphicsFamily);
-        queueContainerExclusive.compute().init(*this, computeFamilyExclusive ? *computeFamilyExclusive : *computeFamily);
-        queueContainerExclusive.transfer().init(*this, transferFamilyExclusive ? *transferFamilyExclusive : *transferFamily);
-        queueContainerExclusive.present().init(*this, presentFamilyExclusive ? *presentFamilyExclusive : *presentFamily);
+        queueContainer.graphics().init(*this, *selectedFamilies[static_cast<int>(QueueProperty::Graphics)]);
+        queueContainer.compute().init(*this, *selectedFamilies[static_cast<int>(QueueProperty::Compute)]);
+        queueContainer.transfer().init(*this, *selectedFamilies[static_cast<int>(QueueProperty::Transfer)]);
+        queueContainer.present().init(*this, *selectedFamilies[static_cast<int>(QueueProperty::Present)]);
     }
 
     void Device::destroy() {

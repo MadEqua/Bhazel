@@ -20,22 +20,6 @@ namespace BZ {
         cummulativeProperties |= family.properties;
     }
 
-    std::vector<const QueueFamily *> QueueFamilyContainer::getFamiliesThatContain(QueueProperty property) const {
-        std::vector<const QueueFamily *> result;
-        for(const auto &fam : families)
-            if(fam.hasProperty(property))
-                result.push_back(&fam);
-        return result;
-    }
-
-    std::vector<const QueueFamily *> QueueFamilyContainer::getFamiliesThatContainExclusively(QueueProperty property) const {
-        std::vector<const QueueFamily *> result;
-        for(const auto &fam : families)
-            if(fam.hasProperty(property) && fam.hasExclusiveProperty())
-                result.push_back(&fam);
-        return result;
-    }
-
     bool QueueFamilyContainer::hasAllProperties() const {
         return cummulativeProperties.count() == static_cast<int>(QueueProperty::Count);
     }
@@ -48,6 +32,14 @@ namespace BZ {
         vkGetDeviceQueue(device.getHandle(), family.getIndex(), 0, &handle);
     }
 
+    const Queue* QueueContainer::getQueueByFamilyIndex(uint32 familyIndex) const {
+        for(uint32 i = 0; i < static_cast<uint32>(QueueProperty::Count); ++i) {
+            if(queues[i].getFamily().getIndex() == familyIndex)
+                return &queues[i];
+        }
+        BZ_ASSERT_ALWAYS_CORE("Queue family index {} is not being used by any Queue!");
+        return nullptr;
+    }
 
     /*-------------------------------------------------------------------------------------------*/
     std::set<uint32> QueueContainer::getFamilyIndexesInUse() const {

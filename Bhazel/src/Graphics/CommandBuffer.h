@@ -20,7 +20,7 @@ namespace BZ {
     */
     class CommandBuffer : public GpuObject<VkCommandBuffer> {
     public:
-        static CommandBuffer& getAndBegin(QueueProperty queueProperty, bool exclusiveQueue = false);
+        static CommandBuffer& getAndBegin(QueueProperty queueProperty);
 
         BZ_NON_COPYABLE(CommandBuffer);
 
@@ -83,18 +83,16 @@ namespace BZ {
         void blitTexture(const Texture &src, const Texture &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter);
 
         uint32 getCommandCount() const { return commandCount; }
-        QueueProperty getQueueProperty() const { return queueProperty; }
-        bool isExclusiveQueue() const { return exclusiveQueue; }
+        uint32 getQueueFamilyIndex() const { return queueFamilyIndex; }
 
     private:
         uint32 commandCount;
 
-        //The queue which this Buffer will be submitted.
-        QueueProperty queueProperty;
-        bool exclusiveQueue;
+        //The queue family which this Buffer will be submitted to.
+        uint32 queueFamilyIndex;
 
         CommandBuffer() = default;
-        void init(VkCommandBuffer vkCommandBuffer, QueueProperty queueProperty, bool exclusiveQueue);
+        void init(VkCommandBuffer vkCommandBuffer, uint32 queueFamilyIndex);
 
         friend class CommandPool;
     };

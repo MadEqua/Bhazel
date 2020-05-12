@@ -44,10 +44,7 @@ namespace BZ {
         QueueFamilyContainer() = default;
         void addFamily(const QueueFamily &family);
 
-        std::vector<const QueueFamily*> getFamiliesThatContain(QueueProperty property) const;
-        std::vector<const QueueFamily*> getFamiliesThatContainExclusively(QueueProperty property) const;
-
-         bool hasAllProperties() const;
+        bool hasAllProperties() const;
 
         uint32 getCount() const { return static_cast<uint32>(families.size()); }
 
@@ -97,7 +94,7 @@ namespace BZ {
         Queue& present() { return queues[static_cast<int>(QueueProperty::Present)]; }
 
         const Queue& getQueueByProperty(QueueProperty property) const { return queues[static_cast<int>(property)]; }
-        Queue& getQueueByProperty(QueueProperty property) { return queues[static_cast<int>(property)]; }
+        const Queue* getQueueByFamilyIndex(uint32 familyIndex) const;
 
         std::set<uint32> getFamilyIndexesInUse() const;
 

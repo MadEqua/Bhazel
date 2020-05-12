@@ -19,7 +19,7 @@ namespace BZ {
         void destroy();
 
         //The returned CommandBuffer is only valid until submission.
-        CommandBuffer& getCommandBuffer(QueueProperty queueProperty, bool exclusiveQueue);
+        CommandBuffer& getCommandBuffer();
 
         //The caller has the responsability to call when it's safe to reset the command buffers.
         void reset();
@@ -29,6 +29,7 @@ namespace BZ {
     private:
         VkCommandPool handle;
         const Device *device;
+        uint32 familyIndex;
 
         CommandBuffer buffers[MAX_COMMAND_BUFFERS_PER_FRAME];
         uint32 nextFreeIndex;

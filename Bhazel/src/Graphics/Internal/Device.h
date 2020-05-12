@@ -54,7 +54,6 @@ namespace BZ {
         VkDevice getHandle() const { return handle; }
 
         const QueueContainer& getQueueContainer() const { return queueContainer; }
-        const QueueContainer& getQueueContainerExclusive() const { return queueContainerExclusive; }
         const PhysicalDevice &getPhysicalDevice() const { return *physicalDevice; }
 
     private:
@@ -62,9 +61,5 @@ namespace BZ {
         const PhysicalDevice *physicalDevice;
 
         QueueContainer queueContainer;
-
-        //Queues with a single property, if existent (eg: transfer queue).
-        //If not existent the handles will refer non-exclusive queues.
-        QueueContainer queueContainerExclusive;
     };
 }

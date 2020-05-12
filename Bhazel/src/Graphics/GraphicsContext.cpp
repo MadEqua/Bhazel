@@ -179,8 +179,7 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 0;
         submitInfo.pSignalSemaphores = nullptr;
 
-        const QueueContainer &container = commandBuffers[0]->isExclusiveQueue() ? device.getQueueContainerExclusive() : device.getQueueContainer();
-        const Queue &queue = container.getQueueByProperty(commandBuffers[0]->getQueueProperty());
+        const Queue &queue = *device.getQueueContainer().getQueueByFamilyIndex(commandBuffers[0]->getQueueFamilyIndex());
         BZ_ASSERT_VK(vkQueueSubmit(queue.getHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
 
@@ -188,9 +187,8 @@ namespace BZ {
         BZ_ASSERT_VK(vkDeviceWaitIdle(device.getHandle()));
     }
 
-    void GraphicsContext::waitForQueue(QueueProperty queueProperty, bool exclusiveQueue) {
-        const QueueContainer &container = exclusiveQueue ? device.getQueueContainerExclusive() : device.getQueueContainer();
-        const Queue &queue = container.getQueueByProperty(queueProperty);
+    void GraphicsContext::waitForQueue(QueueProperty queueProperty) {
+        const Queue &queue = device.getQueueContainer().getQueueByProperty(queueProperty);
         BZ_ASSERT_VK(vkQueueWaitIdle(queue.getHandle()));
     }
 
@@ -204,16 +202,13 @@ namespace BZ {
         currentFrameIndex = 0;
     }
 
-    CommandPool& GraphicsContext::getCurrentFrameCommandPool(QueueProperty property, bool exclusive) {
-        const QueueContainer &queueContainer = exclusive ? device.getQueueContainerExclusive() : device.getQueueContainer();
-        const Queue &queue = queueContainer.getQueueByProperty(property);
+    CommandPool& GraphicsContext::getCurrentFrameCommandPool(QueueProperty property) {
+        const Queue &queue = device.getQueueContainer().getQueueByProperty(property);
         return frameDatas[currentFrameIndex].commandPoolsByFamily[queue.getFamily().getIndex()];
     }
 
     void GraphicsContext::createFrameData() {
         std::set<uint32> familiesInUse = device.getQueueContainer().getFamilyIndexesInUse();
-        std::set<uint32> exclusiveFamiliesInUse = device.getQueueContainerExclusive().getFamilyIndexesInUse();
-        familiesInUse.insert(exclusiveFamiliesInUse.begin(), exclusiveFamiliesInUse.end());
 
         for (uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
             frameDatas[i].imageAvailableSemaphore.init(device);

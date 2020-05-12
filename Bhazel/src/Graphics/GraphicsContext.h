@@ -52,7 +52,7 @@ namespace BZ {
         void submitImmediatelyCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count);
         
         void waitForDevice();
-        void waitForQueue(QueueProperty queueProperty, bool exclusiveQueue);
+        void waitForQueue(QueueProperty queueProperty);
 
         void onWindowResize(const WindowResizedEvent& e);
         void onImGuiRender(const FrameStats &frameStats); //For statistics.
@@ -62,7 +62,7 @@ namespace BZ {
         const Ref<RenderPass>& getMainRenderPass() const { return mainRenderPass; }
         const Ref<Framebuffer>& getMainFramebuffer() const { return mainFramebuffer; }
 
-        CommandPool& getCurrentFrameCommandPool(QueueProperty property, bool exclusive);
+        CommandPool& getCurrentFrameCommandPool(QueueProperty property);
         DescriptorPool& getDescriptorPool() { return descriptorPool; }
         VmaAllocator getMemoryAllocator() const { return memoryAllocator; }
 

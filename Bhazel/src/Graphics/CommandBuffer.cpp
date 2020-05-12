@@ -15,15 +15,14 @@
 
 namespace BZ {
 
-    CommandBuffer& CommandBuffer::getAndBegin(QueueProperty queueProperty, bool exclusiveQueue) {
-        auto &buf = BZ_GRAPHICS_CTX.getCurrentFrameCommandPool(queueProperty, exclusiveQueue).getCommandBuffer(queueProperty, exclusiveQueue);
+    CommandBuffer& CommandBuffer::getAndBegin(QueueProperty queueProperty) {
+        auto &buf = BZ_GRAPHICS_CTX.getCurrentFrameCommandPool(queueProperty).getCommandBuffer();
         buf.begin();
         return buf;
     }
     
-    void CommandBuffer::init(VkCommandBuffer vkCommandBuffer, QueueProperty queueProperty, bool exclusiveQueue) {
-        this->queueProperty = queueProperty;
-        this->exclusiveQueue = exclusiveQueue;
+    void CommandBuffer::init(VkCommandBuffer vkCommandBuffer, uint32 queueFamilyIndex) {
+        this->queueFamilyIndex = queueFamilyIndex;
 
         handle = vkCommandBuffer;
         commandCount = 0;

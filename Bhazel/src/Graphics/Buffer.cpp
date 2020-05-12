@@ -319,7 +319,7 @@ namespace BZ {
             Buffer stagingBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, dataSize, MemoryType::Staging, nullptr);
             stagingBuffer.setData(data, dataSize, 0);
 
-            CommandBuffer &comBuffer = CommandBuffer::getAndBegin(QueueProperty::Transfer, true);
+            CommandBuffer &comBuffer = CommandBuffer::getAndBegin(QueueProperty::Transfer);
 
             VkBufferCopy copyRegion;
             copyRegion.srcOffset = 0;
@@ -329,7 +329,7 @@ namespace BZ {
 
             comBuffer.endAndSubmitImmediately();
 
-            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Transfer, true);
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Transfer);
         }
         else {
             void *ptr;
