@@ -468,7 +468,7 @@ namespace BZ {
             rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSetForDepthPass,
                 rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
 
-            rendererData.commandBuffer->beginRenderPass(dirLight.shadowMapFramebuffer, true);
+            rendererData.commandBuffer->beginRenderPass(dirLight.shadowMapFramebuffer);
             drawEntities(scene, true);
             rendererData.commandBuffer->endRenderPass();
 
@@ -483,7 +483,7 @@ namespace BZ {
         rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
-        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getMainFramebuffer(), false);
+        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getMainFramebuffer());
 
         if (scene.hasSkyBox()) {
             rendererData.commandBuffer->bindPipelineState(rendererData.skyBoxPipelineState);
@@ -498,7 +498,7 @@ namespace BZ {
     void Renderer::postProcessPass() {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), true);
+        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
         rendererData.commandBuffer->bindPipelineState(rendererData.postProcessPipelineState);
         rendererData.commandBuffer->bindDescriptorSet(*rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
         rendererData.commandBuffer->draw(3, 1, 0, 0);

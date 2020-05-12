@@ -239,7 +239,7 @@ namespace BZ {
         pipelineInfo.pColorBlendState = &colorBlendingState;
         pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = handle.pipelineLayout;
-        pipelineInfo.renderPass = data.renderPass->getHandle().original;
+        pipelineInfo.renderPass = data.renderPass->getHandle();
         pipelineInfo.subpass = data.subPassIndex;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;

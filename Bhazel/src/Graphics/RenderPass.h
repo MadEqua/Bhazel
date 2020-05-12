@@ -10,8 +10,8 @@ namespace BZ {
 
     struct SubPassDependency {
         //Indices refer to parent RenderPass SubPass list, or VK_SUBPASS_EXTERNAL.
-        int32 srcSubPassIndex;
-        int32 dstSubPassIndex;
+        int srcSubPassIndex;
+        int dstSubPassIndex;
 
         VkPipelineStageFlags srcStageMask;
         VkPipelineStageFlags dstStageMask;
@@ -58,12 +58,7 @@ namespace BZ {
         VkClearValue clearValue = {}; //RGBA or Depth/Stencil.
     };
 
-    struct RenderPassData {
-        VkRenderPass original;
-        VkRenderPass forceClear;
-    };
-
-    class RenderPass : public GpuObject<RenderPassData> {
+    class RenderPass : public GpuObject<VkRenderPass> {
     public:
         static Ref<RenderPass> create(const std::initializer_list<AttachmentDescription> &descs, 
                                       const std::initializer_list<SubPassDescription> &subPassDescs,
@@ -75,6 +70,7 @@ namespace BZ {
         
         uint32 getSubPassCount() const { return static_cast<uint32>(subPassDescs.size()); }
 
+        const AttachmentDescription& getAttachmentDescription(uint32 index) const;
         const AttachmentDescription& getColorAttachmentDescription(uint32 index) const;
         const AttachmentDescription* getDepthStencilAttachmentDescription() const;
 
@@ -86,7 +82,7 @@ namespace BZ {
         BZ_NON_COPYABLE(RenderPass);
 
     private:
-        void init(bool forceClear);
+        void init();
 
         std::vector<AttachmentDescription> attachmentDescs;
         std::vector<SubPassDescription> subPassDescs;

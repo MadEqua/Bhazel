@@ -29,19 +29,22 @@ namespace BZ {
             idx++;
         }
 
-        init(false);
-        init(true);
+        init();
     }
 
     RenderPass::~RenderPass() {
-        vkDestroyRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), handle.original, nullptr);
-        vkDestroyRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), handle.forceClear, nullptr);
-    }
+        vkDestroyRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
+   }
 
     Ref<RenderPass> RenderPass::create(const std::initializer_list<AttachmentDescription> &descs,
                                        const std::initializer_list<SubPassDescription> &subPassDescs,
                                        const std::initializer_list<SubPassDependency> &subPassDeps) {
         return MakeRef<RenderPass>(descs, subPassDescs, subPassDeps);
+    }
+
+    const AttachmentDescription & RenderPass::getAttachmentDescription(uint32 index) const {
+        BZ_ASSERT_CORE(index < getAttachmentCount(), "Index {} is out of range!", index);
+        return attachmentDescs[index];
     }
 
     const AttachmentDescription& RenderPass::getColorAttachmentDescription(uint32 index) const {
@@ -55,7 +58,7 @@ namespace BZ {
         return nullptr;
     }
 
-    void RenderPass::init(bool forceClear) {
+    void RenderPass::init() {
         std::vector<VkAttachmentDescription> vkAttachmentDescriptions(getAttachmentCount());
 
         int i = 0;
@@ -63,11 +66,11 @@ namespace BZ {
             VkAttachmentDescription vkAttachmentDesc = {};
             vkAttachmentDesc.format = attDesc.format;
             vkAttachmentDesc.samples = attDesc.samples;
-            vkAttachmentDesc.loadOp = forceClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : attDesc.loadOperatorColorAndDepth;
+            vkAttachmentDesc.loadOp = attDesc.loadOperatorColorAndDepth;
             vkAttachmentDesc.storeOp = attDesc.storeOperatorColorAndDepth;
-            vkAttachmentDesc.stencilLoadOp = forceClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : attDesc.loadOperatorStencil;
+            vkAttachmentDesc.stencilLoadOp = attDesc.loadOperatorStencil;
             vkAttachmentDesc.stencilStoreOp = attDesc.storeOperatorStencil;
-            vkAttachmentDesc.initialLayout = forceClear ? VK_IMAGE_LAYOUT_UNDEFINED : attDesc.initialLayout;
+            vkAttachmentDesc.initialLayout = attDesc.initialLayout;
             vkAttachmentDesc.finalLayout = attDesc.finalLayout;
             vkAttachmentDescriptions[i] = vkAttachmentDesc;
             i++;
@@ -153,6 +156,6 @@ namespace BZ {
         vkRrenderPassInfo.dependencyCount = static_cast<uint32>(subPassDeps.size());
         vkRrenderPassInfo.pDependencies = vkSubpassDependencies.data();
 
-        BZ_ASSERT_VK(vkCreateRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), &vkRrenderPassInfo, nullptr, forceClear ? &handle.forceClear : &handle.original));
+        BZ_ASSERT_VK(vkCreateRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), &vkRrenderPassInfo, nullptr, &handle));
     }
 }

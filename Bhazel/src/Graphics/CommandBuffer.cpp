@@ -63,28 +63,25 @@ namespace BZ {
         BZ_GRAPHICS_CTX.submitImmediatelyCommandBuffers(arr, 1);
     }
 
-    void CommandBuffer::beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments) {
+    void CommandBuffer::beginRenderPass(const Ref<Framebuffer> &framebuffer) {
         auto &renderPass = framebuffer->getRenderPass();
 
-        //We know that the color attachments will be first and then the depthstencil
         VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
         uint32 i;
-        for (i = 0; i < renderPass->getColorAttachmentCount(); ++i) {
-            const auto &attDesc = renderPass->getColorAttachmentDescription(i);
-            if (attDesc.loadOperatorColorAndDepth == VK_ATTACHMENT_LOAD_OP_CLEAR || forceClearAttachments) {
+        for (i = 0; i < renderPass->getAttachmentCount(); ++i) {
+            const auto &attDesc = renderPass->getAttachmentDescription(i);
+            if (attDesc.loadOperatorColorAndDepth == VK_ATTACHMENT_LOAD_OP_CLEAR) {
                 clearValues[i].color = attDesc.clearValue.color;
+                clearValues[i].depthStencil.depth = attDesc.clearValue.depthStencil.depth;
             }
-        }
-        if (renderPass->hasDepthStencilAttachment()) {
-            const auto attDesc = renderPass->getDepthStencilAttachmentDescription();
-            if (attDesc->loadOperatorStencil == VK_ATTACHMENT_LOAD_OP_CLEAR || forceClearAttachments) {
-                clearValues[i].depthStencil = attDesc->clearValue.depthStencil;
+            if(attDesc.loadOperatorStencil == VK_ATTACHMENT_LOAD_OP_CLEAR) {
+                clearValues[i].depthStencil.stencil = attDesc.clearValue.depthStencil.stencil;
             }
         }
 
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassBeginInfo.renderPass = forceClearAttachments ? renderPass->getHandle().forceClear : renderPass->getHandle().original;
+        renderPassBeginInfo.renderPass = renderPass->getHandle();
         renderPassBeginInfo.framebuffer = framebuffer->getHandle();
         renderPassBeginInfo.renderArea.offset = {};
         renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(framebuffer->getDimensionsAndLayers().x), static_cast<uint32_t>(framebuffer->getDimensionsAndLayers().y) };

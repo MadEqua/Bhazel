@@ -52,7 +52,7 @@ namespace BZ {
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass->getHandle().original;
+        framebufferInfo.renderPass = renderPass->getHandle();
         framebufferInfo.attachmentCount = static_cast<uint32_t>(vkImageViews.size());
         framebufferInfo.pAttachments = vkImageViews.data();
         framebufferInfo.width = dimensionsAndLayers.x;

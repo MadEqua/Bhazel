@@ -33,7 +33,7 @@ namespace BZ {
         void submit();
         void submitImmediately();
 
-        void beginRenderPass(const Ref<Framebuffer> &framebuffer, bool forceClearAttachments);
+        void beginRenderPass(const Ref<Framebuffer> &framebuffer);
         void endRenderPass();
 
         void nextSubPass();

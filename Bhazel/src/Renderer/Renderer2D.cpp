@@ -234,7 +234,7 @@ namespace BZ {
             });
 
             CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
-            commandBuffer.beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer(), false);
+            commandBuffer.beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
 
             glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
             memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));

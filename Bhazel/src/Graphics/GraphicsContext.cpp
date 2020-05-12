@@ -179,6 +179,7 @@ namespace BZ {
         submitInfo.signalSemaphoreCount = 0;
         submitInfo.pSignalSemaphores = nullptr;
 
+        //The first CommandBuffer will determine the Queue to use.
         const Queue &queue = *device.getQueueContainer().getQueueByFamilyIndex(commandBuffers[0]->getQueueFamilyIndex());
         BZ_ASSERT_VK(vkQueueSubmit(queue.getHandle(), 1, &submitInfo, VK_NULL_HANDLE));
     }
