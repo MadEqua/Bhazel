@@ -43,7 +43,7 @@ namespace BZ {
 
         //Create the RenderPass
         AttachmentDescription colorAttachmentDesc;
-        colorAttachmentDesc.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        colorAttachmentDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
         colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;

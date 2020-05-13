@@ -67,8 +67,7 @@ namespace BZ {
         auto &renderPass = framebuffer->getRenderPass();
 
         VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
-        uint32 i;
-        for (i = 0; i < renderPass->getAttachmentCount(); ++i) {
+        for (uint32 i = 0; i < renderPass->getAttachmentCount(); ++i) {
             const auto &attDesc = renderPass->getAttachmentDescription(i);
             if (attDesc.loadOperatorColorAndDepth == VK_ATTACHMENT_LOAD_OP_CLEAR) {
                 clearValues[i].color = attDesc.clearValue.color;
@@ -108,7 +107,7 @@ namespace BZ {
 
         VkClearRect clearRect;
         clearRect.baseArrayLayer = 0;
-        clearRect.layerCount = 1;
+        clearRect.layerCount = static_cast<uint32>(framebuffer->getDimensionsAndLayers().z);
         clearRect.rect = vkRect;
 
         VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
@@ -130,7 +129,7 @@ namespace BZ {
 
         VkClearRect clearRect;
         clearRect.baseArrayLayer = 0;
-        clearRect.layerCount = 1;
+        clearRect.layerCount = static_cast<uint32>(framebuffer->getDimensionsAndLayers().z);
         clearRect.rect = vkRect;
 
         VkClearAttachment vkClearAttchments;
