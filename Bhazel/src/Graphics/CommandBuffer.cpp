@@ -63,8 +63,8 @@ namespace BZ {
         BZ_GRAPHICS_CTX.submitImmediatelyCommandBuffers(arr, 1);
     }
 
-    void CommandBuffer::beginRenderPass(const Ref<Framebuffer> &framebuffer) {
-        auto &renderPass = framebuffer->getRenderPass();
+    void CommandBuffer::beginRenderPass(const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer) {
+        //auto &renderPass = framebuffer->getRenderPass();
 
         VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
         for (uint32 i = 0; i < renderPass->getAttachmentCount(); ++i) {

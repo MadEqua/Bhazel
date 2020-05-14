@@ -38,7 +38,8 @@ namespace BZ {
         VkSwapchainKHR getHandle() const { return handle; }
 
         const Ref<Framebuffer>& getAquiredImageFramebuffer() const { return framebuffers[currentImageIndex]; }
-        const Ref<RenderPass>& getRenderPass() const { return renderPass; }
+        const Ref<RenderPass>& getDefaultRenderPass() const { return defaultRenderPass; }
+
         glm::ivec2 getDimensions() const { return { extent.width, extent.height }; }
 
     private:
@@ -47,7 +48,7 @@ namespace BZ {
 
         VkSwapchainKHR handle;
 
-        Ref<RenderPass> renderPass;
+        Ref<RenderPass> defaultRenderPass;
         std::vector<Ref<Framebuffer>> framebuffers;
 
         VkFormat imageFormat;

@@ -122,6 +122,13 @@ namespace BZ {
 
         Ref<RenderPass> depthRenderPass;
 
+        Ref<RenderPass> colorRenderPass;
+        Ref<TextureView> colorTexView;
+        Ref<TextureView> depthTexView;
+        Ref<Framebuffer> colorFramebuffer;
+
+        Ref<RenderPass> postProcessRenderPass;
+
         //ConstantFactor, clamp and slopeFactor
         glm::vec3 depthBiasData = { 1.0f, 0.0f, 2.5f };
 
@@ -235,25 +242,17 @@ namespace BZ {
         SubPassDescription subPassDesc;
         subPassDesc.depthStencilAttachmentsRef = { 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
-        //SubPassDependency dependency1;
-        //dependency1.srcSubPassIndex = -1;
-        //dependency1.dstSubPassIndex = 0;
-        //dependency1.srcStageMask = flagsToMask(PipelineStageFlag::FragmentShader);
-        //dependency1.dstStageMask = flagsToMask(PipelineStageFlag::EarlyFragmentTests);
-        //dependency1.srcAccessMask = 0;
-        //dependency1.dstAccessMask = flagsToMask(AccessFlag::DepthStencilAttachmentWrite);
-        //dependency1.dependencyFlags = flagsToMask(DependencyFlag::ByRegion);
+        //TODO: this dependency is too strong. Will make it wait on the whole previous frame. Use an event to wait only on color pass.
+        SubPassDependency dependency;
+        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubPassIndex = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        dependency.srcAccessMask = 0;
+        dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependency.dependencyFlags = 0;
 
-        SubPassDependency dependency2;
-        dependency2.srcSubPassIndex = 0;
-        dependency2.dstSubPassIndex = VK_SUBPASS_EXTERNAL;
-        dependency2.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        dependency2.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        dependency2.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        dependency2.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        dependency2.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc }, { dependency2 });
+        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc }, { dependency });
         pipelineStateData.renderPass = rendererData.depthRenderPass;
         pipelineStateData.subPassIndex = 0;
 
@@ -312,10 +311,60 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::get().getGraphicsContext().getMainRenderPass();
+        //Create the RenderPass
+        AttachmentDescription colorAttachmentDesc;
+        colorAttachmentDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+        AttachmentDescription depthStencilAttachmentDesc;
+        depthStencilAttachmentDesc.format = VK_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthStencilAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthStencilAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        depthStencilAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthStencilAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_STORE;
+        depthStencilAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depthStencilAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        depthStencilAttachmentDesc.clearValue.depthStencil.depth = 1.0f;
+        depthStencilAttachmentDesc.clearValue.depthStencil.stencil = 0;
+
+        SubPassDescription subPassDesc;
+        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+        subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+
+        //Wait on DepthPass.
+        SubPassDependency dependency;
+        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubPassIndex = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependency.dependencyFlags = 0;
+
+        rendererData.colorRenderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc }, { dependency });
+
+        pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
 
         rendererData.defaultPipelineState = PipelineState::create(pipelineStateData);
+
+
+        auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, colorAttachmentDesc.format);
+        rendererData.colorTexView = TextureView::create(colorTexture);
+        auto depthTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, depthStencilAttachmentDesc.format);
+        rendererData.depthTexView = TextureView::create(depthTexture);
+
+        rendererData.colorFramebuffer = Framebuffer::create(rendererData.colorRenderPass, { rendererData.colorTexView, rendererData.depthTexView },
+            glm::ivec3(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1));
+
 
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -345,7 +394,7 @@ namespace BZ {
         pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
         rendererData.postProcessPassDescriptorSetLayout =
-            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1} });
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
         pipelineStateData.descriptorSetLayouts = { rendererData.postProcessPassDescriptorSetLayout };
 
@@ -359,14 +408,41 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+        //Create a Render Pass based on the default Swapchain one.
+        const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
+
+        //This Renderer is the first one, so clear. Not the last one so keep the color attachment layout.
+        AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+        SubPassDescription subPassDesc;
+        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+
+        //Wait on ColorPass.
+        SubPassDependency dependency;
+        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubPassIndex = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependency.dependencyFlags = 0;
+
+        rendererData.postProcessRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
+
+        pipelineStateData.renderPass = rendererData.postProcessRenderPass;
         pipelineStateData.subPassIndex = 0;
 
         rendererData.postProcessPipelineState = PipelineState::create(pipelineStateData);
 
         rendererData.postProcessDescriptorSet = &DescriptorSet::get(rendererData.postProcessPassDescriptorSetLayout);
-        rendererData.postProcessDescriptorSet->setCombinedTextureSampler(Application::get().getGraphicsContext().getColorTextureView(),
-            rendererData.defaultSampler, 0);
+        rendererData.postProcessDescriptorSet->setCombinedTextureSampler(rendererData.colorTexView, rendererData.defaultSampler, 0);
     }
 
     void Renderer::initSkyBoxData() {
@@ -396,7 +472,7 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::get().getGraphicsContext().getMainRenderPass();
+        pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
 
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
@@ -430,6 +506,13 @@ namespace BZ {
         rendererData.dummyTextureArrayView.reset();
 
         rendererData.depthRenderPass.reset();
+
+        rendererData.colorRenderPass.reset();
+        rendererData.colorTexView.reset();
+        rendererData.depthTexView.reset();
+        rendererData.colorFramebuffer.reset();
+
+        rendererData.postProcessRenderPass.reset();
     }
 
     void Renderer::drawScene(const Scene &scene) {
@@ -468,7 +551,7 @@ namespace BZ {
             rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSetForDepthPass,
                 rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
 
-            rendererData.commandBuffer->beginRenderPass(dirLight.shadowMapFramebuffer);
+            rendererData.commandBuffer->beginRenderPass(rendererData.depthRenderPass, dirLight.shadowMapFramebuffer);
             drawEntities(scene, true);
             rendererData.commandBuffer->endRenderPass();
 
@@ -483,7 +566,7 @@ namespace BZ {
         rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSet,
             rendererData.defaultPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
-        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getMainFramebuffer());
+        rendererData.commandBuffer->beginRenderPass(rendererData.colorRenderPass, rendererData.colorFramebuffer);
 
         if (scene.hasSkyBox()) {
             rendererData.commandBuffer->bindPipelineState(rendererData.skyBoxPipelineState);
@@ -498,7 +581,7 @@ namespace BZ {
     void Renderer::postProcessPass() {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBuffer->beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
+        rendererData.commandBuffer->beginRenderPass(rendererData.postProcessRenderPass, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
         rendererData.commandBuffer->bindPipelineState(rendererData.postProcessPipelineState);
         rendererData.commandBuffer->bindDescriptorSet(*rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
         rendererData.commandBuffer->draw(3, 1, 0, 0);

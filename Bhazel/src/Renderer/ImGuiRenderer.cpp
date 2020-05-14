@@ -8,6 +8,7 @@
 #include "Graphics/PipelineState.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/CommandBuffer.h"
+#include "Graphics/RenderPass.h"
 
 #include "Core/Application.h"
 #include "Core/Input.h"
@@ -35,6 +36,8 @@ namespace BZ {
 
         Ref<PipelineState> pipelineState;
         DescriptorSet *descriptorSet;
+
+        Ref<RenderPass> renderPass;
     } rendererData;
 
 
@@ -64,6 +67,8 @@ namespace BZ {
         rendererData.fontTextureSampler.reset();
 
         rendererData.pipelineState.reset();
+
+        rendererData.renderPass.reset();
 
         ImGui::DestroyContext();
     }
@@ -155,14 +160,11 @@ namespace BZ {
         uint32 vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
         uint32 indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 
-        if ((vertexBufferSize == 0) || (indexBufferSize == 0)) {
-            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Bailing out.", vertexBufferSize, indexBufferSize);
-            return;
-        }
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
 
-        if (imDrawData->CmdListsCount <= 0) {
-            BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Command List count: {}. Bailing out.", imDrawData->CmdListsCount);
-            return;
+        if (vertexBufferSize == 0 || indexBufferSize == 0 || imDrawData->CmdListsCount <= 0) {
+            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Command List count: {}. Allowing dummy RenderPass to perform image layout transition.",
+                vertexBufferSize, indexBufferSize, imDrawData->CmdListsCount);
         }
 
         byte *vtxDst = rendererData.vertexBufferPtr;
@@ -175,8 +177,7 @@ namespace BZ {
             idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
         }
 
-        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
-        commandBuffer.beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
+        commandBuffer.beginRenderPass(rendererData.renderPass, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
 
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
@@ -332,7 +333,35 @@ namespace BZ {
         pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_SCISSOR };
-        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+
+        //Create a Render Pass based on the default Swapchain one.
+        const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
+
+        //This Renderer is not the first one, so load. It's the last one so transition to present layout.
+        AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
+        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        SubPassDescription subPassDesc;
+        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+
+        //Wait on previous Renderers.
+        SubPassDependency dependency;
+        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubPassIndex = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        dependency.dependencyFlags = 0;
+
+        rendererData.renderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
+
+        pipelineStateData.renderPass = rendererData.renderPass;
         pipelineStateData.subPassIndex = 0;
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);

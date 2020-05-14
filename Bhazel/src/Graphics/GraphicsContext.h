@@ -57,11 +57,6 @@ namespace BZ {
         void onWindowResize(const WindowResizedEvent& e);
         void onImGuiRender(const FrameStats &frameStats); //For statistics.
 
-        const Ref<TextureView>& getColorTextureView() const { return colorTextureView; }
-        const Ref<TextureView>& getDepthTextureView() const { return depthTextureView; }
-        const Ref<RenderPass>& getMainRenderPass() const { return mainRenderPass; }
-        const Ref<Framebuffer>& getMainFramebuffer() const { return mainFramebuffer; }
-
         CommandPool& getCurrentFrameCommandPool(QueueProperty property);
         DescriptorPool& getDescriptorPool() { return descriptorPool; }
         VmaAllocator getMemoryAllocator() const { return memoryAllocator; }
@@ -69,7 +64,7 @@ namespace BZ {
         uint32 getCurrentFrameIndex() const { return currentFrameIndex; }
 
         const Ref<Framebuffer>& getSwapchainAquiredImageFramebuffer() const { return swapchain.getAquiredImageFramebuffer(); }
-        const Ref<RenderPass>& getSwapchainRenderPass() const { return swapchain.getRenderPass(); }
+        const Ref<RenderPass>& getSwapchainDefaultRenderPass() const { return swapchain.getDefaultRenderPass(); }
 
         Device& getDevice() { return device; }
 
@@ -89,12 +84,6 @@ namespace BZ {
         uint32 currentFrameIndex = 0;
 
         VmaAllocator memoryAllocator;
-
-        //The main framebuffer stuff.
-        Ref<TextureView> colorTextureView;
-        Ref<TextureView> depthTextureView;
-        Ref<RenderPass> mainRenderPass;
-        Ref<Framebuffer> mainFramebuffer;
 
         //CommandBuffers to be submitted at frame end.
         const CommandBuffer* pendingCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];

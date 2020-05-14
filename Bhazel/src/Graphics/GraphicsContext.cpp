@@ -6,8 +6,6 @@
 
 #include "Graphics/CommandBuffer.h"
 #include "Graphics/DescriptorSet.h"
-#include "Graphics/Framebuffer.h"
-#include "Graphics/RenderPass.h"
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -41,55 +39,10 @@ namespace BZ {
         descriptorPool.init(device, { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 64 }, { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 64 },
                                       { VK_DESCRIPTOR_TYPE_SAMPLER, 64 }, { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64 } }, 128);
 
-        //Create the RenderPass
-        AttachmentDescription colorAttachmentDesc;
-        colorAttachmentDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
-        colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-        AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = VK_FORMAT_D24_UNORM_S8_UINT;
-        depthStencilAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-        depthStencilAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        depthStencilAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
-        depthStencilAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        depthStencilAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_STORE;
-        depthStencilAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        depthStencilAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        depthStencilAttachmentDesc.clearValue.depthStencil.depth = 1.0f;
-        depthStencilAttachmentDesc.clearValue.depthStencil.stencil = 0;
-
-        SubPassDescription subPassDesc;
-        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
-        subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-
-        mainRenderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc });
-
-        //TODO: get the dimensions from a better place
-        glm::ivec2 dimensions;
-        glfwGetWindowSize(static_cast<GLFWwindow*>(windowHandle), &dimensions.x, &dimensions.y);
-        auto colorTexture = Texture2D::createRenderTarget(dimensions.x, dimensions.y, 1, colorAttachmentDesc.format);
-        colorTextureView = TextureView::create(colorTexture);
-        auto depthTexture = Texture2D::createRenderTarget(dimensions.x, dimensions.y, 1, depthStencilAttachmentDesc.format);
-        depthTextureView = TextureView::create(depthTexture);
-
-        mainFramebuffer = Framebuffer::create(mainRenderPass, { colorTextureView, depthTextureView }, glm::ivec3(dimensions.x, dimensions.y, 1));
-
         swapchain.init(device, surface);
     }
 
     void GraphicsContext::destroy() {
-        colorTextureView.reset();
-        depthTextureView.reset();
-        mainFramebuffer.reset();
-        mainRenderPass.reset();
-        
         descriptorPool.destroy();
 
         swapchain.destroy();

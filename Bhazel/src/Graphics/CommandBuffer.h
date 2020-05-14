@@ -9,6 +9,7 @@
 namespace BZ {
 
     class Framebuffer;
+    class RenderPass;
     union ClearValues;
     class Texture;
     class Buffer;
@@ -33,7 +34,7 @@ namespace BZ {
         void submit();
         void submitImmediately();
 
-        void beginRenderPass(const Ref<Framebuffer> &framebuffer);
+        void beginRenderPass(const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer);
         void endRenderPass();
 
         void nextSubPass();

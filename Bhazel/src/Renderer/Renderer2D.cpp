@@ -8,6 +8,7 @@
 #include "Graphics/PipelineState.h"
 #include "Graphics/Shader.h"
 #include "Graphics/CommandBuffer.h"
+#include "Graphics/RenderPass.h"
 
 #include "Core/Application.h"
 #include "Core/Utils.h"
@@ -105,6 +106,8 @@ namespace BZ {
         Ref<DescriptorSetLayout> textureDescriptorSetLayout;
         DescriptorSet *constantsDescriptorSet;
 
+        Ref<RenderPass> renderPass;
+
         std::unordered_map<uint64, TexData> texDataStorage;
 
         InternalSprite sprites[MAX_RENDERER2D_SPRITES + 1];
@@ -186,7 +189,34 @@ namespace BZ {
         pipelineStateData.descriptorSetLayouts = { rendererData.constantsDescriptorSetLayout, rendererData.textureDescriptorSetLayout };
         pipelineStateData.blendingState = blendingState;
 
-        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+        //Create a Render Pass based on the default Swapchain one.
+        const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
+
+        //This Renderer is not the first one, so load. Not the last one so keep the color attachment layout.
+        AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
+        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        SubPassDescription subPassDesc;
+        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+
+        //Wait on previous Renderers.
+        SubPassDependency dependency;
+        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+        dependency.dstSubPassIndex = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+        dependency.dependencyFlags = 0;
+
+        rendererData.renderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
+
+        pipelineStateData.renderPass = rendererData.renderPass;
         pipelineStateData.subPassIndex = 0;
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
@@ -213,6 +243,8 @@ namespace BZ {
 
         rendererData.constantsDescriptorSetLayout.reset();
         rendererData.textureDescriptorSetLayout.reset();
+
+        rendererData.renderPass.reset();
     }
 
     void Renderer2D::begin(const OrthographicCamera &camera) {
@@ -234,7 +266,7 @@ namespace BZ {
             });
 
             CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
-            commandBuffer.beginRenderPass(Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
+            commandBuffer.beginRenderPass(rendererData.renderPass, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
 
             glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
             memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));

@@ -24,7 +24,7 @@ namespace BZ {
 
     void Swapchain::destroy() {
         framebuffers.clear();
-        renderPass.reset();
+        defaultRenderPass.reset();
         vkDestroySwapchainKHR(device->getHandle(), handle, nullptr);
         currentImageIndex = 0;
         aquired = false;
@@ -134,34 +134,29 @@ namespace BZ {
         swapChainImages.resize(imageCount);
         BZ_ASSERT_VK(vkGetSwapchainImagesKHR(device->getHandle(), handle, &imageCount, swapChainImages.data()));
 
-        //Create the Swapchain RenderPass, reutilizing the main DepthBuffer.
-        GraphicsContext &context = Application::get().getGraphicsContext();
-
+        //Create the Swapchain default RenderPass.
         AttachmentDescription colorAttachmentDesc;
         colorAttachmentDesc.format = imageFormat;
         colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; //TODO: this is not correct.
-        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; //TODO: probably it's better to transition manually at frame end, to avoid unecesary transitions.
+        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-        AttachmentDescription depthAttachmentDesc = *context.getMainRenderPass()->getDepthStencilAttachmentDescription();
 
         SubPassDescription subPassDesc;
         subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
-        subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
-        renderPass = RenderPass::create({ colorAttachmentDesc, depthAttachmentDesc }, { subPassDesc });
+        defaultRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
 
-        //Create Views and Framebuffers for the images
+        //Create Views and Framebuffers for the images.
         framebuffers.resize(imageCount);
         for(size_t i = 0; i < swapChainImages.size(); i++) {
             auto textureRef = Texture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
             auto textureViewRef = TextureView::create(textureRef);
-            framebuffers[i] = Framebuffer::create(renderPass, { textureViewRef, context.getDepthTextureView() }, glm::ivec3(extent.width, extent.height, 1));
+            framebuffers[i] = Framebuffer::create(defaultRenderPass, { textureViewRef }, glm::ivec3(extent.width, extent.height, 1));
         }
     }
 
