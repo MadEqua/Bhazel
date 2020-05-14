@@ -11,8 +11,6 @@ namespace BZ {
     class Shader;
     class PipelineState;
 
-    constexpr uint32 TIME_TO_DEBOUNCE_CALLBACK_MS = 200;
-
     class FileWatcher {
     public:
         FileWatcher() = default;

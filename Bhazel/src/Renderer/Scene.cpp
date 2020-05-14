@@ -70,12 +70,13 @@ namespace BZ {
                              const char *irradianceMapBasePath, const char *irradianceMapFileNames[6],
                              const char *radianceMapBasePath, const char *radianceMapFileNames[6], uint32 radianceMipmapCount) {
 
-        auto albedoTexRef = TextureCube::create(albedoBasePath, albedoFileNames, VK_FORMAT_R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        auto albedoTexRef = TextureCube::create(albedoBasePath, albedoFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, MipmapData::Options::Generate);
         skyBox.mesh = Mesh::createUnitCubeInsides(Material(albedoTexRef));
 
-        auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames, VK_FORMAT_R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, MipmapData::Options::Generate);
         skyBox.irradianceMapView = TextureView::create(irradianceMapTexRef);
 
+        //TODO: should be HDR
         auto radianceMapTexRef = TextureCube::create(radianceMapBasePath, radianceMapFileNames, VK_FORMAT_R8G8B8A8_SRGB, { MipmapData::Options::Load, radianceMipmapCount });
         skyBox.radianceMapView = TextureView::create(radianceMapTexRef);
 

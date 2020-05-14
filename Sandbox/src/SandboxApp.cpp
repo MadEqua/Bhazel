@@ -254,21 +254,18 @@ void Layer3D::onGraphicsContextCreated() {
     //scenes[1].addDirectionalLight(dirLight2);
     //scenes[2].addDirectionalLight(dirLight2);
 
-    const char* cubeFileNames[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga", 
-                                     "output_skybox_posy.tga", "output_skybox_negy.tga",
-                                     "output_skybox_posz.tga", "output_skybox_negz.tga" };
+    const char* cubeFileNames[6] = { "output_skybox_posx.hdr", "output_skybox_negx.hdr", 
+                                     "output_skybox_posy.hdr", "output_skybox_negy.hdr",
+                                     "output_skybox_posz.hdr", "output_skybox_negz.hdr" };
 
-    scenes[0].enableSkyBox("Sandbox/textures/sky/", cubeFileNames,
-                           "Sandbox/textures/skyIrradiance/", cubeFileNames,
-                           "Sandbox/textures/skyRadiance/", cubeFileNames, 5);
-    //scenes[1].enableSkyBox("Sandbox/textures/lobby/", cubeFileNames,
-    //                       "Sandbox/textures/lobbyIrradiance/", cubeFileNames,
-    //                       "Sandbox/textures/lobbyRadiance/", cubeFileNames, 5);
-    //
-    //scenes[2].enableSkyBox("Sandbox/textures/theater/", cubeFileNames,
-    //                       "Sandbox/textures/theaterIrradiance/", cubeFileNames,
-    //                       "Sandbox/textures/theaterRadiance/", cubeFileNames, 5);
-    //
+    //TODO: should be HDR
+    const char* cubeFileNamesTga[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga",
+                                        "output_skybox_posy.tga", "output_skybox_negy.tga",
+                                        "output_skybox_posz.tga", "output_skybox_negz.tga" };
+
+    scenes[0].enableSkyBox("Sandbox/textures/delta/", cubeFileNames,
+                           "Sandbox/textures/deltaIrradiance/", cubeFileNames,
+                           "Sandbox/textures/deltaRadiance/", cubeFileNamesTga, 5);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
@@ -363,6 +360,10 @@ void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
     ImGui::End();
 
     if (ImGui::Begin("Camera")) {
+        float exposure = camera.getExposure();
+        if(ImGui::DragFloat("Exposure", &exposure, 0.01f, 0.0f, 20.0f)) {
+            camera.setExposure(exposure);
+        }
         ImGui::Checkbox("Use Free Camera", &useFreeCamera);
     }
     ImGui::End();

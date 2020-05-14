@@ -18,9 +18,14 @@ namespace BZ {
         Transform& getTransform() { return transform; }
         const Transform& getTransform() const { return transform; }
 
+        float getExposure() const { return exposure; };
+        void setExposure(float exposure) { this->exposure = exposure; };
+
     protected:
         Transform transform;
         glm::mat4 projectionMatrix;
+
+        float exposure = 1.0f;
     };
 
 

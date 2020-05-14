@@ -40,7 +40,7 @@ namespace BZ {
         glm::mat4 viewMatrix; //World to camera space
         glm::mat4 projectionMatrix; //Camera to clip space
         glm::mat4 viewProjectionMatrix; //World to clip space
-        glm::vec4 cameraPosition; //mat4 to simplify alignments
+        glm::vec4 cameraPositionAndExposure;
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
@@ -394,7 +394,8 @@ namespace BZ {
         pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
         rendererData.postProcessPassDescriptorSetLayout =
-            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
+                                          { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
         pipelineStateData.descriptorSetLayouts = { rendererData.postProcessPassDescriptorSetLayout };
 
@@ -443,6 +444,7 @@ namespace BZ {
 
         rendererData.postProcessDescriptorSet = &DescriptorSet::get(rendererData.postProcessPassDescriptorSetLayout);
         rendererData.postProcessDescriptorSet->setCombinedTextureSampler(rendererData.colorTexView, rendererData.defaultSampler, 0);
+        rendererData.postProcessDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 1, PASS_CONSTANT_BUFFER_OFFSET, PASS_CONSTANT_BUFFER_SIZE);
     }
 
     void Renderer::initSkyBoxData() {
@@ -729,6 +731,11 @@ namespace BZ {
                 passConstantBufferData.viewMatrix = lightMatrices[passIndex];
                 passConstantBufferData.projectionMatrix = lightProjectionMatrices[passIndex];
                 passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
+                const glm::vec3 &cameraPosition = scene.getCamera().getTransform().getTranslation();
+                passConstantBufferData.cameraPositionAndExposure.x = cameraPosition.x;
+                passConstantBufferData.cameraPositionAndExposure.y = cameraPosition.y;
+                passConstantBufferData.cameraPositionAndExposure.z = cameraPosition.z;
+                passConstantBufferData.cameraPositionAndExposure.w = scene.getCamera().getExposure();
                 memcpy(rendererData.passConstantBufferPtr + passOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
                 passIndex++;
             }
@@ -740,9 +747,10 @@ namespace BZ {
         passConstantBufferData.projectionMatrix = scene.getCamera().getProjectionMatrix();
         passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
         const glm::vec3 &cameraPosition = scene.getCamera().getTransform().getTranslation();
-        passConstantBufferData.cameraPosition.x = cameraPosition.x;
-        passConstantBufferData.cameraPosition.y = cameraPosition.y;
-        passConstantBufferData.cameraPosition.z = cameraPosition.z;
+        passConstantBufferData.cameraPositionAndExposure.x = cameraPosition.x;
+        passConstantBufferData.cameraPositionAndExposure.y = cameraPosition.y;
+        passConstantBufferData.cameraPositionAndExposure.z = cameraPosition.z;
+        passConstantBufferData.cameraPositionAndExposure.w = scene.getCamera().getExposure();
 
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
         memcpy(rendererData.passConstantBufferPtr + colorPassOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
