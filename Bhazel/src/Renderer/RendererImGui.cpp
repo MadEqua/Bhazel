@@ -1,6 +1,6 @@
 #include "bzpch.h"
 
-#include "ImGuiRenderer.h"
+#include "RendererImGui.h"
 
 #include "Graphics/Buffer.h"
 #include "Graphics/Texture.h"
@@ -9,6 +9,7 @@
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/CommandBuffer.h"
 #include "Graphics/RenderPass.h"
+#include "Graphics/Framebuffer.h"
 
 #include "Core/Application.h"
 #include "Core/Input.h"
@@ -36,12 +37,10 @@ namespace BZ {
 
         Ref<PipelineState> pipelineState;
         DescriptorSet *descriptorSet;
-
-        Ref<RenderPass> renderPass;
     } rendererData;
 
 
-    void ImGuiRenderer::init() {
+    void RendererImGui::init() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
@@ -57,7 +56,7 @@ namespace BZ {
         initGraphics();
     }
 
-    void ImGuiRenderer::destroy() {
+    void RendererImGui::destroy() {
 
         rendererData.vertexBuffer.reset();
         rendererData.indexBuffer.reset();
@@ -68,12 +67,10 @@ namespace BZ {
 
         rendererData.pipelineState.reset();
 
-        rendererData.renderPass.reset();
-
         ImGui::DestroyContext();
     }
 
-    void ImGuiRenderer::onEvent(Event &event) {
+    void RendererImGui::onEvent(Event &event) {
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<KeyPressedEvent>([](const KeyPressedEvent &event) -> bool {
             ImGuiIO &io = ImGui::GetIO();
@@ -144,7 +141,7 @@ namespace BZ {
             });
     }
 
-    void ImGuiRenderer::begin() {
+    void RendererImGui::begin() {
         ImGuiIO &io = ImGui::GetIO();
         Window &window = Application::get().getWindow();
         io.DisplaySize = ImVec2(static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()));
@@ -152,73 +149,11 @@ namespace BZ {
         ImGui::NewFrame();
     }
 
-    void ImGuiRenderer::end() {
+    void RendererImGui::end() {
         ImGui::Render();
-
-        ImDrawData *imDrawData = ImGui::GetDrawData();
-
-        uint32 vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
-        uint32 indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
-
-        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
-
-        if (vertexBufferSize == 0 || indexBufferSize == 0 || imDrawData->CmdListsCount <= 0) {
-            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Command List count: {}. Allowing dummy RenderPass to perform image layout transition.",
-                vertexBufferSize, indexBufferSize, imDrawData->CmdListsCount);
-        }
-
-        byte *vtxDst = rendererData.vertexBufferPtr;
-        byte *idxDst = rendererData.indexBufferPtr;
-        for (int n = 0; n < imDrawData->CmdListsCount; n++) {
-            const ImDrawList *drawList = imDrawData->CmdLists[n];
-            memcpy(vtxDst, drawList->VtxBuffer.Data, drawList->VtxBuffer.Size * sizeof(ImDrawVert));
-            memcpy(idxDst, drawList->IdxBuffer.Data, drawList->IdxBuffer.Size * sizeof(ImDrawIdx));
-            vtxDst += drawList->VtxBuffer.Size * sizeof(ImDrawVert);
-            idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
-        }
-
-        commandBuffer.beginRenderPass(rendererData.renderPass, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
-
-        ImGuiIO &io = ImGui::GetIO();
-        glm::mat4 projMatrix(1.0f);
-        projMatrix[0][0] = 2.0f / io.DisplaySize.x;
-        projMatrix[1][1] = -2.0f / io.DisplaySize.y;
-        projMatrix[3][0] = -1.0f;
-        projMatrix[3][1] = 1.0f;
-
-        memcpy(rendererData.constantBufferPtr, &projMatrix[0], sizeof(glm::mat4));
-
-        commandBuffer.bindPipelineState(rendererData.pipelineState);
-        commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
-
-        int vertexOffset = 0;
-        int indexOffset = 0;
-
-        commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
-        commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
-
-        for(int i = 0; i < imDrawData->CmdListsCount; ++i) {
-            const ImDrawList *cmdList = imDrawData->CmdLists[i];
-            for(int j = 0; j < cmdList->CmdBuffer.Size; ++j) {
-                const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
-                VkRect2D scissorRect;
-                scissorRect.offset.x = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);
-                scissorRect.offset.y = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
-                scissorRect.extent.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
-                scissorRect.extent.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
-                commandBuffer.setScissorRects(0, &scissorRect, 1);
-                commandBuffer.drawIndexed(pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
-
-                indexOffset += pcmd->ElemCount;
-            }
-            vertexOffset += cmdList->VtxBuffer.Size;
-        }
-
-        commandBuffer.endRenderPass();
-        commandBuffer.endAndSubmit();
     }
 
-    void ImGuiRenderer::initInput() {
+    void RendererImGui::initInput() {
         // Setup back-end capabilities flags
         ImGuiIO &io = ImGui::GetIO();
         io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
@@ -264,7 +199,7 @@ namespace BZ {
         //g_MouseCursors[ImGuiMouseCursor_Hand] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
     }
 
-    void ImGuiRenderer::initGraphics() {
+    void RendererImGui::initGraphics() {
         ImGuiIO &io = ImGui::GetIO();
 
         // Setup Dear ImGui style
@@ -333,35 +268,7 @@ namespace BZ {
         pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_SCISSOR };
-
-        //Create a Render Pass based on the default Swapchain one.
-        const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
-
-        //This Renderer is not the first one, so load. It's the last one so transition to present layout.
-        AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
-        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
-        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-        SubPassDescription subPassDesc;
-        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
-
-        //Wait on previous Renderers.
-        SubPassDependency dependency;
-        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubPassIndex = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-        dependency.dependencyFlags = 0;
-
-        rendererData.renderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
-
-        pipelineStateData.renderPass = rendererData.renderPass;
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
@@ -374,5 +281,70 @@ namespace BZ {
         rendererData.descriptorSet = &DescriptorSet::get(descriptorSetLayout);
         rendererData.descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, 0, sizeof(glm::mat4));
         rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler, 1);
+    }
+
+    void RendererImGui::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer) {
+        ImDrawData *imDrawData = ImGui::GetDrawData();
+
+        int vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
+        int indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
+
+        if(vertexBufferSize == 0 || indexBufferSize == 0 || imDrawData->CmdListsCount <= 0) {
+            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Command List count: {}. Bailing Out.",
+                vertexBufferSize, indexBufferSize, imDrawData->CmdListsCount);
+            return;
+        }
+
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+
+        byte *vtxDst = rendererData.vertexBufferPtr;
+        byte *idxDst = rendererData.indexBufferPtr;
+        for(int n = 0; n < imDrawData->CmdListsCount; n++) {
+            const ImDrawList *drawList = imDrawData->CmdLists[n];
+            memcpy(vtxDst, drawList->VtxBuffer.Data, drawList->VtxBuffer.Size * sizeof(ImDrawVert));
+            memcpy(idxDst, drawList->IdxBuffer.Data, drawList->IdxBuffer.Size * sizeof(ImDrawIdx));
+            vtxDst += drawList->VtxBuffer.Size * sizeof(ImDrawVert);
+            idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
+        }
+
+        commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
+
+        ImGuiIO &io = ImGui::GetIO();
+        glm::mat4 projMatrix(1.0f);
+        projMatrix[0][0] = 2.0f / io.DisplaySize.x;
+        projMatrix[1][1] = -2.0f / io.DisplaySize.y;
+        projMatrix[3][0] = -1.0f;
+        projMatrix[3][1] = 1.0f;
+
+        memcpy(rendererData.constantBufferPtr, &projMatrix[0], sizeof(glm::mat4));
+
+        commandBuffer.bindPipelineState(rendererData.pipelineState);
+        commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+
+        int vertexOffset = 0;
+        int indexOffset = 0;
+
+        commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
+        commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
+
+        for(int i = 0; i < imDrawData->CmdListsCount; ++i) {
+            const ImDrawList *cmdList = imDrawData->CmdLists[i];
+            for(int j = 0; j < cmdList->CmdBuffer.Size; ++j) {
+                const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
+                VkRect2D scissorRect;
+                scissorRect.offset.x = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);
+                scissorRect.offset.y = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
+                scissorRect.extent.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
+                scissorRect.extent.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
+                commandBuffer.setScissorRects(0, &scissorRect, 1);
+                commandBuffer.drawIndexed(pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
+
+                indexOffset += pcmd->ElemCount;
+            }
+            vertexOffset += cmdList->VtxBuffer.Size;
+        }
+
+        commandBuffer.endRenderPass();
+        commandBuffer.endAndSubmit();
     }
 }

@@ -13,6 +13,7 @@ namespace BZ {
     class Buffer;
     class Entity;
     class DescriptorSet;
+    class RenderPass;
     class Framebuffer;
     class Sampler;
     class TextureView;
@@ -38,6 +39,7 @@ namespace BZ {
         static const Ref<TextureView>& getDummyTextureArrayView();
 
     private:
+        friend class RendererCoordinator;
         friend class Application;
 
         static void init();
@@ -50,7 +52,7 @@ namespace BZ {
 
         static void depthPass(const Scene &scene);
         static void colorPass(const Scene &scene);
-        static void postProcessPass();
+        static void postProcessPass(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
 
         static void drawEntities(const Scene &scene, bool depthPass);
         static void drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool depthPass);
@@ -62,6 +64,7 @@ namespace BZ {
         static void fillMaterial(const Material &material);
         static void fillEntities(const Scene &scene);
 
+        static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
         static void onImGuiRender(const FrameStats &frameStats);
 
         static void computeCascadedShadowMappingSplits(float out[], uint32 splits, float nearPlane, float farPlane);

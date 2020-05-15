@@ -112,7 +112,7 @@ namespace BZ {
 
         VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
         uint32 i = 0;
-        for (; i < framebuffer->getRenderPass()->getColorAttachmentCount(); i++) {
+        for (; i < framebuffer->getColorAttachmentCount(); i++) {
             vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             vkClearAttchments[i].colorAttachment = i;
             vkClearAttchments[i].clearValue.color = clearColor;

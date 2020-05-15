@@ -7,6 +7,8 @@ namespace BZ {
     class OrthographicCamera;
     class Texture2D;
     struct FrameStats;
+    class RenderPass;
+    class Framebuffer;
 
     struct Sprite {
         glm::vec2 position;
@@ -33,11 +35,13 @@ namespace BZ {
         static void drawParticleSystem2D(const ParticleSystem2D &particleSystem);
 
     private:
+        friend class RendererCoordinator;
         friend class Application;
 
         static void init();
         static void destroy();
 
+        static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
         static void onImGuiRender(const FrameStats &frameStats);
     };
 }

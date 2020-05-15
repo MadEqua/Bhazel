@@ -127,7 +127,7 @@ namespace BZ {
         Ref<TextureView> depthTexView;
         Ref<Framebuffer> colorFramebuffer;
 
-        Ref<RenderPass> postProcessRenderPass;
+        const Scene *sceneToRender;
 
         //ConstantFactor, clamp and slopeFactor
         glm::vec3 depthBiasData = { 1.0f, 0.0f, 2.5f };
@@ -145,6 +145,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         rendererData.commandBuffer = nullptr;
+        rendererData.sceneToRender = nullptr;
 
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             SCENE_CONSTANT_BUFFER_SIZE + PASS_CONSTANT_BUFFER_SIZE + MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE,
@@ -322,7 +323,7 @@ namespace BZ {
         colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
+        
         AttachmentDescription depthStencilAttachmentDesc;
         depthStencilAttachmentDesc.format = VK_FORMAT_D24_UNORM_S8_UINT;
         depthStencilAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -334,11 +335,11 @@ namespace BZ {
         depthStencilAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         depthStencilAttachmentDesc.clearValue.depthStencil.depth = 1.0f;
         depthStencilAttachmentDesc.clearValue.depthStencil.stencil = 0;
-
+        
         SubPassDescription subPassDesc;
         subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
         subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-
+        
         //Wait on DepthPass.
         SubPassDependency dependency;
         dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
@@ -348,7 +349,7 @@ namespace BZ {
         dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         dependency.dependencyFlags = 0;
-
+        
         rendererData.colorRenderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc }, { dependency });
 
         pipelineStateData.renderPass = rendererData.colorRenderPass;
@@ -409,35 +410,7 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
-        //Create a Render Pass based on the default Swapchain one.
-        const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
-
-        //This Renderer is the first one, so clear. Not the last one so keep the color attachment layout.
-        AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
-        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-        SubPassDescription subPassDesc;
-        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
-
-        //Wait on ColorPass.
-        SubPassDependency dependency;
-        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubPassIndex = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        dependency.dependencyFlags = 0;
-
-        rendererData.postProcessRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
-
-        pipelineStateData.renderPass = rendererData.postProcessRenderPass;
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.postProcessPipelineState = PipelineState::create(pipelineStateData);
@@ -516,28 +489,12 @@ namespace BZ {
         rendererData.colorTexView.reset();
         rendererData.depthTexView.reset();
         rendererData.colorFramebuffer.reset();
-
-        rendererData.postProcessRenderPass.reset();
     }
 
     void Renderer::drawScene(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
-        memset(&rendererData.stats, 0, sizeof(RendererStats));
- 
-        fillConstants(scene);
-
-        rendererData.commandBuffer = &CommandBuffer::getAndBegin(QueueProperty::Graphics);
-
-        //Bind stuff that will not change.
-        rendererData.commandBuffer->bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
-        rendererData.commandBuffer->bindDescriptorSet(scene.getDescriptorSet(), rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
-
-        depthPass(scene);
-        colorPass(scene);
-        postProcessPass();
-
-        rendererData.commandBuffer->endAndSubmit();
+        rendererData.sceneToRender = &scene;
     }
 
     void Renderer::depthPass(const Scene &scene) {
@@ -583,10 +540,10 @@ namespace BZ {
         rendererData.commandBuffer->endRenderPass();
     }
 
-    void Renderer::postProcessPass() {
+    void Renderer::postProcessPass(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer) {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBuffer->beginRenderPass(rendererData.postProcessRenderPass, Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer());
+        rendererData.commandBuffer->beginRenderPass(finalRenderPass, finalFramebuffer);
         rendererData.commandBuffer->bindPipelineState(rendererData.postProcessPipelineState);
         rendererData.commandBuffer->bindDescriptorSet(*rendererData.postProcessDescriptorSet, rendererData.postProcessPipelineState, 0, nullptr, 0);
         rendererData.commandBuffer->draw(3, 1, 0, 0);
@@ -821,6 +778,30 @@ namespace BZ {
             entityIndex++;
         }
         BZ_ASSERT_CORE(entityIndex <= MAX_ENTITIES_PER_SCENE, "Reached the max number of Entities!");
+    }
+
+    void Renderer::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer) {
+        BZ_PROFILE_FUNCTION();
+
+        if(rendererData.sceneToRender) {
+            memset(&rendererData.stats, 0, sizeof(RendererStats));
+
+            fillConstants(*rendererData.sceneToRender);
+
+            rendererData.commandBuffer = &CommandBuffer::getAndBegin(QueueProperty::Graphics);
+
+            //Bind stuff that will not change.
+            rendererData.commandBuffer->bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.defaultPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
+            rendererData.commandBuffer->bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.defaultPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
+
+            depthPass(*rendererData.sceneToRender);
+            colorPass(*rendererData.sceneToRender);
+            postProcessPass(finalRenderPass, finalFramebuffer);
+
+            rendererData.commandBuffer->endAndSubmit();
+
+            rendererData.sceneToRender = nullptr;
+        }
     }
 
     void Renderer::onImGuiRender(const FrameStats &frameStats) {

@@ -8,6 +8,7 @@ ParticleLayer::ParticleLayer() :
 }
 
 void ParticleLayer::onAttach() {
+    BZ::Application::get().enable3dRenderer(false);
 }
 
 void ParticleLayer::onGraphicsContextCreated() {

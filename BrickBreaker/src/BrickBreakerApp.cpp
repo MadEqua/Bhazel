@@ -205,6 +205,7 @@ MainLayer::MainLayer() :
 }
 
 void MainLayer::onAttach() {
+    BZ::Application::get().enable3dRenderer(false);
 }
 
 void MainLayer::onGraphicsContextCreated() {

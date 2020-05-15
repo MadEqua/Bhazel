@@ -19,13 +19,11 @@ namespace BZ {
         BZ_NON_COPYABLE(Framebuffer);
 
         const glm::ivec3& getDimensionsAndLayers() const { return dimensionsAndLayers; }
-        const Ref<RenderPass>& getRenderPass() const { return renderPass; }
 
         const Ref<TextureView>& getDepthStencilTextureView() const { return depthStencilTextureView; }
+        uint32 getColorAttachmentCount() const { return static_cast<uint32>(colorTextureViews.size()); }
 
     private:
-        Ref<RenderPass> renderPass;
-
         //z = layers
         glm::ivec3 dimensionsAndLayers;
 

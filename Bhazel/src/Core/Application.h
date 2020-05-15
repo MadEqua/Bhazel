@@ -6,6 +6,7 @@
 #include "Core/Ini/IniParser.h"
 #include "Core/Timer.h"
 
+#include "Renderer/RendererCoordinator.h"
 #include "Graphics/GraphicsContext.h"
 #include "Layers/LayerStack.h"
 #include "FileWatcher/FileWatcher.h"
@@ -36,6 +37,10 @@ namespace BZ {
         const FrameStats& getFrameStats() const { return frameStats; }
         const std::string& getAssetsPath() const { return assetsPath; }
 
+        void enable3dRenderer(bool enable) { rendererCoordinator.enable3dRenderer(enable); }
+        void enable2dRenderer(bool enable) { rendererCoordinator.enable2dRenderer(enable); }
+        void enableImGuiRenderer(bool enable) { rendererCoordinator.enableImGuiRenderer(enable); }
+
 #ifdef BZ_HOT_RELOAD_SHADERS
         FileWatcher& getFileWatcher() { return fileWatcher; }
 #endif      
@@ -46,6 +51,7 @@ namespace BZ {
 
         Window window;
         GraphicsContext graphicsContext;
+        RendererCoordinator rendererCoordinator;
 
         LayerStack layerStack;
         IniParser iniParser;

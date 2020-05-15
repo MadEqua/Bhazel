@@ -16,7 +16,7 @@ namespace BZ {
     }
 
     Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) :
-        renderPass(renderPass), dimensionsAndLayers(dimensionsAndLayers) {
+        dimensionsAndLayers(dimensionsAndLayers) {
 
         BZ_ASSERT_CORE(textureViews.size() == renderPass->getAttachmentCount(), "The number of TextureViews must match the number of Attachments declared on the RenderPass!");
         

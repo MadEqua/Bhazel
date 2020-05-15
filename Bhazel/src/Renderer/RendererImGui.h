@@ -4,8 +4,10 @@
 namespace BZ {
 
     class Event;
+    class RenderPass;
+    class Framebuffer;
 
-    class ImGuiRenderer {
+    class RendererImGui {
     public:
         static void begin();
         static void end();
@@ -13,6 +15,7 @@ namespace BZ {
         static void onEvent(Event &event);
 
     private:
+        friend class RendererCoordinator;
         friend class Application;
 
         static void init();
@@ -20,5 +23,7 @@ namespace BZ {
 
         static void initInput();
         static void initGraphics();
+
+        static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
     };
 }

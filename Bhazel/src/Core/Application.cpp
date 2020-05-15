@@ -4,9 +4,9 @@
 
 #include "Layers/Layer.h"
 #include "Events/WindowEvent.h"
-#include "Renderer/Renderer2D.h"
 #include "Renderer/Renderer.h"
-#include "Renderer/ImGuiRenderer.h"
+#include "Renderer/Renderer2D.h"
+#include "Renderer/RendererImGui.h"
 
 #include <GLFW/glfw3.h>
 
@@ -31,7 +31,6 @@ namespace BZ {
 
         BZ_CRITICAL_ERROR_CORE(iniParser.parse("bhazel.ini"), "Failed to open \"bhazel.ini\" file.");
         auto &settings = iniParser.getParsedIniSettings();
-
         assetsPath = settings.getFieldAsString("assetsPath", "");
 
         WindowData windowData;
@@ -43,10 +42,12 @@ namespace BZ {
         window.init(windowData, BZ_BIND_EVENT_FN(Application::onEvent));
         graphicsContext.init();
 
-        Input::init();
-        ImGuiRenderer::init();
+        RendererImGui::init();
         Renderer2D::init();
         Renderer::init();
+        rendererCoordinator.init();
+
+        Input::init();
 
 #ifdef BZ_HOT_RELOAD_SHADERS
         fileWatcher.startWatching();
@@ -57,9 +58,11 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         graphicsContext.waitForDevice();
-        ImGuiRenderer::destroy();
+        RendererImGui::destroy();
         Renderer2D::destroy();
         Renderer::destroy();
+
+        rendererCoordinator.destroy();
 
         layerStack.clear();
 
@@ -88,12 +91,14 @@ namespace BZ {
 
                 layerStack.onUpdate(frameStats);
 
-                ImGuiRenderer::begin();
+                RendererImGui::begin();
                 graphicsContext.onImGuiRender(frameStats);
                 Renderer::onImGuiRender(frameStats);
                 Renderer2D::onImGuiRender(frameStats);
                 layerStack.onImGuiRender(frameStats);
-                ImGuiRenderer::end();
+                RendererImGui::end();
+
+                rendererCoordinator.render();
 
                 graphicsContext.endFrame();
 
@@ -116,7 +121,9 @@ namespace BZ {
     void Application::onEvent(Event &e) {
         //BZ_LOG_CORE_TRACE(e);
 
-        ImGuiRenderer::onEvent(e);
+        rendererCoordinator.onEvent(e);
+
+        RendererImGui::onEvent(e);
 
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(Application::onWindowResized));

@@ -53,7 +53,7 @@ private:
 class Sandbox : public BZ::Application {
 public:
     Sandbox() {
-        //pushLayer(new ParticleLayer());
-        pushLayer(new Layer3D());
+        pushLayer(new ParticleLayer());
+        //pushLayer(new Layer3D());
     }
 };
