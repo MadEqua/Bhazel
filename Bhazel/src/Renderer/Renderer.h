@@ -45,17 +45,17 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        static void initDepthPassData();
-        static void initDefaultPassData();
+        static void initShadowPassData();
+        static void initColorPassData();
         static void initPostProcessPassData();
         static void initSkyBoxData();
 
-        static void depthPass(const Scene &scene);
+        static void shadowPass(const Scene &scene);
         static void colorPass(const Scene &scene);
         static void postProcessPass(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
 
-        static void drawEntities(const Scene &scene, bool depthPass);
-        static void drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool depthPass);
+        static void drawEntities(const Scene &scene, bool shadowPass);
+        static void drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool shadowPass);
 
         static void fillConstants(const Scene &scene);
         static void fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices, const float cascadeSplits[]);
