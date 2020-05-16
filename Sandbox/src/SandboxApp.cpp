@@ -100,34 +100,34 @@ void Layer3D::onGraphicsContextCreated() {
     freeCameraController = BZ::FreeCameraController(camera, 50.0f);
 
     //Hydrant, Wrench and Cerberus
-#if 1
-    //BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
-    //                             "Sandbox/meshes/fireHydrant/Normal.png",
-    //                             "Sandbox/meshes/fireHydrant/Metallic.png",
-    //                             "Sandbox/meshes/fireHydrant/Roughness.png",
-    //                             "Sandbox/meshes/fireHydrant/Height.png");
-    //hydrantMaterial.setParallaxOcclusionScale(0.001f);
-    //BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
-    //BZ::Transform hydrantTransform;
-    //hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
-    //hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f, BZ::Space::Parent);
-    //scenes[0].addEntity(hydrantMesh, hydrantTransform);
-    //scenes[1].addEntity(hydrantMesh, hydrantTransform);
-    //scenes[2].addEntity(hydrantMesh, hydrantTransform);
+#if 0
+    BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
+                                 "Sandbox/meshes/fireHydrant/Normal.png",
+                                 "Sandbox/meshes/fireHydrant/Metallic.png",
+                                 "Sandbox/meshes/fireHydrant/Roughness.png",
+                                 "Sandbox/meshes/fireHydrant/Height.png");
+    hydrantMaterial.setParallaxOcclusionScale(0.001f);
+    BZ::Mesh hydrantMesh("Sandbox/meshes/fireHydrant/fireHydrant.obj", hydrantMaterial);
+    BZ::Transform hydrantTransform;
+    hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
+    hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f, BZ::Space::Parent);
+    scenes[0].addEntity(hydrantMesh, hydrantTransform);
+    scenes[1].addEntity(hydrantMesh, hydrantTransform);
+    scenes[2].addEntity(hydrantMesh, hydrantTransform);
     
-    //BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
-    //                            "Sandbox/meshes/wrench/normal.png",
-    //                            "Sandbox/meshes/wrench/metallic.jpg",
-    //                            "Sandbox/meshes/wrench/roughness.jpg",
-    //                            "Sandbox/meshes/wrench/height.png");
-    //wrenchMaterial.setParallaxOcclusionScale(0.01f);
-    //BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
-    //BZ::Transform wrenchTransform;
-    //wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f, BZ::Space::Parent);
-    //wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f, BZ::Space::Parent);
-    //scenes[0].addEntity(wrenchMesh, wrenchTransform);
-    //scenes[1].addEntity(wrenchMesh, wrenchTransform);
-    //scenes[2].addEntity(wrenchMesh, wrenchTransform);
+    BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg",
+                                "Sandbox/meshes/wrench/normal.png",
+                                "Sandbox/meshes/wrench/metallic.jpg",
+                                "Sandbox/meshes/wrench/roughness.jpg",
+                                "Sandbox/meshes/wrench/height.png");
+    wrenchMaterial.setParallaxOcclusionScale(0.01f);
+    BZ::Mesh wrenchMesh("Sandbox/meshes/wrench/wrench.obj", wrenchMaterial);
+    BZ::Transform wrenchTransform;
+    wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f, BZ::Space::Parent);
+    wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f, BZ::Space::Parent);
+    scenes[0].addEntity(wrenchMesh, wrenchTransform);
+    scenes[1].addEntity(wrenchMesh, wrenchTransform);
+    scenes[2].addEntity(wrenchMesh, wrenchTransform);
     
     BZ::Material gunMaterial("Sandbox/meshes/cerberus/albedo.png",
                              "Sandbox/meshes/cerberus/normal.png",
@@ -146,7 +146,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Ground
-#if 1
+#if 0
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
         "Sandbox/textures/steppingstones/steppingstones1_normal.png",
         "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
@@ -180,8 +180,8 @@ void Layer3D::onGraphicsContextCreated() {
     BZ::Mesh barrelMesh("Sandbox/meshes/barrel/barrel.obj");
     BZ::Transform barrelTransform;
     barrelTransform.setScale(2.5f, 2.5f, 2.5f);
-    barrelTransform.setTranslation(40.0f, 2.5f, 0.0f);
-    barrelTransform.setRotationEuler(29.0f, 4.0f, 90.0f);
+    barrelTransform.setTranslation(40.0f, -23.0f, 0.0f, BZ::Space::Parent);
+    barrelTransform.setRotationEuler(29.0f, 4.0f, 90.0f, BZ::Space::Parent);
     scenes[0].addEntity(barrelMesh, barrelTransform);
     scenes[1].addEntity(barrelMesh, barrelTransform);
     scenes[2].addEntity(barrelMesh, barrelTransform);
@@ -189,49 +189,49 @@ void Layer3D::onGraphicsContextCreated() {
     BZ::Mesh houseMesh("Sandbox/meshes/house/house.obj");
     BZ::Transform houseTransform;
     houseTransform.setScale(10.0f, 10.0f, 10.0f);
-    houseTransform.setTranslation(0.4f, -3.0f, 0.0f);
-    houseTransform.setRotationEuler(0.0f, 295.0f, 0.0f);
+    houseTransform.setTranslation(0.4f, -29.0f, 0.0f, BZ::Space::Parent);
+    houseTransform.setRotationEuler(0.0f, 295.0f, 0.0f, BZ::Space::Parent);
     scenes[0].addEntity(houseMesh, houseTransform);
     scenes[1].addEntity(houseMesh, houseTransform);
     scenes[2].addEntity(houseMesh, houseTransform);
     
     BZ::Transform houseTransform2;
     houseTransform2.setScale(10.0f, 10.0f, 10.0f);
-    houseTransform2.setTranslation(-83.0f, -3.6f, -27.4f);
-    houseTransform2.setRotationEuler(0.0f, -218.0f, 0.0f);
+    houseTransform2.setTranslation(-83.0f, -29.0f, -27.4f, BZ::Space::Parent);
+    houseTransform2.setRotationEuler(0.0f, -218.0f, 0.0f, BZ::Space::Parent);
     scenes[0].addEntity(houseMesh, houseTransform2);
     scenes[1].addEntity(houseMesh, houseTransform2);
     scenes[2].addEntity(houseMesh, houseTransform2);
     
     BZ::Transform houseTransform3;
     houseTransform3.setScale(10.0f, 10.0f, 10.0f);
-    houseTransform3.setTranslation(-20.0f, -3.0f, -100.0f);
-    houseTransform3.setRotationEuler(0.0f, 151.0f, 0.0f);
+    houseTransform3.setTranslation(-20.0f, -29.0f, -100.0f, BZ::Space::Parent);
+    houseTransform3.setRotationEuler(0.0f, 151.0f, 0.0f, BZ::Space::Parent);
     scenes[0].addEntity(houseMesh, houseTransform3);
     scenes[1].addEntity(houseMesh, houseTransform3);
     scenes[2].addEntity(houseMesh, houseTransform3);
 #endif
 
     //Sphere Wall
-#if 0
-    //byte whiteTextureData [] = { 255, 255, 255, 255 };
-    //auto texRef = BZ::Texture2D::create(whiteTextureData, 1, 1, BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::DoNothing);
-    auto texRef = BZ::Texture2D::create("Sandbox/textures/test.jpg", BZ::TextureFormatEnum::R8G8B8A8, BZ::MipmapData::Options::Generate);
+#if 1
+    byte whiteTextureData [] = { 255, 255, 255, 255 };
+    auto texRef = BZ::Texture2D::create(whiteTextureData, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, BZ::MipmapData::Options::DoNothing);
+    //auto texRef = BZ::Texture2D::create("Sandbox/textures/test.jpg", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
     BZ::Mesh sphereMesh("Sandbox/meshes/sphere.obj");
 
     const float SCALE = 7.0f;
     for (int x = -3; x <= 3; ++x) {
         for (int y = -3; y <= 3; ++y) {
             glm::vec3 pos(x * (SCALE * 2.4f), y * (SCALE * 2.2f), 0.0f);
-
+    
             BZ::Transform sphereTransform;
             sphereTransform.setScale(SCALE);
             sphereTransform.setTranslation(pos, BZ::Space::Parent);
-
+    
             BZ::Material mat(texRef);
             mat.setMetallic(static_cast<float>(x + 3) / 6.0f);
             mat.setRoughness(static_cast<float>(y + 3) / 6.0f);
-
+    
             scenes[0].addEntity(sphereMesh, sphereTransform, mat, false);
             scenes[1].addEntity(sphereMesh, sphereTransform, mat, false);
             scenes[2].addEntity(sphereMesh, sphereTransform, mat, false);
@@ -255,18 +255,13 @@ void Layer3D::onGraphicsContextCreated() {
     //scenes[1].addDirectionalLight(dirLight2);
     //scenes[2].addDirectionalLight(dirLight2);
 
-    const char* cubeFileNames[6] = { "output_skybox_posx.hdr", "output_skybox_negx.hdr", 
-                                     "output_skybox_posy.hdr", "output_skybox_negy.hdr",
-                                     "output_skybox_posz.hdr", "output_skybox_negz.hdr" };
+    const char* cubeFileNames[6] = { "skybox_posx.hdr", "skybox_negx.hdr", 
+                                     "skybox_posy.hdr", "skybox_negy.hdr",
+                                     "skybox_posz.hdr", "skybox_negz.hdr" };
 
-    //TODO: should be HDR
-    const char* cubeFileNamesTga[6] = { "output_skybox_posx.tga", "output_skybox_negx.tga",
-                                        "output_skybox_posy.tga", "output_skybox_negy.tga",
-                                        "output_skybox_posz.tga", "output_skybox_negz.tga" };
-
-    scenes[0].enableSkyBox("Sandbox/textures/delta/", cubeFileNames,
-                           "Sandbox/textures/deltaIrradiance/", cubeFileNames,
-                           "Sandbox/textures/deltaRadiance/", cubeFileNamesTga, 5);
+    scenes[0].enableSkyBox("Sandbox/textures/umbrellas/", cubeFileNames,
+                           "Sandbox/textures/umbrellasIrradiance/", cubeFileNames,
+                           "Sandbox/textures/umbrellasRadiance/", cubeFileNames, 5);
 }
 
 void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
