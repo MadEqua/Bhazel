@@ -91,16 +91,16 @@ namespace BZ {
         static Ref<Texture2D> create(const char *path, TextureFormat format, MipmapData mipmapData);
         static Ref<Texture2D> create(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
 
-        static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, uint32 layers, TextureFormat format);
+        static Ref<Texture2D> createRenderTarget(uint32 width, uint32 height, uint32 layers, uint32 mipLevels, TextureFormat format, bool usedInTransfers = false);
 
         static Ref<Texture2D> wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
 
         Texture2D(const char *path, TextureFormat format, MipmapData mipmapData);
         Texture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData);
-        Texture2D(uint32 width, uint32 height, uint32 layers, TextureFormat format);
+        Texture2D(uint32 width, uint32 height, uint32 layers, uint32 mipLevels, TextureFormat format, bool usedInTransfers);
 
     private:
-        void createImage(bool hasData, MipmapData mipmapData);
+        void createImage(bool hasData, bool forceTransferBits, MipmapData mipmapData);
 
         //Coming from an already existent VkImage. Used on the swapchain images.
         Texture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat);
@@ -124,11 +124,14 @@ namespace BZ {
     class TextureView : public GpuObject<VkImageView> {
     public:
         static Ref<TextureView> create(const Ref<Texture2D> &texture2D);
-        static Ref<TextureView> create(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount);
-        static Ref<TextureView> create(const Ref<TextureCube> &textureCube);
+        static Ref<TextureView> create(const Ref<Texture2D> &texture2D, uint32 baseMip, uint32 mipCount);
 
-        explicit TextureView(const Ref<Texture2D> &texture2D);
-        TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount);
+        static Ref<TextureView> createLayered(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount);
+        
+        static Ref<TextureView> createCube(const Ref<TextureCube> &textureCube);
+
+        TextureView(const Ref<Texture2D> &texture2D, uint32 baseMip, uint32 mipCount);
+        TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount);
         explicit TextureView(const Ref<TextureCube> &textureCube);
 
         ~TextureView();
@@ -138,7 +141,7 @@ namespace BZ {
         Ref<Texture> getTexture() const { return texture; }
 
     private:
-        void init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount);
+        void init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount);
 
         Ref<Texture> texture;
     };

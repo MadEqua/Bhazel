@@ -24,6 +24,6 @@ namespace BZ {
         static void initInput();
         static void initGraphics();
 
-        static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
+        static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer);
     };
 }

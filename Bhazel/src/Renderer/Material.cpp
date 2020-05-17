@@ -25,7 +25,7 @@ namespace BZ {
     }
 
     Material::Material(Ref<TextureCube> &albedoTexture) :
-        albedoTextureView(TextureView::create(albedoTexture)) {
+        albedoTextureView(TextureView::createCube(albedoTexture)) {
         init();
     }
 

@@ -47,12 +47,10 @@ namespace BZ {
 
         static void initShadowPassData();
         static void initColorPassData();
-        static void initPostProcessPassData();
         static void initSkyBoxData();
 
         static void shadowPass(const Scene &scene);
         static void colorPass(const Scene &scene);
-        static void postProcessPass(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
 
         static void drawEntities(const Scene &scene, bool shadowPass);
         static void drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool shadowPass);
@@ -64,7 +62,7 @@ namespace BZ {
         static void fillMaterial(const Material &material);
         static void fillEntities(const Scene &scene);
 
-        static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
+        static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer);
         static void onImGuiRender(const FrameStats &frameStats);
 
         static void computeCascadedShadowMappingSplits(float out[], uint32 splits, float nearPlane, float farPlane);

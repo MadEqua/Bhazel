@@ -233,6 +233,23 @@ namespace BZ {
         commandCount++;
     }
 
+    void CommandBuffer::pipelineBarrierMemory(VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask) {
+        VkMemoryBarrier barrier = {};
+        barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+        barrier.srcAccessMask = srcAccessMask;
+        barrier.dstAccessMask = dstAccessMask;
+        
+        vkCmdPipelineBarrier(handle,
+            srcStage, dstStage,
+            0, //TODO: this may be a parameter
+            1, &barrier,
+            0, nullptr,
+            0, nullptr
+        );
+        
+        commandCount++;
+    }
+
     void CommandBuffer::pipelineBarrierTexture(const Ref<Texture> &texture,
                                                VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
                                                VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,

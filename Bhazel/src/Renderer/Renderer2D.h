@@ -41,7 +41,7 @@ namespace BZ {
         static void init();
         static void destroy();
 
-        static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer);
+        static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer);
         static void onImGuiRender(const FrameStats &frameStats);
     };
 }

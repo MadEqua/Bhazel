@@ -62,6 +62,9 @@ namespace BZ {
         void setDepthBias(float constantFactor, float clamp, float slopeFactor);
 
         //Sync and Transitions
+        void pipelineBarrierMemory(VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
+                                   VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask);
+
         void pipelineBarrierTexture(const Ref<Texture> &texture,
                                     VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
                                     VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,

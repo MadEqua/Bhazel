@@ -279,12 +279,12 @@ namespace BZ {
         }
     }
 
-    void Renderer2D::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer)  {
+    void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer)  {
         BZ_PROFILE_FUNCTION();
 
         if(rendererData.nextSprite > 0) {
             CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
-            commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
+            commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
 
             glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
             memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));

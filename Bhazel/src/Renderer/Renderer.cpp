@@ -17,11 +17,12 @@
 #include "Core/Window.h"
 #include "Core/Utils.h"
 
-#include "Camera.h"
-#include "Transform.h"
-#include "Mesh.h"
-#include "Material.h"
-#include "Scene.h"
+#include "Renderer/Camera.h"
+#include "Renderer/Transform.h"
+#include "Renderer/Mesh.h"
+#include "Renderer/Material.h"
+#include "Renderer/Scene.h"
+#include "Renderer/PostProcessor.h"
 
 #include <imgui.h>
 
@@ -40,7 +41,7 @@ namespace BZ {
         glm::mat4 viewMatrix; //World to camera space
         glm::mat4 projectionMatrix; //Camera to clip space
         glm::mat4 viewProjectionMatrix; //World to clip space
-        glm::vec4 cameraPositionAndExposure;
+        glm::vec4 cameraPosition;
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
@@ -57,11 +58,13 @@ namespace BZ {
     constexpr uint32 PASS_CONSTANT_BUFFER_SIZE = sizeof(PassConstantBufferData) * MAX_PASSES_PER_FRAME;
     constexpr uint32 MATERIAL_CONSTANT_BUFFER_SIZE = sizeof(MaterialConstantBufferData) * MAX_MATERIALS_PER_SCENE;
     constexpr uint32 ENTITY_CONSTANT_BUFFER_SIZE = sizeof(EntityConstantBufferData) * MAX_ENTITIES_PER_SCENE;
+    constexpr uint32 POST_PROCESS_CONSTANT_BUFFER_SIZE = sizeof(PostProcessConstantBufferData);
 
     constexpr uint32 SCENE_CONSTANT_BUFFER_OFFSET = 0;
     constexpr uint32 PASS_CONSTANT_BUFFER_OFFSET = SCENE_CONSTANT_BUFFER_SIZE;
     constexpr uint32 MATERIAL_CONSTANT_BUFFER_OFFSET = PASS_CONSTANT_BUFFER_OFFSET + PASS_CONSTANT_BUFFER_SIZE;
     constexpr uint32 ENTITY_CONSTANT_BUFFER_OFFSET = MATERIAL_CONSTANT_BUFFER_OFFSET + MATERIAL_CONSTANT_BUFFER_SIZE;
+    constexpr uint32 POST_PROCESS_CONSTANT_BUFFER_OFFSET = ENTITY_CONSTANT_BUFFER_OFFSET + ENTITY_CONSTANT_BUFFER_SIZE;
 
     constexpr uint32 SHADOW_MAP_SIZE = 1024;
 
@@ -86,28 +89,26 @@ namespace BZ {
     static struct RendererData {
         CommandBuffer *commandBuffer;
 
+        PostProcessor postProcessor;
+
         Ref<Buffer> constantBuffer;
         BufferPtr sceneConstantBufferPtr;
         BufferPtr passConstantBufferPtr;
         BufferPtr materialConstantBufferPtr;
         BufferPtr entityConstantBufferPtr;
+        BufferPtr postProcessConstantBufferPtr;
 
         Ref<DescriptorSetLayout> globalDescriptorSetLayout;
         Ref<DescriptorSetLayout> sceneDescriptorSetLayout;
         Ref<DescriptorSetLayout> passDescriptorSetLayout;
-        Ref<DescriptorSetLayout> passDescriptorSetLayoutForDepthPass;
+        Ref<DescriptorSetLayout> passDescriptorSetLayoutForShadowPass;
         Ref<DescriptorSetLayout> materialDescriptorSetLayout;
         Ref<DescriptorSetLayout> entityDescriptorSetLayout;
-        Ref<DescriptorSetLayout> blurDescriptorSetLayout; //TODO: should be the same layout as below
-        Ref<DescriptorSetLayout> toneMapDescriptorSetLayout;
 
         DescriptorSet *globalDescriptorSet;
         DescriptorSet *passDescriptorSet;
-        DescriptorSet *passDescriptorSetForDepthPass;
+        DescriptorSet *passDescriptorSetForShadowPass;
         DescriptorSet *entityDescriptorSet;
-        DescriptorSet *blur1DescriptorSet;
-        DescriptorSet *blur2DescriptorSet;
-        DescriptorSet *toneMapDescriptorSet;
 
         Ref<Sampler> defaultSampler;
         Ref<Sampler> brdfLookupSampler;
@@ -115,28 +116,19 @@ namespace BZ {
 
         Ref<PipelineState> colorPassPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
-        Ref<PipelineState> depthPassPipelineState;
-        Ref<PipelineState> blurPipelineState;
-        Ref<PipelineState> toneMapPipelineState;
+        Ref<PipelineState> shadowPassPipelineState;
 
         Ref<TextureView> brdfLookupTexture;
         Ref<TextureView> dummyTextureArrayView;
 
         std::unordered_map<Material, uint32> materialOffsetMap;
 
-        Ref<RenderPass> depthRenderPass;
-
+        Ref<RenderPass> shadowRenderPass;
         Ref<RenderPass> colorRenderPass;
-        Ref<RenderPass> blurRenderPass;
         
-        Ref<TextureView> colorTexView;
-        Ref<TextureView> colorThresholdTexView;
-        Ref<TextureView> blurTexView;
-        Ref<TextureView> depthTexView;
-
         Ref<Framebuffer> colorFramebuffer;
-        Ref<Framebuffer> blur1Framebuffer;
-        Ref<Framebuffer> blur2Framebuffer;
+        Ref<TextureView> colorTexView;
+        Ref<TextureView> depthTexView;
 
         const Scene *sceneToRender;
 
@@ -159,13 +151,16 @@ namespace BZ {
         rendererData.sceneToRender = nullptr;
 
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            SCENE_CONSTANT_BUFFER_SIZE + PASS_CONSTANT_BUFFER_SIZE + MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE,
+            SCENE_CONSTANT_BUFFER_SIZE + PASS_CONSTANT_BUFFER_SIZE + 
+            MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE +
+            POST_PROCESS_CONSTANT_BUFFER_SIZE,
             MemoryType::CpuToGpu);
 
         rendererData.sceneConstantBufferPtr = rendererData.constantBuffer->map(0);
         rendererData.passConstantBufferPtr = rendererData.sceneConstantBufferPtr + PASS_CONSTANT_BUFFER_OFFSET;
         rendererData.materialConstantBufferPtr = rendererData.sceneConstantBufferPtr + MATERIAL_CONSTANT_BUFFER_OFFSET;
         rendererData.entityConstantBufferPtr = rendererData.sceneConstantBufferPtr + ENTITY_CONSTANT_BUFFER_OFFSET;
+        rendererData.postProcessConstantBufferPtr = rendererData.sceneConstantBufferPtr + POST_PROCESS_CONSTANT_BUFFER_OFFSET;
 
         rendererData.globalDescriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
@@ -200,25 +195,26 @@ namespace BZ {
 
         initShadowPassData();
         initColorPassData();
-        initPostProcessPassData();
         initSkyBoxData();
+
+        rendererData.postProcessor.init(rendererData.colorTexView, rendererData.constantBuffer, POST_PROCESS_CONSTANT_BUFFER_OFFSET);
     }
 
     void Renderer::initShadowPassData() {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.passDescriptorSetLayoutForDepthPass =
+        rendererData.passDescriptorSetLayoutForShadowPass =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, SHADOW_MAPPING_CASCADE_COUNT } });
 
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexDataLayout;
 
-        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/DepthPassVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                    { "Bhazel/shaders/bin/DepthPassGeo.spv", VK_SHADER_STAGE_GEOMETRY_BIT } });
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/ShadowPassVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/ShadowPassGeo.spv", VK_SHADER_STAGE_GEOMETRY_BIT } });
 
         pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
-                                                   rendererData.passDescriptorSetLayoutForDepthPass, rendererData.materialDescriptorSetLayout,
+                                                   rendererData.passDescriptorSetLayoutForShadowPass, rendererData.materialDescriptorSetLayout,
                                                    rendererData.entityDescriptorSetLayout };
         pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
@@ -264,13 +260,13 @@ namespace BZ {
         dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependency.dependencyFlags = 0;
 
-        rendererData.depthRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc }, { dependency });
-        pipelineStateData.renderPass = rendererData.depthRenderPass;
+        rendererData.shadowRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc }, { dependency });
+        pipelineStateData.renderPass = rendererData.shadowRenderPass;
         pipelineStateData.subPassIndex = 0;
 
-        rendererData.depthPassPipelineState = PipelineState::create(pipelineStateData);
+        rendererData.shadowPassPipelineState = PipelineState::create(pipelineStateData);
 
-        rendererData.passDescriptorSetForDepthPass = &DescriptorSet::get(rendererData.passDescriptorSetLayoutForDepthPass);
+        rendererData.passDescriptorSetForShadowPass = &DescriptorSet::get(rendererData.passDescriptorSetLayoutForShadowPass);
         Ref<Buffer> constantBuffers[SHADOW_MAPPING_CASCADE_COUNT];
         uint32 offsets[SHADOW_MAPPING_CASCADE_COUNT];
         uint32 sizes[SHADOW_MAPPING_CASCADE_COUNT];
@@ -279,7 +275,7 @@ namespace BZ {
             offsets[i] = PASS_CONSTANT_BUFFER_OFFSET + sizeof(PassConstantBufferData) * i;
             sizes[i] = sizeof(PassConstantBufferData);
         }
-        rendererData.passDescriptorSetForDepthPass->setConstantBuffers(constantBuffers, SHADOW_MAPPING_CASCADE_COUNT, 0, 0, offsets, sizes);
+        rendererData.passDescriptorSetForShadowPass->setConstantBuffers(constantBuffers, SHADOW_MAPPING_CASCADE_COUNT, 0, 0, offsets, sizes);
 
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
@@ -320,7 +316,7 @@ namespace BZ {
 
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
-        blendingState.attachmentBlendingStates = { blendingStateAttachment, blendingStateAttachment };
+        blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
         //Create the RenderPass
@@ -348,21 +344,32 @@ namespace BZ {
         depthStencilAttachmentDesc.clearValue.depthStencil.stencil = 0;
         
         SubPassDescription subPassDesc;
-        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
-        subPassDesc.depthStencilAttachmentsRef = { 2, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+        subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
         
-        //Wait on DepthPass.
-        SubPassDependency dependency;
-        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubPassIndex = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        dependency.dependencyFlags = 0;
+        //Wait on ShadowPass.
+        SubPassDependency dependencyBefore;
+        dependencyBefore.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+        dependencyBefore.dstSubPassIndex = 0;
+        dependencyBefore.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependencyBefore.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependencyBefore.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependencyBefore.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependencyBefore.dependencyFlags = 0;
+
+        //Make PostProcessor wait.
+        //SubPassDependency dependencyAfter;
+        //dependencyAfter.srcSubPassIndex = 0;
+        //dependencyAfter.dstSubPassIndex = VK_SUBPASS_EXTERNAL;
+        //dependencyAfter.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        //dependencyAfter.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        //dependencyAfter.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        //dependencyAfter.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        //dependencyAfter.dependencyFlags = 0;
         
-        //The second color attachement (similar to the first) is to threshold color values (for Bloom) on a single pass.
-        rendererData.colorRenderPass = RenderPass::create({ colorAttachmentDesc, colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc }, { dependency });
+        rendererData.colorRenderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, 
+                                                          { subPassDesc },
+                                                          { dependencyBefore });
 
         pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
@@ -370,17 +377,14 @@ namespace BZ {
         rendererData.colorPassPipelineState = PipelineState::create(pipelineStateData);
 
 
-        auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, colorAttachmentDesc.format);
+        auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, colorAttachmentDesc.format, true);
         rendererData.colorTexView = TextureView::create(colorTexture);
 
-        auto colorThresholdTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, colorAttachmentDesc.format);
-        rendererData.colorThresholdTexView = TextureView::create(colorThresholdTexture);
-
-        auto depthTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, depthStencilAttachmentDesc.format);
+        auto depthTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, depthStencilAttachmentDesc.format);
         rendererData.depthTexView = TextureView::create(depthTexture);
 
         rendererData.colorFramebuffer = Framebuffer::create(rendererData.colorRenderPass, 
-            { rendererData.colorTexView, rendererData.colorThresholdTexView, rendererData.depthTexView },
+            { rendererData.colorTexView, rendererData.depthTexView },
             glm::ivec3(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1));
 
 
@@ -397,120 +401,7 @@ namespace BZ {
         rendererData.passDescriptorSet = &DescriptorSet::get(rendererData.passDescriptorSetLayout);
         rendererData.passDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, PASS_CONSTANT_BUFFER_OFFSET, sizeof(PassConstantBufferData));
 
-        rendererData.dummyTextureArrayView = TextureView::create(brdfLookupTexRef, 0, 1);
-    }
-
-    void Renderer::initPostProcessPassData() {
-        BZ_PROFILE_FUNCTION();
-
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-
-        //Gaussian Blur.
-        PipelineStateData blurPipelineStateData;
-        blurPipelineStateData.dataLayout = {};
-
-        blurPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                        { "Bhazel/shaders/bin/GaussianBlurFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-
-        blurPipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-        rendererData.blurDescriptorSetLayout =
-            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
-
-        blurPipelineStateData.descriptorSetLayouts = { rendererData.blurDescriptorSetLayout };
-        blurPipelineStateData.pushConstants = { {VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32) } };
-
-        blurPipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        blurPipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
-
-        BlendingState blendingState;
-        BlendingStateAttachment blendingStateAttachment;
-        blendingState.attachmentBlendingStates = { blendingStateAttachment };
-        blurPipelineStateData.blendingState = blendingState;
-
-        //Create the RenderPass
-        AttachmentDescription colorAttachmentDesc;
-        colorAttachmentDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
-        colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-        SubPassDescription subPassDesc;
-        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
-
-        //Wait on color pass.
-        SubPassDependency dependency;
-        dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
-        dependency.dstSubPassIndex = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        dependency.dependencyFlags = 0;
-
-        rendererData.blurRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
-
-        blurPipelineStateData.renderPass = rendererData.blurRenderPass;
-        blurPipelineStateData.subPassIndex = 0;
-
-        rendererData.blurPipelineState = PipelineState::create(blurPipelineStateData);
-
-        rendererData.blurTexView = TextureView::create(Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, colorAttachmentDesc.format));
-
-        rendererData.blur1DescriptorSet = &DescriptorSet::get(rendererData.blurDescriptorSetLayout);
-        rendererData.blur1DescriptorSet->setCombinedTextureSampler(rendererData.colorThresholdTexView, rendererData.defaultSampler, 0);
-
-        rendererData.blur2DescriptorSet = &DescriptorSet::get(rendererData.blurDescriptorSetLayout);
-        rendererData.blur2DescriptorSet->setCombinedTextureSampler(rendererData.blurTexView, rendererData.defaultSampler, 0);
-
-        rendererData.blur1Framebuffer = Framebuffer::create(rendererData.blurRenderPass,
-            { rendererData.blurTexView },
-            { WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1 });
-
-        rendererData.blur2Framebuffer = Framebuffer::create(rendererData.blurRenderPass,
-            { rendererData.colorThresholdTexView },
-            { WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1 });
-
-        //Tone mapping.
-        PipelineStateData toneMapPipelineStateData;
-        toneMapPipelineStateData.dataLayout = {};
-
-        toneMapPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                           { "Bhazel/shaders/bin/ToneMapFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-
-        toneMapPipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-        rendererData.toneMapDescriptorSetLayout =
-            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
-                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
-                                          { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
-
-        toneMapPipelineStateData.descriptorSetLayouts = { rendererData.toneMapDescriptorSetLayout };
-
-        toneMapPipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        toneMapPipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
-
-        blendingState.attachmentBlendingStates = { blendingStateAttachment };
-        toneMapPipelineStateData.blendingState = blendingState;
-
-        toneMapPipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
-        toneMapPipelineStateData.subPassIndex = 0;
-
-        rendererData.toneMapPipelineState = PipelineState::create(toneMapPipelineStateData);
-
-        rendererData.toneMapDescriptorSet = &DescriptorSet::get(rendererData.toneMapDescriptorSetLayout);
-        rendererData.toneMapDescriptorSet->setCombinedTextureSampler(rendererData.colorTexView, rendererData.defaultSampler, 0);
-        rendererData.toneMapDescriptorSet->setCombinedTextureSampler(rendererData.colorThresholdTexView, rendererData.defaultSampler, 1);
-
-        //To get the Camera exposure on the Color pass buffer section.
-        uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
-        rendererData.toneMapDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 2, PASS_CONSTANT_BUFFER_OFFSET + colorPassOffset, PASS_CONSTANT_BUFFER_SIZE);
+        rendererData.dummyTextureArrayView = TextureView::createLayered(brdfLookupTexRef, 0, 1, 0, 1);
     }
 
     void Renderer::initSkyBoxData() {
@@ -536,7 +427,7 @@ namespace BZ {
 
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
-        blendingState.attachmentBlendingStates = { blendingStateAttachment, blendingStateAttachment };
+        blendingState.attachmentBlendingStates = { blendingStateAttachment };
         pipelineStateData.blendingState = blendingState;
 
         pipelineStateData.renderPass = rendererData.colorRenderPass;
@@ -553,17 +444,13 @@ namespace BZ {
         rendererData.globalDescriptorSetLayout.reset();
         rendererData.sceneDescriptorSetLayout.reset();
         rendererData.passDescriptorSetLayout.reset();
-        rendererData.passDescriptorSetLayoutForDepthPass.reset();
+        rendererData.passDescriptorSetLayoutForShadowPass.reset();
         rendererData.materialDescriptorSetLayout.reset();
         rendererData.entityDescriptorSetLayout.reset();
-        rendererData.blurDescriptorSetLayout.reset();
-        rendererData.toneMapDescriptorSetLayout.reset();
 
         rendererData.colorPassPipelineState.reset();
         rendererData.skyBoxPipelineState.reset();
-        rendererData.depthPassPipelineState.reset();
-        rendererData.blurPipelineState.reset();
-        rendererData.toneMapPipelineState.reset();
+        rendererData.shadowPassPipelineState.reset();
 
         rendererData.defaultSampler.reset();
         rendererData.brdfLookupSampler.reset();
@@ -574,19 +461,16 @@ namespace BZ {
         rendererData.brdfLookupTexture.reset();
         rendererData.dummyTextureArrayView.reset();
 
-        rendererData.depthRenderPass.reset();
+        rendererData.shadowRenderPass.reset();
 
         rendererData.colorRenderPass.reset();
-        rendererData.blurRenderPass.reset();
         
         rendererData.colorTexView.reset();
-        rendererData.colorThresholdTexView.reset();
-        rendererData.blurTexView.reset();
         rendererData.depthTexView.reset();
 
         rendererData.colorFramebuffer.reset();
-        rendererData.blur1Framebuffer.reset();
-        rendererData.blur2Framebuffer.reset();
+
+        rendererData.postProcessor.destroy();
     }
 
     void Renderer::drawScene(const Scene &scene) {
@@ -598,7 +482,7 @@ namespace BZ {
     void Renderer::shadowPass(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBuffer->bindPipelineState(rendererData.depthPassPipelineState);
+        rendererData.commandBuffer->bindPipelineState(rendererData.shadowPassPipelineState);
         rendererData.commandBuffer->setDepthBias(rendererData.depthBiasData.x, rendererData.depthBiasData.y, rendererData.depthBiasData.z);
 
         uint32 lightIdx = 0;
@@ -608,10 +492,10 @@ namespace BZ {
             for (uint32 i = 0; i < SHADOW_MAPPING_CASCADE_COUNT; ++i) {
                 lightOffsetArr[i] = lightOffset;
             }
-            rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSetForDepthPass,
-                rendererData.depthPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
+            rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSetForShadowPass,
+                rendererData.shadowPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
 
-            rendererData.commandBuffer->beginRenderPass(rendererData.depthRenderPass, dirLight.shadowMapFramebuffer);
+            rendererData.commandBuffer->beginRenderPass(rendererData.shadowRenderPass, dirLight.shadowMapFramebuffer);
             drawEntities(scene, true);
             rendererData.commandBuffer->endRenderPass();
 
@@ -638,27 +522,6 @@ namespace BZ {
         rendererData.commandBuffer->endRenderPass();
     }
 
-    void Renderer::postProcessPass(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer) {
-        BZ_PROFILE_FUNCTION();
-
-        rendererData.commandBuffer->bindPipelineState(rendererData.blurPipelineState);
-
-        for(uint32 blurPass = 0; blurPass < 10; ++blurPass) {
-            uint32 horizontal = blurPass % 2;
-            rendererData.commandBuffer->beginRenderPass(rendererData.blurRenderPass, horizontal ? rendererData.blur2Framebuffer : rendererData.blur1Framebuffer);
-            rendererData.commandBuffer->bindDescriptorSet(horizontal ? *rendererData.blur2DescriptorSet : *rendererData.blur1DescriptorSet, rendererData.blurPipelineState, 0, nullptr, 0);
-            rendererData.commandBuffer->setPushConstants(rendererData.blurPipelineState, VK_SHADER_STAGE_FRAGMENT_BIT, &horizontal, sizeof(uint32), 0);
-            rendererData.commandBuffer->draw(3, 1, 0, 0);
-            rendererData.commandBuffer->endRenderPass();
-        }
-
-        rendererData.commandBuffer->beginRenderPass(finalRenderPass, finalFramebuffer);
-        rendererData.commandBuffer->bindPipelineState(rendererData.toneMapPipelineState);
-        rendererData.commandBuffer->bindDescriptorSet(*rendererData.toneMapDescriptorSet, rendererData.toneMapPipelineState, 0, nullptr, 0);
-        rendererData.commandBuffer->draw(3, 1, 0, 0);
-        rendererData.commandBuffer->endRenderPass();
-    }
-
     void Renderer::drawEntities(const Scene &scene, bool shadowPass) {
         BZ_PROFILE_FUNCTION();
 
@@ -667,7 +530,7 @@ namespace BZ {
             if (!shadowPass || entity.castShadow) {
                 uint32 entityOffset = entityIndex * sizeof(EntityConstantBufferData);
                 rendererData.commandBuffer->bindDescriptorSet(*rendererData.entityDescriptorSet,
-                    shadowPass ? rendererData.depthPassPipelineState : rendererData.colorPassPipelineState,
+                    shadowPass ? rendererData.shadowPassPipelineState : rendererData.colorPassPipelineState,
                     RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
 
                 drawMesh(entity.mesh, entity.overrideMaterial, shadowPass);
@@ -690,7 +553,7 @@ namespace BZ {
 
                 uint32 materialOffset = rendererData.materialOffsetMap[materialToUse];
                 rendererData.commandBuffer->bindDescriptorSet(materialToUse.getDescriptorSet(),
-                    shadowPass ? rendererData.depthPassPipelineState : rendererData.colorPassPipelineState,
+                    shadowPass ? rendererData.shadowPassPipelineState : rendererData.colorPassPipelineState,
                     RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
             }
 
@@ -758,6 +621,7 @@ namespace BZ {
         fillPasses(scene, lightMatrices, lightProjectionMatrices);
         fillMaterials(scene);
         fillEntities(scene);
+        rendererData.postProcessor.fillData(rendererData.postProcessConstantBufferPtr, scene);
     }
 
     void Renderer::fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices, const float cascadeSplits []) {
@@ -811,10 +675,9 @@ namespace BZ {
         passConstantBufferData.projectionMatrix = scene.getCamera().getProjectionMatrix();
         passConstantBufferData.viewProjectionMatrix = passConstantBufferData.projectionMatrix * passConstantBufferData.viewMatrix;
         const glm::vec3 &cameraPosition = scene.getCamera().getTransform().getTranslation();
-        passConstantBufferData.cameraPositionAndExposure.x = cameraPosition.x;
-        passConstantBufferData.cameraPositionAndExposure.y = cameraPosition.y;
-        passConstantBufferData.cameraPositionAndExposure.z = cameraPosition.z;
-        passConstantBufferData.cameraPositionAndExposure.w = scene.getCamera().getExposure();
+        passConstantBufferData.cameraPosition.x = cameraPosition.x;
+        passConstantBufferData.cameraPosition.y = cameraPosition.y;
+        passConstantBufferData.cameraPosition.z = cameraPosition.z;
 
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
         memcpy(rendererData.passConstantBufferPtr + colorPassOffset, &passConstantBufferData, sizeof(PassConstantBufferData));
@@ -889,7 +752,7 @@ namespace BZ {
         BZ_ASSERT_CORE(entityIndex <= MAX_ENTITIES_PER_SCENE, "Reached the max number of Entities!");
     }
 
-    void Renderer::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer) {
+    void Renderer::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
         BZ_PROFILE_FUNCTION();
 
         if(rendererData.sceneToRender) {
@@ -905,7 +768,7 @@ namespace BZ {
 
             shadowPass(*rendererData.sceneToRender);
             colorPass(*rendererData.sceneToRender);
-            postProcessPass(finalRenderPass, finalFramebuffer);
+            rendererData.postProcessor.render(*rendererData.commandBuffer, swapchainRenderPass, swapchainFramebuffer);
 
             rendererData.commandBuffer->endAndSubmit();
 
@@ -969,9 +832,9 @@ namespace BZ {
     }
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
-        auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, SHADOW_MAPPING_CASCADE_COUNT, rendererData.depthRenderPass->getDepthStencilAttachmentDescription()->format);
+        auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, SHADOW_MAPPING_CASCADE_COUNT, 1, rendererData.shadowRenderPass->getDepthStencilAttachmentDescription()->format);
         glm::ivec3 dimsAndLayers(shadowMapRef->getDimensions().x, shadowMapRef->getDimensions().y, shadowMapRef->getLayers());
-        return Framebuffer::create(rendererData.depthRenderPass, { TextureView::create(shadowMapRef, 0, shadowMapRef->getLayers()) }, dimsAndLayers);
+        return Framebuffer::create(rendererData.shadowRenderPass, { TextureView::createLayered(shadowMapRef, 0, shadowMapRef->getLayers(), 0, 1) }, dimsAndLayers);
     }
 
     const Ref<Sampler>& Renderer::getDefaultSampler() {

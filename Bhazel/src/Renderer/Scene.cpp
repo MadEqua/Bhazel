@@ -74,10 +74,10 @@ namespace BZ {
         skyBox.mesh = Mesh::createUnitCubeInsides(Material(albedoTexRef));
 
         auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, MipmapData::Options::Generate);
-        skyBox.irradianceMapView = TextureView::create(irradianceMapTexRef);
+        skyBox.irradianceMapView = TextureView::createCube(irradianceMapTexRef);
 
         auto radianceMapTexRef = TextureCube::create(radianceMapBasePath, radianceMapFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, { MipmapData::Options::Load, radianceMipmapCount });
-        skyBox.radianceMapView = TextureView::create(radianceMapTexRef);
+        skyBox.radianceMapView = TextureView::createCube(radianceMapTexRef);
 
         descriptorSet->setCombinedTextureSampler(skyBox.irradianceMapView, Renderer::getDefaultSampler(), 1);
         descriptorSet->setCombinedTextureSampler(skyBox.radianceMapView, Renderer::getDefaultSampler(), 2);

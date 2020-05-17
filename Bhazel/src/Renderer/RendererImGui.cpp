@@ -283,7 +283,7 @@ namespace BZ {
         rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler, 1);
     }
 
-    void RendererImGui::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer) {
+    void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
         ImDrawData *imDrawData = ImGui::GetDrawData();
 
         int vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
@@ -307,7 +307,7 @@ namespace BZ {
             idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
         }
 
-        commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
+        commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
 
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
