@@ -779,6 +779,8 @@ namespace BZ {
     void Renderer::onImGuiRender(const FrameStats &frameStats) {
         BZ_PROFILE_FUNCTION();
 
+        rendererData.postProcessor.onImGuiRender(frameStats);
+
         if (ImGui::Begin("Renderer")) {
             ImGui::Text("Depth Bias:");
             ImGui::DragFloat("ConstantFactor", &rendererData.depthBiasData.x, 0.05f, 0.0f, 10.0f);

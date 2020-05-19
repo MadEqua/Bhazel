@@ -1,14 +1,21 @@
 #version 450 core
 #pragma shader_stage(fragment)
 
+#define BLOOM_TEXTURE_MIPS 5
+
 layout(location = 0) in vec2 inTexCoord;
 
-layout(set = 0, binding = 0) uniform sampler2D uSrcTexSampler;
-layout(set = 0, binding = 1) uniform sampler2D uPreviousMipTexSampler;
+layout (set = 0, binding = 1, std140) uniform PostProcessConstants {
+    vec4 cameraExposureAndBloomIntensity;
+    float bloomBlurWeights[BLOOM_TEXTURE_MIPS];
+} uPostProcessConstants;
+
+layout(set = 1, binding = 0) uniform sampler2D uSrcTexSampler;
+layout(set = 1, binding = 1) uniform sampler2D uPreviousMipTexSampler;
 
 layout(push_constant) uniform Data {
     uint direction;
-    uint shouldSum;
+    uint currentMip;
 } pData;
 
 layout(location = 0) out vec4 outColor;
@@ -35,8 +42,13 @@ void main() {
             result += texture(uSrcTexSampler, inTexCoord - vec2(0.0, texelOffset.y * i)).rgb * weight[i];
         }
 
-        if(pData.shouldSum == 1)
+        //Control the weight of the current blur mip.
+        result *= uPostProcessConstants.bloomBlurWeights[pData.currentMip];
+
+        //All mips except the last one should sum with the previous.
+        if(pData.currentMip < BLOOM_TEXTURE_MIPS - 1) {
             result += texture(uPreviousMipTexSampler, inTexCoord).rgb;
+        }
     }
 
     outColor = vec4(result, 1.0);

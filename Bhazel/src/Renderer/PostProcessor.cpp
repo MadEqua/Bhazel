@@ -17,6 +17,8 @@
 #include "Renderer/Scene.h"
 #include "Renderer/Camera.h"
 
+#include <imgui.h>
+
 
 namespace BZ {
 
@@ -47,10 +49,14 @@ namespace BZ {
 
             w /= 2;
             h /= 2;
+
+            blurWeights[i] = 1.0f;
         }
 
+        intensity = 0.05f;
+
         initBlurPass(descriptorSetLayout, sampler);
-        initFinalPass(colorTexView, sampler);
+        initFinalPass(descriptorSetLayout, colorTexView, sampler);
     }
 
     void Bloom::destroy() {
@@ -61,7 +67,7 @@ namespace BZ {
             tex1MipViews[i].reset();
             tex2MipViews[i].reset();
             tex1Framebuffers[i].reset();
-            tex1Framebuffers[i].reset();
+            tex2Framebuffers[i].reset();
         }
 
         blurPipelineState.reset();
@@ -76,8 +82,22 @@ namespace BZ {
 
     void Bloom::render(CommandBuffer &commandBuffer, const DescriptorSet &descriptorSet, const Ref<TextureView> &colorTexView) {
         downsamplePass(commandBuffer, colorTexView);
-        blurPass(commandBuffer);
-        finalPass(commandBuffer);
+        blurPass(commandBuffer, descriptorSet);
+        finalPass(commandBuffer, descriptorSet);
+    }
+
+    void Bloom::onImGuiRender(const FrameStats &frameStats) {
+        ImGui::Text("Bloom:");
+        ImGui::DragFloat("Intensity", &intensity, 0.001f, 0.0f, 0.5f);
+
+        for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
+            ImGui::PushID(i);
+            const char *label = "Blur #%d Weight";
+            char buf[32];
+            sprintf_s(buf, label, i);
+            ImGui::DragFloat(buf, &blurWeights[i], 0.005f, 0.0f, 2.0f);
+            ImGui::PopID();
+        }
     }
 
     void Bloom::downsamplePass(CommandBuffer &commandBuffer, const Ref<TextureView> &colorTexView) {
@@ -193,7 +213,7 @@ namespace BZ {
         blurPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                         { "Bhazel/shaders/bin/GaussianBlurFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         blurPipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        blurPipelineStateData.descriptorSetLayouts = { blurDescriptorSetLayout };
+        blurPipelineStateData.descriptorSetLayouts = { descriptorSetLayout, blurDescriptorSetLayout };
         blurPipelineStateData.pushConstants = { { VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32) * 2 } };
         blurPipelineStateData.blendingState = blendingState;
         blurPipelineStateData.viewports = { {} };
@@ -220,17 +240,19 @@ namespace BZ {
         }
     }
 
-    void Bloom::blurPass(CommandBuffer &commandBuffer) {
+    void Bloom::blurPass(CommandBuffer &commandBuffer, const DescriptorSet &descriptorSet) {
         commandBuffer.bindPipelineState(blurPipelineState);
+
+        commandBuffer.bindDescriptorSet(descriptorSet, blurPipelineState, 0, nullptr, 0);
 
         //One horizontal pass and another vertical for each mip.
         //The vertical (second) pass will simultaneously do a sum of the current mip with the previous one, gathering all data on the top mip.
         for(uint32 blurPass = 0; blurPass < 2; ++blurPass) {
 
             for(int mip = BLOOM_TEXTURE_MIPS - 1; mip >= 0; --mip) {
-                uint32 push[] = { blurPass, mip < BLOOM_TEXTURE_MIPS - 1 };
+                uint32 push[] = { blurPass, static_cast<uint32>(mip) };
 
-                commandBuffer.bindDescriptorSet(blurPass ? *blurDescriptorSets2[mip] : *blurDescriptorSets1[mip], blurPipelineState, 0, nullptr, 0);
+                commandBuffer.bindDescriptorSet(blurPass ? *blurDescriptorSets2[mip] : *blurDescriptorSets1[mip], blurPipelineState, 1, nullptr, 0);
                 commandBuffer.beginRenderPass(blurRenderPass, blurPass ? tex1Framebuffers[mip] : tex2Framebuffers[mip]);
                 commandBuffer.setViewports(0, &viewports[mip], 1);
                 commandBuffer.setPushConstants(blurPipelineState, VK_SHADER_STAGE_FRAGMENT_BIT, &push, sizeof(push), 0);
@@ -253,7 +275,7 @@ namespace BZ {
         }
     }
 
-    void Bloom::initFinalPass(const Ref<TextureView> &colorTexView, const Ref<Sampler> &sampler) {
+    void Bloom::initFinalPass(const Ref<DescriptorSetLayout> &descriptorSetLayout, const Ref<TextureView> &colorTexView, const Ref<Sampler> &sampler) {
 
         BlendingStateAttachment blendingStateAttachment;
         blendingStateAttachment.enableBlending = true;
@@ -305,7 +327,7 @@ namespace BZ {
         finalPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                          { "Bhazel/shaders/bin/BloomFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         finalPipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        finalPipelineStateData.descriptorSetLayouts = { finalDescriptorSetLayout };
+        finalPipelineStateData.descriptorSetLayouts = { descriptorSetLayout, finalDescriptorSetLayout };
         finalPipelineStateData.blendingState = blendingState;
         finalPipelineStateData.viewports = { {0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h) } };
         finalPipelineStateData.scissorRects = { { 0, 0, w, h } };
@@ -319,10 +341,11 @@ namespace BZ {
         finalDescriptorSet->setCombinedTextureSampler(tex1MipViews[0], sampler, 0);
     }
 
-    void Bloom::finalPass(CommandBuffer &commandBuffer) {
+    void Bloom::finalPass(CommandBuffer &commandBuffer, const DescriptorSet &descriptorSet) {
         commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
         commandBuffer.bindPipelineState(finalPipelineState);
-        commandBuffer.bindDescriptorSet(*finalDescriptorSet, finalPipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(descriptorSet, finalPipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(*finalDescriptorSet, finalPipelineState, 1, nullptr, 0);
         commandBuffer.draw(3, 1, 0, 0);
         commandBuffer.endRenderPass();
     }
@@ -369,12 +392,18 @@ namespace BZ {
         commandBuffer.endRenderPass();
     }
 
+    void ToneMap::onImGuiRender(const FrameStats &frameStats) {
+        ImGui::Text("Tone Mapping:");
+        ImGui::Text("Check camera exposure.");
+    }
+
 
     /*-------------------------------------------------------------------------------------------*/
     void PostProcessor::init(const Ref<TextureView> &colorTexView, const Ref<Buffer> &constantBuffer, uint32 bufferOffset) {
         this->colorTexView = colorTexView;
 
         Sampler::Builder samplerBuilder;
+        samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
         sampler = samplerBuilder.build();
 
         descriptorSetLayout =
@@ -400,13 +429,31 @@ namespace BZ {
     }
 
     void PostProcessor::fillData(const BufferPtr &ptr, const Scene &scene) {
-        PostProcessConstantBufferData data;
-        data.cameraExposure.x = scene.getCamera().getExposure();
+        PostProcessConstantBufferData data = {};
+        data.cameraExposureAndBloomIntensity.x = scene.getCamera().getExposure();
+        data.cameraExposureAndBloomIntensity.y = bloom.getIntensity();
+
+        for(uint32 i = 0; i < Bloom::BLOOM_TEXTURE_MIPS; ++i) {
+            data.bloomBlurWeights[i].x = bloom.getBlurWeights()[i];
+        }
+ 
         memcpy(ptr, &data, sizeof(PostProcessConstantBufferData));
     }
 
     void PostProcessor::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
+        //TODO: see ToneMap::render() comment.
+        //commandBuffer.bindDescriptorSet(*descriptorSet, pipelineState, 0, nullptr, 0);
+
         bloom.render(commandBuffer, *descriptorSet, colorTexView);
         toneMap.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer, *descriptorSet);
+    }
+
+    void PostProcessor::onImGuiRender(const FrameStats &frameStats) {
+        if(ImGui::Begin("Post-Processing")) {
+            bloom.onImGuiRender(frameStats);
+            ImGui::Separator();
+            toneMap.onImGuiRender(frameStats);
+        }
+        ImGui::End();
     }
 }
