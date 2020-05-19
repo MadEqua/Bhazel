@@ -158,7 +158,8 @@ namespace BZ {
         ImGuiIO &io = ImGui::GetIO();
         io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
         io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
-        io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create multi-viewports on the Platform side (optional)
+        //io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create multi-viewports on the Platform side (optional)
+        io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
         io.BackendPlatformName = "BhazelEngine";
 
         // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
@@ -254,8 +255,8 @@ namespace BZ {
         blendingStateAttachment.srcColorBlendingFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         blendingStateAttachment.dstColorBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         blendingStateAttachment.colorBlendingOperation = VK_BLEND_OP_ADD;
-        blendingStateAttachment.srcAlphaBlendingFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-        blendingStateAttachment.dstAlphaBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blendingStateAttachment.srcAlphaBlendingFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        blendingStateAttachment.dstAlphaBlendingFactor = VK_BLEND_FACTOR_ZERO;
         blendingStateAttachment.alphaBlendingOperation = VK_BLEND_OP_ADD;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
@@ -286,12 +287,9 @@ namespace BZ {
     void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
         ImDrawData *imDrawData = ImGui::GetDrawData();
 
-        int vertexBufferSize = imDrawData->TotalVtxCount * sizeof(ImDrawVert);
-        int indexBufferSize = imDrawData->TotalIdxCount * sizeof(ImDrawIdx);
-
-        if(vertexBufferSize == 0 || indexBufferSize == 0 || imDrawData->CmdListsCount <= 0) {
-            BZ_LOG_CORE_INFO("Nothing to draw from ImGui Vertices size: {}. Indices size: {}. Command List count: {}. Bailing Out.",
-                vertexBufferSize, indexBufferSize, imDrawData->CmdListsCount);
+        if(imDrawData->TotalVtxCount == 0 || imDrawData->TotalIdxCount == 0 || imDrawData->CmdListsCount <= 0) {
+            BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Vertices count: {}. Indices count: {}. Command List count: {}. Bailing Out.",
+                imDrawData->TotalVtxCount, imDrawData->TotalIdxCount, imDrawData->CmdListsCount);
             return;
         }
 
@@ -307,8 +305,6 @@ namespace BZ {
             idxDst += drawList->IdxBuffer.Size * sizeof(ImDrawIdx);
         }
 
-        commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
-
         ImGuiIO &io = ImGui::GetIO();
         glm::mat4 projMatrix(1.0f);
         projMatrix[0][0] = 2.0f / io.DisplaySize.x;
@@ -318,30 +314,35 @@ namespace BZ {
 
         memcpy(rendererData.constantBufferPtr, &projMatrix[0], sizeof(glm::mat4));
 
-        commandBuffer.bindPipelineState(rendererData.pipelineState);
-        commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
-
-        int vertexOffset = 0;
-        int indexOffset = 0;
-
         commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
         commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
+        commandBuffer.bindPipelineState(rendererData.pipelineState);
+        commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+        commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
 
+        int globalIndexOffset = 0;
+        int globalVertexOffset = 0;
         for(int i = 0; i < imDrawData->CmdListsCount; ++i) {
             const ImDrawList *cmdList = imDrawData->CmdLists[i];
             for(int j = 0; j < cmdList->CmdBuffer.Size; ++j) {
                 const ImDrawCmd *pcmd = &cmdList->CmdBuffer[j];
-                VkRect2D scissorRect;
-                scissorRect.offset.x = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);
-                scissorRect.offset.y = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
-                scissorRect.extent.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
-                scissorRect.extent.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
-                commandBuffer.setScissorRects(0, &scissorRect, 1);
-                commandBuffer.drawIndexed(pcmd->ElemCount, 1, indexOffset, vertexOffset, 0);
 
-                indexOffset += pcmd->ElemCount;
+                // User callback, registered via ImDrawList::AddCallback()
+                if(pcmd->UserCallback != NULL) {
+                    pcmd->UserCallback(cmdList, pcmd);
+                }
+                else {
+                    VkRect2D scissorRect;
+                    scissorRect.offset.x = std::max(static_cast<uint32>(pcmd->ClipRect.x), 0u);
+                    scissorRect.offset.y = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
+                    scissorRect.extent.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
+                    scissorRect.extent.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
+                    commandBuffer.setScissorRects(0, &scissorRect, 1);
+                    commandBuffer.drawIndexed(pcmd->ElemCount, 1, pcmd->IdxOffset + globalIndexOffset, pcmd->VtxOffset + globalVertexOffset, 0);
+                }
             }
-            vertexOffset += cmdList->VtxBuffer.Size;
+            globalIndexOffset += cmdList->IdxBuffer.Size;
+            globalVertexOffset += cmdList->VtxBuffer.Size;
         }
 
         commandBuffer.endRenderPass();

@@ -88,12 +88,20 @@ namespace BZ {
         Buffer *buffer = nullptr;
         byte* basePtr = nullptr;
 
+        friend BufferPtr operator+(const BufferPtr &lhs, int offset);
+        friend BufferPtr operator-(const BufferPtr &lhs, int offset);
         friend BufferPtr operator+(const BufferPtr &lhs, uint32 offset);
         friend BufferPtr operator-(const BufferPtr &lhs, uint32 offset);
+        friend BufferPtr operator+(const BufferPtr &lhs, uint64 offset);
+        friend BufferPtr operator-(const BufferPtr &lhs, uint64 offset);
     };
 
+    BufferPtr operator+(const BufferPtr &lhs, int offset);
+    BufferPtr operator-(const BufferPtr &lhs, int offset);
     BufferPtr operator+(const BufferPtr &lhs, uint32 offset);
     BufferPtr operator-(const BufferPtr &lhs, uint32 offset);
+    BufferPtr operator+(const BufferPtr &lhs, uint64 offset);
+    BufferPtr operator-(const BufferPtr &lhs, uint64 offset);
 
 
     /*-------------------------------------------------------------------------------------------*/

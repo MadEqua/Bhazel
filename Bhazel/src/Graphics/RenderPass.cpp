@@ -9,6 +9,12 @@
 
 namespace BZ {
 
+    Ref<RenderPass> RenderPass::create(const std::initializer_list<AttachmentDescription> &descs,
+                                       const std::initializer_list<SubPassDescription> &subPassDescs,
+                                       const std::initializer_list<SubPassDependency> &subPassDeps) {
+        return MakeRef<RenderPass>(descs, subPassDescs, subPassDeps);
+    }
+
     RenderPass::RenderPass(const std::initializer_list<AttachmentDescription> &descs,
                            const std::initializer_list<SubPassDescription> &subPassDescs,
                            const std::initializer_list<SubPassDependency> &subPassDeps) :
@@ -36,12 +42,6 @@ namespace BZ {
         vkDestroyRenderPass(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
    }
 
-    Ref<RenderPass> RenderPass::create(const std::initializer_list<AttachmentDescription> &descs,
-                                       const std::initializer_list<SubPassDescription> &subPassDescs,
-                                       const std::initializer_list<SubPassDependency> &subPassDeps) {
-        return MakeRef<RenderPass>(descs, subPassDescs, subPassDeps);
-    }
-
     const AttachmentDescription & RenderPass::getAttachmentDescription(uint32 index) const {
         BZ_ASSERT_CORE(index < getAttachmentCount(), "Index {} is out of range!", index);
         return attachmentDescs[index];
@@ -56,6 +56,16 @@ namespace BZ {
         if (depthStencilAttachmentDescIndex.has_value())
             return &attachmentDescs[depthStencilAttachmentDescIndex.value()];
         return nullptr;
+    }
+
+    const SubPassDescription& RenderPass::getSubPassDescription(uint32 index) const {
+        BZ_ASSERT_CORE(index < getSubPassCount(), "Index {} is out of range!", index);
+        return subPassDescs[index];
+    }
+
+    const SubPassDependency & RenderPass::getSubPassDependency(uint32 index) const {
+        BZ_ASSERT_CORE(index < static_cast<uint32>(subPassDeps.size()), "Index {} is out of range!", index);
+        return subPassDeps[index];
     }
 
     void RenderPass::init() {

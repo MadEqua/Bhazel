@@ -250,11 +250,27 @@ namespace BZ {
         return basePtr + buffer->getCurrentBaseOfReplicaOffset();
     }
 
+    BufferPtr operator+(const BufferPtr &lhs, int offset) {
+        return BufferPtr(*lhs.buffer, lhs.basePtr + offset);
+    }
+
+    BufferPtr operator-(const BufferPtr &lhs, int offset) {
+        return BufferPtr(*lhs.buffer, lhs.basePtr - offset);
+    }
+
     BufferPtr operator+(const BufferPtr &lhs, uint32 offset) {
         return BufferPtr(*lhs.buffer, lhs.basePtr + offset);
     }
 
     BufferPtr operator-(const BufferPtr &lhs, uint32 offset) {
+        return BufferPtr(*lhs.buffer, lhs.basePtr - offset);
+    }
+
+    BufferPtr operator+(const BufferPtr &lhs, uint64 offset) {
+        return BufferPtr(*lhs.buffer, lhs.basePtr + offset);
+    }
+
+    BufferPtr operator-(const BufferPtr &lhs, uint64 offset) {
         return BufferPtr(*lhs.buffer, lhs.basePtr - offset);
     }
 

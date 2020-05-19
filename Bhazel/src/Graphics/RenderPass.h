@@ -60,7 +60,7 @@ namespace BZ {
 
     class RenderPass : public GpuObject<VkRenderPass> {
     public:
-        static Ref<RenderPass> create(const std::initializer_list<AttachmentDescription> &descs, 
+        static Ref<RenderPass> create(const std::initializer_list<AttachmentDescription> &descs,
                                       const std::initializer_list<SubPassDescription> &subPassDescs,
                                       const std::initializer_list<SubPassDependency> &subPassDeps = {});
 
@@ -73,6 +73,13 @@ namespace BZ {
         const AttachmentDescription& getAttachmentDescription(uint32 index) const;
         const AttachmentDescription& getColorAttachmentDescription(uint32 index) const;
         const AttachmentDescription* getDepthStencilAttachmentDescription() const;
+
+        const SubPassDescription& getSubPassDescription(uint32 index) const;
+        const SubPassDependency& getSubPassDependency(uint32 index) const;
+
+        const std::vector<AttachmentDescription>& getAttachmentDescriptions() const { return attachmentDescs; }
+        const std::vector<SubPassDescription>& getSubPassDescriptions() const { return subPassDescs; }
+        const std::vector<SubPassDependency>& getSubPassDependencies() const { return subPassDeps; }
 
         RenderPass(const std::initializer_list<AttachmentDescription> &descs, 
                    const std::initializer_list<SubPassDescription> &subPassDescs,

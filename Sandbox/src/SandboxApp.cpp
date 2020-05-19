@@ -100,7 +100,7 @@ void Layer3D::onGraphicsContextCreated() {
     freeCameraController = BZ::FreeCameraController(camera, 50.0f);
 
     //Hydrant, Wrench and Cerberus
-#if 0
+#if 1
     BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
                                  "Sandbox/meshes/fireHydrant/Normal.png",
                                  "Sandbox/meshes/fireHydrant/Metallic.png",
@@ -139,14 +139,14 @@ void Layer3D::onGraphicsContextCreated() {
     BZ::Transform gunTransform;
     gunTransform.setScale(9.0f, 9.0f, 9.0f);
     gunTransform.setTranslation(-25.0f, 0.0f, 0.0f, BZ::Space::Parent);
-    gunTransform.setRotationEuler(0.0f, 90.0f, -45.0f, BZ::Space::Parent);
+    //gunTransform.setRotationEuler(0.0f, 90.0f, -45.0f, BZ::Space::Parent);
     scenes[0].addEntity(gunMesh, gunTransform);
     scenes[1].addEntity(gunMesh, gunTransform);
     scenes[2].addEntity(gunMesh, gunTransform);
 #endif
 
     //Ground
-#if 0
+#if 1
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
         "Sandbox/textures/steppingstones/steppingstones1_normal.png",
         "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
@@ -213,7 +213,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 1
+#if 0
     byte whiteTextureData [] = { 255, 255, 255, 255 };
     auto texRef = BZ::Texture2D::create(whiteTextureData, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, BZ::MipmapData::Options::DoNothing);
     //auto texRef = BZ::Texture2D::create("Sandbox/textures/test.jpg", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
@@ -271,6 +271,8 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
         freeCameraController.onUpdate(frameStats);
     else
         rotateCameraController.onUpdate(frameStats);
+
+    scenes[activeScene].getEntities()[2].transform.yaw(frameStats.lastFrameTime.asSeconds() * 25.0f, BZ::Space::Local);
 
     BZ::Renderer::drawScene(scenes[activeScene]);
 

@@ -104,11 +104,6 @@ namespace BZ {
         int w = colorTexView->getTexture()->getWidth();
         int h = colorTexView->getTexture()->getHeight();
 
-        //Wait for color pass to finish. This is only needed while the downsample pass is the first on post-processing.
-        //Otherwise this would be on a RenderPass dependency.
-        commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-
         //Populate tex1 with blits from the input image.
         uint32 i;
         for(i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
@@ -154,7 +149,7 @@ namespace BZ {
             //Layout transition from SRC_OPTIMAL to SHADER_READ_ONLY_OPTIMAL.
             commandBuffer.pipelineBarrierTexture(src,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 srcMip, 1);
 
@@ -356,6 +351,7 @@ namespace BZ {
         const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
         const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
 
+
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
@@ -369,9 +365,6 @@ namespace BZ {
         pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.blendingState = blendingState;
-
-        //Tone mapping will write to a Swapchain framebuffer.
-        //TODO: sync?
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
         pipelineStateData.subPassIndex = 0;
         pipelineState = PipelineState::create(pipelineStateData);
@@ -383,8 +376,7 @@ namespace BZ {
 
     //TODO: the descriptorSet argument could removed. Bind it on PostProcessor only once, if the PipelineLayout was separated from the PipelineState.
     //bindDescriptorSet() would only take the PipelineLayout as argument and that should be the same for all PostProcessing passes.
-    void ToneMap::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
-                         const DescriptorSet &descriptorSet) {
+    void ToneMap::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, const DescriptorSet &descriptorSet) {
         commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
         commandBuffer.bindPipelineState(pipelineState);
         commandBuffer.bindDescriptorSet(descriptorSet, pipelineState, 0, nullptr, 0);
@@ -444,7 +436,9 @@ namespace BZ {
         //TODO: see ToneMap::render() comment.
         //commandBuffer.bindDescriptorSet(*descriptorSet, pipelineState, 0, nullptr, 0);
 
+        addBarrier(commandBuffer);
         bloom.render(commandBuffer, *descriptorSet, colorTexView);
+        addBarrier(commandBuffer);
         toneMap.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer, *descriptorSet);
     }
 
@@ -455,5 +449,10 @@ namespace BZ {
             toneMap.onImGuiRender(frameStats);
         }
         ImGui::End();
+    }
+
+    void PostProcessor::addBarrier(CommandBuffer &commandBuffer) {
+        commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
     }
 }

@@ -235,17 +235,16 @@ namespace BZ {
 
         pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_DEPTH_BIAS };
 
-        AttachmentDescription depthStencilAttachmentDesc;
-        depthStencilAttachmentDesc.format = VK_FORMAT_D32_SFLOAT;
-        depthStencilAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-        depthStencilAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        depthStencilAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
-        depthStencilAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        depthStencilAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        depthStencilAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        depthStencilAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        depthStencilAttachmentDesc.clearValue.depthStencil.depth = 1.0f;
-        depthStencilAttachmentDesc.clearValue.depthStencil.stencil = 0;
+        AttachmentDescription depthAttachmentDesc;
+        depthAttachmentDesc.format = VK_FORMAT_D32_SFLOAT;
+        depthAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        depthAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        depthAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depthAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        depthAttachmentDesc.clearValue.depthStencil.depth = 1.0f;
 
         SubPassDescription subPassDesc;
         subPassDesc.depthStencilAttachmentsRef = { 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
@@ -260,7 +259,7 @@ namespace BZ {
         dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependency.dependencyFlags = 0;
 
-        rendererData.shadowRenderPass = RenderPass::create({ depthStencilAttachmentDesc }, { subPassDesc }, { dependency });
+        rendererData.shadowRenderPass = RenderPass::create({ depthAttachmentDesc }, { subPassDesc }, { dependency });
         pipelineStateData.renderPass = rendererData.shadowRenderPass;
         pipelineStateData.subPassIndex = 0;
 

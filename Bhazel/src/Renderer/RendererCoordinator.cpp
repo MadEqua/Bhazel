@@ -19,27 +19,26 @@ namespace BZ {
         is2dActive = true;
         isImGuiActive = true;
 
-        //Create the possible combinations of RenderPasses. All compatible with the default Swapchain one which
+        //Create the possible combinations of RenderPasses. All compatible with the default Swapchain Renderpass, which
         //is used on the Pipelines and to create the Framebuffers.
         const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
+        const SubPassDescription &subPassDesc = renderPass->getSubPassDescription(0);
+
         AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
         colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
         colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-        //Wait for previous Renderer. //TODO: check if correct
+        //Wait for previous Renderer. //TODO: confirm if correct.
         SubPassDependency dependency;
         dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
         dependency.dstSubPassIndex = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
         dependency.dependencyFlags = 0;
-
-        SubPassDescription subPassDesc;
-        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
 
         //firstPass
         colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;

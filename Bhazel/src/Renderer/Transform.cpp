@@ -58,7 +58,7 @@ namespace BZ {
             orientation = quat;
         }
         else {
-            glm::vec3 axisParent = getLocalToParentMatrix() * glm::vec4(glm::axis(quat), 0.0);
+            glm::vec3 axisParent = getLocalToParentMatrix() * glm::vec4(glm::axis(quat), 0.0f);
             orientation = glm::angleAxis(glm::angle(quat), axisParent);
         }
         matricesDirty = true;
@@ -66,12 +66,12 @@ namespace BZ {
 
     void Transform::rotate(const glm::quat &quat, Space space) {
         if (space == Space::Parent) {
-            orientation = quat * orientation;
+            orientation = glm::normalize(quat * orientation);
         }
         else {
-            glm::vec3 axisParent = getLocalToParentMatrix() * glm::vec4(glm::axis(quat), 0.0);
+            glm::vec3 axisParent = getLocalToParentMatrix() * glm::vec4(glm::axis(quat), 0.0f);
             glm::quat orientationParent = glm::angleAxis(glm::angle(quat), axisParent);
-            orientation = orientationParent * orientation;
+            orientation = glm::normalize(orientationParent * orientation);
         }
         matricesDirty = true;
     }

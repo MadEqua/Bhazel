@@ -108,6 +108,8 @@ namespace BZ {
         void onImGuiRender(const FrameStats &frameStats);
 
     private:
+        void addBarrier(CommandBuffer &commandBuffer);
+
         Ref<TextureView> colorTexView;
 
         Ref<Sampler> sampler;
