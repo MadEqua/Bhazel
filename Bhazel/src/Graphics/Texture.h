@@ -56,9 +56,11 @@ namespace BZ {
 
         BZ_NON_COPYABLE(Texture);
 
-        const TextureFormat& getFormat() const { return format; }
+        TextureFormat getFormat() const { return format; }
 
-        const glm::ivec3& getDimensions() const { return dimensions; }
+        const glm::uvec3& getDimensions() const { return dimensions; }
+        const glm::vec3 getDimensionsFloat() const { return dimensions; }
+
         uint32 getWidth() const { return dimensions.x; }
         uint32 getHeight() const { return dimensions.y; }
         uint32 getDepth() const { return dimensions.z; }
@@ -77,7 +79,7 @@ namespace BZ {
         static void freeData(const FileData &fileData);
 
         TextureFormat format;
-        glm::ivec3 dimensions = { 1, 1, 1 };
+        glm::uvec3 dimensions = { 1, 1, 1 };
         uint32 layers = 1;
         uint32 mipLevels = 1;
 
@@ -137,7 +139,7 @@ namespace BZ {
         ~TextureView();
 
         //const TextureFormat& getFormat() const { return texture->getFormat(); } TODO: TextureView own format
-        const TextureFormat& getTextureFormat() const { return texture->getFormat(); }
+        TextureFormat getTextureFormat() const { return texture->getFormat(); }
         Ref<Texture> getTexture() const { return texture; }
 
     private:

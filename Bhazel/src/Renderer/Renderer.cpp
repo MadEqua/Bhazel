@@ -34,7 +34,7 @@ namespace BZ {
         glm::vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
         glm::vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
         glm::vec4 cascadeSplits; //TODO: Hardcoded to 4.
-        glm::vec2 dirLightCountAndRadianceMapMips;
+        float dirLightCount;
     };
 
     struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) PassConstantBufferData {
@@ -212,7 +212,6 @@ namespace BZ {
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/ShadowPassVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/ShadowPassGeo.spv", VK_SHADER_STAGE_GEOMETRY_BIT } });
 
-        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
                                                    rendererData.passDescriptorSetLayoutForShadowPass, rendererData.materialDescriptorSetLayout,
                                                    rendererData.entityDescriptorSetLayout };
@@ -292,7 +291,6 @@ namespace BZ {
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/RendererVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/RendererFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
-        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
                                                    rendererData.passDescriptorSetLayout, rendererData.materialDescriptorSetLayout,
                                                    rendererData.entityDescriptorSetLayout };
@@ -410,7 +408,6 @@ namespace BZ {
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/SkyBoxVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/SkyBoxFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
-        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
                                                    rendererData.passDescriptorSetLayout, rendererData.materialDescriptorSetLayout,
                                                    rendererData.entityDescriptorSetLayout };
@@ -423,6 +420,12 @@ namespace BZ {
         RasterizerState rasterizerState;
         rasterizerState.cullMode = VK_CULL_MODE_NONE;
         pipelineStateData.rasterizerState = rasterizerState;
+
+        DepthStencilState depthStencilState;
+        depthStencilState.enableDepthTest = true;
+        depthStencilState.enableDepthWrite = false;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+        pipelineStateData.depthStencilState = depthStencilState;
 
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
@@ -472,7 +475,7 @@ namespace BZ {
         rendererData.postProcessor.destroy();
     }
 
-    void Renderer::drawScene(const Scene &scene) {
+    void Renderer::renderScene(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
         rendererData.sceneToRender = &scene;
@@ -511,13 +514,14 @@ namespace BZ {
 
         rendererData.commandBuffer->beginRenderPass(rendererData.colorRenderPass, rendererData.colorFramebuffer);
 
-        if (scene.hasSkyBox()) {
+        rendererData.commandBuffer->bindPipelineState(rendererData.colorPassPipelineState);
+        drawEntities(scene, false);
+
+        if(scene.hasSkyBox()) {
             rendererData.commandBuffer->bindPipelineState(rendererData.skyBoxPipelineState);
             drawMesh(scene.getSkyBox().mesh, Material(), false);
         }
 
-        rendererData.commandBuffer->bindPipelineState(rendererData.colorPassPipelineState);
-        drawEntities(scene, false);
         rendererData.commandBuffer->endRenderPass();
     }
 
@@ -646,8 +650,7 @@ namespace BZ {
             sceneConstantBufferData.dirLightColors[lightIdx].b = dirLight.color.b;
             lightIdx++;
         }
-        sceneConstantBufferData.dirLightCountAndRadianceMapMips.x = static_cast<float>(lightIdx);
-        sceneConstantBufferData.dirLightCountAndRadianceMapMips.y = scene.hasSkyBox() ? scene.getSkyBox().radianceMapView->getTexture()->getMipLevels() : 0.0f;
+        sceneConstantBufferData.dirLightCount = static_cast<float>(lightIdx);
         memcpy(rendererData.sceneConstantBufferPtr, &sceneConstantBufferData, sizeof(SceneConstantBufferData));
     }
 

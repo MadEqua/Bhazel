@@ -64,7 +64,7 @@ void ParticleLayer::onUpdate(const BZ::FrameStats &frameStats) {
 
     BZ::Renderer2D::begin(camera);
     particleSystem.onUpdate(frameStats);
-    BZ::Renderer2D::drawParticleSystem2D(particleSystem);
+    BZ::Renderer2D::renderParticleSystem2D(particleSystem);
     BZ::Renderer2D::end();
 }
 
@@ -100,7 +100,7 @@ void Layer3D::onGraphicsContextCreated() {
     freeCameraController = BZ::FreeCameraController(camera, 50.0f);
 
     //Hydrant, Wrench and Cerberus
-#if 1
+#if 0
     BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
                                  "Sandbox/meshes/fireHydrant/Normal.png",
                                  "Sandbox/meshes/fireHydrant/Metallic.png",
@@ -146,7 +146,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Ground
-#if 1
+#if 0
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
         "Sandbox/textures/steppingstones/steppingstones1_normal.png",
         "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
@@ -213,7 +213,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 0
+#if 1
     byte whiteTextureData [] = { 255, 255, 255, 255 };
     auto texRef = BZ::Texture2D::create(whiteTextureData, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, BZ::MipmapData::Options::DoNothing);
     //auto texRef = BZ::Texture2D::create("Sandbox/textures/test.jpg", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
@@ -272,19 +272,19 @@ void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
     else
         rotateCameraController.onUpdate(frameStats);
 
-    scenes[activeScene].getEntities()[2].transform.yaw(frameStats.lastFrameTime.asSeconds() * 25.0f, BZ::Space::Local);
+    scenes[activeScene].getEntities()[2].transform.yaw(frameStats.lastFrameTime.asSeconds() * 10.0f, BZ::Space::Local);
 
-    BZ::Renderer::drawScene(scenes[activeScene]);
+    BZ::Renderer::renderScene(scenes[activeScene]);
 
     BZ::Renderer2D::begin(orthoCamera);
-    //BZ::Renderer2D::drawQuad(glm::vec2(100.0f, 0.0f), glm::vec2(200.0f, 200.0f), 0.0f, glm::vec4(1, 1, 1, 1));
+    //BZ::Renderer2D::renderQuad(glm::vec2(100.0f, 0.0f), glm::vec2(200.0f, 200.0f), 0.0f, glm::vec4(1, 1, 1, 1));
 
     const auto &WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
     const glm::vec2 SIZE = { 256, 256 };
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     glm::vec2 pos = -WINDOW_HALF_DIMS + SIZE * 0.5f;
 
-    BZ::Renderer2D::drawQuad(pos, SIZE, 0.0f,
+    BZ::Renderer2D::renderQuad(pos, SIZE, 0.0f,
         std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene].getDirectionalLights()[0].shadowMapFramebuffer->getDepthStencilTextureView()->getTexture()),
         glm::vec4(1, 1, 1, 1));
 

@@ -263,7 +263,6 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexLayout;
         pipelineStateData.shader = shader;
-        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
         pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()), 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };

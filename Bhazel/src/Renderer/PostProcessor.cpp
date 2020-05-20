@@ -3,7 +3,6 @@
 #include "PostProcessor.h"
 
 #include "Core/Application.h"
-#include "Core/Window.h"
 
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Texture.h"
@@ -23,40 +22,25 @@
 namespace BZ {
 
 
-    void Bloom::init(const Ref<DescriptorSetLayout> &descriptorSetLayout, const Ref<TextureView> &colorTexView, const Ref<Sampler> &sampler) {
-        const auto HALF_WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat() * 0.5f;
-        uint32 w = static_cast<uint32>(HALF_WINDOW_DIMS_FLOAT.x);
-        uint32 h = static_cast<uint32>(HALF_WINDOW_DIMS_FLOAT.y);
+    void Bloom::init() {
+        const auto INPUT_DIMENSIONS = postProcessor.getInputTextureDimensions();
 
-        tex1 = Texture2D::createRenderTarget(w, h, 1, BLOOM_TEXTURE_MIPS, VK_FORMAT_R16G16B16A16_SFLOAT, true);
-        tex2 = Texture2D::createRenderTarget(w, h, 1, BLOOM_TEXTURE_MIPS, VK_FORMAT_R16G16B16A16_SFLOAT, true);
+        //Start at half dimensions.
+        const uint32 W = INPUT_DIMENSIONS.x / 2;
+        const uint32 H = INPUT_DIMENSIONS.y / 2;
+
+        tex1 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat(), true);
+        tex2 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat(), true);
 
         for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
             tex1MipViews[i] = TextureView::create(tex1, i, 1);
             tex2MipViews[i] = TextureView::create(tex2, i, 1);
-
-            viewports[i].x = 0.0f;
-            viewports[i].y = 0.0f;
-            viewports[i].width = static_cast<float>(w);
-            viewports[i].height = static_cast<float>(h);
-            viewports[i].minDepth = 0.0f;
-            viewports[i].maxDepth = 1.0f;
-
-            //Inverting the space (+y -> up)
-            //TODO: aux function
-            viewports[i].y = viewports[i].height;
-            viewports[i].height = -viewports[i].height;
-
-            w /= 2;
-            h /= 2;
-
-            blurWeights[i] = 1.0f;
         }
 
         intensity = 0.05f;
 
-        initBlurPass(descriptorSetLayout, sampler);
-        initFinalPass(descriptorSetLayout, colorTexView, sampler);
+        initBlurPass();
+        initFinalPass();
     }
 
     void Bloom::destroy() {
@@ -80,10 +64,10 @@ namespace BZ {
         finalFramebuffer.reset();
     }
 
-    void Bloom::render(CommandBuffer &commandBuffer, const DescriptorSet &descriptorSet, const Ref<TextureView> &colorTexView) {
-        downsamplePass(commandBuffer, colorTexView);
-        blurPass(commandBuffer, descriptorSet);
-        finalPass(commandBuffer, descriptorSet);
+    void Bloom::render(CommandBuffer &commandBuffer) {
+        downsamplePass(commandBuffer);
+        blurPass(commandBuffer);
+        finalPass(commandBuffer);
     }
 
     void Bloom::onImGuiRender(const FrameStats &frameStats) {
@@ -100,15 +84,16 @@ namespace BZ {
         }
     }
 
-    void Bloom::downsamplePass(CommandBuffer &commandBuffer, const Ref<TextureView> &colorTexView) {
-        int w = colorTexView->getTexture()->getWidth();
-        int h = colorTexView->getTexture()->getHeight();
+    void Bloom::downsamplePass(CommandBuffer &commandBuffer) {
+        const auto INPUT_DIMENSIONS = postProcessor.getInputTextureDimensions();
+        uint32 w = INPUT_DIMENSIONS.x;
+        uint32 h = INPUT_DIMENSIONS.y;
 
         //Populate tex1 with blits from the input image.
         uint32 i;
         for(i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
 
-            Ref<Texture> src = i == 0 ? colorTexView->getTexture() : tex1;
+            Ref<Texture> src = i == 0 ? postProcessor.getInputTexView()->getTexture() : tex1;
             uint32 srcMip = i == 0 ? 0 : i - 1;
             uint32 dstMip = i;
             VkImageLayout srcLayout = i == 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -130,13 +115,13 @@ namespace BZ {
 
             VkImageBlit blit = {};
             blit.srcOffsets[0] = { 0, 0, 0 };
-            blit.srcOffsets[1] = { w, h, 1 };
+            blit.srcOffsets[1] = { (int)w, (int)h, 1 };
             blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             blit.srcSubresource.mipLevel = srcMip;
             blit.srcSubresource.baseArrayLayer = 0;
             blit.srcSubresource.layerCount = 1;
             blit.dstOffsets[0] = { 0, 0, 0 };
-            blit.dstOffsets[1] = { w / 2, h / 2, 1 };
+            blit.dstOffsets[1] = { (int)w / 2, (int)h / 2, 1 };
             blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             blit.dstSubresource.mipLevel = dstMip;
             blit.dstSubresource.baseArrayLayer = 0;
@@ -165,7 +150,7 @@ namespace BZ {
             i - 1, 1);
     }
 
-    void Bloom::initBlurPass(const Ref<DescriptorSetLayout> &descriptorSetLayout, const Ref<Sampler> &sampler) {
+    void Bloom::initBlurPass() {
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
@@ -175,15 +160,14 @@ namespace BZ {
 
         //Create the RenderPass.
         AttachmentDescription colorAttachmentDesc;
-        colorAttachmentDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        colorAttachmentDesc.format = postProcessor.getInputTextureFormat();
         colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
         SubPassDescription subPassDesc;
         subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
@@ -196,51 +180,65 @@ namespace BZ {
         dependencyBefore.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         dependencyBefore.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         dependencyBefore.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        dependencyBefore.dependencyFlags = 0;
 
         blurRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc}, { dependencyBefore });
 
+        //Half the input texture.
         uint32 w = tex1->getWidth();
-        uint32 h = tex2->getHeight();
+        uint32 h = tex1->getHeight();
 
         PipelineStateData blurPipelineStateData;
         blurPipelineStateData.dataLayout = {};
         blurPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                        { "Bhazel/shaders/bin/GaussianBlurFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-        blurPipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        blurPipelineStateData.descriptorSetLayouts = { descriptorSetLayout, blurDescriptorSetLayout };
+                                                        { "Bhazel/shaders/bin/BloomBlurAndSumFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
+        blurPipelineStateData.descriptorSetLayouts = { postProcessor.getDescriptorSetLayout(), blurDescriptorSetLayout };
         blurPipelineStateData.pushConstants = { { VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32) * 2 } };
         blurPipelineStateData.blendingState = blendingState;
         blurPipelineStateData.viewports = { {} };
-        blurPipelineStateData.scissorRects = { { 0, 0, w, h } };
+        blurPipelineStateData.scissorRects = { { 0, 0, w, h } }; //Scissor with the largest mip dimensions.
         blurPipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT };
         blurPipelineStateData.renderPass = blurRenderPass;
         blurPipelineStateData.subPassIndex = 0;
         blurPipelineState = PipelineState::create(blurPipelineStateData);
 
         for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
+            blurWeights[i] = 1.0f;
+
+            viewports[i].x = 0.0f;
+            viewports[i].y = 0.0f;
+            viewports[i].width = static_cast<float>(w);
+            viewports[i].height = static_cast<float>(h);
+            viewports[i].minDepth = 0.0f;
+            viewports[i].maxDepth = 1.0f;
+
+            //Inverting the space (+y -> up)
+            //TODO: aux function
+            viewports[i].y = viewports[i].height;
+            viewports[i].height = -viewports[i].height;
+
             tex1Framebuffers[i] = Framebuffer::create(blurRenderPass, { tex1MipViews[i] }, { w, h, 1 });
             tex2Framebuffers[i] = Framebuffer::create(blurRenderPass, { tex2MipViews[i] }, { w, h, 1 });
+            
             w /= 2;
             h /= 2;
 
             blurDescriptorSets1[i] = &DescriptorSet::get(blurDescriptorSetLayout);
-            blurDescriptorSets1[i]->setCombinedTextureSampler(tex1MipViews[i], sampler, 0);
-            //Next mip, if exists. If not, send a dummy.
-            blurDescriptorSets1[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex2MipViews[i + 1] : tex1MipViews[i], sampler, 1);
+            blurDescriptorSets1[i]->setCombinedTextureSampler(tex1MipViews[i], postProcessor.getSampler(), 0);
+            //Previous mip (smaller), if exists. If not, send a dummy.
+            blurDescriptorSets1[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex2MipViews[i + 1] : tex1MipViews[i], postProcessor.getSampler(), 1);
 
             blurDescriptorSets2[i] = &DescriptorSet::get(blurDescriptorSetLayout);
-            blurDescriptorSets2[i]->setCombinedTextureSampler(tex2MipViews[i], sampler, 0);
-            blurDescriptorSets2[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex1MipViews[i + 1] : tex2MipViews[i], sampler, 1);
+            blurDescriptorSets2[i]->setCombinedTextureSampler(tex2MipViews[i], postProcessor.getSampler(), 0);
+            blurDescriptorSets2[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex1MipViews[i + 1] : tex2MipViews[i], postProcessor.getSampler(), 1);
         }
     }
 
-    void Bloom::blurPass(CommandBuffer &commandBuffer, const DescriptorSet &descriptorSet) {
+    void Bloom::blurPass(CommandBuffer &commandBuffer) {
         commandBuffer.bindPipelineState(blurPipelineState);
 
-        commandBuffer.bindDescriptorSet(descriptorSet, blurPipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), blurPipelineState, 0, nullptr, 0);
 
-        //One horizontal pass and another vertical for each mip.
+        //One horizontal pass and another vertical for each mip, ping-ponging between tex1 and tex2.
         //The vertical (second) pass will simultaneously do a sum of the current mip with the previous one, gathering all data on the top mip.
         for(uint32 blurPass = 0; blurPass < 2; ++blurPass) {
 
@@ -258,19 +256,19 @@ namespace BZ {
                 //Horizontal pass mips may run concurrently.
                 if(blurPass == 1) {
                     commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                                                        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
                 }
             }
 
-             //Vertical pass must wait for horizontal pass.
+            //Vertical pass must wait for horizontal pass.
             if(blurPass == 0) {
                 commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                                                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
             }
         }
     }
 
-    void Bloom::initFinalPass(const Ref<DescriptorSetLayout> &descriptorSetLayout, const Ref<TextureView> &colorTexView, const Ref<Sampler> &sampler) {
+    void Bloom::initFinalPass() {
 
         BlendingStateAttachment blendingStateAttachment;
         blendingStateAttachment.enableBlending = true;
@@ -289,7 +287,7 @@ namespace BZ {
 
         //Create the RenderPass.
         AttachmentDescription colorAttachmentDesc;
-        colorAttachmentDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        colorAttachmentDesc.format = postProcessor.getInputTextureFormat();
         colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
         colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
@@ -297,7 +295,6 @@ namespace BZ {
         colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        colorAttachmentDesc.clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
         SubPassDescription subPassDesc;
         subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
@@ -314,32 +311,30 @@ namespace BZ {
 
         finalRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependencyBefore });
 
-        uint32 w = colorTexView->getTexture()->getWidth();
-        uint32 h = colorTexView->getTexture()->getHeight();
+        const auto INPUT_DIMENSIONS = postProcessor.getInputTextureDimensions();
+        const auto INPUT_DIMENSIONS_F = postProcessor.getInputTextureDimensionsFloat();
 
         PipelineStateData finalPipelineStateData;
-        finalPipelineStateData.dataLayout = {};
         finalPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                         { "Bhazel/shaders/bin/BloomFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-        finalPipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        finalPipelineStateData.descriptorSetLayouts = { descriptorSetLayout, finalDescriptorSetLayout };
+                                                         { "Bhazel/shaders/bin/BloomFinalFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
+        finalPipelineStateData.descriptorSetLayouts = { postProcessor.getDescriptorSetLayout(), finalDescriptorSetLayout };
         finalPipelineStateData.blendingState = blendingState;
-        finalPipelineStateData.viewports = { {0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h) } };
-        finalPipelineStateData.scissorRects = { { 0, 0, w, h } };
+        finalPipelineStateData.viewports = { {0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y } };
+        finalPipelineStateData.scissorRects = { { 0, 0, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y} };
         finalPipelineStateData.renderPass = finalRenderPass;
         finalPipelineStateData.subPassIndex = 0;
         finalPipelineState = PipelineState::create(finalPipelineStateData);
 
-        finalFramebuffer = Framebuffer::create(finalRenderPass, { colorTexView }, { w, h, 1 });
+        finalFramebuffer = Framebuffer::create(finalRenderPass, { postProcessor.getInputTexView() }, { INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y, 1 });
 
         finalDescriptorSet = &DescriptorSet::get(finalDescriptorSetLayout);
-        finalDescriptorSet->setCombinedTextureSampler(tex1MipViews[0], sampler, 0);
+        finalDescriptorSet->setCombinedTextureSampler(tex1MipViews[0], postProcessor.getSampler(), 0);
     }
 
-    void Bloom::finalPass(CommandBuffer &commandBuffer, const DescriptorSet &descriptorSet) {
+    void Bloom::finalPass(CommandBuffer &commandBuffer) {
         commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
         commandBuffer.bindPipelineState(finalPipelineState);
-        commandBuffer.bindDescriptorSet(descriptorSet, finalPipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), finalPipelineState, 0, nullptr, 0);
         commandBuffer.bindDescriptorSet(*finalDescriptorSet, finalPipelineState, 1, nullptr, 0);
         commandBuffer.draw(3, 1, 0, 0);
         commandBuffer.endRenderPass();
@@ -347,23 +342,20 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
-    void ToneMap::init(const Ref<DescriptorSetLayout> &descriptorSetLayout) {
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-
+    void ToneMap::init() {
+        const auto INPUT_DIMENSIONS = postProcessor.getInputTextureDimensions();
+        const auto INPUT_DIMENSIONS_F = postProcessor.getInputTextureDimensionsFloat();
 
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
         PipelineStateData pipelineStateData;
-        pipelineStateData.dataLayout = {};
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/ToneMapFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
+        pipelineStateData.descriptorSetLayouts = { postProcessor.getDescriptorSetLayout() };
+        pipelineStateData.viewports = { { 0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y, 0.0f, 1.0f } };
+        pipelineStateData.scissorRects = { { 0u, 0u, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
         pipelineStateData.subPassIndex = 0;
@@ -374,12 +366,10 @@ namespace BZ {
         pipelineState.reset();
     }
 
-    //TODO: the descriptorSet argument could removed. Bind it on PostProcessor only once, if the PipelineLayout was separated from the PipelineState.
-    //bindDescriptorSet() would only take the PipelineLayout as argument and that should be the same for all PostProcessing passes.
-    void ToneMap::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, const DescriptorSet &descriptorSet) {
+     void ToneMap::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
         commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
         commandBuffer.bindPipelineState(pipelineState);
-        commandBuffer.bindDescriptorSet(descriptorSet, pipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), pipelineState, 0, nullptr, 0);
         commandBuffer.draw(3, 1, 0, 0);
         commandBuffer.endRenderPass();
     }
@@ -391,8 +381,13 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
+    PostProcessor::PostProcessor() :
+        bloom(*this), 
+        toneMap(*this) {
+    }
+
     void PostProcessor::init(const Ref<TextureView> &colorTexView, const Ref<Buffer> &constantBuffer, uint32 bufferOffset) {
-        this->colorTexView = colorTexView;
+        inputTexView = colorTexView;
 
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -406,12 +401,12 @@ namespace BZ {
         descriptorSet->setCombinedTextureSampler(colorTexView, sampler, 0);
         descriptorSet->setConstantBuffer(constantBuffer, 1, bufferOffset, sizeof(PostProcessConstantBufferData));
 
-        bloom.init(descriptorSetLayout, colorTexView, sampler);
-        toneMap.init(descriptorSetLayout);
+        bloom.init();
+        toneMap.init();
     }
 
     void PostProcessor::destroy() {
-        colorTexView.reset();
+        inputTexView.reset();
 
         sampler.reset();
         descriptorSetLayout.reset();
@@ -421,7 +416,7 @@ namespace BZ {
     }
 
     void PostProcessor::fillData(const BufferPtr &ptr, const Scene &scene) {
-        PostProcessConstantBufferData data = {};
+        PostProcessConstantBufferData data;
         data.cameraExposureAndBloomIntensity.x = scene.getCamera().getExposure();
         data.cameraExposureAndBloomIntensity.y = bloom.getIntensity();
 
@@ -433,13 +428,14 @@ namespace BZ {
     }
 
     void PostProcessor::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
-        //TODO: see ToneMap::render() comment.
+        //TODO: Bind it here only once instead of relying on others to do it, if the PipelineLayout was separated from the PipelineState.
+        //bindDescriptorSet() would only take the PipelineLayout as argument and that should be the same for all PostProcessing passes.
         //commandBuffer.bindDescriptorSet(*descriptorSet, pipelineState, 0, nullptr, 0);
 
         addBarrier(commandBuffer);
-        bloom.render(commandBuffer, *descriptorSet, colorTexView);
+        bloom.render(commandBuffer);
         addBarrier(commandBuffer);
-        toneMap.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer, *descriptorSet);
+        toneMap.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer);
     }
 
     void PostProcessor::onImGuiRender(const FrameStats &frameStats) {
@@ -453,6 +449,6 @@ namespace BZ {
 
     void PostProcessor::addBarrier(CommandBuffer &commandBuffer) {
         commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
     }
 }

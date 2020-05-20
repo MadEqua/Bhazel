@@ -22,7 +22,7 @@ namespace BZ {
 
     class Renderer {
     public:
-        static void drawScene(const Scene &scene);
+        static void renderScene(const Scene &scene);
 
         static const DataLayout& getVertexDataLayout();
         static const DataLayout& getIndexDataLayout();

@@ -182,7 +182,6 @@ namespace BZ {
 
         //pipelineStateData.pushConstantDescs = { pushConstantDesc };
 
-        pipelineStateData.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.descriptorSetLayouts = { rendererData.constantsDescriptorSetLayout, rendererData.textureDescriptorSetLayout };
@@ -236,19 +235,19 @@ namespace BZ {
         }
     }
 
-    void Renderer2D::drawSprite(const Sprite &sprite) {
+    void Renderer2D::renderSprite(const Sprite &sprite) {
         BZ_PROFILE_FUNCTION();
 
-        drawQuad(sprite.position, sprite.dimensions, sprite.rotationDeg, sprite.texture, sprite.tintAndAlpha);
+        renderQuad(sprite.position, sprite.dimensions, sprite.rotationDeg, sprite.texture, sprite.tintAndAlpha);
     }
 
-    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &colorAndAlpha) {
+    void Renderer2D::renderQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &colorAndAlpha) {
         BZ_PROFILE_FUNCTION();
 
-        drawQuad(position, dimensions, rotationDeg, rendererData.whiteTexture, colorAndAlpha);
+        renderQuad(position, dimensions, rotationDeg, rendererData.whiteTexture, colorAndAlpha);
     }
 
-    void Renderer2D::drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha) {
+    void Renderer2D::renderQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha) {
         BZ_PROFILE_FUNCTION();
 
         BZ_ASSERT_CORE(rendererData.nextSprite < MAX_RENDERER2D_SPRITES, "nextSprite exceeded MAX_RENDERER2D_SPRITES!");
@@ -269,12 +268,12 @@ namespace BZ {
         rendererData.stats.spriteCount++;
     }
 
-    void Renderer2D::drawParticleSystem2D(const ParticleSystem2D & particleSystem) {
+    void Renderer2D::renderParticleSystem2D(const ParticleSystem2D & particleSystem) {
         BZ_PROFILE_FUNCTION();
 
         for (const auto &emitter : particleSystem.getEmitters()) {
             for (const auto &particle : emitter.getActiveParticles()) {
-                drawQuad(particle.position, particle.dimensions, particle.rotationDeg, emitter.texture, particle.tintAndAlpha);
+                renderQuad(particle.position, particle.dimensions, particle.rotationDeg, emitter.texture, particle.tintAndAlpha);
             }
         }
     }

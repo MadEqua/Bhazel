@@ -27,12 +27,12 @@ namespace BZ {
         static void begin(const OrthographicCamera &camera);
         static void end();
 
-        static void drawSprite(const Sprite &sprite);
+        static void renderSprite(const Sprite &sprite);
 
-        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &colorAndAlpha);
-        static void drawQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha);
+        static void renderQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const glm::vec4 &colorAndAlpha);
+        static void renderQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg, const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha);
 
-        static void drawParticleSystem2D(const ParticleSystem2D &particleSystem);
+        static void renderParticleSystem2D(const ParticleSystem2D &particleSystem);
 
     private:
         friend class RendererCoordinator;

@@ -78,7 +78,7 @@ namespace BZ {
         DataLayout dataLayout;
 
         Ref<Shader> shader;
-        VkPrimitiveTopology primitiveTopology;
+        VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
         std::vector<VkPushConstantRange> pushConstants;
         std::vector<VkViewport> viewports;

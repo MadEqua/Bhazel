@@ -11,7 +11,7 @@ layout (set = 1, binding = 0, std140) uniform SceneConstants {
     vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
     vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE];
     vec4 cascadeSplits; //View space
-    vec2 dirLightCountAndRadianceMapMips;
+    float dirLightCount;
 } uSceneConstants;
 
 layout(set = 1, binding = 1) uniform samplerCube uIrradianceMapTexSampler;
@@ -158,7 +158,8 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness, vec2 t
     vec3 worldR = normalize(inData.TBN * R);
     worldR.x = -worldR.x;
 
-    vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * uSceneConstants.dirLightCountAndRadianceMapMips.y).rgb;
+    int radianceMapMips = textureQueryLevels(uRadianceMapTexSampler);
+    vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * float(radianceMapMips)).rgb;
     vec2 envBRDF = texture(uBrdfLookupTexture, vec2(NdotV, roughness)).rg;
     vec3 specular = radiance * (F * envBRDF.x + envBRDF.y);
 
@@ -218,7 +219,7 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     vec3 col = indirectLight(N, V, F0, albedo, roughness, texCoord);
     int cascadeIdx = findShadowMapCascade();
 
-    for(int lightIdx = 0; lightIdx < int(uSceneConstants.dirLightCountAndRadianceMapMips.x); ++lightIdx) {
+    for(int lightIdx = 0; lightIdx < int(uSceneConstants.dirLightCount); ++lightIdx) {
         vec3 L = normalize(inData.LTan[lightIdx]);
 
         float shadow = shadowMapping(lightIdx, cascadeIdx);

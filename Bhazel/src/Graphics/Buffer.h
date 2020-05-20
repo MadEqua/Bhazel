@@ -61,7 +61,7 @@ namespace BZ {
 
     private:
         std::vector<DataElement> elements;
-        uint32 sizeBytes;
+        uint32 sizeBytes = 0;
         VkVertexInputRate vertexInputRate;
 
         void calculateOffsetsAndStride();

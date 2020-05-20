@@ -79,7 +79,7 @@ void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle
         sprite.tintAndAlpha = glm::mix(BALL_TINT, colorToTint, secsToTint / BALL_TINT_SECONDS);
         secsToTint -= frameStats.lastFrameTime.asSeconds();
     }
-    BZ::Renderer2D::drawSprite(sprite);
+    BZ::Renderer2D::renderSprite(sprite);
 
     for (auto &emitter : particleSystem.getEmitters()) {
         emitter.ranges.tintAndAlphaRange = sprite.tintAndAlpha;
@@ -87,7 +87,7 @@ void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle
 
     particleSystem.setPosition(sprite.position);
     particleSystem.onUpdate(frameStats);
-    BZ::Renderer2D::drawParticleSystem2D(particleSystem);
+    BZ::Renderer2D::renderParticleSystem2D(particleSystem);
 }
 
 void Ball::setToInitialPosition() {
@@ -127,8 +127,8 @@ void Paddle::onUpdate(const BZ::FrameStats &frameStats) {
     }
 
     aabb = BZ::AABB(glm::vec3(sprite.position, 0.1f), glm::vec3(PADDLE_DIMS, 0.1f));
-    BZ::Renderer2D::drawSprite(sprite);
-    //BZ::Renderer2D::drawQuad(glm::vec2(aabb.getCenter()), glm::vec2(aabb.getDimensions()), 0.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+    BZ::Renderer2D::renderSprite(sprite);
+    //BZ::Renderer2D::renderQuad(glm::vec2(aabb.getCenter()), glm::vec2(aabb.getDimensions()), 0.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 }
 
 void BrickMap::init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ::Texture2D> &explosionTexture) {
@@ -180,13 +180,13 @@ void BrickMap::onUpdate(const BZ::FrameStats &frameStats) {
                 }
             }
 
-            BZ::Renderer2D::drawSprite(brick.sprite);
+            BZ::Renderer2D::renderSprite(brick.sprite);
         }
     }
 
     for (int i = 0; i < PARTICLE_SYSTEMS_COUNT; ++i) {
         particleSystems[i].onUpdate(frameStats);
-        BZ::Renderer2D::drawParticleSystem2D(particleSystems[i]);
+        BZ::Renderer2D::renderParticleSystem2D(particleSystems[i]);
     }
 }
 
