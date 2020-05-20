@@ -144,15 +144,17 @@ namespace BZ {
     void CommandBuffer::bindBuffer(const Ref<Buffer> &buffer, uint32 offset) {
         BZ_ASSERT_CORE(buffer->isVertex() || buffer->isIndex(), "Invalid Buffer type!");
 
+        uint32 realOffset = buffer->getCurrentBaseOfReplicaOffset() + offset;
+
         if (buffer->isVertex()) {
             VkBuffer vkBuffers [] = { buffer->getHandle().bufferHandle };
-            VkDeviceSize offsets [] = { offset };
+            VkDeviceSize offsets [] = { realOffset };
             vkCmdBindVertexBuffers(handle, 0, 1, vkBuffers, offsets);
         }
         else if (buffer->isIndex()) {
             VkBuffer vkBuffer = buffer->getHandle().bufferHandle;
             VkIndexType type = buffer->getLayout().begin()->getDataType() == DataType::Uint16 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
-            vkCmdBindIndexBuffer(handle, vkBuffer, offset, type);
+            vkCmdBindIndexBuffer(handle, vkBuffer, realOffset, type);
         }
         commandCount++;
     }
