@@ -29,12 +29,12 @@ namespace BZ {
         const uint32 W = INPUT_DIMENSIONS.x / 2;
         const uint32 H = INPUT_DIMENSIONS.y / 2;
 
-        tex1 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat(), true);
-        tex2 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat(), true);
+        tex1 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat(), VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+        tex2 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat());
 
         for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
-            tex1MipViews[i] = TextureView::create(tex1, i, 1);
-            tex2MipViews[i] = TextureView::create(tex2, i, 1);
+            tex1MipViews[i] = TextureView::create(tex1, 0, 1, i, 1);
+            tex2MipViews[i] = TextureView::create(tex2, 0, 1, i, 1);
         }
 
         intensity = 0.05f;

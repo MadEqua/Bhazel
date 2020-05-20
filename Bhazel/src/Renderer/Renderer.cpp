@@ -119,7 +119,6 @@ namespace BZ {
         Ref<PipelineState> shadowPassPipelineState;
 
         Ref<TextureView> brdfLookupTexture;
-        Ref<TextureView> dummyTextureArrayView;
 
         std::unordered_map<Material, uint32> materialOffsetMap;
 
@@ -374,7 +373,7 @@ namespace BZ {
         rendererData.colorPassPipelineState = PipelineState::create(pipelineStateData);
 
 
-        auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, colorAttachmentDesc.format, true);
+        auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, colorAttachmentDesc.format, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
         rendererData.colorTexView = TextureView::create(colorTexture);
 
         auto depthTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, depthStencilAttachmentDesc.format);
@@ -397,8 +396,6 @@ namespace BZ {
 
         rendererData.passDescriptorSet = &DescriptorSet::get(rendererData.passDescriptorSetLayout);
         rendererData.passDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, PASS_CONSTANT_BUFFER_OFFSET, sizeof(PassConstantBufferData));
-
-        rendererData.dummyTextureArrayView = TextureView::createLayered(brdfLookupTexRef, 0, 1, 0, 1);
     }
 
     void Renderer::initSkyBoxData() {
@@ -461,7 +458,6 @@ namespace BZ {
         rendererData.materialOffsetMap.clear();
 
         rendererData.brdfLookupTexture.reset();
-        rendererData.dummyTextureArrayView.reset();
 
         rendererData.shadowRenderPass.reset();
 
@@ -838,7 +834,7 @@ namespace BZ {
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
         auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, SHADOW_MAPPING_CASCADE_COUNT, 1, rendererData.shadowRenderPass->getDepthStencilAttachmentDescription()->format);
         glm::ivec3 dimsAndLayers(shadowMapRef->getDimensions().x, shadowMapRef->getDimensions().y, shadowMapRef->getLayers());
-        return Framebuffer::create(rendererData.shadowRenderPass, { TextureView::createLayered(shadowMapRef, 0, shadowMapRef->getLayers(), 0, 1) }, dimsAndLayers);
+        return Framebuffer::create(rendererData.shadowRenderPass, { TextureView::create(shadowMapRef) }, dimsAndLayers);
     }
 
     const Ref<Sampler>& Renderer::getDefaultSampler() {
@@ -847,14 +843,5 @@ namespace BZ {
 
     const Ref<Sampler>& Renderer::getShadowSampler() {
         return rendererData.shadowSampler;
-    }
-
-    const Ref<TextureView>& Renderer::getDummyTextureView() {
-        //Since this texture is permanentely bound, might as well be the dummy texture.
-        return rendererData.brdfLookupTexture;
-    }
-
-    const Ref<TextureView>& Renderer::getDummyTextureArrayView() {
-        return rendererData.dummyTextureArrayView;
     }
 }

@@ -35,9 +35,6 @@ namespace BZ {
         static const Ref<Sampler>& getDefaultSampler();
         static const Ref<Sampler>& getShadowSampler();
 
-        static const Ref<TextureView>& getDummyTextureView();
-        static const Ref<TextureView>& getDummyTextureArrayView();
-
     private:
         friend class RendererCoordinator;
         friend class Application;

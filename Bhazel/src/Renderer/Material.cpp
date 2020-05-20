@@ -25,7 +25,7 @@ namespace BZ {
     }
 
     Material::Material(Ref<TextureCube> &albedoTexture) :
-        albedoTextureView(TextureView::createCube(albedoTexture)) {
+        albedoTextureView(TextureView::create(albedoTexture)) {
         init();
     }
 
@@ -70,27 +70,27 @@ namespace BZ {
         if(normalTextureView)
             descriptorSet->setCombinedTextureSampler(normalTextureView, Renderer::getDefaultSampler(), 2);
         else
-            descriptorSet->setCombinedTextureSampler(Renderer::getDummyTextureView(), Renderer::getDefaultSampler(), 2);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 2);
 
         if (metallicTextureView)
             descriptorSet->setCombinedTextureSampler(metallicTextureView, Renderer::getDefaultSampler(), 3);
         else
-            descriptorSet->setCombinedTextureSampler(Renderer::getDummyTextureView(), Renderer::getDefaultSampler(), 3);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 3);
 
         if(roughnessTextureView)
             descriptorSet->setCombinedTextureSampler(roughnessTextureView, Renderer::getDefaultSampler(), 4);
         else
-            descriptorSet->setCombinedTextureSampler(Renderer::getDummyTextureView(), Renderer::getDefaultSampler(), 4);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 4);
 
         if (heightTextureView)
             descriptorSet->setCombinedTextureSampler(heightTextureView, Renderer::getDefaultSampler(), 5);
         else
-            descriptorSet->setCombinedTextureSampler(Renderer::getDummyTextureView(), Renderer::getDefaultSampler(), 5);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 5);
 
         if (aoTextureView)
             descriptorSet->setCombinedTextureSampler(aoTextureView, Renderer::getDefaultSampler(), 6);
         else
-            descriptorSet->setCombinedTextureSampler(Renderer::getDummyTextureView(), Renderer::getDefaultSampler(), 6);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 6);
     }
 
     bool Material::operator==(const Material &other) const {

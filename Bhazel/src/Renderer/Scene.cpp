@@ -60,7 +60,8 @@ namespace BZ {
                 shadowMaps[i] = lights[i].shadowMapFramebuffer->getDepthStencilTextureView();
             }
             else {
-                shadowMaps[i] = Renderer::getDummyTextureArrayView();
+                //TODO: Assuming at least 1 light.
+                shadowMaps[i] = lights[0].shadowMapFramebuffer->getDepthStencilTextureView();
             }
         }
         descriptorSet->setCombinedTextureSamplers(shadowMaps.data(), MAX_DIR_LIGHTS_PER_SCENE, 0, Renderer::getShadowSampler(), 3);
@@ -74,10 +75,10 @@ namespace BZ {
         skyBox.mesh = Mesh::createUnitCubeInsides(Material(albedoTexRef));
 
         auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, MipmapData::Options::Generate);
-        skyBox.irradianceMapView = TextureView::createCube(irradianceMapTexRef);
+        skyBox.irradianceMapView = TextureView::create(irradianceMapTexRef);
 
         auto radianceMapTexRef = TextureCube::create(radianceMapBasePath, radianceMapFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, { MipmapData::Options::Load, radianceMipmapCount });
-        skyBox.radianceMapView = TextureView::createCube(radianceMapTexRef);
+        skyBox.radianceMapView = TextureView::create(radianceMapTexRef);
 
         descriptorSet->setCombinedTextureSampler(skyBox.irradianceMapView, Renderer::getDefaultSampler(), 1);
         descriptorSet->setCombinedTextureSampler(skyBox.radianceMapView, Renderer::getDefaultSampler(), 2);

@@ -418,24 +418,24 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
-    Ref<Texture2D> Texture2D::create(const char *path, TextureFormat format, MipmapData mipmapData) {
+    Ref<Texture2D> Texture2D::create(const char *path, TextureFormat format, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
         auto &assetsPath = Application::get().getAssetsPath();
-        return MakeRef<Texture2D>((assetsPath + path).c_str(), format, mipmapData);
+        return MakeRef<Texture2D>((assetsPath + path).c_str(), format, mipmapData, additionalUsageFlags);
     }
 
-    Ref<Texture2D> Texture2D::create(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData) {
-        return MakeRef<Texture2D>(data, width, height, format, mipmapData);
+    Ref<Texture2D> Texture2D::create(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
+        return MakeRef<Texture2D>(data, width, height, format, mipmapData, additionalUsageFlags);
     }
 
-    Ref<Texture2D> Texture2D::createRenderTarget(uint32 width, uint32 height, uint32 layers, uint32 mipLevels, TextureFormat format, bool usedInTransfers) {
-        return MakeRef<Texture2D>(width, height, layers, mipLevels, format, usedInTransfers);
+    Ref<Texture2D> Texture2D::createRenderTarget(uint32 width, uint32 height, uint32 layers, uint32 mipLevels, TextureFormat format, VkImageUsageFlags additionalUsageFlags) {
+        return MakeRef<Texture2D>(width, height, layers, mipLevels, format, additionalUsageFlags);
     }
 
     Ref<Texture2D> Texture2D::wrap(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) {
         return MakeRef<Texture2D>(new Texture2D(vkImage, width, height, vkFormat));
     }
 
-    Texture2D::Texture2D(const char *path, TextureFormat format, MipmapData mipmapData) :
+    Texture2D::Texture2D(const char *path, TextureFormat format, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) :
         Texture(format) {
 
         //Graphics queue (and not transfer) because of the layout transition operations.
@@ -459,7 +459,7 @@ namespace BZ {
             dimensions.x = fileDatas[0].width;
             dimensions.y = fileDatas[0].height;
 
-            createImage(true, false, mipmapData);
+            createImage(true, mipmapData, additionalUsageFlags);
 
             commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                               0, VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -495,7 +495,7 @@ namespace BZ {
                 mipLevels = 1;
             }
 
-            createImage(true, false, mipmapData);
+            createImage(true, mipmapData, additionalUsageFlags);
             commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                                0, VK_ACCESS_TRANSFER_WRITE_BIT,
                                                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
@@ -522,7 +522,7 @@ namespace BZ {
         }
     }
 
-    Texture2D::Texture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData) :
+    Texture2D::Texture2D(const byte *data, uint32 width, uint32 height, TextureFormat format, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) :
         Texture(format) {
 
         //Graphics queue (and not transfer) because of the layout transition operations.
@@ -544,7 +544,7 @@ namespace BZ {
                 totalSize += datas[mipIdx].width * datas[mipIdx].height * format.getSizePerTexel();
             }
 
-            createImage(true, false, mipmapData);
+            createImage(true, mipmapData, additionalUsageFlags);
             commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                                0, VK_ACCESS_TRANSFER_WRITE_BIT,
                                                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
@@ -574,7 +574,7 @@ namespace BZ {
                 mipLevels = 1;
             }
 
-            createImage(true, false, mipmapData);
+            createImage(true, mipmapData, additionalUsageFlags);
             commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                               0, VK_ACCESS_TRANSFER_WRITE_BIT,
                                               VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
@@ -600,14 +600,14 @@ namespace BZ {
         }
     }
 
-    Texture2D::Texture2D(uint32 width, uint32 height, uint32 layers, uint32 mipLevels, TextureFormat format, bool usedInTransfers) :
+    Texture2D::Texture2D(uint32 width, uint32 height, uint32 layers, uint32 mipLevels, TextureFormat format, VkImageUsageFlags additionalUsageFlags) :
         Texture(format) {
 
         dimensions.x = width;
         dimensions.y = height;
         this->mipLevels = mipLevels;
         this->layers = layers;
-        createImage(false, usedInTransfers, MipmapData::Options::DoNothing);
+        createImage(false, MipmapData::Options::DoNothing, additionalUsageFlags);
     }
 
     Texture2D::Texture2D(VkImage vkImage, uint32 width, uint32 height, VkFormat vkFormat) :
@@ -623,12 +623,12 @@ namespace BZ {
         mipLevels = 1;
     }
 
-    void Texture2D::createImage(bool hasData, bool forceTransferBits, MipmapData mipmapData) {
+    void Texture2D::createImage(bool hasData, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent.width = static_cast<uint32_t>(dimensions.x);
-        imageInfo.extent.height = static_cast<uint32_t>(dimensions.y);
+        imageInfo.extent.width = dimensions.x;
+        imageInfo.extent.height = dimensions.y;
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = mipLevels;
         imageInfo.arrayLayers = layers;
@@ -653,9 +653,7 @@ namespace BZ {
             imageInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
         }
 
-        if(forceTransferBits) {
-            imageInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        }
+        imageInfo.usage |= additionalUsageFlags;
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -665,12 +663,12 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
-    Ref<TextureCube> TextureCube::create(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData) {
+    Ref<TextureCube> TextureCube::create(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
         auto &assetsPath = Application::get().getAssetsPath();
-        return MakeRef<TextureCube>((assetsPath + basePath).c_str(), fileNames, format, mipmapData);
+        return MakeRef<TextureCube>((assetsPath + basePath).c_str(), fileNames, format, mipmapData, additionalUsageFlags);
     }
 
-    TextureCube::TextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData) :
+    TextureCube::TextureCube(const char *basePath, const char *fileNames[6], TextureFormat format, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) :
         Texture(format) {
 
         layers = 6;
@@ -699,7 +697,7 @@ namespace BZ {
             dimensions.x = fileDatas[0].width;
             dimensions.y = fileDatas[0].height;
 
-            createImage(true, mipmapData);
+            createImage(true, mipmapData, additionalUsageFlags);
             commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                               0, VK_ACCESS_TRANSFER_WRITE_BIT,
                                               VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
@@ -746,7 +744,7 @@ namespace BZ {
                 mipLevels = 1;
             }
 
-            createImage(true, mipmapData);
+            createImage(true, mipmapData, additionalUsageFlags);
             commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                               0, VK_ACCESS_TRANSFER_WRITE_BIT,
                                               VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, mipLevels);
@@ -777,7 +775,7 @@ namespace BZ {
         }
     }
 
-    void TextureCube::createImage(bool hasData, MipmapData mipmapData) {
+    void TextureCube::createImage(bool hasData, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -804,6 +802,7 @@ namespace BZ {
         }
 
         imageInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        imageInfo.usage |= additionalUsageFlags;
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -813,37 +812,58 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
-    Ref<TextureView> TextureView::create(const Ref<Texture2D> &texture2D) {
-        return MakeRef<TextureView>(texture2D, 0, texture2D->getMipLevels());
-    }
-
-    Ref<TextureView> TextureView::create(const Ref<Texture2D> &texture2D, uint32 baseMip, uint32 mipCount) {
-        return MakeRef<TextureView>(texture2D, baseMip, mipCount);
-    }
-
-    Ref<TextureView> TextureView::createLayered(const Ref<Texture2D>& texture2D, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount) {
+    Ref<TextureView> TextureView::create(const Ref<Texture2D> &texture2D, uint32 baseLayer, int layerCount, uint32 baseMip, int mipCount) {
         return MakeRef<TextureView>(texture2D, baseLayer, layerCount, baseMip, mipCount);
     }
 
-    Ref<TextureView> TextureView::createCube(const Ref<TextureCube> &textureCube) {
+    Ref<TextureView> TextureView::create(const Ref<TextureCube> &textureCube) {
         return MakeRef<TextureView>(textureCube);
     }
 
-    TextureView::TextureView(const Ref<Texture2D> &texture2D, uint32 baseMip, uint32 mipCount) :
+    TextureView::TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, int layerCount, uint32 baseMip, int mipCount) :
         texture(texture2D) {
         BZ_ASSERT_CORE(texture, "Invalid Texture!");
-        init(VK_IMAGE_VIEW_TYPE_2D, texture2D->getHandle().imageHandle, 0, 1, baseMip, mipCount);
-    }
 
-    TextureView::TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount) :
-        texture(texture2D) {
-        BZ_ASSERT_CORE(texture, "Invalid Texture!");
-        init(VK_IMAGE_VIEW_TYPE_2D_ARRAY, texture2D->getHandle().imageHandle, baseLayer, layerCount, baseMip, mipCount);
+        BZ_ASSERT_CORE(baseLayer < texture2D->getLayers(), "Invalid baseLayer!");
+        BZ_ASSERT_CORE(layerCount != 0, "Invalid layerCount!");
+        BZ_ASSERT_CORE(layerCount < 0 || baseLayer + layerCount <= texture2D->getLayers(), "Invalid baseLayer + layerCount!");
+
+        BZ_ASSERT_CORE(baseMip < texture2D->getMipLevels(), "Invalid baseMip!");
+        BZ_ASSERT_CORE(mipCount != 0, "Invalid mipCount!");
+        BZ_ASSERT_CORE(mipCount < 0 || baseMip + mipCount <= texture2D->getMipLevels(), "Invalid baseMip + mipCount!");
+
+        uint32 realLayerCount;
+        if(layerCount < 0) {
+            realLayerCount = texture2D->getLayers();
+        }
+        else {
+            realLayerCount = layerCount;
+        }
+
+        VkImageViewType type;
+        if(realLayerCount == 1) {
+            type = VK_IMAGE_VIEW_TYPE_2D;
+        }
+        else {
+            type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        }
+
+        uint32 realMipCount;
+        if(mipCount < 0) {
+            realMipCount = texture2D->getMipLevels();
+        }
+        else {
+            realMipCount = mipCount;
+        }
+
+        init(type, texture2D->getHandle().imageHandle, baseLayer, realLayerCount, baseMip, realMipCount);
     }
 
     TextureView::TextureView(const Ref<TextureCube> &textureCube) :
         texture(textureCube) {
         BZ_ASSERT_CORE(texture, "Invalid Texture!");
+        BZ_ASSERT_CORE(textureCube->getLayers() == 6, "Can't create a Cube TextureView with a Texture with layers != 6!");
+
         init(VK_IMAGE_VIEW_TYPE_CUBE, textureCube->getHandle().imageHandle, 0, 6, 0, textureCube->getMipLevels());
     }
 
@@ -868,9 +888,9 @@ namespace BZ {
         else if (texture->getFormat().isDepth()) {
             imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         }
-        //if (texture->getFormat().isStencil()) {
-        //    imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-        //}
+        if (texture->getFormat().isStencil()) {
+            imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
 
         imageViewCreateInfo.subresourceRange.baseMipLevel = baseMip;
         imageViewCreateInfo.subresourceRange.levelCount = mipCount;

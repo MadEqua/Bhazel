@@ -124,7 +124,7 @@ namespace BZ {
     static uint64 initTexture(const Ref<Texture2D>& texture) {
         uint64 hash = reinterpret_cast<uint64>(texture.get()); //TODO: something better
         if (rendererData.texDataStorage.find(hash) == rendererData.texDataStorage.end()) {
-            auto texViewRef = TextureView::create(texture);
+            auto texViewRef = TextureView::create(texture, 0, 1);
             auto descSetRef = &DescriptorSet::get(rendererData.textureDescriptorSetLayout);
             descSetRef->setCombinedTextureSampler(texViewRef, rendererData.sampler, 0);
             rendererData.texDataStorage.emplace(hash, TexData{ texViewRef, descSetRef });
