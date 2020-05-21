@@ -99,6 +99,7 @@ namespace BZ {
         BufferPtr indexBufferPtr;
         BufferPtr constantBufferPtr;
 
+        Ref<PipelineLayout> pipelineLayout;
         Ref<PipelineState> pipelineState;
         Ref<Texture2D> whiteTexture;
         Ref<Sampler> sampler;
@@ -135,10 +136,6 @@ namespace BZ {
     void Renderer2D::init() {
         BZ_PROFILE_FUNCTION();
 
-        PipelineStateData pipelineStateData;
-        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/Renderer2DVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                    { "Bhazel/shaders/bin/Renderer2DFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-
         rendererData.vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 4 * sizeof(VertexData) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, vertexLayout);
         rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 6 * sizeof(uint32) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, indexLayout);
 
@@ -172,7 +169,8 @@ namespace BZ {
         blendingStateAttachment.alphaBlendingOperation = VK_BLEND_OP_ADD;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
-        pipelineStateData.dataLayout = vertexLayout;
+        rendererData.pipelineLayout = 
+            PipelineLayout::create({ rendererData.constantsDescriptorSetLayout, rendererData.textureDescriptorSetLayout });
 
         //Push constants are used to pass tint and alpha values
         //PushConstantDesc pushConstantDesc;
@@ -180,15 +178,16 @@ namespace BZ {
         //pushConstantDesc.size = sizeof(glm::vec4);
         //pushConstantDesc.shaderStageMask = flagsToMask(ShaderStageFlag::Fragment);
 
-        //pipelineStateData.pushConstantDescs = { pushConstantDesc };
-
+        PipelineStateData pipelineStateData;
+        pipelineStateData.dataLayout = vertexLayout;
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/Renderer2DVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/Renderer2DFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
+        pipelineStateData.layout = rendererData.pipelineLayout;
         pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
-        pipelineStateData.descriptorSetLayouts = { rendererData.constantsDescriptorSetLayout, rendererData.textureDescriptorSetLayout };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
         pipelineStateData.subPassIndex = 0;
-
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
 
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
@@ -207,6 +206,7 @@ namespace BZ {
 
         rendererData.texDataStorage.clear();
 
+        rendererData.pipelineLayout.reset();
         rendererData.pipelineState.reset();
         rendererData.sampler.reset();
         rendererData.whiteTexture.reset();
@@ -287,7 +287,7 @@ namespace BZ {
 
             glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
             memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
-            commandBuffer.bindDescriptorSet(*rendererData.constantsDescriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+            commandBuffer.bindDescriptorSet(*rendererData.constantsDescriptorSet, rendererData.pipelineLayout, 0, nullptr, 0);
 
             commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
             commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
@@ -342,7 +342,7 @@ namespace BZ {
                 if(texChanged || isLastIteration) {
                     if(currentBoundTexHash != currentBatchTexHash) {
                         const TexData& texData = rendererData.texDataStorage[currentBatchTexHash];
-                        commandBuffer.bindDescriptorSet(*texData.descriptorSet, rendererData.pipelineState, 1, nullptr, 0);
+                        commandBuffer.bindDescriptorSet(*texData.descriptorSet, rendererData.pipelineLayout, 1, nullptr, 0);
                         currentBoundTexHash = currentBatchTexHash;
                         rendererData.stats.descriptorSetBindCount++;
                     }

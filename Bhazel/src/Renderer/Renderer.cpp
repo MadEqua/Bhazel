@@ -104,6 +104,7 @@ namespace BZ {
         Ref<DescriptorSetLayout> passDescriptorSetLayoutForShadowPass;
         Ref<DescriptorSetLayout> materialDescriptorSetLayout;
         Ref<DescriptorSetLayout> entityDescriptorSetLayout;
+        Ref<PipelineLayout> pipelineLayout;
 
         DescriptorSet *globalDescriptorSet;
         DescriptorSet *passDescriptorSet;
@@ -114,6 +115,7 @@ namespace BZ {
         Ref<Sampler> brdfLookupSampler;
         Ref<Sampler> shadowSampler;
 
+        Ref<PipelineLayout> shadowPassPipelineLayout;
         Ref<PipelineState> colorPassPipelineState;
         Ref<PipelineState> skyBoxPipelineState;
         Ref<PipelineState> shadowPassPipelineState;
@@ -150,10 +152,10 @@ namespace BZ {
         rendererData.sceneToRender = nullptr;
 
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            SCENE_CONSTANT_BUFFER_SIZE + PASS_CONSTANT_BUFFER_SIZE + 
-            MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE +
-            POST_PROCESS_CONSTANT_BUFFER_SIZE,
-            MemoryType::CpuToGpu);
+                                                     SCENE_CONSTANT_BUFFER_SIZE + PASS_CONSTANT_BUFFER_SIZE + 
+                                                     MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE +
+                                                     POST_PROCESS_CONSTANT_BUFFER_SIZE,
+                                                     MemoryType::CpuToGpu);
 
         rendererData.sceneConstantBufferPtr = rendererData.constantBuffer->map(0);
         rendererData.passConstantBufferPtr = rendererData.sceneConstantBufferPtr + PASS_CONSTANT_BUFFER_OFFSET;
@@ -186,6 +188,10 @@ namespace BZ {
         rendererData.entityDescriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, 1 } });
 
+        rendererData.pipelineLayout = PipelineLayout::create({ rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
+                                                               rendererData.passDescriptorSetLayout, rendererData.materialDescriptorSetLayout,
+                                                               rendererData.entityDescriptorSetLayout });
+
         rendererData.entityDescriptorSet = &DescriptorSet::get(rendererData.entityDescriptorSetLayout);
         rendererData.entityDescriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, ENTITY_CONSTANT_BUFFER_OFFSET, sizeof(EntityConstantBufferData));
 
@@ -201,37 +207,6 @@ namespace BZ {
 
     void Renderer::initShadowPassData() {
         BZ_PROFILE_FUNCTION();
-
-        rendererData.passDescriptorSetLayoutForShadowPass =
-            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, SHADOW_MAPPING_CASCADE_COUNT } });
-
-        PipelineStateData pipelineStateData;
-        pipelineStateData.dataLayout = vertexDataLayout;
-
-        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/ShadowPassVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                    { "Bhazel/shaders/bin/ShadowPassGeo.spv", VK_SHADER_STAGE_GEOMETRY_BIT } });
-
-        pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
-                                                   rendererData.passDescriptorSetLayoutForShadowPass, rendererData.materialDescriptorSetLayout,
-                                                   rendererData.entityDescriptorSetLayout };
-        pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
-
-        //To disable clipping on z axis. Geometry behind "light camera" will still cast shadows.
-        pipelineStateData.rasterizerState.enableDepthClamp = true;
-
-        //To avoid shadow acne.
-        pipelineStateData.rasterizerState.enableDepthBias = true;
-        //pipelineStateData.rasterizerState.depthBiasConstantFactor = 0.0f;
-        //pipelineStateData.rasterizerState.depthBiasSlopeFactor = 0.0f;
-
-        DepthStencilState depthStencilState;
-        depthStencilState.enableDepthTest = true;
-        depthStencilState.enableDepthWrite = true;
-        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
-        pipelineStateData.depthStencilState = depthStencilState;
-
-        pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_DEPTH_BIAS };
 
         AttachmentDescription depthAttachmentDesc;
         depthAttachmentDesc.format = VK_FORMAT_D32_SFLOAT;
@@ -258,9 +233,38 @@ namespace BZ {
         dependency.dependencyFlags = 0;
 
         rendererData.shadowRenderPass = RenderPass::create({ depthAttachmentDesc }, { subPassDesc }, { dependency });
+
+        rendererData.passDescriptorSetLayoutForShadowPass =
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, SHADOW_MAPPING_CASCADE_COUNT } });
+
+       rendererData.shadowPassPipelineLayout = PipelineLayout::create({ rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
+                                                                        rendererData.passDescriptorSetLayoutForShadowPass, rendererData.materialDescriptorSetLayout,
+                                                                        rendererData.entityDescriptorSetLayout });
+        DepthStencilState depthStencilState;
+        depthStencilState.enableDepthTest = true;
+        depthStencilState.enableDepthWrite = true;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+
+        RasterizerState rasterizerState;
+        //To disable clipping on z axis. Geometry behind "light camera" will still cast shadows.
+        rasterizerState.enableDepthClamp = true;
+        //To avoid shadow acne.
+        rasterizerState.enableDepthBias = true;
+        //rasterizerState.depthBiasConstantFactor = 0.0f;
+        //rasterizerState.depthBiasSlopeFactor = 0.0f;
+
+        PipelineStateData pipelineStateData;
+        pipelineStateData.dataLayout = vertexDataLayout;
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/ShadowPassVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/ShadowPassGeo.spv", VK_SHADER_STAGE_GEOMETRY_BIT } });
+        pipelineStateData.layout = rendererData.shadowPassPipelineLayout;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 0.0f, 1.0f } };
+        pipelineStateData.scissorRects = { { 0u, 0u, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } };
+        pipelineStateData.rasterizerState = rasterizerState;
+        pipelineStateData.depthStencilState = depthStencilState;
+        pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_DEPTH_BIAS };
         pipelineStateData.renderPass = rendererData.shadowRenderPass;
         pipelineStateData.subPassIndex = 0;
-
         rendererData.shadowPassPipelineState = PipelineState::create(pipelineStateData);
 
         rendererData.passDescriptorSetForShadowPass = &DescriptorSet::get(rendererData.passDescriptorSetLayoutForShadowPass);
@@ -284,38 +288,6 @@ namespace BZ {
     void Renderer::initColorPassData() {
         BZ_PROFILE_FUNCTION();
 
-        PipelineStateData pipelineStateData;
-        pipelineStateData.dataLayout = vertexDataLayout;
-
-        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/RendererVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                    { "Bhazel/shaders/bin/RendererFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-
-        pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
-                                                   rendererData.passDescriptorSetLayout, rendererData.materialDescriptorSetLayout,
-                                                   rendererData.entityDescriptorSetLayout };
-
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
-
-        RasterizerState rasterizerState;
-        rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizerState.frontFaceCounterClockwise = true;
-        pipelineStateData.rasterizerState = rasterizerState;
-
-        DepthStencilState depthStencilState;
-        depthStencilState.enableDepthTest = true;
-        depthStencilState.enableDepthWrite = true;
-        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
-        pipelineStateData.depthStencilState = depthStencilState;
-
-        BlendingState blendingState;
-        BlendingStateAttachment blendingStateAttachment;
-        blendingState.attachmentBlendingStates = { blendingStateAttachment };
-        pipelineStateData.blendingState = blendingState;
-
-        //Create the RenderPass
         AttachmentDescription colorAttachmentDesc;
         colorAttachmentDesc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
         colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -338,11 +310,11 @@ namespace BZ {
         depthStencilAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         depthStencilAttachmentDesc.clearValue.depthStencil.depth = 1.0f;
         depthStencilAttachmentDesc.clearValue.depthStencil.stencil = 0;
-        
+
         SubPassDescription subPassDesc;
         subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
         subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-        
+
         //Wait on ShadowPass.
         SubPassDependency dependencyBefore;
         dependencyBefore.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
@@ -362,16 +334,39 @@ namespace BZ {
         //dependencyAfter.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         //dependencyAfter.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         //dependencyAfter.dependencyFlags = 0;
-        
-        rendererData.colorRenderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, 
-                                                          { subPassDesc },
-                                                          { dependencyBefore });
 
+        rendererData.colorRenderPass = RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc }, { dependencyBefore });
+
+        RasterizerState rasterizerState;
+        rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
+        rasterizerState.frontFaceCounterClockwise = true;
+
+        DepthStencilState depthStencilState;
+        depthStencilState.enableDepthTest = true;
+        depthStencilState.enableDepthWrite = true;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+
+        BlendingState blendingState;
+        BlendingStateAttachment blendingStateAttachment;
+        blendingState.attachmentBlendingStates = { blendingStateAttachment };
+
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
+
+        PipelineStateData pipelineStateData;
+        pipelineStateData.dataLayout = vertexDataLayout;
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/RendererVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/RendererFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
+
+        pipelineStateData.layout = rendererData.pipelineLayout;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
+        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
+        pipelineStateData.rasterizerState = rasterizerState;
+        pipelineStateData.depthStencilState = depthStencilState;
+        pipelineStateData.blendingState = blendingState;
         pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
-
         rendererData.colorPassPipelineState = PipelineState::create(pipelineStateData);
-
 
         auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, colorAttachmentDesc.format, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
         rendererData.colorTexView = TextureView::create(colorTexture);
@@ -399,39 +394,35 @@ namespace BZ {
     }
 
     void Renderer::initSkyBoxData() {
-        PipelineStateData pipelineStateData;
-        pipelineStateData.dataLayout = vertexDataLayout;
-
-        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/SkyBoxVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
-                                                    { "Bhazel/shaders/bin/SkyBoxFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-
-        pipelineStateData.descriptorSetLayouts = { rendererData.globalDescriptorSetLayout, rendererData.sceneDescriptorSetLayout,
-                                                   rendererData.passDescriptorSetLayout, rendererData.materialDescriptorSetLayout,
-                                                   rendererData.entityDescriptorSetLayout };
-
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
+        BZ_PROFILE_FUNCTION();
 
         RasterizerState rasterizerState;
         rasterizerState.cullMode = VK_CULL_MODE_NONE;
-        pipelineStateData.rasterizerState = rasterizerState;
 
         DepthStencilState depthStencilState;
         depthStencilState.enableDepthTest = true;
         depthStencilState.enableDepthWrite = false;
         depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
-        pipelineStateData.depthStencilState = depthStencilState;
 
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
-        pipelineStateData.blendingState = blendingState;
 
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
+
+        PipelineStateData pipelineStateData;
+        pipelineStateData.dataLayout = vertexDataLayout;
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/SkyBoxVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/SkyBoxFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
+        pipelineStateData.layout = rendererData.pipelineLayout;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
+        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
+        pipelineStateData.rasterizerState = rasterizerState;
+        pipelineStateData.depthStencilState = depthStencilState;
+        pipelineStateData.blendingState = blendingState;
         pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
-
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
     }
 
@@ -446,10 +437,12 @@ namespace BZ {
         rendererData.passDescriptorSetLayoutForShadowPass.reset();
         rendererData.materialDescriptorSetLayout.reset();
         rendererData.entityDescriptorSetLayout.reset();
+        rendererData.pipelineLayout.reset();
 
         rendererData.colorPassPipelineState.reset();
         rendererData.skyBoxPipelineState.reset();
         rendererData.shadowPassPipelineState.reset();
+        rendererData.shadowPassPipelineLayout.reset();
 
         rendererData.defaultSampler.reset();
         rendererData.brdfLookupSampler.reset();
@@ -491,7 +484,7 @@ namespace BZ {
                 lightOffsetArr[i] = lightOffset;
             }
             rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSetForShadowPass,
-                rendererData.shadowPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
+                rendererData.shadowPassPipelineLayout, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
 
             rendererData.commandBuffer->beginRenderPass(rendererData.shadowRenderPass, dirLight.shadowMapFramebuffer);
             drawEntities(scene, true);
@@ -506,7 +499,7 @@ namespace BZ {
 
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
         rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSet,
-            rendererData.colorPassPipelineState, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
+            rendererData.pipelineLayout, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
         rendererData.commandBuffer->beginRenderPass(rendererData.colorRenderPass, rendererData.colorFramebuffer);
 
@@ -529,7 +522,7 @@ namespace BZ {
             if (!shadowPass || entity.castShadow) {
                 uint32 entityOffset = entityIndex * sizeof(EntityConstantBufferData);
                 rendererData.commandBuffer->bindDescriptorSet(*rendererData.entityDescriptorSet,
-                    shadowPass ? rendererData.shadowPassPipelineState : rendererData.colorPassPipelineState,
+                    shadowPass ? rendererData.shadowPassPipelineLayout : rendererData.pipelineLayout,
                     RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
 
                 drawMesh(entity.mesh, entity.overrideMaterial, shadowPass);
@@ -552,7 +545,7 @@ namespace BZ {
 
                 uint32 materialOffset = rendererData.materialOffsetMap[materialToUse];
                 rendererData.commandBuffer->bindDescriptorSet(materialToUse.getDescriptorSet(),
-                    shadowPass ? rendererData.shadowPassPipelineState : rendererData.colorPassPipelineState,
+                    shadowPass ? rendererData.shadowPassPipelineLayout : rendererData.pipelineLayout,
                     RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
             }
 
@@ -761,8 +754,8 @@ namespace BZ {
             rendererData.commandBuffer = &CommandBuffer::getAndBegin(QueueProperty::Graphics);
 
             //Bind stuff that will not change.
-            rendererData.commandBuffer->bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.colorPassPipelineState, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
-            rendererData.commandBuffer->bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.colorPassPipelineState, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
+            rendererData.commandBuffer->bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.pipelineLayout, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
+            rendererData.commandBuffer->bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.pipelineLayout, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
 
             shadowPass(*rendererData.sceneToRender);
             colorPass(*rendererData.sceneToRender);

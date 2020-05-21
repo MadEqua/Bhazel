@@ -54,11 +54,13 @@ namespace BZ {
             tex2Framebuffers[i].reset();
         }
 
+        blurPipelineLayout.reset();
         blurPipelineState.reset();
         blurRenderPass.reset();
         blurDescriptorSetLayout.reset();
 
         finalDescriptorSetLayout.reset();
+        finalPipelineLayout.reset();
         finalPipelineState.reset();
         finalRenderPass.reset();
         finalFramebuffer.reset();
@@ -183,6 +185,8 @@ namespace BZ {
 
         blurRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc}, { dependencyBefore });
 
+        blurPipelineLayout = PipelineLayout::create({ postProcessor.getDescriptorSetLayout(), blurDescriptorSetLayout },
+                                                    { { VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32) * 2 } });
         //Half the input texture.
         uint32 w = tex1->getWidth();
         uint32 h = tex1->getHeight();
@@ -191,8 +195,7 @@ namespace BZ {
         blurPipelineStateData.dataLayout = {};
         blurPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                         { "Bhazel/shaders/bin/BloomBlurAndSumFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-        blurPipelineStateData.descriptorSetLayouts = { postProcessor.getDescriptorSetLayout(), blurDescriptorSetLayout };
-        blurPipelineStateData.pushConstants = { { VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32) * 2 } };
+        blurPipelineStateData.layout = blurPipelineLayout;
         blurPipelineStateData.blendingState = blendingState;
         blurPipelineStateData.viewports = { {} };
         blurPipelineStateData.scissorRects = { { 0, 0, w, h } }; //Scissor with the largest mip dimensions.
@@ -235,8 +238,7 @@ namespace BZ {
 
     void Bloom::blurPass(CommandBuffer &commandBuffer) {
         commandBuffer.bindPipelineState(blurPipelineState);
-
-        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), blurPipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), blurPipelineLayout, 0, nullptr, 0);
 
         //One horizontal pass and another vertical for each mip, ping-ponging between tex1 and tex2.
         //The vertical (second) pass will simultaneously do a sum of the current mip with the previous one, gathering all data on the top mip.
@@ -244,11 +246,10 @@ namespace BZ {
 
             for(int mip = BLOOM_TEXTURE_MIPS - 1; mip >= 0; --mip) {
                 uint32 push[] = { blurPass, static_cast<uint32>(mip) };
-
-                commandBuffer.bindDescriptorSet(blurPass ? *blurDescriptorSets2[mip] : *blurDescriptorSets1[mip], blurPipelineState, 1, nullptr, 0);
+                commandBuffer.bindDescriptorSet(blurPass ? *blurDescriptorSets2[mip] : *blurDescriptorSets1[mip], blurPipelineLayout, 1, nullptr, 0);
                 commandBuffer.beginRenderPass(blurRenderPass, blurPass ? tex1Framebuffers[mip] : tex2Framebuffers[mip]);
                 commandBuffer.setViewports(0, &viewports[mip], 1);
-                commandBuffer.setPushConstants(blurPipelineState, VK_SHADER_STAGE_FRAGMENT_BIT, &push, sizeof(push), 0);
+                commandBuffer.setPushConstants(blurPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, &push, sizeof(push), 0);
                 commandBuffer.draw(3, 1, 0, 0);
                 commandBuffer.endRenderPass();
 
@@ -311,13 +312,15 @@ namespace BZ {
 
         finalRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependencyBefore });
 
+        finalPipelineLayout = PipelineLayout::create({ postProcessor.getDescriptorSetLayout(), finalDescriptorSetLayout });
+
         const auto INPUT_DIMENSIONS = postProcessor.getInputTextureDimensions();
         const auto INPUT_DIMENSIONS_F = postProcessor.getInputTextureDimensionsFloat();
 
         PipelineStateData finalPipelineStateData;
         finalPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                          { "Bhazel/shaders/bin/BloomFinalFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-        finalPipelineStateData.descriptorSetLayouts = { postProcessor.getDescriptorSetLayout(), finalDescriptorSetLayout };
+        finalPipelineStateData.layout = finalPipelineLayout;
         finalPipelineStateData.blendingState = blendingState;
         finalPipelineStateData.viewports = { {0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y } };
         finalPipelineStateData.scissorRects = { { 0, 0, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y} };
@@ -334,8 +337,8 @@ namespace BZ {
     void Bloom::finalPass(CommandBuffer &commandBuffer) {
         commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
         commandBuffer.bindPipelineState(finalPipelineState);
-        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), finalPipelineState, 0, nullptr, 0);
-        commandBuffer.bindDescriptorSet(*finalDescriptorSet, finalPipelineState, 1, nullptr, 0);
+        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), finalPipelineLayout, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(*finalDescriptorSet, finalPipelineLayout, 1, nullptr, 0);
         commandBuffer.draw(3, 1, 0, 0);
         commandBuffer.endRenderPass();
     }
@@ -353,7 +356,7 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/ToneMapFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-        pipelineStateData.descriptorSetLayouts = { postProcessor.getDescriptorSetLayout() };
+        pipelineStateData.layout = postProcessor.getPipelineLayout();
         pipelineStateData.viewports = { { 0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y } };
         pipelineStateData.blendingState = blendingState;
@@ -369,7 +372,6 @@ namespace BZ {
      void ToneMap::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
         commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
         commandBuffer.bindPipelineState(pipelineState);
-        commandBuffer.bindDescriptorSet(postProcessor.getDescriptorSet(), pipelineState, 0, nullptr, 0);
         commandBuffer.draw(3, 1, 0, 0);
         commandBuffer.endRenderPass();
     }
@@ -397,6 +399,8 @@ namespace BZ {
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
                                           { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
+        pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
+
         descriptorSet = &DescriptorSet::get(descriptorSetLayout);
         descriptorSet->setCombinedTextureSampler(colorTexView, sampler, 0);
         descriptorSet->setConstantBuffer(constantBuffer, 1, bufferOffset, sizeof(PostProcessConstantBufferData));
@@ -410,6 +414,7 @@ namespace BZ {
 
         sampler.reset();
         descriptorSetLayout.reset();
+        pipelineLayout.reset();
 
         toneMap.destroy();
         bloom.destroy();
@@ -428,9 +433,7 @@ namespace BZ {
     }
 
     void PostProcessor::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
-        //TODO: Bind it here only once instead of relying on others to do it, if the PipelineLayout was separated from the PipelineState.
-        //bindDescriptorSet() would only take the PipelineLayout as argument and that should be the same for all PostProcessing passes.
-        //commandBuffer.bindDescriptorSet(*descriptorSet, pipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(*descriptorSet, pipelineLayout, 0, nullptr, 0);
 
         addBarrier(commandBuffer);
         bloom.render(commandBuffer);

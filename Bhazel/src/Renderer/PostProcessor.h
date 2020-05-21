@@ -8,6 +8,7 @@ namespace BZ {
 
     class DescriptorSetLayout;
     class DescriptorSet;
+    class PipelineLayout;
     class RenderPass;
     class Framebuffer;
     class CommandBuffer;
@@ -76,6 +77,7 @@ namespace BZ {
         //Viewports to render into each of the mips.
         VkViewport viewports[BLOOM_TEXTURE_MIPS];
 
+        Ref<PipelineLayout> blurPipelineLayout;
         Ref<PipelineState> blurPipelineState;
         Ref<RenderPass> blurRenderPass;
 
@@ -83,6 +85,7 @@ namespace BZ {
         DescriptorSet *blurDescriptorSets1[BLOOM_TEXTURE_MIPS];
         DescriptorSet *blurDescriptorSets2[BLOOM_TEXTURE_MIPS];
 
+        Ref<PipelineLayout> finalPipelineLayout;
         Ref<PipelineState> finalPipelineState;
         Ref<RenderPass> finalRenderPass;
         Ref<Framebuffer> finalFramebuffer;
@@ -133,6 +136,7 @@ namespace BZ {
 
         const Ref<TextureView> &getInputTexView() const { return inputTexView; }
         const Ref<Sampler> &getSampler() const { return sampler; }
+        const Ref<PipelineLayout> &getPipelineLayout() const { return pipelineLayout; }
         const Ref<DescriptorSetLayout> &getDescriptorSetLayout() const { return descriptorSetLayout; }
         const DescriptorSet& getDescriptorSet() const { return *descriptorSet; }
 
@@ -148,6 +152,7 @@ namespace BZ {
 
         //Descriptors to the input texture and the constant buffer.
         Ref<DescriptorSetLayout> descriptorSetLayout;
+        Ref<PipelineLayout> pipelineLayout;
         DescriptorSet *descriptorSet;
         
         Bloom bloom;

@@ -15,6 +15,7 @@ namespace BZ {
     class Buffer;
     class DescriptorSet;
     class PipelineState;
+    class PipelineLayout;
 
     /*
     * CommandPools create the CommandBuffers.
@@ -47,10 +48,10 @@ namespace BZ {
         void bindPipelineState(const Ref<PipelineState> &pipelineState);
         //void bindDescriptorSets(const Ref<DescriptorSet> &descriptorSet);
         void bindDescriptorSet(const DescriptorSet &descriptorSet,
-                               const Ref<PipelineState> &pipelineState, uint32 setIndex,
+                               const Ref<PipelineLayout> &pipelineLayout, uint32 setIndex,
                                uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
 
-        void setPushConstants(const Ref<PipelineState> &pipelineState, VkShaderStageFlags shaderStageFlags,
+        void setPushConstants(const Ref<PipelineLayout> &pipelineLayout, VkShaderStageFlags shaderStageFlags,
                               const void* data, uint32 size, uint32 offset);
 
         void draw(uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);

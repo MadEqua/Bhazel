@@ -8,6 +8,27 @@
 
 namespace BZ {
 
+    class Shader;
+    class RenderPass;
+    class DescriptorSetLayout;
+
+    class PipelineLayout : public GpuObject<VkPipelineLayout> {
+    public:
+        static Ref<PipelineLayout> create(const std::initializer_list<Ref<DescriptorSetLayout>> &descriptorSetLayouts,
+                                          const std::initializer_list<VkPushConstantRange> &pushConstants = {});
+
+        PipelineLayout(const std::initializer_list<Ref<DescriptorSetLayout>> &descriptorSetLayouts,
+                       const std::initializer_list<VkPushConstantRange> &pushConstants = {});
+        ~PipelineLayout();
+
+        BZ_NON_COPYABLE(PipelineLayout);
+
+    private:
+        std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
+    };
+
+
+    /*-------------------------------------------------------------------------------------------*/
     struct RasterizerState {
         bool enableDepthClamp = false;
         bool enableRasterizerDiscard = false;
@@ -68,10 +89,6 @@ namespace BZ {
         glm::vec4 blendingConstants = {};
     };
 
-    class Shader;
-    class RenderPass;
-    class DescriptorSetLayout;
-
     struct PipelineStateData {
 
         //Supporting a single vertex buffer.
@@ -79,8 +96,7 @@ namespace BZ {
 
         Ref<Shader> shader;
         VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        std::vector<Ref<DescriptorSetLayout>> descriptorSetLayouts;
-        std::vector<VkPushConstantRange> pushConstants;
+        Ref<PipelineLayout> layout;
         std::vector<VkViewport> viewports;
         std::vector<VkRect2D> scissorRects;
         RasterizerState rasterizerState;
@@ -92,12 +108,7 @@ namespace BZ {
         uint32 subPassIndex = 0;
     };
 
-    struct PipelineStateHandles {
-        VkPipeline pipeline;
-        VkPipelineLayout pipelineLayout;
-    };
-
-    class PipelineState : public GpuObject<PipelineStateHandles> {
+    class PipelineState : public GpuObject<VkPipeline> {
     public:
         static Ref<PipelineState> create(PipelineStateData &data);
 

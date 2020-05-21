@@ -160,12 +160,12 @@ namespace BZ {
     }
 
     void CommandBuffer::bindPipelineState(const Ref<PipelineState> &pipelineState) {
-        vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState->getHandle().pipeline);
+        vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState->getHandle());
         commandCount++;
     }
 
     void CommandBuffer::bindDescriptorSet(const DescriptorSet &descriptorSet,
-        const Ref<PipelineState> &pipelineState, uint32 setIndex,
+        const Ref<PipelineLayout> &pipelineLayout, uint32 setIndex,
         uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
 
         BZ_ASSERT_CORE(dynamicBufferCount <= MAX_DESCRIPTOR_DYNAMIC_OFFSETS && dynamicBufferCount <= descriptorSet.getDynamicBufferCount(),
@@ -196,17 +196,17 @@ namespace BZ {
         }
 
         VkDescriptorSet descSets[] = { descriptorSet.getHandle() };
-        vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineState->getHandle().pipelineLayout, setIndex,
+        vkCmdBindDescriptorSets(handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->getHandle(), setIndex,
                                 1, descSets, index, finalDynamicBufferOffsets);
         commandCount++;
     }
 
-    void CommandBuffer::setPushConstants(const Ref<PipelineState> &pipelineState, VkShaderStageFlags shaderStageFlags, const void* data, uint32 size, uint32 offset) {
+    void CommandBuffer::setPushConstants(const Ref<PipelineLayout> &pipelineLayout, VkShaderStageFlags shaderStageFlags, const void* data, uint32 size, uint32 offset) {
         BZ_ASSERT_CORE(size % 4 == 0, "Size must be a multiple of 4!");
         BZ_ASSERT_CORE(offset % 4 == 0, "Offset must be a multiple of 4!");
         BZ_ASSERT_CORE(size <= MAX_PUSH_CONSTANT_SIZE, "Push constant size must be less or equal than {}. Sending size: {}!", MAX_PUSH_CONSTANT_SIZE, size);
 
-        vkCmdPushConstants(handle, pipelineState->getHandle().pipelineLayout, shaderStageFlags, offset, size, data);
+        vkCmdPushConstants(handle, pipelineLayout->getHandle(), shaderStageFlags, offset, size, data);
         commandCount++;
     }
 

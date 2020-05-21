@@ -12,6 +12,42 @@
 
 namespace BZ {
 
+    Ref<PipelineLayout> PipelineLayout::create(const std::initializer_list<Ref<DescriptorSetLayout>> &descriptorSetLayouts, 
+                                               const std::initializer_list<VkPushConstantRange> &pushConstants) {
+        return MakeRef<PipelineLayout>(descriptorSetLayouts, pushConstants);
+    }
+
+    PipelineLayout::PipelineLayout(const std::initializer_list<Ref<DescriptorSetLayout>> &descriptorSetLayouts, 
+                                   const std::initializer_list<VkPushConstantRange> &pushConstants) :
+        descriptorSetLayouts(descriptorSetLayouts) {
+
+        std::vector<VkDescriptorSetLayout> vkDescriptorSetLayouts(descriptorSetLayouts.size());
+        uint32 idx = 0;
+        for(const auto &layout : descriptorSetLayouts) {
+            vkDescriptorSetLayouts[idx++] = layout->getHandle();
+        }
+
+        for(const auto& desc : pushConstants) {
+            BZ_ASSERT_CORE(desc.size % 4 == 0, "Size must be a multiple of 4!");
+            BZ_ASSERT_CORE(desc.offset % 4 == 0, "Offset must be a multiple of 4!");
+        }
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = static_cast<uint32>(descriptorSetLayouts.size());
+        pipelineLayoutInfo.pSetLayouts = vkDescriptorSetLayouts.data();
+        pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32>(pushConstants.size());
+        pipelineLayoutInfo.pPushConstantRanges = pushConstants.begin();
+
+        BZ_ASSERT_VK(vkCreatePipelineLayout(BZ_GRAPHICS_DEVICE.getHandle(), &pipelineLayoutInfo, nullptr, &handle));
+    }
+
+    PipelineLayout::~PipelineLayout() {
+        vkDestroyPipelineLayout(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
+    }
+    
+
+    /*-------------------------------------------------------------------------------------------*/
     Ref<PipelineState> PipelineState::create(PipelineStateData& data) {
         return MakeRef<PipelineState>(data);
     }
@@ -186,30 +222,8 @@ namespace BZ {
         colorBlendingState.pAttachments = blendAttachmentStates.data();
         memcpy(colorBlendingState.blendConstants, &data.blendingState.blendingConstants[0], 4 * sizeof(float));
 
-        //Descriptor Set Layout setup
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts(data.descriptorSetLayouts.size());
-        idx = 0;
-        for (const auto &layout : data.descriptorSetLayouts) {
-            descriptorSetLayouts[idx++] = layout->getHandle();
-        }
-
-        for (const auto& desc : data.pushConstants) {
-            BZ_ASSERT_CORE(desc.size % 4 == 0, "Size must be a multiple of 4!");
-            BZ_ASSERT_CORE(desc.offset % 4 == 0, "Offset must be a multiple of 4!");
-        }
-
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = static_cast<uint32>(descriptorSetLayouts.size());
-        pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-        pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32>(data.pushConstants.size());
-        pipelineLayoutInfo.pPushConstantRanges = data.pushConstants.data();
-
-        BZ_ASSERT_VK(vkCreatePipelineLayout(BZ_GRAPHICS_DEVICE.getHandle(), &pipelineLayoutInfo, nullptr, &handle.pipelineLayout));
-
         //Shader setup
         std::array<VkPipelineShaderStageCreateInfo, MAX_SHADER_STAGE_COUNT> shaderStagesCreateInfos;
-
         for (uint32 i = 0; i < data.shader->getStageCount(); ++i) {
             VkPipelineShaderStageCreateInfo shaderCreateInfo = {};
             shaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -238,17 +252,16 @@ namespace BZ {
         pipelineInfo.pDepthStencilState = &depthStencilState;
         pipelineInfo.pColorBlendState = &colorBlendingState;
         pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = handle.pipelineLayout;
+        pipelineInfo.layout = data.layout->getHandle();
         pipelineInfo.renderPass = data.renderPass->getHandle();
         pipelineInfo.subpass = data.subPassIndex;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
 
-        BZ_ASSERT_VK(vkCreateGraphicsPipelines(BZ_GRAPHICS_DEVICE.getHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &handle.pipeline));
+        BZ_ASSERT_VK(vkCreateGraphicsPipelines(BZ_GRAPHICS_DEVICE.getHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &handle));
     }
 
     void PipelineState::destroy() {
-        vkDestroyPipeline(BZ_GRAPHICS_DEVICE.getHandle(), handle.pipeline, nullptr);
-        vkDestroyPipelineLayout(BZ_GRAPHICS_DEVICE.getHandle(), handle.pipelineLayout, nullptr);
+        vkDestroyPipeline(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
     }
 }

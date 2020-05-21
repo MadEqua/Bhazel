@@ -35,6 +35,7 @@ namespace BZ {
         Ref<TextureView> fontTextureView;
         Ref<Sampler> fontTextureSampler;
 
+        Ref<PipelineLayout> pipelineLayout;
         Ref<PipelineState> pipelineState;
         DescriptorSet *descriptorSet;
     } rendererData;
@@ -65,92 +66,10 @@ namespace BZ {
         rendererData.fontTextureView.reset();
         rendererData.fontTextureSampler.reset();
 
+        rendererData.pipelineLayout.reset();
         rendererData.pipelineState.reset();
 
         ImGui::DestroyContext();
-    }
-
-    void RendererImGui::onEvent(Event &event) {
-        EventDispatcher dispatcher(event);
-        dispatcher.dispatch<KeyPressedEvent>([](const KeyPressedEvent &event) -> bool {
-            ImGuiIO &io = ImGui::GetIO();
-
-            int keyCode = event.getKeyCode();
-            io.KeysDown[keyCode] = true;
-
-            if(keyCode == BZ_KEY_LEFT_CONTROL || keyCode == BZ_KEY_RIGHT_CONTROL)
-                io.KeyCtrl = true;
-            if(keyCode == BZ_KEY_LEFT_ALT || keyCode == BZ_KEY_RIGHT_ALT)
-                io.KeyAlt = true;
-            if(keyCode == BZ_KEY_LEFT_SHIFT || keyCode == BZ_KEY_RIGHT_SHIFT)
-                io.KeyShift = true;
-            if(keyCode == BZ_KEY_LEFT_SUPER || keyCode == BZ_KEY_RIGHT_SUPER)
-                io.KeySuper = true;
-
-            return false;
-            });
-
-        dispatcher.dispatch<KeyReleasedEvent>([](const KeyReleasedEvent &event) -> bool {
-            ImGuiIO &io = ImGui::GetIO();
-
-            int keyCode = event.getKeyCode();
-            io.KeysDown[keyCode] = false;
-
-            if(keyCode == BZ_KEY_LEFT_CONTROL || keyCode == BZ_KEY_RIGHT_CONTROL)
-                io.KeyCtrl = false;
-            if(keyCode == BZ_KEY_LEFT_ALT || keyCode == BZ_KEY_RIGHT_ALT)
-                io.KeyAlt = false;
-            if(keyCode == BZ_KEY_LEFT_SHIFT || keyCode == BZ_KEY_RIGHT_SHIFT)
-                io.KeyShift = false;
-            if(keyCode == BZ_KEY_LEFT_SUPER || keyCode == BZ_KEY_RIGHT_SUPER)
-                io.KeySuper = false;
-
-            return false;
-            });
-
-        dispatcher.dispatch<KeyTypedEvent>([](const KeyTypedEvent &event) -> bool {
-            ImGuiIO &io = ImGui::GetIO();
-            io.AddInputCharacter(event.getKeyCode());
-            return false;
-            });
-
-        Window &window = Application::get().getWindow();
-        dispatcher.dispatch<MouseMovedEvent>([&window](const MouseMovedEvent &event) -> bool {
-            ImGuiIO &io = ImGui::GetIO();
-            io.MouseHoveredViewport = 0;
-            io.MousePos = ImVec2(static_cast<float>(event.getX()), static_cast<float>(window.getDimensions().y - event.getY()));
-            return false;
-            });
-
-        dispatcher.dispatch<MouseButtonPressedEvent>([](const MouseButtonPressedEvent &event) -> bool {
-            ImGuiIO &io = ImGui::GetIO();
-            io.MouseDown[event.getMouseButton()] = true;
-            return false;
-            });
-
-        dispatcher.dispatch<MouseButtonReleasedEvent>([](const MouseButtonReleasedEvent &event) -> bool {
-            ImGuiIO &io = ImGui::GetIO();
-            io.MouseDown[event.getMouseButton()] = false;
-            return false;
-            });
-
-        dispatcher.dispatch<MouseScrolledEvent>([](const MouseScrolledEvent &event) -> bool {
-            ImGuiIO &io = ImGui::GetIO();
-            io.MouseWheel = event.getYOffset();
-            return false;
-            });
-    }
-
-    void RendererImGui::begin() {
-        ImGuiIO &io = ImGui::GetIO();
-        Window &window = Application::get().getWindow();
-        io.DisplaySize = ImVec2(static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()));
-
-        ImGui::NewFrame();
-    }
-
-    void RendererImGui::end() {
-        ImGui::Render();
     }
 
     void RendererImGui::initInput() {
@@ -232,8 +151,8 @@ namespace BZ {
         //Buffers
         const uint32 MAX_INDICES = 1 << (sizeof(ImDrawIdx) * 8);
         rendererData.vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
-        rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { {DataType::Uint16, DataElements::Scalar, ""} });
-        
+        rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { { DataType::Uint16, DataElements::Scalar, "" } });
+
         rendererData.vertexBufferPtr = rendererData.vertexBuffer->map(0);
         rendererData.indexBufferPtr = rendererData.indexBuffer->map(0);
 
@@ -242,11 +161,14 @@ namespace BZ {
                                               { "Bhazel/shaders/bin/ImGuiFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
         //DescriptorSetLayout
-        Ref<DescriptorSetLayout> descriptorSetLayout = 
+        Ref<DescriptorSetLayout> descriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1 },
                                           { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
-        Window &window = Application::get().getWindow();
+        rendererData.pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
+
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
 
         //PipelineStateData
         BlendingState blendingState;
@@ -263,9 +185,9 @@ namespace BZ {
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexLayout;
         pipelineStateData.shader = shader;
-        pipelineStateData.descriptorSetLayouts = { descriptorSetLayout };
-        pipelineStateData.viewports = { { 0.0f, 0.0f, static_cast<float>(window.getWidth()), static_cast<float>(window.getHeight()), 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, window.getWidth(), window.getHeight() } };
+        pipelineStateData.layout = rendererData.pipelineLayout;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
+        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_SCISSOR };
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
@@ -316,7 +238,7 @@ namespace BZ {
         commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
         commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
         commandBuffer.bindPipelineState(rendererData.pipelineState);
-        commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineState, 0, nullptr, 0);
+        commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineLayout, 0, nullptr, 0);
         commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
 
         int globalIndexOffset = 0;
@@ -346,5 +268,88 @@ namespace BZ {
 
         commandBuffer.endRenderPass();
         commandBuffer.endAndSubmit();
+    }
+
+    void RendererImGui::onEvent(Event &event) {
+        EventDispatcher dispatcher(event);
+        dispatcher.dispatch<KeyPressedEvent>([](const KeyPressedEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+
+            int keyCode = event.getKeyCode();
+            io.KeysDown[keyCode] = true;
+
+            if(keyCode == BZ_KEY_LEFT_CONTROL || keyCode == BZ_KEY_RIGHT_CONTROL)
+                io.KeyCtrl = true;
+            if(keyCode == BZ_KEY_LEFT_ALT || keyCode == BZ_KEY_RIGHT_ALT)
+                io.KeyAlt = true;
+            if(keyCode == BZ_KEY_LEFT_SHIFT || keyCode == BZ_KEY_RIGHT_SHIFT)
+                io.KeyShift = true;
+            if(keyCode == BZ_KEY_LEFT_SUPER || keyCode == BZ_KEY_RIGHT_SUPER)
+                io.KeySuper = true;
+
+            return false;
+            });
+
+        dispatcher.dispatch<KeyReleasedEvent>([](const KeyReleasedEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+
+            int keyCode = event.getKeyCode();
+            io.KeysDown[keyCode] = false;
+
+            if(keyCode == BZ_KEY_LEFT_CONTROL || keyCode == BZ_KEY_RIGHT_CONTROL)
+                io.KeyCtrl = false;
+            if(keyCode == BZ_KEY_LEFT_ALT || keyCode == BZ_KEY_RIGHT_ALT)
+                io.KeyAlt = false;
+            if(keyCode == BZ_KEY_LEFT_SHIFT || keyCode == BZ_KEY_RIGHT_SHIFT)
+                io.KeyShift = false;
+            if(keyCode == BZ_KEY_LEFT_SUPER || keyCode == BZ_KEY_RIGHT_SUPER)
+                io.KeySuper = false;
+
+            return false;
+            });
+
+        dispatcher.dispatch<KeyTypedEvent>([](const KeyTypedEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+            io.AddInputCharacter(event.getKeyCode());
+            return false;
+            });
+
+        Window &window = Application::get().getWindow();
+        dispatcher.dispatch<MouseMovedEvent>([&window](const MouseMovedEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+            io.MouseHoveredViewport = 0;
+            io.MousePos = ImVec2(static_cast<float>(event.getX()), static_cast<float>(window.getDimensions().y - event.getY()));
+            return false;
+            });
+
+        dispatcher.dispatch<MouseButtonPressedEvent>([](const MouseButtonPressedEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+            io.MouseDown[event.getMouseButton()] = true;
+            return false;
+            });
+
+        dispatcher.dispatch<MouseButtonReleasedEvent>([](const MouseButtonReleasedEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+            io.MouseDown[event.getMouseButton()] = false;
+            return false;
+            });
+
+        dispatcher.dispatch<MouseScrolledEvent>([](const MouseScrolledEvent &event) -> bool {
+            ImGuiIO &io = ImGui::GetIO();
+            io.MouseWheel = event.getYOffset();
+            return false;
+            });
+    }
+
+    void RendererImGui::begin() {
+        ImGuiIO &io = ImGui::GetIO();
+        const auto &windowDims = Application::get().getWindow().getDimensionsFloat();
+        io.DisplaySize = ImVec2(windowDims.x, windowDims.y);
+
+        ImGui::NewFrame();
+    }
+
+    void RendererImGui::end() {
+        ImGui::Render();
     }
 }
