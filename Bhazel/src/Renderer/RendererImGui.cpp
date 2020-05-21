@@ -167,9 +167,6 @@ namespace BZ {
 
         rendererData.pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
 
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-
         //PipelineStateData
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
@@ -186,8 +183,6 @@ namespace BZ {
         pipelineStateData.dataLayout = vertexLayout;
         pipelineStateData.shader = shader;
         pipelineStateData.layout = rendererData.pipelineLayout;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_SCISSOR };
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();

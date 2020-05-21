@@ -3,6 +3,7 @@
 #include "PipelineState.h"
 
 #include "Core/Application.h"
+#include "Core/Window.h"
 
 #include "Graphics/GraphicsContext.h"
 #include "Graphics/Shader.h"
@@ -48,6 +49,14 @@ namespace BZ {
     
 
     /*-------------------------------------------------------------------------------------------*/
+    PipelineStateData::PipelineStateData() {
+        const auto WINDOW_DIMS_UINT = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
+
+        viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
+        scissorRects = { { 0u, 0u, WINDOW_DIMS_UINT.x, WINDOW_DIMS_UINT.y } };
+    }
+
     Ref<PipelineState> PipelineState::create(PipelineStateData& data) {
         return MakeRef<PipelineState>(data);
     }

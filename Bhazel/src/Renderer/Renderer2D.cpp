@@ -155,9 +155,6 @@ namespace BZ {
         rendererData.textureDescriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-
         BlendingState blendingState;
         BlendingStateAttachment blendingStateAttachment;
         blendingStateAttachment.enableBlending = true;
@@ -183,8 +180,6 @@ namespace BZ {
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/Renderer2DVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/Renderer2DFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         pipelineStateData.layout = rendererData.pipelineLayout;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
         pipelineStateData.subPassIndex = 0;

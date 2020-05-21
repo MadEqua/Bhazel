@@ -350,23 +350,20 @@ namespace BZ {
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexDataLayout;
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/RendererVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/RendererFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
 
         pipelineStateData.layout = rendererData.pipelineLayout;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.rasterizerState = rasterizerState;
         pipelineStateData.depthStencilState = depthStencilState;
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
         rendererData.colorPassPipelineState = PipelineState::create(pipelineStateData);
+
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
 
         auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, colorAttachmentDesc.format, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
         rendererData.colorTexView = TextureView::create(colorTexture);
@@ -408,16 +405,11 @@ namespace BZ {
         BlendingStateAttachment blendingStateAttachment;
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
-        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
-        const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
-
         PipelineStateData pipelineStateData;
         pipelineStateData.dataLayout = vertexDataLayout;
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/SkyBoxVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/SkyBoxFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         pipelineStateData.layout = rendererData.pipelineLayout;
-        pipelineStateData.viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
-        pipelineStateData.scissorRects = { { 0u, 0u, static_cast<uint32>(WINDOW_DIMS_INT.x), static_cast<uint32>(WINDOW_DIMS_INT.y) } };
         pipelineStateData.rasterizerState = rasterizerState;
         pipelineStateData.depthStencilState = depthStencilState;
         pipelineStateData.blendingState = blendingState;

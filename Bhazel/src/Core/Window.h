@@ -9,7 +9,7 @@ namespace BZ {
 
     struct WindowData {
         std::string title;
-        glm::ivec2 dimensions;
+        glm::uvec2 dimensions;
         //bool fullScreen;
     };
 
@@ -30,8 +30,9 @@ namespace BZ {
 
         uint32 getWidth() const { return data.dimensions.x; }
         uint32 getHeight() const {return data.dimensions.y;}
-        const glm::ivec2& getDimensions() const { return data.dimensions; }
-        const glm::vec2 getDimensionsFloat() const { return { data.dimensions.x, data.dimensions.y }; }
+        const glm::uvec2& getDimensions() const { return data.dimensions; }
+        glm::ivec2 getDimensionsInt() const { return { static_cast<int>(data.dimensions.x), static_cast<int>(data.dimensions.y) }; }
+        glm::vec2 getDimensionsFloat() const { return { static_cast<float>(data.dimensions.x), static_cast<float>(data.dimensions.y) }; }
         float getAspectRatio() const { return static_cast<float>(data.dimensions.x) / static_cast<float>(data.dimensions.y); }
 
         bool isMinimized() const { return minimized; }

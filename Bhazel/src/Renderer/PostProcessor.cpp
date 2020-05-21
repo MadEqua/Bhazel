@@ -197,7 +197,7 @@ namespace BZ {
                                                         { "Bhazel/shaders/bin/BloomBlurAndSumFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         blurPipelineStateData.layout = blurPipelineLayout;
         blurPipelineStateData.blendingState = blendingState;
-        blurPipelineStateData.viewports = { {} };
+        blurPipelineStateData.viewports = { {} }; //Dynamic.
         blurPipelineStateData.scissorRects = { { 0, 0, w, h } }; //Scissor with the largest mip dimensions.
         blurPipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT };
         blurPipelineStateData.renderPass = blurRenderPass;

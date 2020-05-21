@@ -113,9 +113,9 @@ namespace BZ {
 
     void FreeCameraController::onUpdate(const FrameStats &frameStats) {
         auto mousePosition = Input::getMousePosition();
-        const auto windowSize = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensionsInt();
 
-        if(mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
+        if(mousePosition.x >= 0 && mousePosition.x < WINDOW_DIMS_INT.x && mousePosition.y >= 0 && mousePosition.y < WINDOW_DIMS_INT.y) {
             if(lastMousePosition.x != -1 && lastMousePosition.y != -1) {
                 auto dif = mousePosition - lastMousePosition;
                 if(Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT) && (dif.x != 0.0f || dif.y != 0.0f)) {
@@ -202,12 +202,12 @@ namespace BZ {
 
     void RotateCameraController::onUpdate(const FrameStats &frameStats) {
         auto mousePosition = Input::getMousePosition();
-        const auto windowSize = Application::get().getWindow().getDimensions();
+        const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensionsInt();
 
         thetaAccel = 0.0f;
         zAccel = 0.0f;
 
-        if (mousePosition.x >= 0 && mousePosition.x < windowSize.x && mousePosition.y >= 0 && mousePosition.y < windowSize.y) {
+        if (mousePosition.x >= 0 && mousePosition.x < WINDOW_DIMS_INT.x && mousePosition.y >= 0 && mousePosition.y < WINDOW_DIMS_INT.y) {
             if (lastMousePosition.x != -1 && lastMousePosition.y != -1) {
                 auto dif = mousePosition - lastMousePosition;
                 if (Input::isMouseButtonPressed(BZ_MOUSE_BUTTON_RIGHT)) {

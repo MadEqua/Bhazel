@@ -91,14 +91,16 @@ namespace BZ {
 
     struct PipelineStateData {
 
+        PipelineStateData();
+
         //Supporting a single vertex buffer.
         DataLayout dataLayout;
 
         Ref<Shader> shader;
         VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         Ref<PipelineLayout> layout;
-        std::vector<VkViewport> viewports;
-        std::vector<VkRect2D> scissorRects;
+        std::vector<VkViewport> viewports; //Defaults to Window Dimensions
+        std::vector<VkRect2D> scissorRects; //Defaults to Window Dimensions
         RasterizerState rasterizerState;
         MultisampleState multiSampleState;
         DepthStencilState depthStencilState;
