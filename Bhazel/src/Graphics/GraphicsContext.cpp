@@ -99,6 +99,8 @@ namespace BZ {
 
         BZ_ASSERT_CORE(commandBuffersCount > 0, "Invalid commandBuffersCount!");
         BZ_ASSERT_CORE(commandBuffersCount <= MAX_COMMAND_BUFFERS_PER_SUBMIT, "commandBuffersCount needs to be <= than MAX_COMMAND_BUFFERS_PER_SUBMIT!");
+        BZ_ASSERT_CORE(semaphoresToWaitForCount < MAX_SEMAPHORES_PER_SUBMIT, "semaphoresToWaitForCount needs to be <= than MAX_SEMAPHORES_PER_SUBMIT!");
+        BZ_ASSERT_CORE(semaphoresToSignalCount < MAX_SEMAPHORES_PER_SUBMIT, "semaphoresToSignalCount needs to be <= than MAX_SEMAPHORES_PER_SUBMIT!");
 
         VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_SUBMIT];
         for(uint32 idx = 0; idx < commandBuffersCount; ++idx) {

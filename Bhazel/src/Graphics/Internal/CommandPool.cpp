@@ -13,7 +13,6 @@ namespace BZ {
         this->device = &device;
         this->familyIndex = familyIndex;
         nextFreeIndex = 0;
-        toAllocateIndex = 0;
 
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -28,28 +27,21 @@ namespace BZ {
     }
 
     CommandBuffer& CommandPool::getCommandBuffer() {
-        BZ_ASSERT_CORE(nextFreeIndex < MAX_COMMAND_BUFFERS_PER_POOL, "CommandPool has reached maximum capacity!");
-
-        //The next free CommandBuffer is still not allocated/initialized, so allocate a batch.
-        if(nextFreeIndex == toAllocateIndex) {
-            uint32 toAllocateCount = std::min(ALLOCATE_BATCH_COUNT, MAX_COMMAND_BUFFERS_PER_POOL - toAllocateIndex);
-
+        if(nextFreeIndex == static_cast<uint32>(buffers.size())) {
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
             allocInfo.commandPool = handle;
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandBufferCount = toAllocateCount;
+            allocInfo.commandBufferCount = ALLOCATE_BATCH_COUNT;
 
             VkCommandBuffer newCommandBuffers[ALLOCATE_BATCH_COUNT];
             BZ_ASSERT_VK(vkAllocateCommandBuffers(device->getHandle(), &allocInfo, newCommandBuffers));
+            BZ_LOG_CORE_INFO("Allocated {} CommandBuffers.", ALLOCATE_BATCH_COUNT);
 
-            BZ_LOG_CORE_INFO("Allocated {} CommandBuffers.", toAllocateCount);
-
-            for(uint32 i = 0; i < toAllocateCount; ++i) {
-                buffers[toAllocateIndex + i].init(newCommandBuffers[i], familyIndex);
+            buffers.resize(buffers.size() + ALLOCATE_BATCH_COUNT);
+            for(uint32 i = 0; i < ALLOCATE_BATCH_COUNT; ++i) {
+                buffers[nextFreeIndex + i].init(newCommandBuffers[i], familyIndex);
             }
-
-            toAllocateIndex += toAllocateCount;
         }
 
         return buffers[nextFreeIndex++];

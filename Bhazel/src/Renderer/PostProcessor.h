@@ -2,6 +2,7 @@
 
 #include "Graphics/PipelineState.h"
 #include "Graphics/Texture.h"
+#include "Graphics/GraphicsContext.h"
 
 
 namespace BZ {
@@ -113,7 +114,7 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
-    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) PostProcessConstantBufferData {
+    struct alignas(GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN) PostProcessConstantBufferData {
         glm::vec4 cameraExposureAndBloomIntensity;
 
         //glm::vec4 is a float! Using only the first vector component, respecting std140 aligment.

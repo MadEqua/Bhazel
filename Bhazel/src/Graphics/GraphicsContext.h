@@ -77,6 +77,11 @@ namespace BZ {
 
         Device& getDevice() { return device; }
 
+        constexpr static uint32 MAX_FRAMES_IN_FLIGHT = 3;
+        constexpr static uint32 MAX_COMMAND_BUFFERS_PER_SUBMIT = 32;
+        constexpr static uint32 MAX_SEMAPHORES_PER_SUBMIT = 8;
+        constexpr static uint32 MIN_UNIFORM_BUFFER_OFFSET_ALIGN = 256;
+
     private:
         void createFrameData();
         void cleanupFrameData();

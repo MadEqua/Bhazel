@@ -31,8 +31,7 @@ namespace BZ {
         const Device *device;
         uint32 familyIndex;
 
-        CommandBuffer buffers[MAX_COMMAND_BUFFERS_PER_POOL];
+        std::vector<CommandBuffer> buffers;
         uint32 nextFreeIndex;
-        uint32 toAllocateIndex;
     };
 }

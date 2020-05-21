@@ -36,6 +36,10 @@ namespace BZ {
         static const Ref<Sampler>& getDefaultSampler();
         static const Ref<Sampler>& getShadowSampler();
 
+        constexpr static uint32 MAX_DIR_LIGHTS_PER_SCENE = 2;
+        constexpr static uint32 MAX_ENTITIES_PER_SCENE = 64;
+        constexpr static uint32 MAX_MATERIALS_PER_SCENE = 64;
+
     private:
         friend class RendererCoordinator;
         friend class Application;

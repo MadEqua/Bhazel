@@ -185,7 +185,7 @@ namespace BZ {
         pipelineStateData.subPassIndex = 0;
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
 
-        rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
+        rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
         rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
 
         rendererData.constantsDescriptorSet = &DescriptorSet::get(rendererData.constantsDescriptorSetLayout);

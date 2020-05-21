@@ -23,7 +23,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Core/Types.h"
-#include "Constants.h"
 #include "Core/Core.h"
 #include "Core/Log.h"
 #include "Core/AssertsAndErrors.h"

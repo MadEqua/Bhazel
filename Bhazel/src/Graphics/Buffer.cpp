@@ -288,7 +288,7 @@ namespace BZ {
         usageFlags(usageFlags), size(size), memoryType(memoryType) {
 
         if(isReplicated())
-            realSize = size * MAX_FRAMES_IN_FLIGHT;
+            realSize = size * GraphicsContext::MAX_FRAMES_IN_FLIGHT;
         else
             realSize = size;
 

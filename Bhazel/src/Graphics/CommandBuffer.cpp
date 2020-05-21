@@ -56,7 +56,7 @@ namespace BZ {
     void CommandBuffer::beginRenderPass(const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer) {
         //auto &renderPass = framebuffer->getRenderPass();
 
-        VkClearValue clearValues[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        std::vector<VkClearValue> clearValues(renderPass->getAttachmentCount());
         for (uint32 i = 0; i < renderPass->getAttachmentCount(); ++i) {
             const auto &attDesc = renderPass->getAttachmentDescription(i);
             if (attDesc.loadOperatorColorAndDepth == VK_ATTACHMENT_LOAD_OP_CLEAR) {
@@ -75,7 +75,7 @@ namespace BZ {
         renderPassBeginInfo.renderArea.offset = {};
         renderPassBeginInfo.renderArea.extent = { static_cast<uint32_t>(framebuffer->getDimensionsAndLayers().x), static_cast<uint32_t>(framebuffer->getDimensionsAndLayers().y) };
         renderPassBeginInfo.clearValueCount = renderPass->getAttachmentCount();
-        renderPassBeginInfo.pClearValues = clearValues;
+        renderPassBeginInfo.pClearValues = clearValues.data();
         vkCmdBeginRenderPass(handle, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         commandCount++;
     }
@@ -100,7 +100,7 @@ namespace BZ {
         clearRect.layerCount = static_cast<uint32>(framebuffer->getDimensionsAndLayers().z);
         clearRect.rect = vkRect;
 
-        VkClearAttachment vkClearAttchments[MAX_FRAMEBUFFER_ATTACHEMENTS];
+        std::vector<VkClearAttachment> vkClearAttchments(framebuffer->getColorAttachmentCount());
         uint32 i = 0;
         for (; i < framebuffer->getColorAttachmentCount(); i++) {
             vkClearAttchments[i].aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -108,7 +108,7 @@ namespace BZ {
             vkClearAttchments[i].clearValue.color = clearColor;
         }
 
-        vkCmdClearAttachments(handle, i, vkClearAttchments, 1, &clearRect);
+        vkCmdClearAttachments(handle, i, vkClearAttchments.data(), 1, &clearRect);
         commandCount++;
     }
 
@@ -158,6 +158,8 @@ namespace BZ {
         const Ref<PipelineLayout> &pipelineLayout, uint32 setIndex,
         uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount) {
 
+        constexpr uint32 MAX_DESCRIPTOR_DYNAMIC_OFFSETS = 8;
+
         BZ_ASSERT_CORE(dynamicBufferCount <= MAX_DESCRIPTOR_DYNAMIC_OFFSETS && dynamicBufferCount <= descriptorSet.getDynamicBufferCount(),
             "Invalid dynamicBufferCount: {}!", dynamicBufferCount);
 
@@ -192,6 +194,8 @@ namespace BZ {
     }
 
     void CommandBuffer::setPushConstants(const Ref<PipelineLayout> &pipelineLayout, VkShaderStageFlags shaderStageFlags, const void* data, uint32 size, uint32 offset) {
+        constexpr uint32 MAX_PUSH_CONSTANT_SIZE = 128;
+
         BZ_ASSERT_CORE(size % 4 == 0, "Size must be a multiple of 4!");
         BZ_ASSERT_CORE(offset % 4 == 0, "Offset must be a multiple of 4!");
         BZ_ASSERT_CORE(size <= MAX_PUSH_CONSTANT_SIZE, "Push constant size must be less or equal than {}. Sending size: {}!", MAX_PUSH_CONSTANT_SIZE, size);

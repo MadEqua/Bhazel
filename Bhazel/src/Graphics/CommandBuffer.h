@@ -24,8 +24,6 @@ namespace BZ {
     public:
         static CommandBuffer& getAndBegin(QueueProperty queueProperty);
 
-        BZ_NON_COPYABLE(CommandBuffer);
-
         void begin();
         void end();
         void endAndSubmit(bool waitForImageAvailable = false, bool signalFrameEnd = false);
@@ -93,9 +91,7 @@ namespace BZ {
         //The queue family which this Buffer will be submitted to.
         uint32 queueFamilyIndex;
 
-        CommandBuffer() = default;
         void init(VkCommandBuffer vkCommandBuffer, uint32 queueFamilyIndex);
-
         friend class CommandPool;
     };
 }

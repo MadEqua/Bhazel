@@ -29,35 +29,47 @@
 
 namespace BZ {
 
-    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) SceneConstantBufferData {
-        glm::mat4 lightMatrices[MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT]; //World to light clip space
-        glm::vec4 dirLightDirectionsAndIntensities[MAX_DIR_LIGHTS_PER_SCENE];
-        glm::vec4 dirLightColors[MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
+    constexpr uint32 RENDERER_GLOBAL_DESCRIPTOR_SET_IDX = 0;
+    constexpr uint32 RENDERER_SCENE_DESCRIPTOR_SET_IDX = 1;
+    constexpr uint32 RENDERER_PASS_DESCRIPTOR_SET_IDX = 2;
+    constexpr uint32 RENDERER_MATERIAL_DESCRIPTOR_SET_IDX = 3;
+    constexpr uint32 RENDERER_ENTITY_DESCRIPTOR_SET_IDX = 4;
+    constexpr uint32 APP_FIRST_DESCRIPTOR_SET_IDX = 5;
+
+    constexpr uint32 SHADOW_MAP_SIZE = 1024;
+    constexpr uint32 SHADOW_MAPPING_CASCADE_COUNT = 4;
+
+    constexpr uint32 MAX_PASSES_PER_FRAME = Renderer::MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT + 1; //Depth Passes + Color Pass
+
+    struct alignas(GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN) SceneConstantBufferData {
+        glm::mat4 lightMatrices[Renderer::MAX_DIR_LIGHTS_PER_SCENE * SHADOW_MAPPING_CASCADE_COUNT]; //World to light clip space
+        glm::vec4 dirLightDirectionsAndIntensities[Renderer::MAX_DIR_LIGHTS_PER_SCENE];
+        glm::vec4 dirLightColors[Renderer::MAX_DIR_LIGHTS_PER_SCENE]; //vec4 to simplify alignments
         glm::vec4 cascadeSplits; //TODO: Hardcoded to 4.
         float dirLightCount;
     };
 
-    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) PassConstantBufferData {
+    struct alignas(GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN) PassConstantBufferData {
         glm::mat4 viewMatrix; //World to camera space
         glm::mat4 projectionMatrix; //Camera to clip space
         glm::mat4 viewProjectionMatrix; //World to clip space
         glm::vec4 cameraPosition;
     };
 
-    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
+    struct alignas(GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN) MaterialConstantBufferData {
         glm::vec4 normalMetallicRoughnessAndAO;
         glm::vec4 heightAndUvScale;
     };
 
-    struct alignas(MIN_UNIFORM_BUFFER_OFFSET_ALIGN) EntityConstantBufferData {
+    struct alignas(GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN) EntityConstantBufferData {
         glm::mat4 modelMatrix; //Model to world space
         glm::mat4 normalMatrix; //Model to world space, appropriate to transform vectors, mat4 to simplify alignments
     };
 
     constexpr uint32 SCENE_CONSTANT_BUFFER_SIZE = sizeof(SceneConstantBufferData);
     constexpr uint32 PASS_CONSTANT_BUFFER_SIZE = sizeof(PassConstantBufferData) * MAX_PASSES_PER_FRAME;
-    constexpr uint32 MATERIAL_CONSTANT_BUFFER_SIZE = sizeof(MaterialConstantBufferData) * MAX_MATERIALS_PER_SCENE;
-    constexpr uint32 ENTITY_CONSTANT_BUFFER_SIZE = sizeof(EntityConstantBufferData) * MAX_ENTITIES_PER_SCENE;
+    constexpr uint32 MATERIAL_CONSTANT_BUFFER_SIZE = sizeof(MaterialConstantBufferData) * Renderer::MAX_MATERIALS_PER_SCENE;
+    constexpr uint32 ENTITY_CONSTANT_BUFFER_SIZE = sizeof(EntityConstantBufferData) * Renderer::MAX_ENTITIES_PER_SCENE;
     constexpr uint32 POST_PROCESS_CONSTANT_BUFFER_SIZE = sizeof(PostProcessConstantBufferData);
 
     constexpr uint32 SCENE_CONSTANT_BUFFER_OFFSET = 0;
@@ -65,8 +77,6 @@ namespace BZ {
     constexpr uint32 MATERIAL_CONSTANT_BUFFER_OFFSET = PASS_CONSTANT_BUFFER_OFFSET + PASS_CONSTANT_BUFFER_SIZE;
     constexpr uint32 ENTITY_CONSTANT_BUFFER_OFFSET = MATERIAL_CONSTANT_BUFFER_OFFSET + MATERIAL_CONSTANT_BUFFER_SIZE;
     constexpr uint32 POST_PROCESS_CONSTANT_BUFFER_OFFSET = ENTITY_CONSTANT_BUFFER_OFFSET + ENTITY_CONSTANT_BUFFER_SIZE;
-
-    constexpr uint32 SHADOW_MAP_SIZE = 1024;
 
     static DataLayout vertexDataLayout = {
         { DataType::Float32, DataElements::Vec3 },
