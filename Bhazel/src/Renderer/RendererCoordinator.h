@@ -6,6 +6,9 @@ namespace BZ {
     class RenderPass;
     class Event;
 
+    /*
+    * Coordinates Renderers accessing the Swapchain Framebuffers (layout transitions and frame Semaphore/Fence handling).
+    */
     class RendererCoordinator {
     public:
 
@@ -28,5 +31,7 @@ namespace BZ {
         Ref<RenderPass> secondPass;
         Ref<RenderPass> lastPass;
         Ref<RenderPass> firstAndLastPass;
+
+        uint32 getActiveRendererCount() const;
     };
 }

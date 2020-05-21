@@ -273,7 +273,7 @@ namespace BZ {
         }
     }
 
-    void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer)  {
+    void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd)  {
         BZ_PROFILE_FUNCTION();
 
         if(rendererData.nextSprite > 0) {
@@ -361,7 +361,7 @@ namespace BZ {
             }
 
             commandBuffer.endRenderPass();
-            commandBuffer.endAndSubmit();
+            commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
         }
     }
 

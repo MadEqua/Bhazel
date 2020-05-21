@@ -87,51 +87,81 @@ namespace BZ {
     void RendererCoordinator::onEvent(Event &ev) {
         EventDispatcher dispatcher(ev);
         dispatcher.dispatch<KeyPressedEvent>([this] (const KeyPressedEvent &ev) -> bool {
-            if(ev.getKeyCode() == BZ_KEY_F1) is3dActive = !is3dActive;
-            if(ev.getKeyCode() == BZ_KEY_F2) is2dActive = !is2dActive;
-            if(ev.getKeyCode() == BZ_KEY_F3) isImGuiActive = !isImGuiActive;
+            uint32 activeRendererCount = getActiveRendererCount();
+
+            if(ev.getKeyCode() == BZ_KEY_F1) {
+                if(is3dActive) {
+                    if(activeRendererCount > 1) {
+                        is3dActive = false;
+                    }
+                }
+                else
+                    is3dActive = true;
+            }
+            if(ev.getKeyCode() == BZ_KEY_F2) {
+                if(is2dActive) {
+                    if(activeRendererCount > 1) {
+                        is2dActive = false;
+                    }
+                }
+                else
+                    is2dActive = true;
+            }
+            if(ev.getKeyCode() == BZ_KEY_F3) {
+                if(isImGuiActive) {
+                    if(activeRendererCount > 1) {
+                        isImGuiActive = false;
+                    }
+                }
+                else
+                    isImGuiActive = true;
+            }
             return false;
         });
     }
 
     void RendererCoordinator::render() {
-        int activeRendererCount = 0;
-        if(is3dActive) activeRendererCount++;
-        if(is2dActive) activeRendererCount++;
-        if(isImGuiActive) activeRendererCount++;
-
         Ref<Framebuffer> currentSwapchainFramebuffer = Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
-
+        
+        uint32 activeRendererCount = getActiveRendererCount();
         if(activeRendererCount == 1) {
             if(is3dActive) {
-                Renderer::render(firstAndLastPass, currentSwapchainFramebuffer);
+                Renderer::render(firstAndLastPass, currentSwapchainFramebuffer, true, true);
             }
             else if(is2dActive) {
-                Renderer2D::render(firstAndLastPass, currentSwapchainFramebuffer);
+                Renderer2D::render(firstAndLastPass, currentSwapchainFramebuffer, true, true);
             }
             else {
-                RendererImGui::render(firstAndLastPass, currentSwapchainFramebuffer);
+                RendererImGui::render(firstAndLastPass, currentSwapchainFramebuffer, true, true);
             }
         }
         else if(activeRendererCount == 2) {
             if(is3dActive) {
-                Renderer::render(firstPass, currentSwapchainFramebuffer);
+                Renderer::render(firstPass, currentSwapchainFramebuffer, true, false);
                 if(is2dActive) {
-                    Renderer2D::render(lastPass, currentSwapchainFramebuffer);
+                    Renderer2D::render(lastPass, currentSwapchainFramebuffer, false, true);
                 }
                 else if(isImGuiActive) {
-                    RendererImGui::render(lastPass, currentSwapchainFramebuffer);
+                    RendererImGui::render(lastPass, currentSwapchainFramebuffer, false, true);
                 }
             }
             else {
-                Renderer2D::render(firstPass, currentSwapchainFramebuffer);
-                RendererImGui::render(lastPass, currentSwapchainFramebuffer);
+                Renderer2D::render(firstPass, currentSwapchainFramebuffer, true, false);
+                RendererImGui::render(lastPass, currentSwapchainFramebuffer, false, true);
             }
         }
         else if(activeRendererCount == 3) {
-            Renderer::render(firstPass, currentSwapchainFramebuffer);
-            Renderer2D::render(secondPass, currentSwapchainFramebuffer);
-            RendererImGui::render(lastPass, currentSwapchainFramebuffer);
+            Renderer::render(firstPass, currentSwapchainFramebuffer, true, false);
+            Renderer2D::render(secondPass, currentSwapchainFramebuffer, false, false);
+            RendererImGui::render(lastPass, currentSwapchainFramebuffer, false, true);
         }
+    }
+
+    uint32 RendererCoordinator::getActiveRendererCount() const {
+        uint32 activeRendererCount = 0;
+        if(is3dActive) activeRendererCount++;
+        if(is2dActive) activeRendererCount++;
+        if(isImGuiActive) activeRendererCount++;
+        return activeRendererCount;
     }
 }

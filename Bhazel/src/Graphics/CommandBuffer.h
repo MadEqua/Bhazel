@@ -27,13 +27,10 @@ namespace BZ {
         BZ_NON_COPYABLE(CommandBuffer);
 
         void begin();
-
         void end();
-        void endAndSubmit();
-        void endAndSubmitImmediately();
+        void endAndSubmit(bool waitForImageAvailable = false, bool signalFrameEnd = false);
 
-        void submit();
-        void submitImmediately();
+        void submit(bool waitForImageAvailable = false, bool signalFrameEnd = false);
 
         void beginRenderPass(const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer);
         void endRenderPass();

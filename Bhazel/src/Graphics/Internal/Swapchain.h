@@ -32,8 +32,8 @@ namespace BZ {
 
         void recreate();
 
-        void aquireImage(const Semaphore &imageAvailableSemaphore);
-        void presentImage(const Semaphore &renderFinishedSemaphore);
+        void aquireImage(const Ref<Semaphore> &imageAvailableSemaphore);
+        void presentImage(const Ref<Semaphore> &renderFinishedSemaphore);
 
         VkSwapchainKHR getHandle() const { return handle; }
 

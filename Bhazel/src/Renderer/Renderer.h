@@ -17,6 +17,7 @@ namespace BZ {
     class Framebuffer;
     class Sampler;
     class TextureView;
+    class CommandBuffer;
     struct FrameStats;
 
 
@@ -49,8 +50,8 @@ namespace BZ {
         static void shadowPass(const Scene &scene);
         static void colorPass(const Scene &scene);
 
-        static void drawEntities(const Scene &scene, bool shadowPass);
-        static void drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool shadowPass);
+        static void drawEntities(CommandBuffer &commandBuffer, const Scene &scene, bool shadowPass);
+        static void drawMesh(CommandBuffer &commandBuffer, const Mesh &mesh, const Material &overrideMaterial, bool shadowPass);
 
         static void fillConstants(const Scene &scene);
         static void fillScene(const Scene &scene, const glm::mat4 *lightMatrices, const glm::mat4 *lightProjectionMatrices, const float cascadeSplits[]);
@@ -59,7 +60,7 @@ namespace BZ {
         static void fillMaterial(const Material &material);
         static void fillEntities(const Scene &scene);
 
-        static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer);
+        static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd);
         static void onImGuiRender(const FrameStats &frameStats);
 
         static void computeCascadedShadowMappingSplits(float out[], uint32 splits, float nearPlane, float farPlane);

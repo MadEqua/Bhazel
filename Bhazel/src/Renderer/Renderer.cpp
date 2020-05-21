@@ -87,8 +87,6 @@ namespace BZ {
     };
 
     static struct RendererData {
-        CommandBuffer *commandBuffer;
-
         PostProcessor postProcessor;
 
         Ref<Buffer> constantBuffer;
@@ -148,7 +146,6 @@ namespace BZ {
     void Renderer::init() {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBuffer = nullptr;
         rendererData.sceneToRender = nullptr;
 
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -465,8 +462,13 @@ namespace BZ {
     void Renderer::shadowPass(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBuffer->bindPipelineState(rendererData.shadowPassPipelineState);
-        rendererData.commandBuffer->setDepthBias(rendererData.depthBiasData.x, rendererData.depthBiasData.y, rendererData.depthBiasData.z);
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+
+        commandBuffer.bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.pipelineLayout, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
+        commandBuffer.bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.pipelineLayout, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
+
+        commandBuffer.bindPipelineState(rendererData.shadowPassPipelineState);
+        commandBuffer.setDepthBias(rendererData.depthBiasData.x, rendererData.depthBiasData.y, rendererData.depthBiasData.z);
 
         uint32 lightIdx = 0;
         for (auto &dirLight : scene.getDirectionalLights()) {
@@ -475,76 +477,83 @@ namespace BZ {
             for (uint32 i = 0; i < SHADOW_MAPPING_CASCADE_COUNT; ++i) {
                 lightOffsetArr[i] = lightOffset;
             }
-            rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSetForShadowPass,
+            commandBuffer.bindDescriptorSet(*rendererData.passDescriptorSetForShadowPass,
                 rendererData.shadowPassPipelineLayout, RENDERER_PASS_DESCRIPTOR_SET_IDX, lightOffsetArr, SHADOW_MAPPING_CASCADE_COUNT);
 
-            rendererData.commandBuffer->beginRenderPass(rendererData.shadowRenderPass, dirLight.shadowMapFramebuffer);
-            drawEntities(scene, true);
-            rendererData.commandBuffer->endRenderPass();
-
+            commandBuffer.beginRenderPass(rendererData.shadowRenderPass, dirLight.shadowMapFramebuffer);
+            drawEntities(commandBuffer, scene, true);
+            commandBuffer.endRenderPass();
             lightIdx++;
         }
+
+        commandBuffer.endAndSubmit(false, false);
     }
 
     void Renderer::colorPass(const Scene &scene) {
         BZ_PROFILE_FUNCTION();
 
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+
+        commandBuffer.bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.pipelineLayout, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
+        commandBuffer.bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.pipelineLayout, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
+
         uint32 colorPassOffset = PASS_CONSTANT_BUFFER_SIZE - sizeof(PassConstantBufferData); //Color pass is the last (after the Depth passes).
-        rendererData.commandBuffer->bindDescriptorSet(*rendererData.passDescriptorSet,
+        commandBuffer.bindDescriptorSet(*rendererData.passDescriptorSet,
             rendererData.pipelineLayout, RENDERER_PASS_DESCRIPTOR_SET_IDX, &colorPassOffset, 1);
 
-        rendererData.commandBuffer->beginRenderPass(rendererData.colorRenderPass, rendererData.colorFramebuffer);
+        commandBuffer.beginRenderPass(rendererData.colorRenderPass, rendererData.colorFramebuffer);
+        commandBuffer.bindPipelineState(rendererData.colorPassPipelineState);
 
-        rendererData.commandBuffer->bindPipelineState(rendererData.colorPassPipelineState);
-        drawEntities(scene, false);
+        drawEntities(commandBuffer, scene, false);
 
         if(scene.hasSkyBox()) {
-            rendererData.commandBuffer->bindPipelineState(rendererData.skyBoxPipelineState);
-            drawMesh(scene.getSkyBox().mesh, Material(), false);
+            commandBuffer.bindPipelineState(rendererData.skyBoxPipelineState);
+            drawMesh(commandBuffer, scene.getSkyBox().mesh, Material(), false);
         }
 
-        rendererData.commandBuffer->endRenderPass();
+        commandBuffer.endRenderPass();
+        commandBuffer.endAndSubmit(false, false);
     }
 
-    void Renderer::drawEntities(const Scene &scene, bool shadowPass) {
+    void Renderer::drawEntities(CommandBuffer &commandBuffer, const Scene &scene, bool shadowPass) {
         BZ_PROFILE_FUNCTION();
 
         uint32 entityIndex = 0;
         for (const auto &entity : scene.getEntities()) {
             if (!shadowPass || entity.castShadow) {
                 uint32 entityOffset = entityIndex * sizeof(EntityConstantBufferData);
-                rendererData.commandBuffer->bindDescriptorSet(*rendererData.entityDescriptorSet,
+                commandBuffer.bindDescriptorSet(*rendererData.entityDescriptorSet,
                     shadowPass ? rendererData.shadowPassPipelineLayout : rendererData.pipelineLayout,
                     RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
 
-                drawMesh(entity.mesh, entity.overrideMaterial, shadowPass);
+                drawMesh(commandBuffer, entity.mesh, entity.overrideMaterial, shadowPass);
                 entityIndex++;
             }
         }
     }
 
-    void Renderer::drawMesh(const Mesh &mesh, const Material &overrideMaterial, bool shadowPass) {
+    void Renderer::drawMesh(CommandBuffer &commandBuffer, const Mesh &mesh, const Material &overrideMaterial, bool shadowPass) {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.commandBuffer->bindBuffer(mesh.getVertexBuffer(), 0);
+        commandBuffer.bindBuffer(mesh.getVertexBuffer(), 0);
         
         if (mesh.hasIndices())
-            rendererData.commandBuffer->bindBuffer(mesh.getIndexBuffer(), 0);
+            commandBuffer.bindBuffer(mesh.getIndexBuffer(), 0);
 
         for (const auto &submesh : mesh.getSubmeshes()) {
             if (!shadowPass) {
                 const Material &materialToUse = overrideMaterial.isValid() ? overrideMaterial : submesh.material;
 
                 uint32 materialOffset = rendererData.materialOffsetMap[materialToUse];
-                rendererData.commandBuffer->bindDescriptorSet(materialToUse.getDescriptorSet(),
+                commandBuffer.bindDescriptorSet(materialToUse.getDescriptorSet(),
                     shadowPass ? rendererData.shadowPassPipelineLayout : rendererData.pipelineLayout,
                     RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
             }
 
             if (mesh.hasIndices())
-                rendererData.commandBuffer->drawIndexed(submesh.indexCount, 1, submesh.indexOffset, 0, 0);
+                commandBuffer.drawIndexed(submesh.indexCount, 1, submesh.indexOffset, 0, 0);
             else
-                rendererData.commandBuffer->draw(submesh.vertexCount, 1, submesh.vertexOffset, 1);
+                commandBuffer.draw(submesh.vertexCount, 1, submesh.vertexOffset, 1);
 
             rendererData.stats.drawCallCount++;
         }
@@ -735,7 +744,7 @@ namespace BZ {
         BZ_ASSERT_CORE(entityIndex <= MAX_ENTITIES_PER_SCENE, "Reached the max number of Entities!");
     }
 
-    void Renderer::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
+    void Renderer::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd) {
         BZ_PROFILE_FUNCTION();
 
         if(rendererData.sceneToRender) {
@@ -743,17 +752,9 @@ namespace BZ {
 
             fillConstants(*rendererData.sceneToRender);
 
-            rendererData.commandBuffer = &CommandBuffer::getAndBegin(QueueProperty::Graphics);
-
-            //Bind stuff that will not change.
-            rendererData.commandBuffer->bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.pipelineLayout, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
-            rendererData.commandBuffer->bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.pipelineLayout, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
-
             shadowPass(*rendererData.sceneToRender);
             colorPass(*rendererData.sceneToRender);
-            rendererData.postProcessor.render(*rendererData.commandBuffer, swapchainRenderPass, swapchainFramebuffer);
-
-            rendererData.commandBuffer->endAndSubmit();
+            rendererData.postProcessor.render(swapchainRenderPass, swapchainFramebuffer, waitForImageAvailable, signalFrameEnd);
 
             rendererData.sceneToRender = nullptr;
         }

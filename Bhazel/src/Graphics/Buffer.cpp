@@ -343,7 +343,7 @@ namespace BZ {
             copyRegion.size = dataSize;
             comBuffer.copyBufferToBuffer(stagingBuffer, *this, &copyRegion, 1);
 
-            comBuffer.endAndSubmitImmediately();
+            comBuffer.endAndSubmit();
 
             BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Transfer);
         }

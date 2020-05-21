@@ -131,7 +131,7 @@ namespace BZ {
         void destroy();
 
         void fillData(const BufferPtr &ptr, const Scene &scene);
-        void render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer);
+        void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd);
         void onImGuiRender(const FrameStats &frameStats);
 
         const Ref<TextureView> &getInputTexView() const { return inputTexView; }

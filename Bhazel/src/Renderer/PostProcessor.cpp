@@ -182,6 +182,7 @@ namespace BZ {
         dependencyBefore.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         dependencyBefore.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         dependencyBefore.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependencyBefore.dependencyFlags = 0;
 
         blurRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc}, { dependencyBefore });
 
@@ -432,13 +433,18 @@ namespace BZ {
         memcpy(ptr, &data, sizeof(PostProcessConstantBufferData));
     }
 
-    void PostProcessor::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
+    void PostProcessor::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+                               bool waitForImageAvailable, bool signalFrameEnd) {
+
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
         commandBuffer.bindDescriptorSet(*descriptorSet, pipelineLayout, 0, nullptr, 0);
 
         addBarrier(commandBuffer);
         bloom.render(commandBuffer);
         addBarrier(commandBuffer);
         toneMap.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer);
+
+        commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 
     void PostProcessor::onImGuiRender(const FrameStats &frameStats) {

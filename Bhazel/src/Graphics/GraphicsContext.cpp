@@ -58,8 +58,8 @@ namespace BZ {
 
     void GraphicsContext::beginFrame() {
         //Make sure that this frame has finished before reutilizing its data. If not, we are GPU bound and should block here.
-        frameDatas[currentFrameIndex].renderFinishedFence.waitFor();
-        frameDatas[currentFrameIndex].renderFinishedFence.reset();
+        frameDatas[currentFrameIndex].renderFinishedFence->waitFor();
+        frameDatas[currentFrameIndex].renderFinishedFence->reset();
 
         FrameData &frameData = frameDatas[currentFrameIndex];
         for(auto &familyAndPool : frameData.commandPoolsByFamily) {
@@ -67,74 +67,70 @@ namespace BZ {
         }
 
         swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
-        pendingCommandBufferIndex = 0;
 
         stats = {};
     }
 
     void GraphicsContext::endFrame() {
-        VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
-        for(uint32 idx = 0; idx < pendingCommandBufferIndex; ++idx) {
-            vkCommandBuffers[idx] = pendingCommandBuffers[idx]->getHandle();
-        }
-
-        VkSemaphore waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore.getHandle() };
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-        VkSemaphore signalSemaphores[] = { frameDatas[currentFrameIndex].renderFinishedSemaphore.getHandle() };
-
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = waitSemaphores;
-        submitInfo.pWaitDstStageMask = waitStages;
-        submitInfo.commandBufferCount = pendingCommandBufferIndex;
-        submitInfo.pCommandBuffers = vkCommandBuffers;
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = signalSemaphores;
-
-        VkFence fence = frameDatas[currentFrameIndex].renderFinishedFence.getHandle();
-
-        //TODO: submiting always to graphics...
-        BZ_ASSERT_VK(vkQueueSubmit(device.getQueueContainer().graphics().getHandle(), 1, &submitInfo, fence));
-
         swapchain.presentImage(frameDatas[currentFrameIndex].renderFinishedSemaphore);
         currentFrameIndex = (currentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-    void GraphicsContext::submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count) {
-        BZ_ASSERT_CORE(count > 0, "Invalid count!");
-        BZ_ASSERT_CORE(pendingCommandBufferIndex + count <= MAX_COMMAND_BUFFERS_PER_FRAME, "Exceeding maximum command buffers per frame!");
+    void GraphicsContext::submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 commandBuffersCount,
+                                               bool waitForImageAvailable, bool signalFrameEnd) {
 
-        for(uint32 i = 0; i < count; ++i) {
-            pendingCommandBuffers[pendingCommandBufferIndex + i] = commandBuffers[i];
-            stats.commandCount += commandBuffers[i]->getCommandCount();
-        }
+        Ref<Semaphore> waitSemaphores[] = { frameDatas[currentFrameIndex].imageAvailableSemaphore };
+        VkPipelineStageFlags waitFlags[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        Ref<Semaphore> signalSemaphores[] = { frameDatas[currentFrameIndex].renderFinishedSemaphore };
+        Ref<Fence> signalFence;
+        if(signalFrameEnd)
+            signalFence = frameDatas[currentFrameIndex].renderFinishedFence;
 
-        pendingCommandBufferIndex += count;
-        stats.commandBufferCount += count;
+        submitCommandBuffers(commandBuffers, commandBuffersCount,
+            waitSemaphores, waitFlags, waitForImageAvailable ? 1 : 0,
+            signalSemaphores, signalFrameEnd ? 1 : 0,
+            signalFence);
     }
 
-    void GraphicsContext::submitImmediatelyCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count) {
-        BZ_ASSERT_CORE(count > 0, "Invalid count!");
+    void GraphicsContext::submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 commandBuffersCount, 
+                                               const Ref<Semaphore> semaphoresToWaitFor[], VkPipelineStageFlags waitStages[], uint32 semaphoresToWaitForCount,
+                                               const Ref<Semaphore> semaphoresToSignal[], uint32 semaphoresToSignalCount, 
+                                               const Ref<Fence> &fenceToSignal) {
 
-        VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
-        for(uint32 idx = 0; idx < count; ++idx) {
+        BZ_ASSERT_CORE(commandBuffersCount > 0, "Invalid commandBuffersCount!");
+        BZ_ASSERT_CORE(commandBuffersCount <= MAX_COMMAND_BUFFERS_PER_SUBMIT, "commandBuffersCount needs to be <= than MAX_COMMAND_BUFFERS_PER_SUBMIT!");
+
+        VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_SUBMIT];
+        for(uint32 idx = 0; idx < commandBuffersCount; ++idx) {
             vkCommandBuffers[idx] = commandBuffers[idx]->getHandle();
+            stats.commandCount += commandBuffers[idx]->getCommandCount();
+        }
+
+        VkSemaphore waitSemaphores[MAX_SEMAPHORES_PER_SUBMIT];
+        for(uint32 idx = 0; idx < semaphoresToWaitForCount; ++idx) {
+            waitSemaphores[idx] = semaphoresToWaitFor[idx]->getHandle();
+        }
+
+        VkSemaphore signalSemaphores[MAX_SEMAPHORES_PER_SUBMIT];
+        for(uint32 idx = 0; idx < semaphoresToSignalCount; ++idx) {
+            signalSemaphores[idx] = semaphoresToSignal[idx]->getHandle();
         }
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.waitSemaphoreCount = 0;
-        submitInfo.pWaitSemaphores = nullptr;
-        submitInfo.pWaitDstStageMask = nullptr;
-        submitInfo.commandBufferCount = count;
+        submitInfo.waitSemaphoreCount = semaphoresToWaitForCount;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+        submitInfo.commandBufferCount = commandBuffersCount;
         submitInfo.pCommandBuffers = vkCommandBuffers;
-        submitInfo.signalSemaphoreCount = 0;
-        submitInfo.pSignalSemaphores = nullptr;
+        submitInfo.signalSemaphoreCount = semaphoresToSignalCount;
+        submitInfo.pSignalSemaphores = signalSemaphores;
 
         //The first CommandBuffer will determine the Queue to use.
         const Queue &queue = *device.getQueueContainer().getQueueByFamilyIndex(commandBuffers[0]->getQueueFamilyIndex());
-        BZ_ASSERT_VK(vkQueueSubmit(queue.getHandle(), 1, &submitInfo, VK_NULL_HANDLE));
+        BZ_ASSERT_VK(vkQueueSubmit(queue.getHandle(), 1, &submitInfo, fenceToSignal ? fenceToSignal->getHandle() : VK_NULL_HANDLE));
+
+        stats.commandBufferCount += commandBuffersCount;
     }
 
     void GraphicsContext::waitForDevice() {
@@ -165,9 +161,9 @@ namespace BZ {
         std::set<uint32> familiesInUse = device.getQueueContainer().getFamilyIndexesInUse();
 
         for (uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            frameDatas[i].imageAvailableSemaphore.init(device);
-            frameDatas[i].renderFinishedSemaphore.init(device);
-            frameDatas[i].renderFinishedFence.init(device, true);
+            frameDatas[i].imageAvailableSemaphore = Semaphore::create();
+            frameDatas[i].renderFinishedSemaphore = Semaphore::create();
+            frameDatas[i].renderFinishedFence = Fence::create(true);
 
             for(uint32 famIdx : familiesInUse) {
                 frameDatas[i].commandPoolsByFamily[famIdx].init(device, famIdx);
@@ -177,9 +173,9 @@ namespace BZ {
 
     void GraphicsContext::cleanupFrameData() {
         for (uint32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-            frameDatas[i].imageAvailableSemaphore.destroy();
-            frameDatas[i].renderFinishedSemaphore.destroy();
-            frameDatas[i].renderFinishedFence.destroy();
+            frameDatas[i].imageAvailableSemaphore.reset();
+            frameDatas[i].renderFinishedSemaphore.reset();
+            frameDatas[i].renderFinishedFence.reset();
 
             for (auto &pair : frameDatas[i].commandPoolsByFamily) {
                 pair.second.destroy();

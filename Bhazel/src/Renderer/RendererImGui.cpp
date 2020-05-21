@@ -200,16 +200,22 @@ namespace BZ {
         rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler, 1);
     }
 
-    void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
+    void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd) {
         ImDrawData *imDrawData = ImGui::GetDrawData();
+
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
 
         if(imDrawData->TotalVtxCount == 0 || imDrawData->TotalIdxCount == 0 || imDrawData->CmdListsCount <= 0) {
             BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Vertices count: {}. Indices count: {}. Command List count: {}. Bailing Out.",
                 imDrawData->TotalVtxCount, imDrawData->TotalIdxCount, imDrawData->CmdListsCount);
+
+            //Still need to submit a command buffer to respect the frame sync and layout transitions coming from the RendererCoordinator.
+            commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
+            commandBuffer.endRenderPass();
+            commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
             return;
         }
 
-        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
 
         byte *vtxDst = rendererData.vertexBufferPtr;
         byte *idxDst = rendererData.indexBufferPtr;
@@ -262,7 +268,7 @@ namespace BZ {
         }
 
         commandBuffer.endRenderPass();
-        commandBuffer.endAndSubmit();
+        commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 
     void RendererImGui::onEvent(Event &event) {

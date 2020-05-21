@@ -43,24 +43,14 @@ namespace BZ {
         BZ_ASSERT_VK(vkEndCommandBuffer(handle));
     }
 
-    void CommandBuffer::endAndSubmit() {
+    void CommandBuffer::endAndSubmit(bool waitForImageAvailable, bool signalFrameEnd) {
         end();
-        submit();
+        submit(waitForImageAvailable, signalFrameEnd);
     }
 
-    void CommandBuffer::endAndSubmitImmediately() {
-        end();
-        submitImmediately();
-    }
-
-    void CommandBuffer::submit() {
+    void CommandBuffer::submit(bool waitForImageAvailable, bool signalFrameEnd) {
         const CommandBuffer* arr[] = { this };
-        BZ_GRAPHICS_CTX.submitCommandBuffers(arr, 1);
-    }
-
-    void CommandBuffer::submitImmediately() {
-        const CommandBuffer* arr[] = { this };
-        BZ_GRAPHICS_CTX.submitImmediatelyCommandBuffers(arr, 1);
+        BZ_GRAPHICS_CTX.submitCommandBuffers(arr, 1, waitForImageAvailable, signalFrameEnd);
     }
 
     void CommandBuffer::beginRenderPass(const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer) {

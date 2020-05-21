@@ -5,9 +5,9 @@
 #include "Graphics/Internal/Device.h"
 #include "Graphics/Internal/Swapchain.h"
 #include "Graphics/Internal/Surface.h"
-#include "Graphics/Internal/Sync.h"
 #include "Graphics/Internal/CommandPool.h"
 #include "Graphics/Internal/DescriptorPool.h"
+#include "Graphics/Sync.h"
 
 
 namespace BZ {
@@ -29,11 +29,11 @@ namespace BZ {
         std::unordered_map<uint32, CommandPool> commandPoolsByFamily;
 
         //GPU-GPU sync.
-        Semaphore imageAvailableSemaphore;
-        Semaphore renderFinishedSemaphore;
+        Ref<Semaphore> imageAvailableSemaphore;
+        Ref<Semaphore> renderFinishedSemaphore;
 
         //CPU-GPU sync, to stop the CPU from piling up more than MAX_FRAMES_IN_FLIGHT frames when the app is GPU-bound.
-        Fence renderFinishedFence;
+        Ref<Fence> renderFinishedFence;
     };
 
     class GraphicsContext {
@@ -48,9 +48,14 @@ namespace BZ {
         void beginFrame();
         void endFrame();
 
-        void submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count);
-        void submitImmediatelyCommandBuffers(const CommandBuffer* commandBuffers[], uint32 count);
-        
+        void submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 commandBuffersCount,
+                                  bool waitForImageAvailable, bool signalFrameEnd);
+
+        void submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 commandBuffersCount,
+                                  const Ref<Semaphore> semaphoresToWaitFor[], VkPipelineStageFlags waitStages[], uint32 semaphoresToWaitForCount,
+                                  const Ref<Semaphore> semaphoresToSignal[], uint32 semaphoresToSignalCount,
+                                  const Ref<Fence> &fenceToSignal);
+
         void waitForDevice();
         void waitForQueue(QueueProperty queueProperty);
 
@@ -65,6 +70,10 @@ namespace BZ {
 
         const Ref<Framebuffer>& getSwapchainAquiredImageFramebuffer() const { return swapchain.getAquiredImageFramebuffer(); }
         const Ref<RenderPass>& getSwapchainDefaultRenderPass() const { return swapchain.getDefaultRenderPass(); }
+
+        const Ref<Semaphore>& getCurrentFrameRenderFinishedSemaphore() const { return frameDatas[currentFrameIndex].renderFinishedSemaphore; }
+        const Ref<Semaphore>& getCurrentFrameImageAvailableSemaphore() const { return frameDatas[currentFrameIndex].imageAvailableSemaphore; }
+        const Ref<Fence>& getCurrentFrameRenderFinishedFence() const { return frameDatas[currentFrameIndex].renderFinishedFence; }
 
         Device& getDevice() { return device; }
 
@@ -84,10 +93,6 @@ namespace BZ {
         uint32 currentFrameIndex = 0;
 
         VmaAllocator memoryAllocator;
-
-        //CommandBuffers to be submitted at frame end.
-        const CommandBuffer* pendingCommandBuffers[MAX_COMMAND_BUFFERS_PER_FRAME];
-        uint32 pendingCommandBufferIndex;
 
         //Statistics stuff.
         struct GraphicsStats {

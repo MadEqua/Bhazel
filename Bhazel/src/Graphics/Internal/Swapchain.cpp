@@ -6,8 +6,8 @@
 
 #include "Graphics/Internal/Device.h"
 #include "Graphics/Internal/Surface.h"
-#include "Graphics/Internal/Sync.h"
 
+#include "Graphics/Sync.h"
 #include "Graphics/GraphicsContext.h"
 #include "Graphics/Framebuffer.h"
 #include "Graphics/RenderPass.h"
@@ -35,10 +35,10 @@ namespace BZ {
         internalInit();
     }
 
-    void Swapchain::aquireImage(const Semaphore &imageAvailableSemaphore) {
+    void Swapchain::aquireImage(const Ref<Semaphore> &imageAvailableSemaphore) {
         BZ_ASSERT_CORE(!aquired, "Aquiring image with one already aquired. Should present it first!");
 
-        VkResult result = vkAcquireNextImageKHR(device->getHandle(), handle, 0, imageAvailableSemaphore.getHandle(), VK_NULL_HANDLE, &currentImageIndex);
+        VkResult result = vkAcquireNextImageKHR(device->getHandle(), handle, 0, imageAvailableSemaphore->getHandle(), VK_NULL_HANDLE, &currentImageIndex);
         if(result < VK_SUCCESS) {
             BZ_LOG_CORE_ERROR("VulkanContext failed to acquire image for presentation. Error: {}.", result);
             recreate();
@@ -51,10 +51,10 @@ namespace BZ {
         }
     }
 
-    void Swapchain::presentImage(const Semaphore &renderFinishedSemaphore) {
+    void Swapchain::presentImage(const Ref<Semaphore> &renderFinishedSemaphore) {
         BZ_ASSERT_CORE(aquired, "Presenting image with none aquired. Aquire one first!");
 
-        VkSemaphore waitSemaphore[] = { renderFinishedSemaphore.getHandle() };
+        VkSemaphore waitSemaphore[] = { renderFinishedSemaphore->getHandle() };
         VkSwapchainKHR swapchains[] = { handle };
 
         VkPresentInfoKHR presentInfo = {};

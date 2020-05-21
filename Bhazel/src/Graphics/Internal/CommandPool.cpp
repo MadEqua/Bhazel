@@ -28,11 +28,11 @@ namespace BZ {
     }
 
     CommandBuffer& CommandPool::getCommandBuffer() {
-        BZ_ASSERT_CORE(nextFreeIndex < MAX_COMMAND_BUFFERS_PER_FRAME, "CommandPool has reached maximum capacity!");
+        BZ_ASSERT_CORE(nextFreeIndex < MAX_COMMAND_BUFFERS_PER_POOL, "CommandPool has reached maximum capacity!");
 
         //The next free CommandBuffer is still not allocated/initialized, so allocate a batch.
         if(nextFreeIndex == toAllocateIndex) {
-            uint32 toAllocateCount = std::min(ALLOCATE_BATCH_COUNT, MAX_COMMAND_BUFFERS_PER_FRAME - toAllocateIndex);
+            uint32 toAllocateCount = std::min(ALLOCATE_BATCH_COUNT, MAX_COMMAND_BUFFERS_PER_POOL - toAllocateIndex);
 
             VkCommandBufferAllocateInfo allocInfo = {};
             allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
