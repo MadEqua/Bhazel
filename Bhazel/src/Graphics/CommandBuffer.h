@@ -47,7 +47,7 @@ namespace BZ {
                                uint32 dynamicBufferOffsets[], uint32 dynamicBufferCount);
 
         void setPushConstants(const Ref<PipelineLayout> &pipelineLayout, VkShaderStageFlags shaderStageFlags,
-                              const void* data, uint32 size, uint32 offset);
+                              const void* data, uint32 offset, uint32 size);
 
         void draw(uint32 vertexCount, uint32 instanceCount, uint32 firstVertex, uint32 firstInstance);
         void drawIndexed(uint32 indexCount, uint32 instanceCount, uint32 firstIndex, uint32 vertexOffset, uint32 firstInstance);

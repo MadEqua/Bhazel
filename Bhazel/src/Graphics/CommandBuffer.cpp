@@ -193,7 +193,7 @@ namespace BZ {
         commandCount++;
     }
 
-    void CommandBuffer::setPushConstants(const Ref<PipelineLayout> &pipelineLayout, VkShaderStageFlags shaderStageFlags, const void* data, uint32 size, uint32 offset) {
+    void CommandBuffer::setPushConstants(const Ref<PipelineLayout> &pipelineLayout, VkShaderStageFlags shaderStageFlags, const void* data, uint32 offset, uint32 size) {
         constexpr uint32 MAX_PUSH_CONSTANT_SIZE = 128;
 
         BZ_ASSERT_CORE(size % 4 == 0, "Size must be a multiple of 4!");

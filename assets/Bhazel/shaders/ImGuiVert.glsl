@@ -5,8 +5,8 @@ layout(location = 0) in vec2 attrPos;
 layout(location = 1) in vec2 attrTexCoord;
 layout(location = 2) in vec4 attrColor;
 
-layout (set = 0, binding = 0, std140) uniform Constants {
-    mat4 projectionMatrix;
+layout (push_constant) uniform Constants {
+    vec2 displaySize;
 } uConstants;
 
 layout(location = 0) out struct { 
@@ -18,5 +18,10 @@ layout(location = 0) out struct {
 void main() {
     outData.color = attrColor;
     outData.texCoord = attrTexCoord;
-    gl_Position = uConstants.projectionMatrix * vec4(attrPos, 0.0, 1.0);
+
+    vec2 pos;
+    pos.x = (attrPos.x * 2.0 / uConstants.displaySize.x) - 1.0;
+    pos.y = (attrPos.y * -2.0 / uConstants.displaySize.y) + 1.0;
+
+    gl_Position = vec4(pos, 0.0, 1.0);
 }

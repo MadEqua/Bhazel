@@ -16,7 +16,7 @@ layout(set = 1, binding = 1) uniform sampler2D uPreviousMipTexSampler;
 layout(push_constant) uniform Data {
     uint direction;
     uint currentMip;
-} pData;
+} uData;
 
 layout(location = 0) out vec4 outColor;
 
@@ -29,7 +29,7 @@ void main() {
     vec3 result = texture(uInputTexSampler, inTexCoord).rgb * weight[0];
 
     //Horizontal
-    if(pData.direction == 0) {
+    if(uData.direction == 0) {
         for(int i = 1; i < 5; ++i) {
             result += texture(uInputTexSampler, inTexCoord + vec2(texelOffset.x * i, 0.0)).rgb * weight[i];
             result += texture(uInputTexSampler, inTexCoord - vec2(texelOffset.x * i, 0.0)).rgb * weight[i];
@@ -43,10 +43,10 @@ void main() {
         }
 
         //Control the weight of the current blur mip.
-        result *= uPostProcessConstants.bloomBlurWeights[pData.currentMip];
+        result *= uPostProcessConstants.bloomBlurWeights[uData.currentMip];
 
         //All mips except the last one should sum with the previous.
-        if(pData.currentMip < BLOOM_TEXTURE_MIPS - 1) {
+        if(uData.currentMip < BLOOM_TEXTURE_MIPS - 1) {
             result += texture(uPreviousMipTexSampler, inTexCoord).rgb;
         }
     }

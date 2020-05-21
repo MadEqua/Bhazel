@@ -250,7 +250,7 @@ namespace BZ {
                 commandBuffer.bindDescriptorSet(blurPass ? *blurDescriptorSets2[mip] : *blurDescriptorSets1[mip], blurPipelineLayout, 1, nullptr, 0);
                 commandBuffer.beginRenderPass(blurRenderPass, blurPass ? tex1Framebuffers[mip] : tex2Framebuffers[mip]);
                 commandBuffer.setViewports(0, &viewports[mip], 1);
-                commandBuffer.setPushConstants(blurPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, &push, sizeof(push), 0);
+                commandBuffer.setPushConstants(blurPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, &push, 0, sizeof(push));
                 commandBuffer.draw(3, 1, 0, 0);
                 commandBuffer.endRenderPass();
 

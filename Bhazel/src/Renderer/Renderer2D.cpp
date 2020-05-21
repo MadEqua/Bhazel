@@ -343,7 +343,7 @@ namespace BZ {
                     }
 
                     //if (currentActiveTint != currentBatchTint) {
-                    //    Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlag::Fragment), &currentBatchTint.x, sizeof(glm::vec4), 0);
+                    //    Graphics::setPushConstants(rendererData.commandBufferId, rendererData.pipelineState, flagsToMask(ShaderStageFlag::Fragment), &currentBatchTint.x, 0, sizeof(glm::vec4));
                     //    currentActiveTint = currentBatchTint;
                     //    stats.tintPushCount++;
                     //}

@@ -1,7 +1,7 @@
 #version 450 core
 #pragma shader_stage(fragment)
 
-layout(set = 0, binding = 1) uniform sampler2D uFontTexSampler;
+layout(set = 0, binding = 0) uniform sampler2D uFontTexSampler;
 
 layout(location = 0) in struct { 
     vec4 color;

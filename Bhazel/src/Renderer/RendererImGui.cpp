@@ -26,11 +26,9 @@ namespace BZ {
     static struct ImGuiRendererData {
         Ref<Buffer> vertexBuffer;
         Ref<Buffer> indexBuffer;
-        Ref<Buffer> constantBuffer;
 
         BufferPtr vertexBufferPtr;
         BufferPtr indexBufferPtr;
-        BufferPtr constantBufferPtr;
 
         Ref<TextureView> fontTextureView;
         Ref<Sampler> fontTextureSampler;
@@ -61,7 +59,6 @@ namespace BZ {
 
         rendererData.vertexBuffer.reset();
         rendererData.indexBuffer.reset();
-        rendererData.constantBuffer.reset();
 
         rendererData.fontTextureView.reset();
         rendererData.fontTextureSampler.reset();
@@ -162,10 +159,9 @@ namespace BZ {
 
         //DescriptorSetLayout
         Ref<DescriptorSetLayout> descriptorSetLayout =
-            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1 },
-                                          { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
+            DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
 
-        rendererData.pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
+        rendererData.pipelineLayout = PipelineLayout::create({ descriptorSetLayout }, { { VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ImVec2) } });
 
         //PipelineStateData
         BlendingState blendingState;
@@ -190,14 +186,9 @@ namespace BZ {
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
 
-        //Constant Buffer
-        rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
-        rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
-
         //DescriptorSet
         rendererData.descriptorSet = &DescriptorSet::get(descriptorSetLayout);
-        rendererData.descriptorSet->setConstantBuffer(rendererData.constantBuffer, 0, 0, sizeof(glm::mat4));
-        rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler, 1);
+        rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler, 0);
     }
 
     void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd) {
@@ -228,18 +219,12 @@ namespace BZ {
         }
 
         ImGuiIO &io = ImGui::GetIO();
-        glm::mat4 projMatrix(1.0f);
-        projMatrix[0][0] = 2.0f / io.DisplaySize.x;
-        projMatrix[1][1] = -2.0f / io.DisplaySize.y;
-        projMatrix[3][0] = -1.0f;
-        projMatrix[3][1] = 1.0f;
-
-        memcpy(rendererData.constantBufferPtr, &projMatrix[0], sizeof(glm::mat4));
 
         commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
         commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
         commandBuffer.bindPipelineState(rendererData.pipelineState);
         commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineLayout, 0, nullptr, 0);
+        commandBuffer.setPushConstants(rendererData.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, &io.DisplaySize, 0, sizeof(ImVec2));
         commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
 
         int globalIndexOffset = 0;
