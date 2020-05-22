@@ -758,8 +758,6 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         if(rendererData.sceneToRender) {
-            memset(&rendererData.stats, 0, sizeof(RendererStats));
-
             fillConstants(*rendererData.sceneToRender);
 
             shadowPass(*rendererData.sceneToRender);
@@ -797,6 +795,7 @@ namespace BZ {
             ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
+        rendererData.stats = {};
     }
 
     void Renderer::computeCascadedShadowMappingSplits(float out[], uint32 splits, float nearPlane, float farPlane) {

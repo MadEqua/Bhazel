@@ -215,8 +215,6 @@ namespace BZ {
 
         rendererData.nextSprite = 0;
         rendererData.camera = &camera;
-
-        memset(&rendererData.stats, 0, sizeof(Renderer2DStats));
     }
 
     void Renderer2D::end() {
@@ -259,8 +257,6 @@ namespace BZ {
         //size_t tintHash = Utils::hashCombine(Utils::hashCombine(Utils::hashCombine(hasher(tintAndAlpha.r), hasher(tintAndAlpha.g)), hasher(tintAndAlpha.b)), hasher(tintAndAlpha.a));
         //spr.sortKey = (spr.textureHash << 32) | (tintHash >> 32);
         spr.sortKey = spr.textureHash;
-
-        rendererData.stats.spriteCount++;
     }
 
     void Renderer2D::renderParticleSystem2D(const ParticleSystem2D & particleSystem) {
@@ -275,6 +271,8 @@ namespace BZ {
 
     void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd)  {
         BZ_PROFILE_FUNCTION();
+
+        rendererData.stats.spriteCount = rendererData.nextSprite;
 
         if(rendererData.nextSprite > 0) {
             CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
@@ -384,5 +382,7 @@ namespace BZ {
             ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
+
+        rendererData.stats = {};
     }
 }

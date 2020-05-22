@@ -67,8 +67,6 @@ namespace BZ {
         }
 
         swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
-
-        stats = {};
     }
 
     void GraphicsContext::endFrame() {
@@ -219,5 +217,6 @@ namespace BZ {
             ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
+        stats = {};
     }
 }

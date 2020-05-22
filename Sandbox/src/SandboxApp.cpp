@@ -258,7 +258,7 @@ void Layer3D::onGraphicsContextCreated() {
     const char* cubeFileNames[6] = { "skybox_posx.hdr", "skybox_negx.hdr", 
                                      "skybox_posy.hdr", "skybox_negy.hdr",
                                      "skybox_posz.hdr", "skybox_negz.hdr" };
-
+    
     scenes[0].enableSkyBox("Sandbox/textures/umbrellas/", cubeFileNames,
                            "Sandbox/textures/umbrellasIrradiance/", cubeFileNames,
                            "Sandbox/textures/umbrellasRadiance/", cubeFileNames, 5);
