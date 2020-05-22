@@ -344,8 +344,6 @@ namespace BZ {
             comBuffer.copyBufferToBuffer(stagingBuffer, *this, &copyRegion, 1);
 
             comBuffer.endAndSubmit();
-
-            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Transfer);
         }
         else {
             void *ptr;

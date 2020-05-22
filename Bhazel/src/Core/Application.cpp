@@ -77,6 +77,10 @@ namespace BZ {
 
         layerStack.onGraphicsContextCreated();
 
+        //Wait for everything that is being loaded.
+        graphicsContext.waitForQueue(QueueProperty::Graphics);
+        graphicsContext.waitForQueue(QueueProperty::Transfer);
+
         Timer frameTimer;
         frameStats = {};
 
