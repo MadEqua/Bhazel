@@ -478,9 +478,10 @@ namespace BZ {
             }
 
             commBuffer.pipelineBarrierTexture(*this, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                              VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-                                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
+                                               VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             commBuffer.endAndSubmit();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics);
         }
         else {
             const FileData fileData = loadFile(path, format.getChannelCount(), true, format.isFloatingPoint());
@@ -517,6 +518,7 @@ namespace BZ {
                                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             }
             commBuffer.endAndSubmit();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics);
         }
     }
 
@@ -562,6 +564,7 @@ namespace BZ {
                                               VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             commBuffer.endAndSubmit();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics);
         }
         else {
             if (mipmapData.option == MipmapData::Options::Generate) {
@@ -593,6 +596,7 @@ namespace BZ {
                                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             }
             commBuffer.endAndSubmit();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics);
         }
     }
 
@@ -721,6 +725,7 @@ namespace BZ {
                                               VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             commBuffer.endAndSubmit();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics);
         }
         else {
             std::vector<FileData> fileDatas(6);
@@ -766,6 +771,7 @@ namespace BZ {
                                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, mipLevels);
             }
             commBuffer.endAndSubmit();
+            BZ_GRAPHICS_CTX.waitForQueue(QueueProperty::Graphics);
         }
     }
 
