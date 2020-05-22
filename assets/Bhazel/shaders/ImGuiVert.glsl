@@ -19,9 +19,6 @@ void main() {
     outData.color = attrColor;
     outData.texCoord = attrTexCoord;
 
-    vec2 pos;
-    pos.x = (attrPos.x * 2.0 / uConstants.displaySize.x) - 1.0;
-    pos.y = (attrPos.y * -2.0 / uConstants.displaySize.y) + 1.0;
-
+    vec2 pos = (attrPos * 2.0 / uConstants.displaySize) - 1.0;
     gl_Position = vec4(pos, 0.0, 1.0);
 }

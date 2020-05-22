@@ -45,7 +45,6 @@ layout(location = 0) in struct {
     //vec3 positionTan;
     vec3 LTan[MAX_DIR_LIGHTS_PER_SCENE];
     vec3 VTan;
-    vec3 NTan;
 } inData;
 
 layout(location = 0) out vec4 outColor;
@@ -149,14 +148,14 @@ vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness, vec2 t
     vec3 kDiffuse = 1.0 - kSpecular;
 
     vec3 cubeDirection = normalize(inData.TBN * N);
-    cubeDirection.x = -cubeDirection.x;
+    cubeDirection.z = -cubeDirection.z;
 
     vec3 irradiance = texture(uIrradianceMapTexSampler, cubeDirection).rgb;
     vec3 diffuse = albedo * irradiance;
 
     vec3 R = reflect(-V, N);
     vec3 worldR = normalize(inData.TBN * R);
-    worldR.x = -worldR.x;
+    worldR.z = -worldR.z;
 
     int radianceMapMips = textureQueryLevels(uRadianceMapTexSampler);
     vec3 radiance = textureLod(uRadianceMapTexSampler, worldR, roughness * float(radianceMapMips)).rgb;
@@ -187,9 +186,6 @@ float shadowMapping(int lightIdx, int cascadeIdx) {
         }
         else {
             vec2 shadowMapTexCoord = posLightNDC.xy * 0.5 + 0.5;
-            //In Vulkan texCoord y=0 is the top line. This texture was not flipped by Bhazel like the ones loaded from disk, so flip it here.
-            shadowMapTexCoord.y = 1.0 - shadowMapTexCoord.y;
-
             vec4 coordLayerAndCompare = vec4(shadowMapTexCoord, float(i), posLightNDC.z);
             return texture(uShadowMapSamplers[lightIdx], coordLayerAndCompare);
         }
@@ -249,7 +245,7 @@ void main() {
     const vec2 uvScale = uMaterialConstants.heightAndUvScale.yz;
     vec2 texCoord = parallaxOcclusionMap(inData.texCoord * uvScale, V);
 
-    vec3 N = normalize(hasNormalMap ? (texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0) : inData.NTan);
+    vec3 N = hasNormalMap ? normalize(texture(uNormalTexSampler, texCoord).rgb * 2.0 - 1.0) : vec3(0.0, 0.0, 1.0);
 
     vec3 col = lighting(N, V, texCoord);
     outColor = vec4(col, 1.0);

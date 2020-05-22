@@ -194,7 +194,7 @@ namespace BZ {
 
         PipelineStateData blurPipelineStateData;
         blurPipelineStateData.dataLayout = {};
-        blurPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+        blurPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                         { "Bhazel/shaders/bin/BloomBlurAndSumFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         blurPipelineStateData.layout = blurPipelineLayout;
         blurPipelineStateData.blendingState = blendingState;
@@ -214,11 +214,6 @@ namespace BZ {
             viewports[i].height = static_cast<float>(h);
             viewports[i].minDepth = 0.0f;
             viewports[i].maxDepth = 1.0f;
-
-            //Inverting the space (+y -> up)
-            //TODO: aux function
-            viewports[i].y = viewports[i].height;
-            viewports[i].height = -viewports[i].height;
 
             tex1Framebuffers[i] = Framebuffer::create(blurRenderPass, { tex1MipViews[i] }, { w, h, 1 });
             tex2Framebuffers[i] = Framebuffer::create(blurRenderPass, { tex2MipViews[i] }, { w, h, 1 });
@@ -319,7 +314,7 @@ namespace BZ {
         const auto INPUT_DIMENSIONS_F = postProcessor.getInputTextureDimensionsFloat();
 
         PipelineStateData finalPipelineStateData;
-        finalPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+        finalPipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                          { "Bhazel/shaders/bin/BloomFinalFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         finalPipelineStateData.layout = finalPipelineLayout;
         finalPipelineStateData.blendingState = blendingState;
@@ -355,7 +350,7 @@ namespace BZ {
         blendingState.attachmentBlendingStates = { blendingStateAttachment };
 
         PipelineStateData pipelineStateData;
-        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenQuadVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/ToneMapFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
         pipelineStateData.layout = postProcessor.getPipelineLayout();
         pipelineStateData.viewports = { { 0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y, 0.0f, 1.0f } };

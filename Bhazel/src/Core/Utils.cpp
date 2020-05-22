@@ -49,15 +49,21 @@ namespace BZ::Utils {
     }
 
     glm::mat4 ortho(float left, float right, float bottom, float top, float near, float far) {
-        return glm::orthoRH_ZO(left, right, bottom, top, near, far);
+        glm::mat4 mat = glm::orthoRH_ZO(left, right, bottom, top, near, far);
+        mat[1] = -mat[1]; //Take into account Vulkan clip space, y is down.
+        return mat;
     }
 
     glm::mat4 frustum(float left, float right, float bottom, float top, float near, float far) {
-        return glm::frustumRH_ZO(left, right, bottom, top, near, far);
+        glm::mat4 mat = glm::frustumRH_ZO(left, right, bottom, top, near, far);
+        mat[1] = -mat[1]; //Take into account Vulkan clip space, y is down.
+        return mat;
     }
 
     glm::mat4 perspective(float fovy, float aspectRatio, float near, float far) {
-        return glm::perspectiveRH_ZO(glm::radians(fovy), aspectRatio, near, far);
+        glm::mat4 mat = glm::perspectiveRH_ZO(glm::radians(fovy), aspectRatio, near, far);
+        mat[1] = -mat[1]; //Take into account Vulkan clip space, y is down.
+        return mat;
     }
 
     std::size_t hashCombine(std::size_t hash1, std::size_t hash2) {

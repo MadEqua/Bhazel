@@ -44,7 +44,6 @@ layout(location = 0) out struct {
     //vec3 positionTan;
     vec3 LTan[MAX_DIR_LIGHTS_PER_SCENE];
     vec3 VTan;
-    vec3 NTan;
 } outData;
 
 
@@ -52,8 +51,9 @@ void main() {
     vec4 positionWorld = uEntityConstants.modelMatrix * vec4(attrPosition, 1.0);
     gl_Position = uPassConstants.viewProjectionMatrix * positionWorld;
 
-    vec3 bitangent = cross(attrNormal, attrTangentAndDet.xyz) * attrTangentAndDet.w;
-    outData.TBN = mat3(uEntityConstants.normalMatrix) * mat3(attrTangentAndDet.xyz, bitangent, attrNormal);
+    vec3 bitangent = normalize(cross(attrNormal, attrTangentAndDet.xyz) * attrTangentAndDet.w);
+    mat3 tangentToModel = mat3(attrTangentAndDet.xyz, bitangent, attrNormal);
+    outData.TBN = mat3(uEntityConstants.normalMatrix) * tangentToModel;
     outData.texCoord = attrTexCoord;
 
     //Multiply on the left is equal to multiply with the transpose (= inverse in this case). So transforming from world to tangent space.
@@ -71,5 +71,4 @@ void main() {
     }
 
     outData.VTan = normalize((uPassConstants.cameraPosition.xyz - positionWorld.xyz) * outData.TBN);
-    outData.NTan = normalize(outData.TBN[2] * outData.TBN);
 }

@@ -15,7 +15,8 @@ layout(location = 0) out vec3 outCubeMapDirection;
 
 void main() {
     outCubeMapDirection = attrPosition;
-    outCubeMapDirection.x = -outCubeMapDirection.x;
+    //Bhazel world space has opposite z axis in relation to Vulkan cube texture mapping.
+    outCubeMapDirection.z = -outCubeMapDirection.z;
 
     //Ignore camera position, meaning the box will always be surrounding the camera.
     mat3 rotView = mat3(uPassConstants.viewMatrix);

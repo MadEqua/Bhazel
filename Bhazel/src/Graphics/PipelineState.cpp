@@ -136,12 +136,6 @@ namespace BZ {
         inputAssemblyState.primitiveRestartEnable = VK_FALSE;
 
         //Viewport and scissor setup. This is ignored if the viewport (or scissor) is declared dynamic.
-        for(auto &vp : data.viewports) {
-            //Inverting the space (+y -> up)
-            vp.y = vp.height;
-            vp.height = -vp.height;
-        }
-
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = static_cast<uint32_t>(data.viewports.size());

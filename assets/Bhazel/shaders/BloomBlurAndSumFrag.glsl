@@ -35,7 +35,7 @@ void main() {
             result += texture(uInputTexSampler, inTexCoord - vec2(texelOffset.x * i, 0.0)).rgb * weight[i];
         }
     }
-    //The vertical pass will simultaneously do a sum of the current mip with the previous one.
+    //The vertical pass will also do a sum of the current mip with the previous one.
     else {
         for(int i = 1; i < 5; ++i) {
             result += texture(uInputTexSampler, inTexCoord + vec2(0.0, texelOffset.y * i)).rgb * weight[i];
