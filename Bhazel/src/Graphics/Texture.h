@@ -125,22 +125,29 @@ namespace BZ {
     /*-------------------------------------------------------------------------------------------*/
     class TextureView : public GpuObject<VkImageView> {
     public:
-        static Ref<TextureView> create(const Ref<Texture2D> &texture2D, uint32 baseLayer = 0, int layerCount = -1, uint32 baseMip = 0, int mipCount = -1);
+        static Ref<TextureView> create(const Ref<Texture2D> &texture2D);
+        static Ref<TextureView> create(const Ref<Texture2D> &texture2D, TextureFormat format);
+        static Ref<TextureView> create(const Ref<Texture2D> &texture2D, uint32 baseLayer, int layerCount, uint32 baseMip, int mipCount);
+
         static Ref<TextureView> create(const Ref<TextureCube> &textureCube);
 
-        TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer = 0, int layerCount = -1, uint32 baseMip = 0, int mipCount = -1);
+        explicit TextureView(const Ref<Texture2D> &texture2D);
+        TextureView(const Ref<Texture2D> &texture2D, TextureFormat format);
+        TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, int layerCount, uint32 baseMip, int mipCount);
+
         explicit TextureView(const Ref<TextureCube> &textureCube);
 
         ~TextureView();
 
-        //const TextureFormat& getFormat() const { return texture->getFormat(); } TODO: TextureView own format
+        const TextureFormat& getFormat() const { return format; }
         TextureFormat getTextureFormat() const { return texture->getFormat(); }
         Ref<Texture> getTexture() const { return texture; }
 
     private:
-        void init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount);
+        void init(VkImageViewType viewType, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount);
 
         Ref<Texture> texture;
+        TextureFormat format;
     };
 
 

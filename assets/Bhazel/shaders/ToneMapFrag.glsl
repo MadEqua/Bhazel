@@ -12,9 +12,16 @@ layout (set = 0, binding = 1, std140) uniform PostProcessConstants {
 layout(location = 0) out vec4 outColor;
 
 
+float luma(vec3 color) {
+    return dot(color, vec3(0.299, 0.587, 0.114));
+}
+
 void main() {
     vec3 hdrColor = texture(uInputTexSampler, inTexCoord).rgb;
 
     vec3 mapped = vec3(1.0) - exp(-hdrColor * uPostProcessConstants.cameraExposureAndBloomIntensity.x);
-    outColor = vec4(mapped, 1.0);
+
+    //Compute luma based on gamma space color. Gamma 2.0 is fine for FXAA purposes.
+    float lumaGamma = luma(sqrt(mapped));
+    outColor = vec4(mapped, lumaGamma);
 }

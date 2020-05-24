@@ -21,6 +21,7 @@ namespace BZ {
 
         //We will initialize Vulkan by ourselves.
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         window = glfwCreateWindow(data.dimensions.x, data.dimensions.y, data.title.c_str(), nullptr, nullptr);
         BZ_CRITICAL_ERROR_CORE(window, "Could not create GLFW Window!");

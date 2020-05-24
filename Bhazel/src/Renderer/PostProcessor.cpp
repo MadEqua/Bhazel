@@ -21,7 +21,6 @@
 
 namespace BZ {
 
-
     void Bloom::init() {
         const auto INPUT_DIMENSIONS = postProcessor.getInputTextureDimensions();
 
@@ -74,6 +73,7 @@ namespace BZ {
 
     void Bloom::onImGuiRender(const FrameStats &frameStats) {
         ImGui::Text("Bloom:");
+        ImGui::Checkbox("Enabled", &enabled);
         ImGui::DragFloat("Intensity", &intensity, 0.001f, 0.0f, 0.5f);
 
         for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
@@ -356,7 +356,7 @@ namespace BZ {
         pipelineStateData.viewports = { { 0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y, 0.0f, 1.0f } };
         pipelineStateData.scissorRects = { { 0u, 0u, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y } };
         pipelineStateData.blendingState = blendingState;
-        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
         pipelineState = PipelineState::create(pipelineStateData);
     }
@@ -365,8 +365,8 @@ namespace BZ {
         pipelineState.reset();
     }
 
-     void ToneMap::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer) {
-        commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
+     void ToneMap::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer) {
+        commandBuffer.beginRenderPass(renderPass, framebuffer);
         commandBuffer.bindPipelineState(pipelineState);
         commandBuffer.draw(3, 1, 0, 0);
         commandBuffer.endRenderPass();
@@ -379,13 +379,87 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
+    void FXAA::init(const Ref<TextureView> &inTexture) {
+        this->inTexture = inTexture;
+
+        auto descriptorSetLayout = DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
+        pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
+        descriptorSet = &DescriptorSet::get(descriptorSetLayout);
+        descriptorSet->setCombinedTextureSampler(inTexture, postProcessor.getSampler(), 0);
+
+        const auto INPUT_DIMENSIONS = inTexture->getTexture()->getDimensions();
+        const auto INPUT_DIMENSIONS_F = inTexture->getTexture()->getDimensionsFloat();
+
+        BlendingState blendingState;
+        BlendingStateAttachment blendingStateAttachment;
+        blendingState.attachmentBlendingStates = { blendingStateAttachment };
+
+        PipelineStateData pipelineStateData;
+        pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/FullScreenVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
+                                                    { "Bhazel/shaders/bin/FxaaFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
+        pipelineStateData.layout = pipelineLayout;
+        pipelineStateData.viewports = { { 0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y, 0.0f, 1.0f } };
+        pipelineStateData.scissorRects = { { 0u, 0u, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y } };
+        pipelineStateData.blendingState = blendingState;
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+        pipelineStateData.subPassIndex = 0;
+        pipelineState = PipelineState::create(pipelineStateData);
+    }
+
+    void FXAA::destroy() {
+        inTexture.reset();
+        pipelineState.reset();
+        pipelineLayout.reset();
+    }
+
+    void FXAA::render(CommandBuffer &commandBuffer, const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer) {
+        commandBuffer.beginRenderPass(renderPass, framebuffer);
+        commandBuffer.bindPipelineState(pipelineState);
+        commandBuffer.bindDescriptorSet(*descriptorSet, pipelineLayout, 0, nullptr, 0);
+        commandBuffer.draw(3, 1, 0, 0);
+        commandBuffer.endRenderPass();
+    }
+
+    void FXAA::onImGuiRender(const FrameStats &frameStats) {
+        ImGui::Text("FXAA:");
+        ImGui::Checkbox("Enabled", &enabled);
+    }
+
+
+    /*-------------------------------------------------------------------------------------------*/
     PostProcessor::PostProcessor() :
         bloom(*this), 
-        toneMap(*this) {
+        toneMap(*this),
+        fxaa(*this) {
     }
 
     void PostProcessor::init(const Ref<TextureView> &colorTexView, const Ref<Buffer> &constantBuffer, uint32 bufferOffset) {
         inputTexView = colorTexView;
+
+        const Ref<RenderPass> &swapchainRenderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+        const Ref<Framebuffer> &swapchainFramebuffer = Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
+        const glm::uvec3 SWAPCHAIN_DIMS = swapchainFramebuffer->getDimensionsAndLayers();
+        auto swapchainReplicaTex = Texture2D::createRenderTarget(SWAPCHAIN_DIMS.x, SWAPCHAIN_DIMS.y, 1, 1,
+            swapchainFramebuffer->getColorAttachmentTextureView(0)->getTextureFormat());
+        auto swapchainReplicaTexView = TextureView::create(swapchainReplicaTex);
+
+
+        //Create the RenderPass.
+        AttachmentDescription colorAttachmentDesc;
+        colorAttachmentDesc.format = swapchainReplicaTex->getFormat();
+        colorAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDesc.storeOperatorColorAndDepth = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        SubPassDescription subPassDesc;
+        subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
+
+        swapchainReplicaRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
+        swapchainReplicaFramebuffer = Framebuffer::create(swapchainReplicaRenderPass, { swapchainReplicaTexView }, SWAPCHAIN_DIMS);
 
         Sampler::Builder samplerBuilder;
         samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -403,16 +477,21 @@ namespace BZ {
 
         bloom.init();
         toneMap.init();
+        fxaa.init(swapchainReplicaTexView);
     }
 
     void PostProcessor::destroy() {
         inputTexView.reset();
+
+        swapchainReplicaRenderPass.reset();
+        swapchainReplicaFramebuffer.reset();
 
         sampler.reset();
         descriptorSetLayout.reset();
         pipelineLayout.reset();
 
         toneMap.destroy();
+        fxaa.destroy();
         bloom.destroy();
     }
 
@@ -428,25 +507,45 @@ namespace BZ {
         memcpy(ptr, &data, sizeof(PostProcessConstantBufferData));
     }
 
-    void PostProcessor::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
-                               bool waitForImageAvailable, bool signalFrameEnd) {
-
+    void PostProcessor::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd) {
         CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
         commandBuffer.bindDescriptorSet(*descriptorSet, pipelineLayout, 0, nullptr, 0);
 
+        if(bloom.isEnabled()) {
+            addBarrier(commandBuffer);
+            bloom.render(commandBuffer);
+        }
+
         addBarrier(commandBuffer);
-        bloom.render(commandBuffer);
-        addBarrier(commandBuffer);
-        toneMap.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer);
+        toneMap.render(commandBuffer, 
+            fxaa.isEnabled() ? swapchainReplicaRenderPass : swapchainRenderPass,
+            fxaa.isEnabled() ? swapchainReplicaFramebuffer : swapchainFramebuffer);
+
+        if(fxaa.isEnabled()) {
+            addBarrier(commandBuffer);
+            fxaa.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer);
+        }
 
         commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 
     void PostProcessor::onImGuiRender(const FrameStats &frameStats) {
         if(ImGui::Begin("Post-Processing")) {
+            ImGui::PushID(1);
             bloom.onImGuiRender(frameStats);
+            ImGui::PopID();
+
             ImGui::Separator();
+
+            ImGui::PushID(2);
             toneMap.onImGuiRender(frameStats);
+            ImGui::PopID();
+
+            ImGui::Separator();
+
+            ImGui::PushID(3);
+            fxaa.onImGuiRender(frameStats);
+            ImGui::PopID();
         }
         ImGui::End();
     }

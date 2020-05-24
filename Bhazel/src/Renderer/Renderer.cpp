@@ -380,7 +380,7 @@ namespace BZ {
 
         rendererData.colorFramebuffer = Framebuffer::create(rendererData.colorRenderPass, 
             { rendererData.colorTexView, rendererData.depthTexView },
-            glm::ivec3(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1));
+            glm::uvec3(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1));
 
 
         Sampler::Builder samplerBuilder;
@@ -828,7 +828,7 @@ namespace BZ {
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
         auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, SHADOW_MAPPING_CASCADE_COUNT, 1, rendererData.shadowRenderPass->getDepthStencilAttachmentDescription()->format);
-        glm::ivec3 dimsAndLayers(shadowMapRef->getDimensions().x, shadowMapRef->getDimensions().y, shadowMapRef->getLayers());
+        glm::uvec3 dimsAndLayers(shadowMapRef->getDimensions().x, shadowMapRef->getDimensions().y, shadowMapRef->getLayers());
         return Framebuffer::create(rendererData.shadowRenderPass, { TextureView::create(shadowMapRef) }, dimsAndLayers);
     }
 

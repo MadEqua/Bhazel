@@ -27,9 +27,11 @@ namespace BZ {
         BZ_NON_COPYABLE(PostProcessEffect);
 
         explicit PostProcessEffect(const PostProcessor &postProcessor) : postProcessor(postProcessor) {}
+        bool isEnabled() const { return enabled; }
 
     protected:
         const PostProcessor &postProcessor;
+        bool enabled = true;
     };
 
 
@@ -105,11 +107,31 @@ namespace BZ {
         void init();
         void destroy();
 
-        void render(CommandBuffer &commandBuffer, const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer);
+        void render(CommandBuffer &commandBuffer, const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer);
         void onImGuiRender(const FrameStats &frameStats);
 
     private:
         Ref<PipelineState> pipelineState;
+    };
+
+
+    /*-------------------------------------------------------------------------------------------*/
+    class FXAA : public PostProcessEffect {
+    public:
+        explicit FXAA(const PostProcessor &postProcessor) :
+            PostProcessEffect(postProcessor) {}
+
+        void init(const Ref<TextureView> &inTexture);
+        void destroy();
+
+        void render(CommandBuffer &commandBuffer, const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer);
+        void onImGuiRender(const FrameStats &frameStats);
+
+    private:
+        Ref<TextureView> inTexture;
+        Ref<PipelineLayout> pipelineLayout;
+        Ref<PipelineState> pipelineState;
+        DescriptorSet *descriptorSet;
     };
 
 
@@ -151,6 +173,9 @@ namespace BZ {
         Ref<TextureView> inputTexView;
         Ref<Sampler> sampler;
 
+        Ref<RenderPass> swapchainReplicaRenderPass;
+        Ref<Framebuffer> swapchainReplicaFramebuffer;
+
         //Descriptors to the input texture and the constant buffer.
         Ref<DescriptorSetLayout> descriptorSetLayout;
         Ref<PipelineLayout> pipelineLayout;
@@ -158,5 +183,6 @@ namespace BZ {
         
         Bloom bloom;
         ToneMap toneMap;
+        FXAA fxaa;
     };
 }

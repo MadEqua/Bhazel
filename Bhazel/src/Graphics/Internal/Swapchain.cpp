@@ -24,7 +24,7 @@ namespace BZ {
 
     void Swapchain::destroy() {
         framebuffers.clear();
-        defaultRenderPass.reset();
+        renderPass.reset();
         vkDestroySwapchainKHR(device->getHandle(), handle, nullptr);
         currentImageIndex = 0;
         aquired = false;
@@ -80,6 +80,15 @@ namespace BZ {
         const SwapChainSupportDetails &swapchainSupport = device->getPhysicalDevice().getSwapChainSupportDetails();
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapchainSupport.formats);
+
+        imageFormat = surfaceFormat.format;
+        //if(imageFormat == VK_FORMAT_R8G8B8A8_SRGB)
+        //    imageFormatLinear = VK_FORMAT_R8G8B8A8_UNORM;
+        //else if(imageFormat == VK_FORMAT_B8G8R8A8_SRGB)
+        //    imageFormatLinear = VK_FORMAT_B8G8R8A8_UNORM;
+        //else
+        //    BZ_ASSERT_ALWAYS_CORE("Not implemented!");
+
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapchainSupport.presentModes);
         extent = chooseSwapExtent(swapchainSupport.surfaceCapabilities);
 
@@ -92,6 +101,12 @@ namespace BZ {
         BZ_LOG_CORE_INFO("Swapchain needs a minImageCount of {} and a maxImageCount of {}. Picked an image count of {}.", 
             swapchainSupport.surfaceCapabilities.minImageCount, swapchainSupport.surfaceCapabilities.maxImageCount, imageCount);
 
+        //VkFormat possibleFormats[] = { imageFormat, imageFormatLinear };
+        //VkImageFormatListCreateInfoKHR imageFormatListCreateInfo = {};
+        //imageFormatListCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO_KHR;
+        //imageFormatListCreateInfo.viewFormatCount = 2;
+        //imageFormatListCreateInfo.pViewFormats = possibleFormats;
+
         VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
         swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapChainCreateInfo.surface = surface->getHandle();
@@ -101,6 +116,8 @@ namespace BZ {
         swapChainCreateInfo.imageExtent = extent;
         swapChainCreateInfo.imageArrayLayers = 1;
         swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        //wapChainCreateInfo.flags = VK_SWAPCHAIN_CREATE_MUTABLE_FORMAT_BIT_KHR;
+        //swapChainCreateInfo.pNext = &imageFormatListCreateInfo;
 
         const QueueContainer &queueContainer = device->getQueueContainer();
         if(queueContainer.graphics().getFamily().getIndex() != queueContainer.present().getFamily().getIndex()) {
@@ -120,8 +137,6 @@ namespace BZ {
         swapChainCreateInfo.clipped = VK_TRUE;
         swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
         BZ_ASSERT_VK(vkCreateSwapchainKHR(device->getHandle(), &swapChainCreateInfo, nullptr, &handle));
-
-        imageFormat = surfaceFormat.format;
 
         createFramebuffers();
     }
@@ -149,20 +164,30 @@ namespace BZ {
         SubPassDescription subPassDesc;
         subPassDesc.colorAttachmentsRefs = { { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } };
 
-        defaultRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
+        renderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
+
+        //colorAttachmentDesc.format = imageFormatLinear;
+        //renderPassLinear = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
 
         //Create Views and Framebuffers for the images.
         framebuffers.resize(imageCount);
+        //framebuffersLinear.resize(imageCount);
         for(size_t i = 0; i < swapChainImages.size(); i++) {
             auto textureRef = Texture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
+            
             auto textureViewRef = TextureView::create(textureRef);
-            framebuffers[i] = Framebuffer::create(defaultRenderPass, { textureViewRef }, glm::ivec3(extent.width, extent.height, 1));
+            framebuffers[i] = Framebuffer::create(renderPass, { textureViewRef }, glm::uvec3(extent.width, extent.height, 1));
+
+            //Force view to linear format.
+            //auto textureViewLinearRef = TextureView::create(textureRef, imageFormatLinear);
+            //framebuffersLinear[i] = Framebuffer::create(renderPassLinear, { textureViewLinearRef }, glm::uvec3(extent.width, extent.height, 1));
         }
     }
 
     VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
         for(const auto &availableFormat : availableFormats) {
-            if(availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            if((availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB || availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB) && 
+                availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 BZ_LOG_CORE_INFO("Found SRGB Surface format for Swapchain.");
                 return availableFormat;
             }

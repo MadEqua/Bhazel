@@ -38,7 +38,10 @@ namespace BZ {
         VkSwapchainKHR getHandle() const { return handle; }
 
         const Ref<Framebuffer>& getAquiredImageFramebuffer() const { return framebuffers[currentImageIndex]; }
-        const Ref<RenderPass>& getDefaultRenderPass() const { return defaultRenderPass; }
+        //const Ref<Framebuffer>& getAquiredImageFramebufferLinear() const { return framebuffersLinear[currentImageIndex]; }
+
+        const Ref<RenderPass>& getRenderPass() const { return renderPass; }
+        //const Ref<RenderPass>& getRenderPassLinear() const { return renderPassLinear; }
 
         glm::ivec2 getDimensions() const { return { extent.width, extent.height }; }
 
@@ -48,10 +51,17 @@ namespace BZ {
 
         VkSwapchainKHR handle;
 
-        Ref<RenderPass> defaultRenderPass;
+        Ref<RenderPass> renderPass;
         std::vector<Ref<Framebuffer>> framebuffers;
 
+        //TODO: may be useful
+        //Using the same Textures as the regular framebuffers but forcing to be viewed as linear. Useful for some algorithms.
+        //Ref<RenderPass> renderPassLinear;
+        //std::vector<Ref<Framebuffer>> framebuffersLinear;
+
         VkFormat imageFormat;
+        //VkFormat imageFormatLinear;
+
         VkExtent2D extent;
 
         //This is OK as long as we maintain a steady aquire -> present cycle, ie, only have one image aquired at a time.

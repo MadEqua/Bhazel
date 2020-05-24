@@ -181,7 +181,7 @@ namespace BZ {
         pipelineStateData.layout = rendererData.pipelineLayout;
         pipelineStateData.blendingState = blendingState;
         pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_SCISSOR };
-        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
+        pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);

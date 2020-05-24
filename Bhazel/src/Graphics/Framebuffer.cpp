@@ -11,11 +11,11 @@
 
 namespace BZ {
 
-    Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) {
+    Ref<Framebuffer> Framebuffer::create(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::uvec3 &dimensionsAndLayers) {
         return MakeRef<Framebuffer>(renderPass, textureViews, dimensionsAndLayers);
     }
 
-    Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::ivec3 &dimensionsAndLayers) :
+    Framebuffer::Framebuffer(const Ref<RenderPass> &renderPass, const std::initializer_list<Ref<TextureView>> &textureViews, const glm::uvec3 &dimensionsAndLayers) :
         dimensionsAndLayers(dimensionsAndLayers) {
 
         BZ_ASSERT_CORE(textureViews.size() == renderPass->getAttachmentCount(), "The number of TextureViews must match the number of Attachments declared on the RenderPass!");
@@ -24,7 +24,6 @@ namespace BZ {
         for (const auto &texView : textureViews) {
             if (texView->getTextureFormat().isColor()) {
                 const auto &desc = renderPass->getColorAttachmentDescription(colorIndex);
-                BZ_ASSERT_CORE(texView->getTextureFormat() == desc.format, "TextureView format is not compatible with RenderPass!");
                 colorTextureViews.push_back(texView);
                 colorIndex++;
             }
@@ -32,7 +31,6 @@ namespace BZ {
                 BZ_ASSERT_CORE(!depthStencilTextureView, "Can't have more than one DepthStencil TextureView!");
                 BZ_ASSERT_CORE(renderPass->hasDepthStencilAttachment(), "The RenderPass doesn't declare any DepthStencil Attachment!");
                 const auto desc = renderPass->getDepthStencilAttachmentDescription();
-                BZ_ASSERT_CORE(texView->getTextureFormat() == desc->format, "TextureView format is not compatible with RenderPass!");
                 depthStencilTextureView = texView;
             }
         }
@@ -64,5 +62,10 @@ namespace BZ {
 
     Framebuffer::~Framebuffer() {
         vkDestroyFramebuffer(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
+    }
+
+    const Ref<TextureView>& Framebuffer::getColorAttachmentTextureView(uint32 index) const {
+        BZ_ASSERT_CORE(index < getColorAttachmentCount(), "Index {} is out of range!", index);
+        return colorTextureViews[index];
     }
 }

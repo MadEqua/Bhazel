@@ -624,6 +624,8 @@ namespace BZ {
     }
 
     void Texture2D::createImage(bool hasData, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
+        BZ_ASSERT_CORE(format != VK_FORMAT_UNDEFINED, "Invalid Format!");
+
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -776,6 +778,8 @@ namespace BZ {
     }
 
     void TextureCube::createImage(bool hasData, MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
+        BZ_ASSERT_CORE(format != VK_FORMAT_UNDEFINED, "Invalid Format!");
+
         VkImageCreateInfo imageInfo = {};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -812,6 +816,14 @@ namespace BZ {
 
 
     /*-------------------------------------------------------------------------------------------*/
+    Ref<TextureView> TextureView::create(const Ref<Texture2D> &texture2D) {
+        return MakeRef<TextureView>(texture2D);
+    }
+
+    Ref<TextureView> TextureView::create(const Ref<Texture2D>& texture2D, TextureFormat format) {
+        return MakeRef<TextureView>(texture2D, format);
+    }
+
     Ref<TextureView> TextureView::create(const Ref<Texture2D> &texture2D, uint32 baseLayer, int layerCount, uint32 baseMip, int mipCount) {
         return MakeRef<TextureView>(texture2D, baseLayer, layerCount, baseMip, mipCount);
     }
@@ -820,9 +832,39 @@ namespace BZ {
         return MakeRef<TextureView>(textureCube);
     }
 
+    TextureView::TextureView(const Ref<Texture2D> &texture2D) :
+        texture(texture2D),
+        format(texture2D->getFormat()) {
+
+        VkImageViewType type;
+        if(texture->getLayers() == 1) {
+            type = VK_IMAGE_VIEW_TYPE_2D;
+        }
+        else {
+            type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        }
+
+        init(type, 0, texture->getLayers(), 0, texture->getMipLevels());
+    }
+
+    TextureView::TextureView(const Ref<Texture2D> &texture2D, TextureFormat format) :
+        texture(texture2D),
+        format(format) {
+
+        VkImageViewType type;
+        if(texture->getLayers() == 1) {
+            type = VK_IMAGE_VIEW_TYPE_2D;
+        }
+        else {
+            type = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        }
+
+        init(type, 0, texture->getLayers(), 0, texture->getMipLevels());
+    }
+
     TextureView::TextureView(const Ref<Texture2D> &texture2D, uint32 baseLayer, int layerCount, uint32 baseMip, int mipCount) :
-        texture(texture2D) {
-        BZ_ASSERT_CORE(texture, "Invalid Texture!");
+        texture(texture2D),
+        format(texture2D->getFormat()) {
 
         BZ_ASSERT_CORE(baseLayer < texture2D->getLayers(), "Invalid baseLayer!");
         BZ_ASSERT_CORE(layerCount != 0, "Invalid layerCount!");
@@ -856,39 +898,43 @@ namespace BZ {
             realMipCount = mipCount;
         }
 
-        init(type, texture2D->getHandle().imageHandle, baseLayer, realLayerCount, baseMip, realMipCount);
+        init(type, baseLayer, realLayerCount, baseMip, realMipCount);
     }
 
     TextureView::TextureView(const Ref<TextureCube> &textureCube) :
-        texture(textureCube) {
-        BZ_ASSERT_CORE(texture, "Invalid Texture!");
+        texture(textureCube),
+        format(textureCube->getFormat()) {
+
         BZ_ASSERT_CORE(textureCube->getLayers() == 6, "Can't create a Cube TextureView with a Texture with layers != 6!");
 
-        init(VK_IMAGE_VIEW_TYPE_CUBE, textureCube->getHandle().imageHandle, 0, 6, 0, textureCube->getMipLevels());
+        init(VK_IMAGE_VIEW_TYPE_CUBE,  0, 6, 0, textureCube->getMipLevels());
     }
 
     TextureView::~TextureView() {
         vkDestroyImageView(BZ_GRAPHICS_DEVICE.getHandle(), handle, nullptr);
     }
 
-    void TextureView::init(VkImageViewType viewType, VkImage vkImage, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount) {
+    void TextureView::init(VkImageViewType viewType, uint32 baseLayer, uint32 layerCount, uint32 baseMip, uint32 mipCount) {
+        BZ_ASSERT_CORE(texture, "Invalid Texture!");
+        BZ_ASSERT_CORE(format != VK_FORMAT_UNDEFINED, "Invalid Format!");
+
         VkImageViewCreateInfo imageViewCreateInfo = {};
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewCreateInfo.image = vkImage;
+        imageViewCreateInfo.image = texture->getHandle().imageHandle;
         imageViewCreateInfo.viewType = viewType;
-        imageViewCreateInfo.format = texture->getFormat();
+        imageViewCreateInfo.format = format;
         imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-        if (texture->getFormat().isColor()) {
+        if (format.isColor()) {
             imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         }
-        else if (texture->getFormat().isDepth()) {
+        else if (format.isDepth()) {
             imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         }
-        if (texture->getFormat().isStencil()) {
+        if (format.isStencil()) {
             imageViewCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
         }
 

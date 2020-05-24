@@ -3,13 +3,15 @@
 #include "RendererCoordinator.h"
 
 #include "Graphics/RenderPass.h"
+#include "Graphics/GraphicsContext.h"
+
 #include "Renderer/Renderer.h"
 #include "Renderer/Renderer2D.h"
 #include "Renderer/RendererImGui.h"
 
 #include "Core/Application.h"
-#include "Events/KeyEvent.h"
 #include "Core/KeyCodes.h"
+#include "Events/KeyEvent.h"
 
 
 namespace BZ {
@@ -21,7 +23,7 @@ namespace BZ {
 
         //Create the possible combinations of RenderPasses. All compatible with the default Swapchain Renderpass, which
         //is used on the Pipelines and to create the Framebuffers.
-        const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainDefaultRenderPass();
+        const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         const SubPassDescription &subPassDesc = renderPass->getSubPassDescription(0);
 
         AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);

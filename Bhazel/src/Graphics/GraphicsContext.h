@@ -69,7 +69,7 @@ namespace BZ {
         uint32 getCurrentFrameIndex() const { return currentFrameIndex; }
 
         const Ref<Framebuffer>& getSwapchainAquiredImageFramebuffer() const { return swapchain.getAquiredImageFramebuffer(); }
-        const Ref<RenderPass>& getSwapchainDefaultRenderPass() const { return swapchain.getDefaultRenderPass(); }
+        const Ref<RenderPass>& getSwapchainRenderPass() const { return swapchain.getRenderPass(); }
 
         const Ref<Semaphore>& getCurrentFrameRenderFinishedSemaphore() const { return frameDatas[currentFrameIndex].renderFinishedSemaphore; }
         const Ref<Semaphore>& getCurrentFrameImageAvailableSemaphore() const { return frameDatas[currentFrameIndex].imageAvailableSemaphore; }
