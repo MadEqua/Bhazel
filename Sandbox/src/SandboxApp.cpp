@@ -100,7 +100,7 @@ void Layer3D::onGraphicsContextCreated() {
     freeCameraController = BZ::FreeCameraController(camera, 50.0f);
 
     //Hydrant, Wrench and Cerberus
-#if 0
+#if 1
     BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
                                  "Sandbox/meshes/fireHydrant/Normal.png",
                                  "Sandbox/meshes/fireHydrant/Metallic.png",
@@ -146,13 +146,15 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Ground
-#if 0
+#if 1
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
         "Sandbox/textures/steppingstones/steppingstones1_normal.png",
         "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
         "Sandbox/textures/steppingstones/steppingstones1_roughness.png",
-        "Sandbox/textures/steppingstones/steppingstones1_height.png");
-    
+        "Sandbox/textures/steppingstones/steppingstones1_height.png",
+        nullptr,
+        true);
+
     //BZ::Material groundMaterial("Sandbox/textures/octostone/octostoneAlbedo.png",
     //                            "Sandbox/textures/octostone/octostoneNormalc.png",
     //                            "Sandbox/textures/octostone/octostoneMetallic.png",
@@ -213,7 +215,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 1
+#if 0
     byte whiteTextureData [] = { 255, 255, 255, 255 };
     auto texRef = BZ::Texture2D::create(whiteTextureData, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, BZ::MipmapData::Options::DoNothing);
     //auto texRef = BZ::Texture2D::create("Sandbox/textures/test.jpg", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);

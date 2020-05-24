@@ -34,6 +34,7 @@ namespace BZ {
         static Ref<Framebuffer> createShadowMapFramebuffer();
 
         static const Ref<Sampler>& getDefaultSampler();
+        static const Ref<Sampler>& getDefaultAnisotropicSampler();
         static const Ref<Sampler>& getShadowSampler();
 
         constexpr static uint32 MAX_DIR_LIGHTS_PER_SCENE = 2;

@@ -160,15 +160,17 @@ namespace BZ {
             void setMagFilterMode(VkFilter filter) { magFilter = filter; }
 
             void setMipmapFilter(VkSamplerMipmapMode filter) { mipmapFilter = filter; }
-            void setMinMipmap(uint32 min) { minMipmap = min; };
-            void setMaxMipmap(uint32 max) { maxMipmap = max; };
+            void setMinMipmap(float min) { minMipmap = min; };
+            void setMaxMipmap(float max) { maxMipmap = max; };
 
             void setAddressModeAll(VkSamplerAddressMode addressMode) { addressModeU = addressMode; addressModeV = addressMode; addressModeW = addressMode; }
             void setAddressModeU(VkSamplerAddressMode addressMode) { addressModeU = addressMode; }
             void setAddressModeV(VkSamplerAddressMode addressMode) { addressModeV = addressMode; }
             void setAddressModeW(VkSamplerAddressMode addressMode) { addressModeW = addressMode; }
 
-            void setUnnormalizedCoordinates(bool enable) { unnormalizedCoordinate = enable; }
+            void enableAnisotropy(float maxAnisotropy) { anisotropyEnabled = true; this->maxAnisotropy = maxAnisotropy; }
+
+            void enableUnormalizedCoordinates(bool enable) { unnormalizedCoordinatesEnabled = enable; }
 
             void enableCompare(VkCompareOp compareOp) { compareEnabled = true; this->compareOp = compareOp; }
 
@@ -180,12 +182,14 @@ namespace BZ {
             VkFilter minFilter = VK_FILTER_LINEAR;
             VkFilter magFilter = VK_FILTER_LINEAR;
             VkSamplerMipmapMode mipmapFilter = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-            uint32 minMipmap = 0;
-            uint32 maxMipmap = 0xffffffff;
+            float minMipmap = 0.0f;
+            float maxMipmap = std::numeric_limits<float>::max();
             VkSamplerAddressMode addressModeU  = VK_SAMPLER_ADDRESS_MODE_REPEAT;
             VkSamplerAddressMode addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
             VkSamplerAddressMode addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            bool unnormalizedCoordinate = false;
+            bool anisotropyEnabled = false;
+            float maxAnisotropy = 0.0f;
+            bool unnormalizedCoordinatesEnabled = false;
             bool compareEnabled = false;
             VkCompareOp compareOp = VK_COMPARE_OP_ALWAYS;
             VkBorderColor borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;

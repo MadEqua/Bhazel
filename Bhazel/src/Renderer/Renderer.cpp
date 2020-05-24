@@ -120,6 +120,7 @@ namespace BZ {
         DescriptorSet *entityDescriptorSet;
 
         Ref<Sampler> defaultSampler;
+        Ref<Sampler> defaultAnisotropicSampler;
         Ref<Sampler> brdfLookupSampler;
         Ref<Sampler> shadowSampler;
 
@@ -204,6 +205,10 @@ namespace BZ {
 
         Sampler::Builder samplerBuilder;
         rendererData.defaultSampler = samplerBuilder.build();
+
+        Sampler::Builder samplerBuilder2;
+        samplerBuilder2.enableAnisotropy(16.0f);
+        rendererData.defaultAnisotropicSampler = samplerBuilder2.build();
 
         initShadowPassData();
         initColorPassData();
@@ -444,6 +449,7 @@ namespace BZ {
         rendererData.shadowPassPipelineLayout.reset();
 
         rendererData.defaultSampler.reset();
+        rendererData.defaultAnisotropicSampler.reset();
         rendererData.brdfLookupSampler.reset();
         rendererData.shadowSampler.reset();
 
@@ -834,6 +840,10 @@ namespace BZ {
 
     const Ref<Sampler>& Renderer::getDefaultSampler() {
         return rendererData.defaultSampler;
+    }
+
+    const Ref<Sampler>& Renderer::getDefaultAnisotropicSampler() {
+        return rendererData.defaultAnisotropicSampler;
     }
 
     const Ref<Sampler>& Renderer::getShadowSampler() {

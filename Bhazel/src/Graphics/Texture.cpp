@@ -960,14 +960,14 @@ namespace BZ {
         samplerInfo.addressModeV = builder.addressModeV;
         samplerInfo.addressModeW = builder.addressModeW;
         samplerInfo.mipLodBias = 0.0f;
-        samplerInfo.anisotropyEnable = VK_FALSE; //TODO
-        samplerInfo.maxAnisotropy = 16;
+        samplerInfo.anisotropyEnable = builder.anisotropyEnabled ? VK_TRUE : VK_FALSE;
+        samplerInfo.maxAnisotropy = builder.maxAnisotropy;
         samplerInfo.compareEnable = builder.compareEnabled ? VK_TRUE : VK_FALSE;
         samplerInfo.compareOp = builder.compareOp;
-        samplerInfo.minLod = static_cast<float>(builder.minMipmap);
-        samplerInfo.maxLod = static_cast<float>(builder.maxMipmap);
+        samplerInfo.minLod = builder.minMipmap;
+        samplerInfo.maxLod = builder.maxMipmap;
         samplerInfo.borderColor = builder.borderColor;
-        samplerInfo.unnormalizedCoordinates = builder.unnormalizedCoordinate ? VK_TRUE : VK_FALSE;
+        samplerInfo.unnormalizedCoordinates = builder.unnormalizedCoordinatesEnabled ? VK_TRUE : VK_FALSE;
 
         BZ_ASSERT_VK(vkCreateSampler(BZ_GRAPHICS_DEVICE.getHandle(), &samplerInfo, nullptr, &handle));
     }

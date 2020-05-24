@@ -20,7 +20,8 @@ namespace BZ {
                  Ref<Texture2D> &metallicTexture = MakeRefNull<Texture2D>(), 
                  Ref<Texture2D> &roughnessTexture = MakeRefNull<Texture2D>(),
                  Ref<Texture2D> &heightTexture = MakeRefNull<Texture2D>(),
-                 Ref<Texture2D> &aoTexture = MakeRefNull<Texture2D>());
+                 Ref<Texture2D> &aoTexture = MakeRefNull<Texture2D>(),
+                 bool useAnisotropicSampler = false);
 
         explicit Material(Ref<TextureCube> &albedoTexture);
        
@@ -29,7 +30,8 @@ namespace BZ {
                  const char *metallicTexturePath = nullptr,
                  const char *roughnessTexturePath = nullptr,
                  const char *heightTexturePath = nullptr,
-                 const char *aoTexturePath = nullptr);
+                 const char *aoTexturePath = nullptr,
+                 bool useAnisotropicSampler = false);
 
         bool isValid() const { return static_cast<bool>(descriptorSet); }
         const DescriptorSet& getDescriptorSet() const { return *descriptorSet; }
@@ -56,6 +58,8 @@ namespace BZ {
         float getParallaxOcclusionScale() const { return parallaxOcclusionScale; }
         void setParallaxOcclusionScale(float scale) { parallaxOcclusionScale = scale; }
 
+        bool useAnisotropicSampler() const { return anisotropicSampler; }
+
         const glm::vec2& getUvScale() const { return uvScale; }
         void setUvScale(float u, float v) { uvScale.x = u; uvScale.y = v; }
         void setUvScale(const glm::vec2& mult) { uvScale = mult; }
@@ -63,6 +67,8 @@ namespace BZ {
         bool operator==(const Material &other) const;
 
     private:
+        bool anisotropicSampler = false;
+
         Ref<TextureView> albedoTextureView;
         Ref<TextureView> normalTextureView;
         Ref<TextureView> metallicTextureView;
@@ -87,14 +93,15 @@ template<>
 struct std::hash<BZ::Material> {
     size_t operator()(const BZ::Material &mat) const {
         return (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAlbedoTextureView())) ^
-               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getNormalTextureView())) ^
-               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getMetallicTextureView())) ^
-               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getRoughnessTextureView())) ^
-               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getHeightTextureView())) ^
-               (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAOTextureView())) ^
-               (std::hash<float>()(mat.getMetallic())) ^
-               (std::hash<float>()(mat.getRoughness())) ^
-               (std::hash<float>()(mat.getParallaxOcclusionScale())) ^
-               (std::hash<glm::vec2>()(mat.getUvScale()));
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getNormalTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getMetallicTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getRoughnessTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getHeightTextureView())) ^
+            (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAOTextureView())) ^
+            (std::hash<float>()(mat.getMetallic())) ^
+            (std::hash<float>()(mat.getRoughness())) ^
+            (std::hash<float>()(mat.getParallaxOcclusionScale())) ^
+            (std::hash<glm::vec2>()(mat.getUvScale())) ^
+            (std::hash<bool>()(mat.useAnisotropicSampler()));
     }
 };

@@ -12,8 +12,10 @@ namespace BZ {
 
     Material::Material(Ref<Texture2D> &albedoTexture, Ref<Texture2D> &normalTexture,
                        Ref<Texture2D> &metallicTexture, Ref<Texture2D> &roughnessTexture,
-                       Ref<Texture2D> &heightTexture, Ref<Texture2D> &aoTexture) :
-        albedoTextureView(TextureView::create(albedoTexture)) {
+                       Ref<Texture2D> &heightTexture, Ref<Texture2D> &aoTexture,
+                       bool useAnisotropicSampler) :
+        albedoTextureView(TextureView::create(albedoTexture)),
+        anisotropicSampler(useAnisotropicSampler) {
 
         if (normalTexture) normalTextureView = TextureView::create(normalTexture);
         if (metallicTexture) metallicTextureView = TextureView::create(metallicTexture);
@@ -31,7 +33,10 @@ namespace BZ {
 
     Material::Material(const char *albedoTexturePath, const char *normalTexturePath,
                        const char *metallicTexturePath, const char *roughnessTexturePath,
-                       const char *heightTexturePath, const char *aoTexturePath) {
+                       const char *heightTexturePath, const char *aoTexturePath,
+                       bool useAnisotropicSampler) :
+        anisotropicSampler(useAnisotropicSampler) {
+
         auto albedoTexture = Texture2D::create(albedoTexturePath, VK_FORMAT_R8G8B8A8_SRGB, MipmapData::Options::Generate);
         albedoTextureView = TextureView::create(albedoTexture);
 
@@ -64,33 +69,35 @@ namespace BZ {
     }
 
     void Material::init() {
+        const Ref<Sampler> &sampler = anisotropicSampler ? Renderer::getDefaultAnisotropicSampler() : Renderer::getDefaultSampler();
+
         descriptorSet = &Renderer::createMaterialDescriptorSet();
-        descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 1);
+        descriptorSet->setCombinedTextureSampler(albedoTextureView, sampler, 1);
 
         if(normalTextureView)
-            descriptorSet->setCombinedTextureSampler(normalTextureView, Renderer::getDefaultSampler(), 2);
+            descriptorSet->setCombinedTextureSampler(normalTextureView, sampler, 2);
         else
-            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 2);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, sampler, 2);
 
         if (metallicTextureView)
-            descriptorSet->setCombinedTextureSampler(metallicTextureView, Renderer::getDefaultSampler(), 3);
+            descriptorSet->setCombinedTextureSampler(metallicTextureView, sampler, 3);
         else
-            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 3);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, sampler, 3);
 
         if(roughnessTextureView)
-            descriptorSet->setCombinedTextureSampler(roughnessTextureView, Renderer::getDefaultSampler(), 4);
+            descriptorSet->setCombinedTextureSampler(roughnessTextureView, sampler, 4);
         else
-            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 4);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, sampler, 4);
 
         if (heightTextureView)
-            descriptorSet->setCombinedTextureSampler(heightTextureView, Renderer::getDefaultSampler(), 5);
+            descriptorSet->setCombinedTextureSampler(heightTextureView, sampler, 5);
         else
-            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 5);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, sampler, 5);
 
         if (aoTextureView)
-            descriptorSet->setCombinedTextureSampler(aoTextureView, Renderer::getDefaultSampler(), 6);
+            descriptorSet->setCombinedTextureSampler(aoTextureView, sampler, 6);
         else
-            descriptorSet->setCombinedTextureSampler(albedoTextureView, Renderer::getDefaultSampler(), 6);
+            descriptorSet->setCombinedTextureSampler(albedoTextureView, sampler, 6);
     }
 
     bool Material::operator==(const Material &other) const {
@@ -103,6 +110,7 @@ namespace BZ {
             metallic == other.metallic &&
             roughness == other.roughness &&
             parallaxOcclusionScale == other.parallaxOcclusionScale;
-            uvScale == other.uvScale;
+            uvScale == other.uvScale &&
+            anisotropicSampler == other.anisotropicSampler;
     }
 }

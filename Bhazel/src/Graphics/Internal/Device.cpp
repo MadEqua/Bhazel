@@ -100,6 +100,7 @@ namespace BZ {
         BZ_ASSERT_CORE(deviceFeatures.geometryShader == VK_TRUE, "Support for geometryShader is assumed!");
         BZ_ASSERT_CORE(deviceFeatures.depthClamp == VK_TRUE, "Support for depthClamp is assumed!");
         BZ_ASSERT_CORE(deviceFeatures.depthBiasClamp == VK_TRUE, "Support for depthBiasClamp is assumed!");
+        BZ_ASSERT_CORE(deviceFeatures.samplerAnisotropy == VK_TRUE, "Support for samplerAnisotropy is assumed!");
 
         bool hasRequiredExtensions = checkDeviceExtensionSupport(device, requiredExtensions);
 
@@ -216,11 +217,12 @@ namespace BZ {
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
-        //Add required features here and also when finding physical device
+        //Add required features here and also when finding physical device.
         VkPhysicalDeviceFeatures deviceFeatures = {};
         deviceFeatures.geometryShader = VK_TRUE;
         deviceFeatures.depthClamp = VK_TRUE;
         deviceFeatures.depthBiasClamp = VK_TRUE;
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
 
         VkDeviceCreateInfo deviceCreateInfo = {};
         deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
