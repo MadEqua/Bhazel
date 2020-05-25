@@ -158,7 +158,8 @@ namespace BZ {
         void onImGuiRender(const FrameStats &frameStats);
 
         const Ref<TextureView> &getInputTexView() const { return inputTexView; }
-        const Ref<Sampler> &getSampler() const { return sampler; }
+        const Ref<Sampler> &getSamplerNearest() const { return samplerNearest; }
+        const Ref<Sampler> &getSamplerLinear() const { return samplerLinear; }
         const Ref<PipelineLayout> &getPipelineLayout() const { return pipelineLayout; }
         const Ref<DescriptorSetLayout> &getDescriptorSetLayout() const { return descriptorSetLayout; }
         const DescriptorSet& getDescriptorSet() const { return *descriptorSet; }
@@ -171,7 +172,8 @@ namespace BZ {
         void addBarrier(CommandBuffer &commandBuffer);
 
         Ref<TextureView> inputTexView;
-        Ref<Sampler> sampler;
+        Ref<Sampler> samplerNearest;
+        Ref<Sampler> samplerLinear;
 
         Ref<RenderPass> swapchainReplicaRenderPass;
         Ref<Framebuffer> swapchainReplicaFramebuffer;

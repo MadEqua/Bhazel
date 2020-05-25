@@ -222,13 +222,13 @@ namespace BZ {
             h /= 2;
 
             blurDescriptorSets1[i] = &DescriptorSet::get(blurDescriptorSetLayout);
-            blurDescriptorSets1[i]->setCombinedTextureSampler(tex1MipViews[i], postProcessor.getSampler(), 0);
+            blurDescriptorSets1[i]->setCombinedTextureSampler(tex1MipViews[i], postProcessor.getSamplerNearest(), 0);
             //Previous mip (smaller), if exists. If not, send a dummy.
-            blurDescriptorSets1[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex2MipViews[i + 1] : tex1MipViews[i], postProcessor.getSampler(), 1);
+            blurDescriptorSets1[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex2MipViews[i + 1] : tex1MipViews[i], postProcessor.getSamplerLinear(), 1);
 
             blurDescriptorSets2[i] = &DescriptorSet::get(blurDescriptorSetLayout);
-            blurDescriptorSets2[i]->setCombinedTextureSampler(tex2MipViews[i], postProcessor.getSampler(), 0);
-            blurDescriptorSets2[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex1MipViews[i + 1] : tex2MipViews[i], postProcessor.getSampler(), 1);
+            blurDescriptorSets2[i]->setCombinedTextureSampler(tex2MipViews[i], postProcessor.getSamplerNearest(), 0);
+            blurDescriptorSets2[i]->setCombinedTextureSampler(i < BLOOM_TEXTURE_MIPS - 1 ? tex1MipViews[i + 1] : tex2MipViews[i], postProcessor.getSamplerLinear(), 1);
         }
     }
 
@@ -327,7 +327,7 @@ namespace BZ {
         finalFramebuffer = Framebuffer::create(finalRenderPass, { postProcessor.getInputTexView() }, { INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y, 1 });
 
         finalDescriptorSet = &DescriptorSet::get(finalDescriptorSetLayout);
-        finalDescriptorSet->setCombinedTextureSampler(tex1MipViews[0], postProcessor.getSampler(), 0);
+        finalDescriptorSet->setCombinedTextureSampler(tex1MipViews[0], postProcessor.getSamplerLinear(), 0);
     }
 
     void Bloom::finalPass(CommandBuffer &commandBuffer) {
@@ -385,7 +385,7 @@ namespace BZ {
         auto descriptorSetLayout = DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
         pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
         descriptorSet = &DescriptorSet::get(descriptorSetLayout);
-        descriptorSet->setCombinedTextureSampler(inTexture, postProcessor.getSampler(), 0);
+        descriptorSet->setCombinedTextureSampler(inTexture, postProcessor.getSamplerNearest(), 0);
 
         const auto INPUT_DIMENSIONS = inTexture->getTexture()->getDimensions();
         const auto INPUT_DIMENSIONS_F = inTexture->getTexture()->getDimensionsFloat();
@@ -461,9 +461,17 @@ namespace BZ {
         swapchainReplicaRenderPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
         swapchainReplicaFramebuffer = Framebuffer::create(swapchainReplicaRenderPass, { swapchainReplicaTexView }, SWAPCHAIN_DIMS);
 
-        Sampler::Builder samplerBuilder;
-        samplerBuilder.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-        sampler = samplerBuilder.build();
+        Sampler::Builder samplerBuilderN;
+        samplerBuilderN.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+        samplerBuilderN.setMinFilterMode(VK_FILTER_NEAREST);
+        samplerBuilderN.setMagFilterMode(VK_FILTER_NEAREST);
+        samplerNearest = samplerBuilderN.build();
+
+        Sampler::Builder samplerBuilderL;
+        samplerBuilderL.setAddressModeAll(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+        samplerBuilderL.setMinFilterMode(VK_FILTER_LINEAR);
+        samplerBuilderL.setMagFilterMode(VK_FILTER_LINEAR);
+        samplerLinear = samplerBuilderL.build();
 
         descriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 },
@@ -472,7 +480,7 @@ namespace BZ {
         pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
 
         descriptorSet = &DescriptorSet::get(descriptorSetLayout);
-        descriptorSet->setCombinedTextureSampler(colorTexView, sampler, 0);
+        descriptorSet->setCombinedTextureSampler(colorTexView, samplerNearest, 0);
         descriptorSet->setConstantBuffer(constantBuffer, 1, bufferOffset, sizeof(PostProcessConstantBufferData));
 
         bloom.init();
@@ -486,7 +494,8 @@ namespace BZ {
         swapchainReplicaRenderPass.reset();
         swapchainReplicaFramebuffer.reset();
 
-        sampler.reset();
+        samplerNearest.reset();
+        samplerLinear.reset();
         descriptorSetLayout.reset();
         pipelineLayout.reset();
 
