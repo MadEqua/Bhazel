@@ -7,34 +7,19 @@
 #include "Graphics/Internal/Surface.h"
 #include "Graphics/Internal/CommandPool.h"
 #include "Graphics/Internal/DescriptorPool.h"
+#include "Graphics/Internal/QueryPool.h"
 #include "Graphics/Sync.h"
 
 
 namespace BZ {
-
-    struct FrameStats {
-        TimeDuration lastFrameTime;
-        uint64 frameCount;
-        TimeDuration runningTime;
-    };
 
     class WindowResizedEvent;
     class Framebuffer;
     class RenderPass;
     class CommandBuffer;
     class TextureView;
+    struct FrameTiming;
 
-    struct FrameData {
-        //One command pool per frame (per family) makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
-        std::unordered_map<uint32, CommandPool> commandPoolsByFamily;
-
-        //GPU-GPU sync.
-        Ref<Semaphore> imageAvailableSemaphore;
-        Ref<Semaphore> renderFinishedSemaphore;
-
-        //CPU-GPU sync, to stop the CPU from piling up more than MAX_FRAMES_IN_FLIGHT frames when the app is GPU-bound.
-        Ref<Fence> renderFinishedFence;
-    };
 
     class GraphicsContext {
     public:
@@ -60,7 +45,7 @@ namespace BZ {
         void waitForQueue(QueueProperty queueProperty);
 
         void onWindowResize(const WindowResizedEvent& e);
-        void onImGuiRender(const FrameStats &frameStats); //For statistics.
+        void onImGuiRender(const FrameTiming &frameTiming); //For statistics.
 
         CommandPool& getCurrentFrameCommandPool(QueueProperty property);
         DescriptorPool& getDescriptorPool() { return descriptorPool; }
@@ -94,16 +79,52 @@ namespace BZ {
 
         DescriptorPool descriptorPool;
 
+        VmaAllocator memoryAllocator;
+
+        struct FrameData {
+            //One command pool per frame (per family) makes it easy to reset all the allocated buffers on frame end. No need to track anything else.
+            std::unordered_map<uint32, CommandPool> commandPoolsByFamily;
+
+            //GPU-GPU sync.
+            Ref<Semaphore> imageAvailableSemaphore;
+            Ref<Semaphore> renderFinishedSemaphore;
+
+            //CPU-GPU sync, to stop the CPU from piling up more than MAX_FRAMES_IN_FLIGHT frames when the app is GPU-bound.
+            Ref<Fence> renderFinishedFence;
+
+#ifdef BZ_GRAPHICS_DEBUG
+            //For timestamps.
+            QueryPool queryPool;
+#endif 
+        };
+
         FrameData frameDatas[MAX_FRAMES_IN_FLIGHT];
         uint32 currentFrameIndex = 0;
 
-        VmaAllocator memoryAllocator;
 
         //Statistics stuff.
         struct GraphicsStats {
-            FrameStats frameStats;
-            uint32 commandBufferCount;
+            //Time spent by the CPU updating and generating the CommandBuffers for the last frame.
+            TimeDuration frameTimeCpu;
+
+            //Time spent by the GPU running the all the generated CommandBuffers.
+            //Not for the last frame, there's a delay of MAX_FRAMES_IN_FLIGHT frames.
+            TimeDuration frameTimeGpu;
+
+            uint64 frameCount;
+            TimeDuration runningTime;
+
             uint32 commandCount;
+            uint32 commandBufferCount;
+
+            //Are we CPU bound? If not, we are GPU bound.
+            bool cpuBound;
+
+            void reset() {
+                uint64 frameCount = this->frameCount;
+                memset(this, 0, sizeof(GraphicsStats));
+                this->frameCount = frameCount;
+            }
         };
 
         GraphicsStats stats;
@@ -115,5 +136,7 @@ namespace BZ {
         constexpr static int FRAME_HISTORY_SIZE = 100;
         float frameTimeHistory[FRAME_HISTORY_SIZE] = {};
         uint32 frameTimeHistoryIdx = 0;
+
+        constexpr static uint32 TIMESTAMP_QUERY_COUNT = 2;
     };
 }

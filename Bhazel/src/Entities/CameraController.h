@@ -5,7 +5,7 @@
 
 namespace BZ {
 
-    struct FrameStats;
+    struct FrameTiming;
     class MouseScrolledEvent;
     class WindowResizedEvent;
     class Event;
@@ -16,7 +16,7 @@ namespace BZ {
     public:
         virtual ~CameraController() = default;
 
-        virtual void onUpdate(const FrameStats &frameStats) = 0;
+        virtual void onUpdate(const FrameTiming &frameTiming) = 0;
         void onEvent(Event &e);
 
         T& getCamera() { return *camera; }
@@ -55,7 +55,7 @@ namespace BZ {
         CameraController2D(OrthographicCamera &camera, float cameraMoveSpeed, bool enableRotation, float cameraRotationSpeed);
         CameraController2D(OrthographicCamera &camera, float cameraMoveSpeed, bool enableRotation);
 
-        void onUpdate(const FrameStats &frameStats) override;
+        void onUpdate(const FrameTiming &frameTiming) override;
 
     private:
         bool onMouseScrolled(const MouseScrolledEvent &e) override;
@@ -75,7 +75,7 @@ namespace BZ {
         FreeCameraController() = default;
         FreeCameraController(PerspectiveCamera &camera, float cameraMoveSpeed);
 
-        void onUpdate(const FrameStats &frameStats) override;
+        void onUpdate(const FrameTiming &frameTiming) override;
 
     private:
         bool onMouseScrolled(const MouseScrolledEvent &e) override;
@@ -98,7 +98,7 @@ namespace BZ {
         RotateCameraController() = default;
         RotateCameraController(PerspectiveCamera &camera, float cameraMoveSpeed, float cameraRotationAccel);
 
-        void onUpdate(const FrameStats &frameStats) override;
+        void onUpdate(const FrameTiming &frameTiming) override;
 
     private:
         bool onMouseScrolled(const MouseScrolledEvent &e) override;

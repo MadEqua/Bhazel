@@ -38,10 +38,10 @@ namespace BZ {
         activeParticles.clear();
     }
 
-    void Emitter2D::onUpdate(const FrameStats &frameStats) {
+    void Emitter2D::onUpdate(const FrameTiming &frameTiming) {
         //Update lifetimes
         for (auto &particle : activeParticles) {
-            particle.timeToLiveSecs -= frameStats.lastFrameTime.asSeconds();
+            particle.timeToLiveSecs -= frameTiming.deltaTime.asSeconds();
         }
 
         auto it = std::remove_if(activeParticles.begin(), activeParticles.end(), [](const Particle2D &particle) {
@@ -51,21 +51,21 @@ namespace BZ {
         
         //Update current active particles
         for (auto &particle : activeParticles) {
-            particle.velocity += particle.acceleration * frameStats.lastFrameTime.asSeconds();
-            particle.position += particle.velocity * frameStats.lastFrameTime.asSeconds();
-            particle.rotationDeg += particle.angularVelocity * frameStats.lastFrameTime.asSeconds();
-            particle.timeToLiveSecs -= frameStats.lastFrameTime.asSeconds();
+            particle.velocity += particle.acceleration * frameTiming.deltaTime.asSeconds();
+            particle.position += particle.velocity * frameTiming.deltaTime.asSeconds();
+            particle.rotationDeg += particle.angularVelocity * frameTiming.deltaTime.asSeconds();
+            particle.timeToLiveSecs -= frameTiming.deltaTime.asSeconds();
             particle.tintAndAlpha.a = particle.originalAlpha * (particle.timeToLiveSecs / particle.totalLifeSecs);
         }
 
         //If not immortal (negative totalLife) and not dead, decrement life
         if (totalLifeSecs >= 0.0f && secsToLive >= 0.0f) {
-            secsToLive -= frameStats.lastFrameTime.asSeconds();
+            secsToLive -= frameTiming.deltaTime.asSeconds();
         }
 
         //If immortal or still alive then emit
         if (totalLifeSecs < 0.0f || secsToLive >= 0.0f) {
-            secsUntilNextEmission -= frameStats.lastFrameTime.asSeconds();
+            secsUntilNextEmission -= frameTiming.deltaTime.asSeconds();
             if (secsUntilNextEmission < 0.0f) {
                 uint32 countToEmit = static_cast<uint32>(-secsUntilNextEmission / secsPerParticle);
                 if (countToEmit > 0) {
@@ -118,10 +118,10 @@ namespace BZ {
         isStarted = true;
     }
 
-    void ParticleSystem2D::onUpdate(const FrameStats &frameStats) {
+    void ParticleSystem2D::onUpdate(const FrameTiming &frameTiming) {
         if (isStarted) {
             for (auto &emitter : emitters) {
-                emitter.onUpdate(frameStats);
+                emitter.onUpdate(frameTiming);
             }
         }
     }

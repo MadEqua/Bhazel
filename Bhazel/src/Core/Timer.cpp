@@ -103,6 +103,11 @@ namespace BZ {
         countedTime = TimeDuration();
     }
 
+    void Timer::restart() {
+        reset();
+        start();
+    }
+
     TimeDuration Timer::getCountedTime() const {
         if(state == State::Started)
             return countedTime + TimeDuration(std::chrono::high_resolution_clock::now() - lastStartPoint);

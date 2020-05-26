@@ -18,6 +18,14 @@ namespace BZ {
     class WindowResizedEvent;
     class Layer;
 
+    struct FrameTiming {
+        //Time since the last update.
+        TimeDuration deltaTime;
+
+        //Cummulative/total running time.
+        TimeDuration runningTime;
+    };
+
     class Application {
     public:
         Application();
@@ -34,7 +42,6 @@ namespace BZ {
         Window& getWindow() { return window; }
         GraphicsContext& getGraphicsContext() { return graphicsContext; }
 
-        const FrameStats& getFrameStats() const { return frameStats; }
         const std::string& getAssetsPath() const { return assetsPath; }
 
         void enable3dRenderer(bool enable) { rendererCoordinator.enable3dRenderer(enable); }
@@ -55,7 +62,7 @@ namespace BZ {
 
         LayerStack layerStack;
         IniParser iniParser;
-        FrameStats frameStats;
+        FrameTiming frameTiming;
 
         std::string assetsPath;
 
@@ -63,6 +70,7 @@ namespace BZ {
         FileWatcher fileWatcher;
 #endif
 
+        bool running = false;
         static Application *instance;
     };
 }

@@ -34,6 +34,8 @@ namespace BZ {
         BZ_LOG_CORE_INFO("  Driver Version: {}.{}.{}.", VK_VERSION_MAJOR(physicalDeviceProperties.driverVersion), VK_VERSION_MINOR(physicalDeviceProperties.driverVersion), VK_VERSION_PATCH(physicalDeviceProperties.driverVersion));
         BZ_LOG_CORE_INFO("  VendorId: 0x{:04x}.", physicalDeviceProperties.vendorID);
         BZ_LOG_CORE_INFO("  DeviceId: 0x{:04x}.", physicalDeviceProperties.deviceID);
+
+        limits = physicalDeviceProperties.limits;
     }
 
     QueueFamilyContainer PhysicalDevice::getQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
@@ -61,7 +63,7 @@ namespace BZ {
                 if(presentSupport)
                     properties.push_back(QueueProperty::Present);
 
-                queueFamilyContainer.addFamily({ idx, vkQueueFamilyProps.queueCount, properties });
+                queueFamilyContainer.addFamily({ idx, vkQueueFamilyProps.queueCount, properties, vkQueueFamilyProps.timestampValidBits });
             }
             idx++;
         }

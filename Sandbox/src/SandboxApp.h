@@ -10,9 +10,9 @@ public:
     void onAttach() override;
     void onGraphicsContextCreated() override;
 
-    void onUpdate(const BZ::FrameStats &frameStats) override;
+    void onUpdate(const BZ::FrameTiming &frameTiming) override;
     void onEvent(BZ::Event &event) override;
-    void onImGuiRender(const BZ::FrameStats &frameStats) override;
+    void onImGuiRender(const BZ::FrameTiming &frameTiming) override;
 
 private:
     BZ::OrthographicCamera camera;
@@ -32,9 +32,9 @@ public:
     void onAttach() override;
     void onGraphicsContextCreated() override;
 
-    void onUpdate(const BZ::FrameStats &frameStats) override;
+    void onUpdate(const BZ::FrameTiming &frameTiming) override;
     void onEvent(BZ::Event &event) override;
-    void onImGuiRender(const BZ::FrameStats &frameStats) override;
+    void onImGuiRender(const BZ::FrameTiming &frameTiming) override;
 
 private:
     BZ::Scene scenes[3];

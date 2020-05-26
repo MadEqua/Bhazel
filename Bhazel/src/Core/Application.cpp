@@ -75,13 +75,15 @@ namespace BZ {
     void Application::run() {
         BZ_PROFILE_FUNCTION();
 
+        BZ_ASSERT_CORE(!running, "Application is already running!");
+        running = true;
+
         layerStack.onGraphicsContextCreated();
 
         Timer frameTimer;
-        frameStats = {};
+        frameTiming = {};
 
         while(!window.isClosed()) {
-            frameTimer.start();
 
             window.pollEvents();
 
@@ -89,23 +91,22 @@ namespace BZ {
 
                 graphicsContext.beginFrame();
 
-                layerStack.onUpdate(frameStats);
+                auto frameDuration = frameTimer.getCountedTime();
+                frameTimer.restart();
+                frameTiming.deltaTime = frameDuration;
+                frameTiming.runningTime += frameDuration;
+                layerStack.onUpdate(frameTiming);
 
                 RendererImGui::begin();
-                graphicsContext.onImGuiRender(frameStats);
-                Renderer::onImGuiRender(frameStats);
-                Renderer2D::onImGuiRender(frameStats);
-                layerStack.onImGuiRender(frameStats);
+                graphicsContext.onImGuiRender(frameTiming);
+                Renderer::onImGuiRender(frameTiming);
+                Renderer2D::onImGuiRender(frameTiming);
+                layerStack.onImGuiRender(frameTiming);
                 RendererImGui::end();
 
                 rendererCoordinator.render();
 
                 graphicsContext.endFrame();
-
-                auto frameDuration = frameTimer.getCountedTime();
-                frameStats.lastFrameTime = frameDuration;
-                frameStats.runningTime += frameDuration;
-                frameStats.frameCount++;
 
 #ifdef BZ_HOT_RELOAD_SHADERS
                 if (fileWatcher.hasPipelineStatesToReload()) {
@@ -114,7 +115,6 @@ namespace BZ {
                 }
 #endif
             }
-            frameTimer.reset();
         }
     }
 

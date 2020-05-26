@@ -53,6 +53,8 @@ namespace BZ {
         void pause();
         void reset();
 
+        void restart();
+
         TimeDuration getCountedTime() const;
 
     private:

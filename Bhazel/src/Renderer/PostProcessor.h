@@ -16,7 +16,7 @@ namespace BZ {
     class Scene;
     class Buffer;
     class BufferPtr;
-    struct FrameStats;
+    struct FrameTiming;
 
 
     /*-------------------------------------------------------------------------------------------*/
@@ -45,7 +45,7 @@ namespace BZ {
         void destroy();
 
         void render(CommandBuffer &commandBuffer);
-        void onImGuiRender(const FrameStats &frameStats);
+        void onImGuiRender(const FrameTiming &frameTiming);
 
         //Ammont of textures to apply the blur filter.
         static constexpr uint32 BLOOM_TEXTURE_MIPS = 5u;
@@ -108,7 +108,7 @@ namespace BZ {
         void destroy();
 
         void render(CommandBuffer &commandBuffer, const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer);
-        void onImGuiRender(const FrameStats &frameStats);
+        void onImGuiRender(const FrameTiming &frameTiming);
 
     private:
         Ref<PipelineState> pipelineState;
@@ -125,7 +125,7 @@ namespace BZ {
         void destroy();
 
         void render(CommandBuffer &commandBuffer, const Ref<RenderPass> &renderPass, const Ref<Framebuffer> &framebuffer);
-        void onImGuiRender(const FrameStats &frameStats);
+        void onImGuiRender(const FrameTiming &frameTiming);
 
     private:
         Ref<TextureView> inTexture;
@@ -155,7 +155,7 @@ namespace BZ {
 
         void fillData(const BufferPtr &ptr, const Scene &scene);
         void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd);
-        void onImGuiRender(const FrameStats &frameStats);
+        void onImGuiRender(const FrameTiming &frameTiming);
 
         const Ref<TextureView> &getInputTexView() const { return inputTexView; }
         const Ref<Sampler> &getSamplerNearest() const { return samplerNearest; }

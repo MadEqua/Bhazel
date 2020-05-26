@@ -44,12 +44,12 @@ void ParticleLayer::onGraphicsContextCreated() {
     particleSystem.start();
 }
 
-void ParticleLayer::onUpdate(const BZ::FrameStats &frameStats) {
+void ParticleLayer::onUpdate(const BZ::FrameTiming &frameTiming) {
     BZ_PROFILE_FUNCTION();
 
     auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensions();
 
-    cameraController.onUpdate(frameStats);
+    cameraController.onUpdate(frameTiming);
 
     static glm::vec2 pos = { 0.0f, WINDOW_DIMS.y * 0.5f };
     static bool right = true;
@@ -58,12 +58,12 @@ void ParticleLayer::onUpdate(const BZ::FrameStats &frameStats) {
     else if (!right && pos.x <= 0.0f) right = true;
     float mult = right ? 1.0f : -1.0f;
 
-    pos.x += 100.0f * frameStats.lastFrameTime.asSeconds() * mult;
+    pos.x += 100.0f * frameTiming.deltaTime.asSeconds() * mult;
     pos.y = (sin(pos.x * 0.02f) * 0.5f + 0.5f) * (WINDOW_DIMS.y * 0.75f) + (WINDOW_DIMS.y * 0.125f);
     particleSystem.setPosition(pos);
 
     BZ::Renderer2D::begin(camera);
-    particleSystem.onUpdate(frameStats);
+    particleSystem.onUpdate(frameTiming);
     BZ::Renderer2D::renderParticleSystem2D(particleSystem);
     BZ::Renderer2D::end();
 }
@@ -72,7 +72,7 @@ void ParticleLayer::onEvent(BZ::Event &event) {
     cameraController.onEvent(event);
 }
 
-void ParticleLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
+void ParticleLayer::onImGuiRender(const BZ::FrameTiming &frameTiming) {
     BZ_PROFILE_FUNCTION();
 }
 
@@ -100,7 +100,7 @@ void Layer3D::onGraphicsContextCreated() {
     freeCameraController = BZ::FreeCameraController(camera, 50.0f);
 
     //Hydrant, Wrench and Cerberus
-#if 1
+#if 0
     BZ::Material hydrantMaterial("Sandbox/meshes/fireHydrant/BaseColor.png", 
                                  "Sandbox/meshes/fireHydrant/Normal.png",
                                  "Sandbox/meshes/fireHydrant/Metallic.png",
@@ -146,7 +146,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Ground
-#if 1
+#if 0
     BZ::Material groundMaterial("Sandbox/textures/steppingstones/steppingstones1_albedo.png",
         "Sandbox/textures/steppingstones/steppingstones1_normal.png",
         "Sandbox/textures/steppingstones/steppingstones1_metallic.png",
@@ -215,7 +215,7 @@ void Layer3D::onGraphicsContextCreated() {
 #endif
 
     //Sphere Wall
-#if 0
+#if 1
     byte whiteTextureData [] = { 255, 255, 255, 255 };
     auto texRef = BZ::Texture2D::create(whiteTextureData, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, BZ::MipmapData::Options::DoNothing);
     //auto texRef = BZ::Texture2D::create("Sandbox/textures/test.jpg", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
@@ -266,15 +266,15 @@ void Layer3D::onGraphicsContextCreated() {
                            "Sandbox/textures/umbrellasRadiance/", cubeFileNames, 5);
 }
 
-void Layer3D::onUpdate(const BZ::FrameStats &frameStats) {
+void Layer3D::onUpdate(const BZ::FrameTiming &frameTiming) {
     BZ_PROFILE_FUNCTION();
 
     if(useFreeCamera)
-        freeCameraController.onUpdate(frameStats);
+        freeCameraController.onUpdate(frameTiming);
     else
-        rotateCameraController.onUpdate(frameStats);
+        rotateCameraController.onUpdate(frameTiming);
 
-    scenes[activeScene].getEntities()[2].transform.yaw(frameStats.lastFrameTime.asSeconds() * 10.0f, BZ::Space::Local);
+    scenes[activeScene].getEntities()[2].transform.yaw(frameTiming.deltaTime.asSeconds() * 10.0f, BZ::Space::Local);
 
     BZ::Renderer::renderScene(scenes[activeScene]);
 
@@ -300,7 +300,7 @@ void Layer3D::onEvent(BZ::Event &event) {
         rotateCameraController.onEvent(event);
 }
 
-void Layer3D::onImGuiRender(const BZ::FrameStats &frameStats) {
+void Layer3D::onImGuiRender(const BZ::FrameTiming &frameTiming) {
     BZ_PROFILE_FUNCTION();
 
     if (ImGui::Begin("Scene Picker")) {

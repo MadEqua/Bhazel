@@ -40,6 +40,7 @@ namespace BZ {
                                       { VK_DESCRIPTOR_TYPE_SAMPLER, 64 }, { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64 } }, 128);
 
         swapchain.init(device, surface);
+        stats = {};
     }
 
     void GraphicsContext::destroy() {
@@ -57,6 +58,8 @@ namespace BZ {
     }
 
     void GraphicsContext::beginFrame() {
+        stats.cpuBound = frameDatas[currentFrameIndex].renderFinishedFence->isSignaled();
+
         //Make sure that this frame has finished before reutilizing its data. If not, we are GPU bound and should block here.
         frameDatas[currentFrameIndex].renderFinishedFence->waitFor();
         frameDatas[currentFrameIndex].renderFinishedFence->reset();
@@ -67,11 +70,35 @@ namespace BZ {
         }
 
         swapchain.aquireImage(frameDatas[currentFrameIndex].imageAvailableSemaphore);
+
+#ifdef BZ_GRAPHICS_DEBUG
+        //Read data from last timestamp.
+        const QueueFamily &graphicsFam = device.getQueueContainer().graphics().getFamily();
+        if(graphicsFam.canUseTimestamps()) {
+            uint64 timestampTicks[TIMESTAMP_QUERY_COUNT] = {};
+            frameDatas[currentFrameIndex].queryPool.getResults(0, 2, sizeof(timestampTicks), &timestampTicks, sizeof(uint64), VK_QUERY_RESULT_64_BIT);
+            uint32 validBits = graphicsFam.getTimestampValidBits();
+            for(int i = 0; i < TIMESTAMP_QUERY_COUNT; ++i) {
+                timestampTicks[i] &= BZ_BIT_MASK(uint64, validBits);
+            }
+
+            float timestampPeriod = device.getPhysicalDevice().getLimits().timestampPeriod;
+            stats.frameTimeGpu = static_cast<uint64>(static_cast<float>(timestampTicks[1] - timestampTicks[0]) * timestampPeriod);
+
+            //Inject timestamp at frame start.
+            CommandBuffer &cmdBuf = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+            cmdBuf.resetQueryPool(frameDatas[currentFrameIndex].queryPool, 0, TIMESTAMP_QUERY_COUNT);
+            cmdBuf.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, frameDatas[currentFrameIndex].queryPool, 0);
+            cmdBuf.endAndSubmit();
+        }
+#endif
     }
 
     void GraphicsContext::endFrame() {
         swapchain.presentImage(frameDatas[currentFrameIndex].renderFinishedSemaphore);
         currentFrameIndex = (currentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+        
+        stats.frameCount++;
     }
 
     void GraphicsContext::submitCommandBuffers(const CommandBuffer* commandBuffers[], uint32 commandBuffersCount,
@@ -100,11 +127,22 @@ namespace BZ {
         BZ_ASSERT_CORE(semaphoresToWaitForCount < MAX_SEMAPHORES_PER_SUBMIT, "semaphoresToWaitForCount needs to be <= than MAX_SEMAPHORES_PER_SUBMIT!");
         BZ_ASSERT_CORE(semaphoresToSignalCount < MAX_SEMAPHORES_PER_SUBMIT, "semaphoresToSignalCount needs to be <= than MAX_SEMAPHORES_PER_SUBMIT!");
 
-        VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_SUBMIT];
+        VkCommandBuffer vkCommandBuffers[MAX_COMMAND_BUFFERS_PER_SUBMIT + 1];
         for(uint32 idx = 0; idx < commandBuffersCount; ++idx) {
             vkCommandBuffers[idx] = commandBuffers[idx]->getHandle();
             stats.commandCount += commandBuffers[idx]->getCommandCount();
         }
+
+#ifdef BZ_GRAPHICS_DEBUG
+        //Inject timestamp CommandBuffer after last frame CommandBuffer.
+        const QueueFamily &graphicsFam = device.getQueueContainer().graphics().getFamily();
+        if(graphicsFam.canUseTimestamps() && fenceToSignal) {
+            CommandBuffer &cmdBuf = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+            cmdBuf.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, frameDatas[currentFrameIndex].queryPool, 1);
+            cmdBuf.end();
+            vkCommandBuffers[commandBuffersCount++] = cmdBuf.getHandle();
+        }
+#endif
 
         VkSemaphore waitSemaphores[MAX_SEMAPHORES_PER_SUBMIT];
         for(uint32 idx = 0; idx < semaphoresToWaitForCount; ++idx) {
@@ -168,6 +206,10 @@ namespace BZ {
             for(uint32 famIdx : familiesInUse) {
                 frameDatas[i].commandPoolsByFamily[famIdx].init(device, famIdx);
             }
+
+#ifdef BZ_GRAPHICS_DEBUG
+            frameDatas[i].queryPool.init(device, VK_QUERY_TYPE_TIMESTAMP, TIMESTAMP_QUERY_COUNT, 0);
+#endif
         }
     }
 
@@ -180,43 +222,58 @@ namespace BZ {
             for (auto &pair : frameDatas[i].commandPoolsByFamily) {
                 pair.second.destroy();
             }
+
+#ifdef BZ_GRAPHICS_DEBUG
+            frameDatas[i].queryPool.destroy();
+#endif
         }
     }
 
-    void GraphicsContext::onImGuiRender(const FrameStats &frameStats) {
-        stats.frameStats = frameStats;
+    void GraphicsContext::onImGuiRender(const FrameTiming &frameTiming) {
+        stats.frameTimeCpu = frameTiming.deltaTime;
+        stats.runningTime = frameTiming.runningTime;
 
-        statsTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
+        statsTimeAcumMs += frameTiming.deltaTime.asMillisecondsUint32();
         if(statsTimeAcumMs >= statsRefreshPeriodMs) {
             statsTimeAcumMs = 0;
             visibleStats = stats;
-            frameTimeHistory[frameTimeHistoryIdx] = frameStats.lastFrameTime.asMillisecondsFloat();
+            frameTimeHistory[frameTimeHistoryIdx] = stats.frameTimeCpu.asMillisecondsFloat();
             frameTimeHistoryIdx = (frameTimeHistoryIdx + 1) % FRAME_HISTORY_SIZE;
         }
 
         if(ImGui::Begin("Graphics")) {
-            ImGui::Text("FrameStats:");
-            ImGui::Text("Last Frame Time: %.3f ms.", visibleStats.frameStats.lastFrameTime.asMillisecondsFloat());
-            ImGui::Text("FPS: %.3f.", 1.0f / visibleStats.frameStats.lastFrameTime.asSeconds());
-            //ImGui::Separator();
-            ImGui::Text("Avg Frame Time: %.3f ms.", visibleStats.frameStats.runningTime.asMillisecondsFloat() / static_cast<float>(visibleStats.frameStats.frameCount));
-            ImGui::Text("Avg FPS: %.3f.", static_cast<float>(visibleStats.frameStats.frameCount) / visibleStats.frameStats.runningTime.asSeconds());
-            //ImGui::Separator();
-            ImGui::Text("Frame Count: %d.", visibleStats.frameStats.frameCount);
-            ImGui::Text("Running Time: %.3f seconds.", visibleStats.frameStats.runningTime.asSeconds());
+            ImGui::Text("CPU:");
+            ImGui::Text("Frame Time: %.3f ms.", visibleStats.frameTimeCpu.asMillisecondsFloat());
+            ImGui::Text("FPS: %.3f.", 1.0f / visibleStats.frameTimeCpu.asSeconds());
+            ImGui::Text("Avg Frame Time: %.3f ms.", visibleStats.runningTime.asMillisecondsFloat() / static_cast<float>(visibleStats.frameCount));
+            ImGui::Text("Avg FPS: %.3f.", static_cast<float>(visibleStats.frameCount) / visibleStats.runningTime.asSeconds());
+            ImGui::Text("Frame Count: %d.", visibleStats.frameCount);
+            ImGui::Text("Running Time: %.3f seconds.", visibleStats.runningTime.asSeconds());
+            ImGui::Separator();
+
+            ImGui::Text("GPU:");
+            ImGui::Text("Frame Time: %.3f ms.", visibleStats.frameTimeGpu.asMillisecondsFloat());
+            ImGui::Text("FPS: %.3f.", 1.0f / visibleStats.frameTimeGpu.asSeconds());
+            ImGui::Separator();
+
+            ImGui::Text("App is %s bound.", visibleStats.cpuBound ? "CPU" : "GPU");
             ImGui::Separator();
 
             ImGui::Text("Stats:");
-            ImGui::Text("CommandBuffer Count: %d", visibleStats.commandBufferCount);
-            ImGui::Text("Command Count: %d", visibleStats.commandCount);
+            ImGui::Text("CommandBuffer Count: %d.", visibleStats.commandBufferCount);
+            ImGui::Text("Command Count: %d.", visibleStats.commandCount);
             ImGui::Separator();
 
-            ImGui::PlotLines("Frame Times", frameTimeHistory, FRAME_HISTORY_SIZE, frameTimeHistoryIdx, "ms", 0.0f, 50.0f, ImVec2(0, 80));
+            ImGui::Text("CPU Frame Times");
+            ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.95f);
+            ImGui::PlotLines("##plot", frameTimeHistory, FRAME_HISTORY_SIZE, frameTimeHistoryIdx, "ms", 0.0f, 20.0f, ImVec2(0, 80));
             ImGui::Separator();
 
-            ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&statsRefreshPeriodMs), 0, 1000);
+            ImGui::Text("Refresh period ms");
+            ImGui::SliderInt("##slider", reinterpret_cast<int*>(&statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
-        stats = {};
+
+        stats.reset();
     }
 }

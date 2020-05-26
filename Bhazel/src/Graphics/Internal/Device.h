@@ -21,6 +21,8 @@ namespace BZ {
 
         void init(const Instance &instance, const Surface &surface, const std::vector<const char *> &requiredDeviceExtensions);
 
+        const VkPhysicalDeviceLimits& getLimits() const { return limits; }
+
         const QueueFamilyContainer& getQueueFamilyContainer() const { return queueFamilyContainer; }
         const SwapChainSupportDetails& getSwapChainSupportDetails() const { return swapChainSupportDetails; }
         VkPhysicalDevice getHandle() const { return handle; }
@@ -30,6 +32,8 @@ namespace BZ {
 
         QueueFamilyContainer queueFamilyContainer;
         SwapChainSupportDetails swapChainSupportDetails;
+
+        VkPhysicalDeviceLimits limits;
 
         static QueueFamilyContainer getQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
         static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
@@ -54,7 +58,7 @@ namespace BZ {
         VkDevice getHandle() const { return handle; }
 
         const QueueContainer& getQueueContainer() const { return queueContainer; }
-        const PhysicalDevice &getPhysicalDevice() const { return *physicalDevice; }
+        const PhysicalDevice& getPhysicalDevice() const { return *physicalDevice; }
 
     private:
         VkDevice handle = VK_NULL_HANDLE;

@@ -49,7 +49,7 @@ namespace BZ {
 
     /*-------------------------------------------------------------------------------------------*/
     class ParticleSystem2D;
-    struct FrameStats;
+    struct FrameTiming;
     class Texture2D;
 
 
@@ -58,7 +58,7 @@ namespace BZ {
         Emitter2D(ParticleSystem2D &parent, const glm::vec2 &positionOffset, uint32 particlesPerSec, float totalLifeSecs, Particle2DRanges &ranges, const Ref<Texture2D> &texture);
 
         void start();
-        void onUpdate(const FrameStats &frameStats);
+        void onUpdate(const FrameTiming &frameTiming);
 
         const std::vector<Particle2D>& getActiveParticles() const { return activeParticles; }
 
@@ -101,7 +101,7 @@ namespace BZ {
         std::vector<Emitter2D>& getEmitters() { return emitters; }
         const std::vector<Emitter2D>& getEmitters() const { return emitters; }
 
-        void onUpdate(const FrameStats &frameStats);
+        void onUpdate(const FrameTiming &frameTiming);
 
     private:
         std::vector<Emitter2D> emitters;

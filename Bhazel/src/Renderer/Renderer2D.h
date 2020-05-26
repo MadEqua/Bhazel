@@ -6,7 +6,7 @@ namespace BZ {
     class ParticleSystem2D;
     class OrthographicCamera;
     class Texture2D;
-    struct FrameStats;
+    struct FrameTiming;
     class RenderPass;
     class Framebuffer;
 
@@ -42,7 +42,7 @@ namespace BZ {
         static void destroy();
 
         static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd);
-        static void onImGuiRender(const FrameStats &frameStats);
+        static void onImGuiRender(const FrameTiming &frameTiming);
     };
 }
 

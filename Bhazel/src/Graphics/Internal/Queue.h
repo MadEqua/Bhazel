@@ -20,7 +20,7 @@ namespace BZ {
     class QueueFamily {
     public:
         QueueFamily() = default;
-        QueueFamily(uint32 index, uint32 queueCount, const std::vector<QueueProperty> &properties);
+        QueueFamily(uint32 index, uint32 queueCount, const std::vector<QueueProperty> &properties, uint32 timestampValidBits);
 
         bool hasProperty(QueueProperty type) const { return properties[static_cast<int>(type)]; }
         uint32 getIndex() const { return index; }
@@ -28,9 +28,13 @@ namespace BZ {
         uint32 getPropertyCount() const { return static_cast<uint32>(properties.count()); }
         bool hasExclusiveProperty() const { return properties.count() == 1; }
 
+        uint32 getTimestampValidBits() const { return timestampValidBits; }
+        bool canUseTimestamps() const { return timestampValidBits != 0; }
+
     private:
         uint32 index;
         uint32 queueCount;
+        uint32 timestampValidBits;
         std::bitset<static_cast<uint32>(QueueProperty::Count)> properties;
 
         friend class QueueFamilyContainer;

@@ -33,7 +33,7 @@ struct Brick {
 class BrickMap {
 public:
     void init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ::Texture2D> &explosionTexture);
-    void onUpdate(const BZ::FrameStats &frameStats);
+    void onUpdate(const BZ::FrameTiming &frameTiming);
 
     std::vector<Brick> bricks;
 
@@ -50,7 +50,7 @@ struct Paddle {
     BZ::AABB aabb;
 
     void init(const BZ::Ref<BZ::Texture2D> &texture);
-    void onUpdate(const BZ::FrameStats &frameStats);
+    void onUpdate(const BZ::FrameTiming &frameTiming);
 };
 
 class Ball {
@@ -64,7 +64,7 @@ public:
     BZ::ParticleSystem2D particleSystem;
 
     void init(const BZ::Ref<BZ::Texture2D> &ballTexture, const BZ::Ref<BZ::Texture2D> &ballParticleTexture);
-    void onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &paddle);
+    void onUpdate(const BZ::FrameTiming &frameTiming, BrickMap &brickMap, Paddle &paddle);
 
     void setToInitialPosition();
 };
@@ -77,9 +77,9 @@ public:
     void onAttach() override;
     void onGraphicsContextCreated() override;
 
-    void onUpdate(const BZ::FrameStats &frameStats) override;
+    void onUpdate(const BZ::FrameTiming &frameTiming) override;
     void onEvent(BZ::Event &event) override;
-    void onImGuiRender(const BZ::FrameStats &frameStats) override;
+    void onImGuiRender(const BZ::FrameTiming &frameTiming) override;
 
 private:
     BZ::OrthographicCamera camera;

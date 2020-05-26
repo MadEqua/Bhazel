@@ -18,7 +18,7 @@ namespace BZ {
     class Sampler;
     class TextureView;
     class CommandBuffer;
-    struct FrameStats;
+    struct FrameTiming;
 
 
     class Renderer {
@@ -66,7 +66,7 @@ namespace BZ {
         static void fillEntities(const Scene &scene);
 
         static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd);
-        static void onImGuiRender(const FrameStats &frameStats);
+        static void onImGuiRender(const FrameTiming &frameTiming);
 
         static void computeCascadedShadowMappingSplits(float out[], uint32 splits, float nearPlane, float farPlane);
     };

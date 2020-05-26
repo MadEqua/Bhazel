@@ -16,6 +16,7 @@ namespace BZ {
     class DescriptorSet;
     class PipelineState;
     class PipelineLayout;
+    class QueryPool;
 
     /*
     * CommandPools create the CommandBuffers.
@@ -81,6 +82,13 @@ namespace BZ {
 
         void blitTexture(const Ref<Texture> &src, const Ref<Texture> &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter);
         void blitTexture(const Texture &src, const Texture &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter);
+
+        //Queries
+        void resetQueryPool(const QueryPool &pool, uint32 firstQuery, uint32 queryCount);
+        void beginQuery(const QueryPool &pool, uint32 queryIndex, VkQueryControlFlags controlFlags);
+        void endQuery(const QueryPool &pool, uint32 queryIndex);
+        void writeTimestamp(VkPipelineStageFlagBits pipelineStage, const QueryPool &pool, uint32 queryIndex);
+        void copyQueryPoolResults(const QueryPool &pool, uint32 firstQuery, uint32 queryCount, const Ref<Buffer> &dstBuffer, uint32 dstOffset, uint32 stride, VkQueryResultFlags flags);
 
         uint32 getCommandCount() const { return commandCount; }
         uint32 getQueueFamilyIndex() const { return queueFamilyIndex; }

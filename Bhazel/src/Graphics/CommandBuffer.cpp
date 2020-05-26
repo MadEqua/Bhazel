@@ -12,6 +12,8 @@
 #include "Graphics/RenderPass.h"
 #include "Graphics/Texture.h"
 
+#include "Graphics/Internal/QueryPool.h"
+
 
 namespace BZ {
 
@@ -321,6 +323,31 @@ namespace BZ {
 
     void CommandBuffer::blitTexture(const Texture &src, const Texture &dst, VkImageLayout srcLayout, VkImageLayout dstLayout, VkImageBlit blit[], uint32 blitCount, VkFilter filter) {
         vkCmdBlitImage(handle, src.getHandle().imageHandle, srcLayout, dst.getHandle().imageHandle, dstLayout, blitCount, blit, filter);
+        commandCount++;
+    }
+
+    void CommandBuffer::resetQueryPool(const QueryPool &pool, uint32 firstQuery, uint32 queryCount) {
+        vkCmdResetQueryPool(handle, pool.getHandle(), firstQuery, queryCount);
+        commandCount++;
+    }
+
+    void CommandBuffer::beginQuery(const QueryPool &pool, uint32 queryIndex, VkQueryControlFlags controlFlags) {
+        vkCmdBeginQuery(handle, pool.getHandle(), queryIndex, controlFlags);
+        commandCount++;
+    }
+
+    void CommandBuffer::endQuery(const QueryPool &pool, uint32 queryIndex) {
+        vkCmdEndQuery(handle, pool.getHandle(), queryIndex);
+        commandCount++;
+    }
+
+    void CommandBuffer::writeTimestamp(VkPipelineStageFlagBits pipelineStage, const QueryPool &pool, uint32 queryIndex) {
+        vkCmdWriteTimestamp(handle, pipelineStage, pool.getHandle(), queryIndex);
+        commandCount++;
+    }
+
+    void CommandBuffer::copyQueryPoolResults(const QueryPool &pool, uint32 firstQuery, uint32 queryCount, const Ref<Buffer> &dstBuffer, uint32 dstOffset, uint32 stride, VkQueryResultFlags flags) {
+        vkCmdCopyQueryPoolResults(handle, pool.getHandle(), firstQuery, queryCount, dstBuffer->getHandle().bufferHandle, dstOffset, stride, flags);
         commandCount++;
     }
 }

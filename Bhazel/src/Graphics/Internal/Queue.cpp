@@ -6,8 +6,8 @@
 
 namespace BZ {
 
-    QueueFamily::QueueFamily(uint32 index, uint32 queueCount, const std::vector<QueueProperty> &properties) :
-        index(index), queueCount(queueCount) {
+    QueueFamily::QueueFamily(uint32 index, uint32 queueCount, const std::vector<QueueProperty> &properties, uint32 timestampValidBits) :
+        index(index), queueCount(queueCount), timestampValidBits(timestampValidBits) {
         for(const auto &prop : properties) {
             this->properties[static_cast<int>(prop)] = true;
         }

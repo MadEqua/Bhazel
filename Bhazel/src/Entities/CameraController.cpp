@@ -28,13 +28,13 @@ namespace BZ {
         enableRotation(enableRotation) {
     }
 
-    void CameraController2D::onUpdate(const FrameStats &frameStats) {
+    void CameraController2D::onUpdate(const FrameTiming &frameTiming) {
         if (enableRotation) {
             if (Input::isKeyPressed(BZ_KEY_Q)) {
-                camera->getTransform().roll(cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
+                camera->getTransform().roll(cameraRotationSpeed * frameTiming.deltaTime.asSeconds(), Space::Parent);
             }
             if (Input::isKeyPressed(BZ_KEY_E)) {
-                camera->getTransform().roll(-cameraRotationSpeed * frameStats.lastFrameTime.asSeconds(), Space::Parent);
+                camera->getTransform().roll(-cameraRotationSpeed * frameTiming.deltaTime.asSeconds(), Space::Parent);
             }
         }
 
@@ -59,7 +59,7 @@ namespace BZ {
         }
 
         if (positionChanged) {
-            glm::vec3 movementScaled = movementDir * cameraMoveSpeed * frameStats.lastFrameTime.asSeconds();
+            glm::vec3 movementScaled = movementDir * cameraMoveSpeed * frameTiming.deltaTime.asSeconds();
 
             //TODO (Mistery alert): Space::Parent is behaving as Space::Local and vice-versa.
             //Only in this CameraController, other Controllers and Entities behave as expected, and they all use the Transform class equally.
@@ -111,7 +111,7 @@ namespace BZ {
         cameraMoveSpeed(cameraMoveSpeed) {
     }
 
-    void FreeCameraController::onUpdate(const FrameStats &frameStats) {
+    void FreeCameraController::onUpdate(const FrameTiming &frameTiming) {
         auto mousePosition = Input::getMousePosition();
         const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensionsInt();
 
@@ -156,7 +156,7 @@ namespace BZ {
             if (Input::isKeyPressed(BZ_KEY_LEFT_SHIFT)) mult = 10.0f;
             if (Input::isKeyPressed(BZ_KEY_LEFT_CONTROL)) mult = 0.05f;
             float speed = cameraMoveSpeed * mult;
-            glm::vec3 movementScaled = movementDir * speed * frameStats.lastFrameTime.asSeconds();
+            glm::vec3 movementScaled = movementDir * speed * frameTiming.deltaTime.asSeconds();
             camera->getTransform().translate(movementScaled, Space::Local);
         }
     }
@@ -200,7 +200,7 @@ namespace BZ {
         camera.getTransform().lookAt(glm::vec3(0.0f), glm::vec3(0, 1, 0));
     }
 
-    void RotateCameraController::onUpdate(const FrameStats &frameStats) {
+    void RotateCameraController::onUpdate(const FrameTiming &frameTiming) {
         auto mousePosition = Input::getMousePosition();
         const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensionsInt();
 
@@ -233,22 +233,22 @@ namespace BZ {
 
         //Velocity
         if (glm::abs(thetaVelocity) > 0.0f) {
-            camPosCilindrical[1] += thetaVelocity * frameStats.lastFrameTime.asSeconds();
+            camPosCilindrical[1] += thetaVelocity * frameTiming.deltaTime.asSeconds();
             changes = true;
         }
 
         if (glm::abs(zVelocity) > 0.0f) {
-            camPosCilindrical[2] += zVelocity * frameStats.lastFrameTime.asSeconds();
+            camPosCilindrical[2] += zVelocity * frameTiming.deltaTime.asSeconds();
             changes = true;
         }
 
         //Drag
-        thetaVelocity *= glm::pow(0.001f, frameStats.lastFrameTime.asSeconds());
+        thetaVelocity *= glm::pow(0.001f, frameTiming.deltaTime.asSeconds());
         if (glm::abs(thetaVelocity) < 0.01f) {
             thetaVelocity = 0.0f;
         }
 
-        zVelocity *= glm::pow(0.001f, frameStats.lastFrameTime.asSeconds());
+        zVelocity *= glm::pow(0.001f, frameTiming.deltaTime.asSeconds());
         if (glm::abs(zVelocity) < 0.01f) {
             zVelocity = 0.0f;
         }

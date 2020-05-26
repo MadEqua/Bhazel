@@ -71,7 +71,7 @@ namespace BZ {
         finalPass(commandBuffer);
     }
 
-    void Bloom::onImGuiRender(const FrameStats &frameStats) {
+    void Bloom::onImGuiRender(const FrameTiming &frameTiming) {
         ImGui::Text("Bloom:");
         ImGui::Checkbox("Enabled", &enabled);
         ImGui::DragFloat("Intensity", &intensity, 0.001f, 0.0f, 0.5f);
@@ -372,7 +372,7 @@ namespace BZ {
         commandBuffer.endRenderPass();
     }
 
-    void ToneMap::onImGuiRender(const FrameStats &frameStats) {
+    void ToneMap::onImGuiRender(const FrameTiming &frameTiming) {
         ImGui::Text("Tone Mapping:");
         ImGui::Text("Check camera exposure.");
     }
@@ -420,7 +420,7 @@ namespace BZ {
         commandBuffer.endRenderPass();
     }
 
-    void FXAA::onImGuiRender(const FrameStats &frameStats) {
+    void FXAA::onImGuiRender(const FrameTiming &frameTiming) {
         ImGui::Text("FXAA:");
         ImGui::Checkbox("Enabled", &enabled);
     }
@@ -538,22 +538,22 @@ namespace BZ {
         commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 
-    void PostProcessor::onImGuiRender(const FrameStats &frameStats) {
+    void PostProcessor::onImGuiRender(const FrameTiming &frameTiming) {
         if(ImGui::Begin("Post-Processing")) {
             ImGui::PushID(1);
-            bloom.onImGuiRender(frameStats);
+            bloom.onImGuiRender(frameTiming);
             ImGui::PopID();
 
             ImGui::Separator();
 
             ImGui::PushID(2);
-            toneMap.onImGuiRender(frameStats);
+            toneMap.onImGuiRender(frameTiming);
             ImGui::PopID();
 
             ImGui::Separator();
 
             ImGui::PushID(3);
-            fxaa.onImGuiRender(frameStats);
+            fxaa.onImGuiRender(frameTiming);
             ImGui::PopID();
         }
         ImGui::End();

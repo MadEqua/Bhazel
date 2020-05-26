@@ -774,10 +774,10 @@ namespace BZ {
         }
     }
 
-    void Renderer::onImGuiRender(const FrameStats &frameStats) {
+    void Renderer::onImGuiRender(const FrameTiming &frameTiming) {
         BZ_PROFILE_FUNCTION();
 
-        rendererData.postProcessor.onImGuiRender(frameStats);
+        rendererData.postProcessor.onImGuiRender(frameTiming);
 
         if (ImGui::Begin("Renderer")) {
             ImGui::Text("Depth Bias:");
@@ -786,19 +786,20 @@ namespace BZ {
             ImGui::DragFloat("SlopeFactor", &rendererData.depthBiasData.z, 0.05f, 0.0f, 100.0f);
             ImGui::Separator();
 
-            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
+            rendererData.statsRefreshTimeAcumMs += frameTiming.deltaTime.asMillisecondsUint32();
             if (rendererData.statsRefreshTimeAcumMs >= rendererData.statsRefreshPeriodMs) {
                 rendererData.statsRefreshTimeAcumMs = 0;
                 rendererData.visibleStats = rendererData.stats;
             }
             ImGui::Text("Stats:");
-            ImGui::Text("Vertex Count: %d", rendererData.visibleStats.vertexCount);
-            ImGui::Text("Triangle Count: %d", rendererData.visibleStats.triangleCount);
-            ImGui::Text("Draw Call Count: %d", rendererData.visibleStats.drawCallCount);
-            ImGui::Text("Material Count: %d", rendererData.visibleStats.materialCount);
+            ImGui::Text("Vertex Count: %d.", rendererData.visibleStats.vertexCount);
+            ImGui::Text("Triangle Count: %d.", rendererData.visibleStats.triangleCount);
+            ImGui::Text("Draw Call Count: %d.", rendererData.visibleStats.drawCallCount);
+            ImGui::Text("Material Count: %d.", rendererData.visibleStats.materialCount);
             ImGui::Separator();
 
-            ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
+            ImGui::Text("Refresh period ms");
+            ImGui::SliderInt("##slider", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
         rendererData.stats = {};

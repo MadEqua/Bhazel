@@ -20,10 +20,10 @@ void Ball::init(const BZ::Ref<BZ::Texture2D> &ballTexture, const BZ::Ref<BZ::Tex
     particleSystem.start();
 }
 
-void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle &paddle) {
+void Ball::onUpdate(const BZ::FrameTiming &frameTiming, BrickMap &brickMap, Paddle &paddle) {
     const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
 
-    sprite.position += velocity * frameStats.lastFrameTime.asSeconds();
+    sprite.position += velocity * frameTiming.deltaTime.asSeconds();
 
     if (sprite.position.x < 0) {
         sprite.position.x = 0;
@@ -77,7 +77,7 @@ void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle
 
     if (secsToTint > 0.0f) {
         sprite.tintAndAlpha = glm::mix(BALL_TINT, colorToTint, secsToTint / BALL_TINT_SECONDS);
-        secsToTint -= frameStats.lastFrameTime.asSeconds();
+        secsToTint -= frameTiming.deltaTime.asSeconds();
     }
     BZ::Renderer2D::renderSprite(sprite);
 
@@ -86,7 +86,7 @@ void Ball::onUpdate(const BZ::FrameStats &frameStats, BrickMap &brickMap, Paddle
     }
 
     particleSystem.setPosition(sprite.position);
-    particleSystem.onUpdate(frameStats);
+    particleSystem.onUpdate(frameTiming);
     BZ::Renderer2D::renderParticleSystem2D(particleSystem);
 }
 
@@ -109,14 +109,14 @@ void Paddle::init(const BZ::Ref<BZ::Texture2D> &texture) {
     sprite.tintAndAlpha = { 1.0f, 1.0f, 1.0f, 1.0f };
 }
 
-void Paddle::onUpdate(const BZ::FrameStats &frameStats) {
+void Paddle::onUpdate(const BZ::FrameTiming &frameTiming) {
     const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
 
     if (BZ::Input::isKeyPressed(BZ_KEY_LEFT)) {
-        sprite.position.x -= PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
+        sprite.position.x -= PADDLE_VELOCITY * frameTiming.deltaTime.asSeconds();
     }
     if (BZ::Input::isKeyPressed(BZ_KEY_RIGHT)) {
-        sprite.position.x += PADDLE_VELOCITY * frameStats.lastFrameTime.asSeconds();
+        sprite.position.x += PADDLE_VELOCITY * frameTiming.deltaTime.asSeconds();
     }
 
     if (sprite.position.x - PADDLE_HALF_DIMS.x < 0) {
@@ -166,7 +166,7 @@ void BrickMap::init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ
     currentParticleSystem = 0;
 }
 
-void BrickMap::onUpdate(const BZ::FrameStats &frameStats) {
+void BrickMap::onUpdate(const BZ::FrameTiming &frameTiming) {
     for (uint32 i = 0; i < bricks.size(); ++i) {
         Brick &brick = bricks[i];
         if (brick.isVisible) {
@@ -174,7 +174,7 @@ void BrickMap::onUpdate(const BZ::FrameStats &frameStats) {
                 //brick.sprite.tintAndAlpha = { 1.0f, 0.0f, 0.0f, brick.secsToFade / BRICK_FADE_SECONDS };
                 brick.sprite.tintAndAlpha = BRICK_HIT_TINT;
                 brick.sprite.tintAndAlpha.a = brick.secsToFade / BRICK_FADE_SECONDS;
-                brick.secsToFade -= frameStats.lastFrameTime.asSeconds();
+                brick.secsToFade -= frameTiming.deltaTime.asSeconds();
                 if (brick.secsToFade <= 0.0f) {
                     brick.isVisible = false;
                 }
@@ -185,7 +185,7 @@ void BrickMap::onUpdate(const BZ::FrameStats &frameStats) {
     }
 
     for (int i = 0; i < PARTICLE_SYSTEMS_COUNT; ++i) {
-        particleSystems[i].onUpdate(frameStats);
+        particleSystems[i].onUpdate(frameTiming);
         BZ::Renderer2D::renderParticleSystem2D(particleSystems[i]);
     }
 }
@@ -227,16 +227,16 @@ void MainLayer::onGraphicsContextCreated() {
     ball.init(ballTexture, ballParticleTexture);
 }
 
-void MainLayer::onUpdate(const BZ::FrameStats &frameStats) {
+void MainLayer::onUpdate(const BZ::FrameTiming &frameTiming) {
     BZ_PROFILE_FUNCTION();
 
-    cameraController.onUpdate(frameStats);
+    cameraController.onUpdate(frameTiming);
 
     BZ::Renderer2D::begin(camera);
     
-    brickMap.onUpdate(frameStats);
-    paddle.onUpdate(frameStats);
-    ball.onUpdate(frameStats, brickMap, paddle);
+    brickMap.onUpdate(frameTiming);
+    paddle.onUpdate(frameTiming);
+    ball.onUpdate(frameTiming, brickMap, paddle);
 
     BZ::Renderer2D::end();
 }
@@ -245,7 +245,7 @@ void MainLayer::onEvent(BZ::Event &event) {
     cameraController.onEvent(event);
 }
 
-void MainLayer::onImGuiRender(const BZ::FrameStats &frameStats) {
+void MainLayer::onImGuiRender(const BZ::FrameTiming &frameTiming) {
     BZ_PROFILE_FUNCTION();
 }
 

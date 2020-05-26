@@ -4,7 +4,7 @@
 namespace BZ {
 
     class Layer;
-    struct FrameStats;
+    struct FrameTiming;
     class Event;
 
     class LayerStack {
@@ -19,8 +19,8 @@ namespace BZ {
         void clear();
 
         void onGraphicsContextCreated();
-        void onUpdate(const FrameStats& frameStats);
-        void onImGuiRender(const FrameStats& frameStats);
+        void onUpdate(const FrameTiming& frameTiming);
+        void onImGuiRender(const FrameTiming& frameTiming);
         void onEvent(Event& event);
         
         /*std::vector<Layer*>::iterator begin() { return layers.begin(); }

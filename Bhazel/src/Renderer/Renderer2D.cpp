@@ -363,23 +363,24 @@ namespace BZ {
         }
     }
 
-    void Renderer2D::onImGuiRender(const FrameStats &frameStats) {
+    void Renderer2D::onImGuiRender(const FrameTiming &frameTiming) {
         BZ_PROFILE_FUNCTION();
 
         if (ImGui::Begin("Renderer2D")) {
-            rendererData.statsRefreshTimeAcumMs += frameStats.lastFrameTime.asMillisecondsUint32();
+            rendererData.statsRefreshTimeAcumMs += frameTiming.deltaTime.asMillisecondsUint32();
             if (rendererData.statsRefreshTimeAcumMs >= rendererData.statsRefreshPeriodMs) {
                 rendererData.statsRefreshTimeAcumMs = 0;
                 rendererData.visibleStats = rendererData.stats;
             }
             ImGui::Text("Stats:");
-            ImGui::Text("Sprite Count: %d", rendererData.visibleStats.spriteCount);
-            ImGui::Text("Draw Call Count: %d", rendererData.visibleStats.drawCallCount);
-            ImGui::Text("Descriptor Set Bind Count: %d", rendererData.visibleStats.descriptorSetBindCount);
+            ImGui::Text("Sprite Count: %d.", rendererData.visibleStats.spriteCount);
+            ImGui::Text("Draw Call Count: %d.", rendererData.visibleStats.drawCallCount);
+            ImGui::Text("Descriptor Set Bind Count: %d.", rendererData.visibleStats.descriptorSetBindCount);
             //ImGui::Text("Tint Push Count: %d", visibleFrameStats.tintPushCount);
             ImGui::Separator();
 
-            ImGui::SliderInt("Refresh period ms", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
+            ImGui::Text("Refresh period ms");
+            ImGui::SliderInt("##slider", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();
 

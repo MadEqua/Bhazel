@@ -17,6 +17,7 @@
 #define BZ_BIT(x) (1 << x)
 #define BZ_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 #define BZ_FLAG_CHECK(mask, flag) static_cast<bool>(mask & flag)
+#define BZ_BIT_MASK(type, oneCount) ((type) (-((oneCount) != 0))) & (((type) -1) >> ((sizeof(type) * 8) - (oneCount)))
 
 #define BZ_NON_COPYABLE(T) \
     T(const T&) = delete; \

@@ -54,15 +54,15 @@ namespace BZ {
         }
     }
 
-    void LayerStack::onUpdate(const FrameStats& frameStats) {
+    void LayerStack::onUpdate(const FrameTiming& frameTiming) {
         for(Layer* layer : layers) {
-            layer->onUpdate(frameStats);
+            layer->onUpdate(frameTiming);
         }
     }
 
-    void LayerStack::onImGuiRender(const FrameStats& frameStats) {
+    void LayerStack::onImGuiRender(const FrameTiming& frameTiming) {
         for(Layer* layer : layers) {
-            layer->onImGuiRender(frameStats);
+            layer->onImGuiRender(frameTiming);
         }
     }
 
