@@ -385,7 +385,7 @@ namespace BZ {
         auto descriptorSetLayout = DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
         pipelineLayout = PipelineLayout::create({ descriptorSetLayout });
         descriptorSet = &DescriptorSet::get(descriptorSetLayout);
-        descriptorSet->setCombinedTextureSampler(inTexture, postProcessor.getSamplerNearest(), 0);
+        descriptorSet->setCombinedTextureSampler(inTexture, postProcessor.getSamplerLinear(), 0);
 
         const auto INPUT_DIMENSIONS = inTexture->getTexture()->getDimensions();
         const auto INPUT_DIMENSIONS_F = inTexture->getTexture()->getDimensionsFloat();

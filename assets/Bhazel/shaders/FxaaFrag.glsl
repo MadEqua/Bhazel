@@ -136,7 +136,6 @@ void main() {
 
     lumaEndN -= lumaNN * 0.5;
     lumaEndP -= lumaNN * 0.5;
-
     bool doneN = abs(lumaEndN) >= gradientScaled;
     bool doneP = abs(lumaEndP) >= gradientScaled;
     if(!doneN) posN.x -= offNP.x * DITHER_WEIGHTS[1];
@@ -187,6 +186,4 @@ void main() {
     if(horzSpan) posM.y += pixelOffsetSubpix * lengthSign;
 
     outColor = vec4(texture(uInputTexSampler, posM).rgb, 1.0);
-    //outColor = vec4(texture(uInputTexSampler, inTexCoord).rgb, 1.0);
-    //outColor = vec4(lumaM, lumaM, lumaM, 1.0);
 }
