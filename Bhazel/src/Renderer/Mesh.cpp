@@ -258,6 +258,8 @@ namespace BZ {
 
         vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
         indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
+        BZ_SET_BUFFER_DEBUG_NAME(vertexBuffer, "Mesh Vertex Buffer");
+        BZ_SET_BUFFER_DEBUG_NAME(indexBuffer, "Mesh Index Buffer");
 
         vertexBuffer->setData(vertices.data(), sizeof(Vertex) * vertexCount, 0);
         indexBuffer->setData(indices.data(), sizeof(uint32) * indexCount, 0);
@@ -266,6 +268,8 @@ namespace BZ {
     Mesh::Mesh(Vertex vertices[], uint32 vertexCount, const Material &material) :
         vertexCount(vertexCount), indexCount(0) {
         vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
+        BZ_SET_BUFFER_DEBUG_NAME(vertexBuffer, "Mesh Vertex Buffer");
+
         vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
 
         SubMesh submesh;
@@ -281,6 +285,8 @@ namespace BZ {
         vertexCount(vertexCount), indexCount(indexCount) {
         vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(Vertex) * vertexCount, MemoryType::GpuOnly, Renderer::getVertexDataLayout());
         indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, sizeof(uint32) * indexCount, MemoryType::GpuOnly, Renderer::getIndexDataLayout());
+        BZ_SET_BUFFER_DEBUG_NAME(vertexBuffer, "Mesh Vertex Buffer");
+        BZ_SET_BUFFER_DEBUG_NAME(indexBuffer, "Mesh Index Buffer");
 
         vertexBuffer->setData(vertices, sizeof(Vertex) * vertexCount, 0);
         indexBuffer->setData(indices, sizeof(uint32) * indexCount, 0);

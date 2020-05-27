@@ -138,6 +138,8 @@ namespace BZ {
 
         rendererData.vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 4 * sizeof(VertexData) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, vertexLayout);
         rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 6 * sizeof(uint32) * MAX_RENDERER2D_SPRITES, MemoryType::CpuToGpu, indexLayout);
+        BZ_SET_BUFFER_DEBUG_NAME(rendererData.vertexBuffer, "Renderer2D Vertex Buffer");
+        BZ_SET_BUFFER_DEBUG_NAME(rendererData.indexBuffer, "Renderer2D Index Buffer");
 
         rendererData.vertexBufferPtr = rendererData.vertexBuffer->map(0);
         rendererData.indexBufferPtr = rendererData.indexBuffer->map(0);
@@ -148,6 +150,7 @@ namespace BZ {
 
         byte whiteTextureData[] = {255, 255, 255, 255};
         rendererData.whiteTexture = Texture2D::create(whiteTextureData, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, MipmapData::Options::DoNothing);
+        BZ_SET_TEXTURE_DEBUG_NAME(rendererData.whiteTexture, "Renderer2D White Texture");
 
         rendererData.constantsDescriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1 } });
@@ -184,8 +187,11 @@ namespace BZ {
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(rendererData.pipelineState, "Renderer2D Pipeline");
 
         rendererData.constantBuffer = Buffer::create(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, GraphicsContext::MIN_UNIFORM_BUFFER_OFFSET_ALIGN, MemoryType::CpuToGpu);
+        BZ_SET_BUFFER_DEBUG_NAME(rendererData.constantBuffer, "Renderer2D Constant Buffer");
+
         rendererData.constantBufferPtr = rendererData.constantBuffer->map(0);
 
         rendererData.constantsDescriptorSet = &DescriptorSet::get(rendererData.constantsDescriptorSetLayout);

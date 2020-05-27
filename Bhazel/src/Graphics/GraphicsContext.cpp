@@ -277,4 +277,17 @@ namespace BZ {
 
         stats.reset();
     }
+
+#ifdef BZ_GRAPHICS_DEBUG
+    void GraphicsContext::setObjectDebugName(uint64 handle, VkObjectType objectType, const char *name) {
+        VkDebugUtilsObjectNameInfoEXT nameStruct = {};
+        nameStruct.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        nameStruct.objectType = objectType;
+        nameStruct.objectHandle = handle;
+        nameStruct.pObjectName = name;
+
+        static auto func = getExtensionFunction<PFN_vkSetDebugUtilsObjectNameEXT>("vkSetDebugUtilsObjectNameEXT");
+        BZ_ASSERT_VK(func(device.getHandle(), &nameStruct));
+    }
+#endif
 }

@@ -3,6 +3,8 @@
 #include "Scene.h"
 #include "Renderer.h"
 
+#include "Core/Application.h"
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/RenderPass.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/Framebuffer.h"
@@ -72,12 +74,16 @@ namespace BZ {
                              const char *radianceMapBasePath, const char *radianceMapFileNames[6], uint32 radianceMipmapCount) {
 
         auto albedoTexRef = TextureCube::create(albedoBasePath, albedoFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, MipmapData::Options::Generate);
+        BZ_SET_TEXTURE_DEBUG_NAME(albedoTexRef, "Scene SkyBox Albedo Texture");
+
         skyBox.mesh = Mesh::createUnitCubeInsides(Material(albedoTexRef));
 
         auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, MipmapData::Options::Generate);
+        BZ_SET_TEXTURE_DEBUG_NAME(irradianceMapTexRef, "Scene SkyBox  Irradiance Texture");
         skyBox.irradianceMapView = TextureView::create(irradianceMapTexRef);
 
         auto radianceMapTexRef = TextureCube::create(radianceMapBasePath, radianceMapFileNames, VK_FORMAT_R32G32B32A32_SFLOAT, { MipmapData::Options::Load, radianceMipmapCount });
+        BZ_SET_TEXTURE_DEBUG_NAME(radianceMapTexRef, "Scene SkyBox Radiance Texture");
         skyBox.radianceMapView = TextureView::create(radianceMapTexRef);
 
         descriptorSet->setCombinedTextureSampler(skyBox.irradianceMapView, Renderer::getDefaultSampler(), 1);

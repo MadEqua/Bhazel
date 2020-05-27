@@ -135,6 +135,7 @@ namespace BZ {
         int texWidth, texHeight;
         io.Fonts->GetTexDataAsRGBA32(&fontData, &texWidth, &texHeight);
         auto fontTextureRef = Texture2D::create(fontData, texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, MipmapData::Options::DoNothing);
+        BZ_SET_TEXTURE_DEBUG_NAME(fontTextureRef, "ImGuiRenderer Font Texture");
         rendererData.fontTextureView = TextureView::create(fontTextureRef);
         rendererData.fontTextureSampler = Sampler::Builder().build();
 
@@ -149,6 +150,8 @@ namespace BZ {
         const uint32 MAX_INDICES = 1 << (sizeof(ImDrawIdx) * 8);
         rendererData.vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawVert), MemoryType::CpuToGpu, vertexLayout);
         rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawIdx), MemoryType::CpuToGpu, { { DataType::Uint16, DataElements::Scalar, "" } });
+        BZ_SET_BUFFER_DEBUG_NAME(rendererData.vertexBuffer, "RendererImGui Vertex Buffer");
+        BZ_SET_BUFFER_DEBUG_NAME(rendererData.indexBuffer, "RendererImGui Index Buffer");
 
         rendererData.vertexBufferPtr = rendererData.vertexBuffer->map(0);
         rendererData.indexBufferPtr = rendererData.indexBuffer->map(0);
@@ -156,7 +159,6 @@ namespace BZ {
         //Shaders
         Ref<Shader> shader = Shader::create({ { "Bhazel/shaders/bin/ImGuiVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                               { "Bhazel/shaders/bin/ImGuiFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-
         //DescriptorSetLayout
         Ref<DescriptorSetLayout> descriptorSetLayout =
             DescriptorSetLayout::create({ { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
@@ -185,6 +187,7 @@ namespace BZ {
         pipelineStateData.subPassIndex = 0;
 
         rendererData.pipelineState = PipelineState::create(pipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(rendererData.pipelineState, "RendererImGui Pipeline");
 
         //DescriptorSet
         rendererData.descriptorSet = &DescriptorSet::get(descriptorSetLayout);

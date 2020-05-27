@@ -164,6 +164,7 @@ namespace BZ {
                                                      MATERIAL_CONSTANT_BUFFER_SIZE + ENTITY_CONSTANT_BUFFER_SIZE +
                                                      POST_PROCESS_CONSTANT_BUFFER_SIZE,
                                                      MemoryType::CpuToGpu);
+        BZ_SET_BUFFER_DEBUG_NAME(rendererData.constantBuffer, "Renderer ConstantBuffer");
 
         rendererData.sceneConstantBufferPtr = rendererData.constantBuffer->map(0);
         rendererData.passConstantBufferPtr = rendererData.sceneConstantBufferPtr + PASS_CONSTANT_BUFFER_OFFSET;
@@ -278,6 +279,7 @@ namespace BZ {
         pipelineStateData.renderPass = rendererData.shadowRenderPass;
         pipelineStateData.subPassIndex = 0;
         rendererData.shadowPassPipelineState = PipelineState::create(pipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(rendererData.shadowPassPipelineState, "Renderer Shadow Pass Pipeline");
 
         rendererData.passDescriptorSetForShadowPass = &DescriptorSet::get(rendererData.passDescriptorSetLayoutForShadowPass);
         Ref<Buffer> constantBuffers[SHADOW_MAPPING_CASCADE_COUNT];
@@ -366,7 +368,6 @@ namespace BZ {
         pipelineStateData.dataLayout = vertexDataLayout;
         pipelineStateData.shader = Shader::create({ { "Bhazel/shaders/bin/RendererVert.spv", VK_SHADER_STAGE_VERTEX_BIT },
                                                     { "Bhazel/shaders/bin/RendererFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
-
         pipelineStateData.layout = rendererData.pipelineLayout;
         pipelineStateData.rasterizerState = rasterizerState;
         pipelineStateData.depthStencilState = depthStencilState;
@@ -374,13 +375,16 @@ namespace BZ {
         pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
         rendererData.colorPassPipelineState = PipelineState::create(pipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(rendererData.colorPassPipelineState, "Renderer Color Pass Pipeline");
 
         const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
 
         auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, colorAttachmentDesc.format, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+        BZ_SET_TEXTURE_DEBUG_NAME(colorTexture, "Renderer Color Texture");
         rendererData.colorTexView = TextureView::create(colorTexture);
 
         auto depthTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1, depthStencilAttachmentDesc.format);
+        BZ_SET_TEXTURE_DEBUG_NAME(depthTexture, "Renderer Depth Texture");
         rendererData.depthTexView = TextureView::create(depthTexture);
 
         rendererData.colorFramebuffer = Framebuffer::create(rendererData.colorRenderPass, 
@@ -393,6 +397,7 @@ namespace BZ {
         rendererData.brdfLookupSampler = samplerBuilder.build();
 
         auto brdfLookupTexRef = Texture2D::create(reinterpret_cast<const byte*>(brdfLut), brdfLutSize, brdfLutSize, VK_FORMAT_R16G16_SFLOAT, MipmapData::Options::DoNothing);
+        BZ_SET_TEXTURE_DEBUG_NAME(brdfLookupTexRef, "Renderer BRDF Lookup Texture");
         rendererData.brdfLookupTexture = TextureView::create(brdfLookupTexRef);
 
         rendererData.globalDescriptorSet = &DescriptorSet::get(rendererData.globalDescriptorSetLayout);
@@ -428,6 +433,7 @@ namespace BZ {
         pipelineStateData.renderPass = rendererData.colorRenderPass;
         pipelineStateData.subPassIndex = 0;
         rendererData.skyBoxPipelineState = PipelineState::create(pipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(rendererData.skyBoxPipelineState, "Renderer Skybox Pipeline");
     }
 
     void Renderer::destroy() {
@@ -840,6 +846,7 @@ namespace BZ {
 
     Ref<Framebuffer> Renderer::createShadowMapFramebuffer() {
         auto shadowMapRef = Texture2D::createRenderTarget(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, SHADOW_MAPPING_CASCADE_COUNT, 1, rendererData.shadowRenderPass->getDepthStencilAttachmentDescription()->format);
+        BZ_SET_TEXTURE_DEBUG_NAME(shadowMapRef, "Renderer Shadow Map Texture");
         glm::uvec3 dimsAndLayers(shadowMapRef->getDimensions().x, shadowMapRef->getDimensions().y, shadowMapRef->getLayers());
         return Framebuffer::create(rendererData.shadowRenderPass, { TextureView::create(shadowMapRef) }, dimsAndLayers);
     }

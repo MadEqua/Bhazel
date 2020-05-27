@@ -92,6 +92,7 @@ void Layer3D::onGraphicsContextCreated() {
 
     camera = BZ::PerspectiveCamera(50.0f, BZ::Application::get().getWindow().getAspectRatio(), 0.1f, 600.0f);
     camera.getTransform().setTranslation(0.0f, 100.0f, 100.0f, BZ::Space::Parent);
+    camera.setExposure(0.5f);
     scenes[0].setCamera(camera);
     scenes[1].setCamera(camera);
     scenes[2].setCamera(camera);
@@ -244,7 +245,7 @@ void Layer3D::onGraphicsContextCreated() {
     BZ::DirectionalLight dirLight;
     dirLight.setDirection({ 0.3f, -1.0f, -1.0f });
     dirLight.color = { 1.0f, 1.0f, 1.0f };
-    dirLight.intensity = 5.0f;
+    dirLight.intensity = 1.0f;
     scenes[0].addDirectionalLight(dirLight);
     scenes[1].addDirectionalLight(dirLight);
     scenes[2].addDirectionalLight(dirLight);

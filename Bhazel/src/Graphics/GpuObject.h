@@ -1,8 +1,8 @@
 #pragma once
 
-#define BZ_GRAPHICS_CTX BZ::Application::get().getGraphicsContext()
 #define BZ_GRAPHICS_DEVICE BZ::Application::get().getGraphicsContext().getDevice()
 #define BZ_MEM_ALLOCATOR BZ::Application::get().getGraphicsContext().getMemoryAllocator()
+
 
 namespace BZ {
 

@@ -29,7 +29,10 @@ namespace BZ {
         const uint32 H = INPUT_DIMENSIONS.y / 2;
 
         tex1 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat(), VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+        BZ_SET_TEXTURE_DEBUG_NAME(tex1, "Bloom Aux Texture 1");
+
         tex2 = Texture2D::createRenderTarget(W, H, 1, BLOOM_TEXTURE_MIPS, postProcessor.getInputTextureFormat());
+        BZ_SET_TEXTURE_DEBUG_NAME(tex2, "Bloom Aux Texture 2");
 
         for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
             tex1MipViews[i] = TextureView::create(tex1, 0, 1, i, 1);
@@ -83,9 +86,8 @@ namespace BZ {
 
         for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
             ImGui::PushID(i);
-            const char *label = "Blur #%d Weight";
             char buf[32];
-            sprintf_s(buf, label, i);
+            sprintf_s(buf, "Blur #%d Weight", i);
             ImGui::DragFloat(buf, &blurWeights[i], 0.005f, 0.0f, 2.0f);
             ImGui::PopID();
         }
@@ -209,9 +211,10 @@ namespace BZ {
         blurPipelineStateData.renderPass = blurRenderPass;
         blurPipelineStateData.subPassIndex = 0;
         blurPipelineState = PipelineState::create(blurPipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(blurPipelineState, "Bloom Blur Pass Pipeline");
 
         for(uint32 i = 0; i < BLOOM_TEXTURE_MIPS; ++i) {
-            blurWeights[i] = 1.0f;
+            blurWeights[i] = (1.0f - (glm::exp(float(i)) - 75.0f)) * 0.02f;
 
             viewports[i].x = 0.0f;
             viewports[i].y = 0.0f;
@@ -328,6 +331,7 @@ namespace BZ {
         finalPipelineStateData.renderPass = finalRenderPass;
         finalPipelineStateData.subPassIndex = 0;
         finalPipelineState = PipelineState::create(finalPipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(finalPipelineState, "Bloom Final Pass Pipeline");
 
         finalFramebuffer = Framebuffer::create(finalRenderPass, { postProcessor.getInputTexView() }, { INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y, 1 });
 
@@ -364,6 +368,7 @@ namespace BZ {
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
         pipelineState = PipelineState::create(pipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(pipelineState, "ToneMap Pipeline");
     }
 
     void ToneMap::destroy() {
@@ -409,6 +414,7 @@ namespace BZ {
         pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
         pipelineStateData.subPassIndex = 0;
         pipelineState = PipelineState::create(pipelineStateData);
+        BZ_SET_PIPELINE_DEBUG_NAME(pipelineState, "FXAA Pipeline");
     }
 
     void FXAA::destroy() {
@@ -446,6 +452,7 @@ namespace BZ {
         const glm::uvec3 SWAPCHAIN_DIMS = swapchainFramebuffer->getDimensionsAndLayers();
         auto swapchainReplicaTex = Texture2D::createRenderTarget(SWAPCHAIN_DIMS.x, SWAPCHAIN_DIMS.y, 1, 1,
             swapchainFramebuffer->getColorAttachmentTextureView(0)->getTextureFormat());
+        BZ_SET_TEXTURE_DEBUG_NAME(swapchainReplicaTex, "PostProcessor SwapchainReplica Texture");
         auto swapchainReplicaTexView = TextureView::create(swapchainReplicaTex);
 
 

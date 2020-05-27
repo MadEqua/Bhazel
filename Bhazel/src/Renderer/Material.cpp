@@ -3,6 +3,8 @@
 #include "Material.h"
 #include "Renderer.h"
 
+#include "Core/Application.h"
+#include "Graphics/GraphicsContext.h"
 #include "Graphics/Texture.h"
 #include "Graphics/DescriptorSet.h"
 
@@ -38,30 +40,36 @@ namespace BZ {
         anisotropicSampler(useAnisotropicSampler) {
 
         auto albedoTexture = Texture2D::create(albedoTexturePath, VK_FORMAT_R8G8B8A8_SRGB, MipmapData::Options::Generate);
+        BZ_SET_TEXTURE_DEBUG_NAME(albedoTexture, "Material Albedo Texture");
         albedoTextureView = TextureView::create(albedoTexture);
 
         if (normalTexturePath) {
             auto normalTexture = Texture2D::create(normalTexturePath, VK_FORMAT_R8G8B8A8_UNORM, MipmapData::Options::Generate);
+            BZ_SET_TEXTURE_DEBUG_NAME(normalTexture, "Material Normal Texture");
             normalTextureView = TextureView::create(normalTexture);
         }
 
         if (metallicTexturePath) {
             auto metallicTexture = Texture2D::create(metallicTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
+            BZ_SET_TEXTURE_DEBUG_NAME(metallicTexture, "Material Metallic Texture");
             metallicTextureView = TextureView::create(metallicTexture);
         }
 
         if (roughnessTexturePath) {
             auto roughnessTexture = Texture2D::create(roughnessTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
+            BZ_SET_TEXTURE_DEBUG_NAME(roughnessTexture, "Material Roughness Texture");
             roughnessTextureView = TextureView::create(roughnessTexture);
         }
 
         if (heightTexturePath) {
             auto heightTexture = Texture2D::create(heightTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
+            BZ_SET_TEXTURE_DEBUG_NAME(heightTexture, "Material Height Texture");
             heightTextureView = TextureView::create(heightTexture);
         }
 
         if (aoTexturePath) {
             auto aoTexture = Texture2D::create(aoTexturePath, VK_FORMAT_R8_UNORM, MipmapData::Options::Generate);
+            BZ_SET_TEXTURE_DEBUG_NAME(aoTexture, "Material AO Texture");
             aoTextureView = TextureView::create(aoTexture);
         }
 

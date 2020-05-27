@@ -174,7 +174,10 @@ namespace BZ {
         //framebuffersLinear.resize(imageCount);
         for(size_t i = 0; i < swapChainImages.size(); i++) {
             auto textureRef = Texture2D::wrap(swapChainImages[i], extent.width, extent.height, imageFormat);
-            
+            char name[32];
+            sprintf_s(name, "Swapchain Image #%d", i);
+            BZ_SET_TEXTURE_DEBUG_NAME(textureRef, name);
+
             auto textureViewRef = TextureView::create(textureRef);
             framebuffers[i] = Framebuffer::create(renderPass, { textureViewRef }, glm::uvec3(extent.width, extent.height, 1));
 

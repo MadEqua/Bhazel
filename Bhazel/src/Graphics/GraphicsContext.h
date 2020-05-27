@@ -60,6 +60,10 @@ namespace BZ {
         const Ref<Semaphore>& getCurrentFrameImageAvailableSemaphore() const { return frameDatas[currentFrameIndex].imageAvailableSemaphore; }
         const Ref<Fence>& getCurrentFrameRenderFinishedFence() const { return frameDatas[currentFrameIndex].renderFinishedFence; }
 
+#ifdef BZ_GRAPHICS_DEBUG
+        void setObjectDebugName(uint64 handle, VkObjectType objectType, const char *name);
+#endif
+
         Device& getDevice() { return device; }
 
         template<typename T>
@@ -96,7 +100,7 @@ namespace BZ {
             Ref<Fence> renderFinishedFence;
 
 #ifdef BZ_GRAPHICS_DEBUG
-            //For timestamps.
+            //For timestamp queries.
             QueryPool queryPool;
 #endif 
         };
@@ -142,4 +146,17 @@ namespace BZ {
 
         constexpr static uint32 TIMESTAMP_QUERY_COUNT = 2;
     };
+
+
+#ifdef BZ_GRAPHICS_DEBUG
+    #define BZ_SET_BUFFER_DEBUG_NAME(buffer, name) BZ_GRAPHICS_CTX.setObjectDebugName(reinterpret_cast<uint64>(buffer->getHandle().bufferHandle), VK_OBJECT_TYPE_BUFFER, name);
+    #define BZ_SET_FRAMEBUFFER_DEBUG_NAME(fb, name) BZ_GRAPHICS_CTX.setObjectDebugName(reinterpret_cast<uint64>(fb->getHandle()), VK_OBJECT_TYPE_FRAMEBUFFER, name);
+    #define BZ_SET_PIPELINE_DEBUG_NAME(pipeline, name) BZ_GRAPHICS_CTX.setObjectDebugName(reinterpret_cast<uint64>(pipeline->getHandle()), VK_OBJECT_TYPE_PIPELINE, name);
+    #define BZ_SET_TEXTURE_DEBUG_NAME(tex, name) BZ_GRAPHICS_CTX.setObjectDebugName(reinterpret_cast<uint64>(tex->getHandle().imageHandle), VK_OBJECT_TYPE_IMAGE, name);
+#else
+    #define BZ_SET_BUFFER_DEBUG_NAME(buffer, name)
+    #define BZ_SET_FRAMEBUFFER_DEBUG_NAME(fb, name)
+    #define BZ_SET_PIPELINE_DEBUG_NAME(pipeline, name)
+    #define BZ_SET_TEXTURE_DEBUG_NAME(tex, name)
+#endif
 }
