@@ -66,8 +66,13 @@ namespace BZ {
     }
 
     void Bloom::render(CommandBuffer &commandBuffer) {
+        BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, "Downsample Pass");
         downsamplePass(commandBuffer);
+
+        BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, "Blur Pass");
         blurPass(commandBuffer);
+
+        BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, "Final Pass");
         finalPass(commandBuffer);
     }
 
@@ -518,23 +523,32 @@ namespace BZ {
 
     void PostProcessor::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer, bool waitForImageAvailable, bool signalFrameEnd) {
         CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+
+        BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "PostProcessing");
         commandBuffer.bindDescriptorSet(*descriptorSet, pipelineLayout, 0, nullptr, 0);
 
         if(bloom.isEnabled()) {
+            BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "Bloom");
             addBarrier(commandBuffer);
             bloom.render(commandBuffer);
+            BZ_CB_END_DEBUG_LABEL(commandBuffer);
         }
 
+        BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "ToneMapping");
         addBarrier(commandBuffer);
         toneMap.render(commandBuffer, 
             fxaa.isEnabled() ? swapchainReplicaRenderPass : swapchainRenderPass,
             fxaa.isEnabled() ? swapchainReplicaFramebuffer : swapchainFramebuffer);
+        BZ_CB_END_DEBUG_LABEL(commandBuffer);
 
         if(fxaa.isEnabled()) {
+            BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "FXAA");
             addBarrier(commandBuffer);
             fxaa.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer);
+            BZ_CB_END_DEBUG_LABEL(commandBuffer);
         }
 
+        BZ_CB_END_DEBUG_LABEL(commandBuffer);
         commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 

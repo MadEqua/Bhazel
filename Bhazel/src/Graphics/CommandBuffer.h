@@ -90,6 +90,14 @@ namespace BZ {
         void writeTimestamp(VkPipelineStageFlagBits pipelineStage, const QueryPool &pool, uint32 queryIndex);
         void copyQueryPoolResults(const QueryPool &pool, uint32 firstQuery, uint32 queryCount, const Ref<Buffer> &dstBuffer, uint32 dstOffset, uint32 stride, VkQueryResultFlags flags);
 
+        //Debug
+#ifdef BZ_GRAPHICS_DEBUG
+        void beginDebugLabel(const char *label, const glm::vec4 &color = glm::vec4(1.0f));
+        void endDebugLabel();
+        void insertDebugLabel(const char *label, const glm::vec4 &color = glm::vec4(1.0f));
+#endif
+
+        //Statistics
         uint32 getCommandCount() const { return commandCount; }
         uint32 getQueueFamilyIndex() const { return queueFamilyIndex; }
 
@@ -102,4 +110,14 @@ namespace BZ {
         void init(VkCommandBuffer vkCommandBuffer, uint32 queueFamilyIndex);
         friend class CommandPool;
     };
+
+#ifdef BZ_GRAPHICS_DEBUG
+    #define BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, ...) commandBuffer.beginDebugLabel(__VA_ARGS__)
+    #define BZ_CB_END_DEBUG_LABEL(commandBuffer) commandBuffer.endDebugLabel()
+    #define BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, ...) commandBuffer.insertDebugLabel(__VA_ARGS__)
+#else
+    #define BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, ...)
+    #define BZ_CB_END_DEBUG_LABEL(commandBuffer)
+    #define BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, ...)
+#endif
 }

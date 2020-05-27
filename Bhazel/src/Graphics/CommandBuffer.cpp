@@ -350,4 +350,31 @@ namespace BZ {
         vkCmdCopyQueryPoolResults(handle, pool.getHandle(), firstQuery, queryCount, dstBuffer->getHandle().bufferHandle, dstOffset, stride, flags);
         commandCount++;
     }
+
+#ifdef BZ_GRAPHICS_DEBUG
+    void CommandBuffer::beginDebugLabel(const char *label, const glm::vec4 &color) {
+        VkDebugUtilsLabelEXT labelStruct = {};
+        labelStruct.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+        labelStruct.pLabelName = label;
+        memcpy(&labelStruct.color, &color[0], sizeof(float[4]));
+
+        static auto func = BZ_GRAPHICS_CTX.getExtensionFunction<PFN_vkCmdBeginDebugUtilsLabelEXT>("vkCmdBeginDebugUtilsLabelEXT");
+        func(handle, &labelStruct);
+    }
+
+    void CommandBuffer::endDebugLabel() {
+        static auto func = BZ_GRAPHICS_CTX.getExtensionFunction<PFN_vkCmdEndDebugUtilsLabelEXT>("vkCmdEndDebugUtilsLabelEXT");
+        func(handle);
+    }
+
+    void CommandBuffer::insertDebugLabel(const char *label, const glm::vec4 &color) {
+        VkDebugUtilsLabelEXT labelStruct = {};
+        labelStruct.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+        labelStruct.pLabelName = label;
+        memcpy(&labelStruct.color, &color[0], sizeof(float[4]));
+
+        static auto func = BZ_GRAPHICS_CTX.getExtensionFunction<PFN_vkCmdInsertDebugUtilsLabelEXT>("vkCmdInsertDebugUtilsLabelEXT");
+        func(handle, &labelStruct);
+    }
+#endif
 }

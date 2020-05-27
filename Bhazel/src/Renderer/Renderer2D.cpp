@@ -276,6 +276,8 @@ namespace BZ {
 
         if(rendererData.nextSprite > 0) {
             CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+            BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "Renderer2D");
+
             commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
 
             glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
@@ -359,6 +361,7 @@ namespace BZ {
             }
 
             commandBuffer.endRenderPass();
+            BZ_CB_END_DEBUG_LABEL(commandBuffer);
             commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
         }
     }
@@ -380,6 +383,7 @@ namespace BZ {
             ImGui::Separator();
 
             ImGui::Text("Refresh period ms");
+            ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.95f);
             ImGui::SliderInt("##slider", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();

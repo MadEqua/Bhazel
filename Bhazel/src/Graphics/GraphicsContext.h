@@ -62,6 +62,9 @@ namespace BZ {
 
         Device& getDevice() { return device; }
 
+        template<typename T>
+        T getExtensionFunction(const char *name) { return instance.getExtensionFunction<T>(name); }
+
         constexpr static uint32 MAX_FRAMES_IN_FLIGHT = 3;
         constexpr static uint32 MAX_COMMAND_BUFFERS_PER_SUBMIT = 32;
         constexpr static uint32 MAX_SEMAPHORES_PER_SUBMIT = 8;

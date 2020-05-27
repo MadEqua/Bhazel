@@ -141,6 +141,7 @@ namespace BZ {
             cmdBuf.writeTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, frameDatas[currentFrameIndex].queryPool, 1);
             cmdBuf.end();
             vkCommandBuffers[commandBuffersCount++] = cmdBuf.getHandle();
+            stats.commandCount++;
         }
 #endif
 

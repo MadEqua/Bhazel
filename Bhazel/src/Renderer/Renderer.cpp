@@ -479,6 +479,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "Shadow Pass");
 
         commandBuffer.bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.pipelineLayout, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
         commandBuffer.bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.pipelineLayout, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
@@ -502,6 +503,7 @@ namespace BZ {
             lightIdx++;
         }
 
+        BZ_CB_END_DEBUG_LABEL(commandBuffer);
         commandBuffer.endAndSubmit(false, false);
     }
 
@@ -509,6 +511,7 @@ namespace BZ {
         BZ_PROFILE_FUNCTION();
 
         CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "Color Pass");
 
         commandBuffer.bindDescriptorSet(*rendererData.globalDescriptorSet, rendererData.pipelineLayout, RENDERER_GLOBAL_DESCRIPTOR_SET_IDX, 0, 0);
         commandBuffer.bindDescriptorSet(rendererData.sceneToRender->getDescriptorSet(), rendererData.pipelineLayout, RENDERER_SCENE_DESCRIPTOR_SET_IDX, 0, 0);
@@ -528,6 +531,7 @@ namespace BZ {
         }
 
         commandBuffer.endRenderPass();
+        BZ_CB_END_DEBUG_LABEL(commandBuffer);
         commandBuffer.endAndSubmit(false, false);
     }
 
@@ -799,6 +803,7 @@ namespace BZ {
             ImGui::Separator();
 
             ImGui::Text("Refresh period ms");
+            ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.95f);
             ImGui::SliderInt("##slider", reinterpret_cast<int*>(&rendererData.statsRefreshPeriodMs), 0, 1000);
         }
         ImGui::End();

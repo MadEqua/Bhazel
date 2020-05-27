@@ -195,6 +195,7 @@ namespace BZ {
         ImDrawData *imDrawData = ImGui::GetDrawData();
 
         CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "RendererImGui");
 
         if(imDrawData->TotalVtxCount == 0 || imDrawData->TotalIdxCount == 0 || imDrawData->CmdListsCount <= 0) {
             BZ_LOG_CORE_INFO("Nothing to draw from ImGui. Vertices count: {}. Indices count: {}. Command List count: {}. Bailing Out.",
@@ -253,6 +254,7 @@ namespace BZ {
         }
 
         commandBuffer.endRenderPass();
+        BZ_CB_END_DEBUG_LABEL(commandBuffer);
         commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 
