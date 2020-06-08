@@ -5,17 +5,17 @@
 
 namespace BZ {
 
-    class IniParser {
-    public:
-        IniParser() = default;
+class IniParser {
+  public:
+    IniParser() = default;
 
-        BZ_NON_COPYABLE(IniParser);
+    BZ_NON_COPYABLE(IniParser);
 
-        bool parse(const char *filePath);
+    bool parse(const char *filePath);
 
-        const IniSettings& getParsedIniSettings() { return out; }
+    const IniSettings &getParsedIniSettings() { return out; }
 
-    private:
-        IniSettings out;
-    };
+  private:
+    IniSettings out;
+};
 }

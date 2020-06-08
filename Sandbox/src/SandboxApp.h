@@ -4,7 +4,7 @@
 
 
 class ParticleLayer : public BZ::Layer {
-public:
+  public:
     ParticleLayer();
 
     void onAttach() override;
@@ -14,7 +14,7 @@ public:
     void onEvent(BZ::Event &event) override;
     void onImGuiRender(const BZ::FrameTiming &frameTiming) override;
 
-private:
+  private:
     BZ::OrthographicCamera camera;
     BZ::CameraController2D cameraController;
 
@@ -26,7 +26,7 @@ private:
 
 
 class Layer3D : public BZ::Layer {
-public:
+  public:
     Layer3D();
 
     void onAttach() override;
@@ -36,7 +36,7 @@ public:
     void onEvent(BZ::Event &event) override;
     void onImGuiRender(const BZ::FrameTiming &frameTiming) override;
 
-private:
+  private:
     BZ::Scene scenes[3];
     int activeScene = 0;
 
@@ -49,11 +49,10 @@ private:
 };
 
 
-
 class Sandbox : public BZ::Application {
-public:
+  public:
     Sandbox() {
-        //pushLayer(new ParticleLayer());
+        // pushLayer(new ParticleLayer());
         pushLayer(new Layer3D());
     }
 };

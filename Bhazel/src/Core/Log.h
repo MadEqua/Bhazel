@@ -7,17 +7,17 @@
 
 namespace BZ {
 
-    class Log {
-        BZ_GENERATE_SINGLETON(Log)
+class Log {
+    BZ_GENERATE_SINGLETON(Log)
 
-    public:
-        std::shared_ptr<spdlog::logger>& getCoreLogger() { return coreLogger; }
-        std::shared_ptr<spdlog::logger>& getClientLogger() { return clientLogger; }
+  public:
+    std::shared_ptr<spdlog::logger> &getCoreLogger() { return coreLogger; }
+    std::shared_ptr<spdlog::logger> &getClientLogger() { return clientLogger; }
 
-    private:
-        std::shared_ptr<spdlog::logger> coreLogger;
-        std::shared_ptr<spdlog::logger> clientLogger;
-    };
+  private:
+    std::shared_ptr<spdlog::logger> coreLogger;
+    std::shared_ptr<spdlog::logger> clientLogger;
+};
 }
 
 #define BZ_LOG_CORE_CRITICAL(...) BZ::Log::get().getCoreLogger()->critical(__VA_ARGS__)
@@ -29,26 +29,26 @@ namespace BZ {
 #define BZ_LOG_WARN(...) BZ::Log::get().getClientLogger()->warn(__VA_ARGS__)
 
 #ifdef BZ_FULL_LOGGER
-    #define BZ_LOG_CORE_INFO(...) BZ::Log::get().getCoreLogger()->info(__VA_ARGS__)
-    #define BZ_LOG_CORE_DEBUG(...) BZ::Log::get().getCoreLogger()->debug(__VA_ARGS__)
-    #define BZ_LOG_CORE_TRACE(...) BZ::Log::get().getCoreLogger()->trace(__VA_ARGS__)
+#define BZ_LOG_CORE_INFO(...) BZ::Log::get().getCoreLogger()->info(__VA_ARGS__)
+#define BZ_LOG_CORE_DEBUG(...) BZ::Log::get().getCoreLogger()->debug(__VA_ARGS__)
+#define BZ_LOG_CORE_TRACE(...) BZ::Log::get().getCoreLogger()->trace(__VA_ARGS__)
 
-    #define BZ_LOG_INFO(...) BZ::Log::get().getClientLogger()->info(__VA_ARGS__)
-    #define BZ_LOG_DEBUG(...) BZ::Log::get().getClientLogger()->debug(__VA_ARGS__)
-    #define BZ_LOG_TRACE(...) BZ::Log::get().getClientLogger()->trace(__VA_ARGS__)
+#define BZ_LOG_INFO(...) BZ::Log::get().getClientLogger()->info(__VA_ARGS__)
+#define BZ_LOG_DEBUG(...) BZ::Log::get().getClientLogger()->debug(__VA_ARGS__)
+#define BZ_LOG_TRACE(...) BZ::Log::get().getClientLogger()->trace(__VA_ARGS__)
 #else
-    #define BZ_LOG_CORE_INFO(...)
-    #define BZ_LOG_CORE_DEBUG(...)
-    #define BZ_LOG_CORE_TRACE(...)
+#define BZ_LOG_CORE_INFO(...)
+#define BZ_LOG_CORE_DEBUG(...)
+#define BZ_LOG_CORE_TRACE(...)
 
-    #define BZ_LOG_INFO(...)
-    #define BZ_LOG_DEBUG(...)
-    #define BZ_LOG_TRACE(...)
+#define BZ_LOG_INFO(...)
+#define BZ_LOG_DEBUG(...)
+#define BZ_LOG_TRACE(...)
 #endif
 
 
 ///////////////////////////////////////////////////////////////////////
-//Custom Printers
+// Custom Printers
 ///////////////////////////////////////////////////////////////////////
 #include <spdlog/fmt/ostr.h>
 

@@ -5,7 +5,6 @@
 
 namespace BZ {
 
-	Layer::Layer(const char *name) :
-        debugName(name) {
-	}
+Layer::Layer(const char *name) : debugName(name) {
+}
 }

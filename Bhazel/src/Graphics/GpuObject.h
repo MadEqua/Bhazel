@@ -6,14 +6,11 @@
 
 namespace BZ {
 
-    template<typename HandleT>
-    class GpuObject {
-    public:
-        HandleT getHandle() const {
-            return handle;
-        }
+template <typename HandleT> class GpuObject {
+  public:
+    HandleT getHandle() const { return handle; }
 
-    protected:
-        HandleT handle;
-    };
+  protected:
+    HandleT handle;
+};
 }

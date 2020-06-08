@@ -44,13 +44,13 @@ void Ball::onUpdate(const BZ::FrameTiming &frameTiming, BrickMap &brickMap, Padd
 
     boundingSphere = BZ::BoundingSphere(glm::vec3(sprite.position, 0.1f), BALL_RADIUS);
 
-    for (Brick& brick : brickMap.bricks) {
+    for (Brick &brick : brickMap.bricks) {
         if (brick.isCollidable) {
             auto intResult = BZ::CollisionUtils::intersects(brick.aabb, boundingSphere);
             if (intResult.intersects) {
                 sprite.position.x += intResult.penetration.x;
                 sprite.position.y += intResult.penetration.y;
-                //velocity = glm::normalize(intResult.penetration) * BALL_SPEED;
+                // velocity = glm::normalize(intResult.penetration) * BALL_SPEED;
                 velocity = glm::reflect(velocity, glm::normalize(glm::vec2(intResult.penetration)));
                 brick.isCollidable = false;
                 brick.secsToFade = BRICK_FADE_SECONDS;
@@ -69,9 +69,10 @@ void Ball::onUpdate(const BZ::FrameTiming &frameTiming, BrickMap &brickMap, Padd
         sprite.position.y += intResult.penetration.y;
 
         //[left, right] -> [-1, 1]
-        //float positionInPaddle = (((ball.sprite.position.x - paddle.sprite.position.x) / paddle.sprite.dimensions.x) * 2.0f);
-        //const glm::vec2 MAX_DISPLACEMENT = { 1.0f, 0.0f };
-        //ball.velocity = glm::normalize((glm::normalize(glm::vec2(intResult.penetration.x, intResult.penetration.y)) + (MAX_DISPLACEMENT * positionInPaddle))) * BALL_SPEED;
+        // float positionInPaddle = (((ball.sprite.position.x - paddle.sprite.position.x) / paddle.sprite.dimensions.x)
+        // * 2.0f); const glm::vec2 MAX_DISPLACEMENT = { 1.0f, 0.0f }; ball.velocity =
+        // glm::normalize((glm::normalize(glm::vec2(intResult.penetration.x, intResult.penetration.y)) +
+        // (MAX_DISPLACEMENT * positionInPaddle))) * BALL_SPEED;
         velocity = glm::reflect(velocity, glm::normalize(glm::vec2(intResult.penetration)));
     }
 
@@ -128,15 +129,18 @@ void Paddle::onUpdate(const BZ::FrameTiming &frameTiming) {
 
     aabb = BZ::AABB(glm::vec3(sprite.position, 0.1f), glm::vec3(PADDLE_DIMS, 0.1f));
     BZ::Renderer2D::renderSprite(sprite);
-    //BZ::Renderer2D::renderQuad(glm::vec2(aabb.getCenter()), glm::vec2(aabb.getDimensions()), 0.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+    // BZ::Renderer2D::renderQuad(glm::vec2(aabb.getCenter()), glm::vec2(aabb.getDimensions()), 0.0f, { 1.0f, 0.0f,
+    // 0.0f, 1.0f });
 }
 
 void BrickMap::init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ::Texture2D> &explosionTexture) {
     const auto &WINDOW_DIMS = BZ::Application::get().getWindow().getDimensions();
 
     bool flip = true;
-    for (float x = BRICK_MARGIN + BRICK_HALF_DIMS.x; x < WINDOW_DIMS.x - BRICK_HALF_DIMS.x; x += BRICK_DIMS.x + BRICK_MARGIN) {
-        for (float y = WINDOW_DIMS.y - BRICK_MARGIN - BRICK_HALF_DIMS.y; y > (WINDOW_DIMS.y / 2) - BRICK_HALF_DIMS.y; y -= BRICK_DIMS.y + BRICK_MARGIN) {
+    for (float x = BRICK_MARGIN + BRICK_HALF_DIMS.x; x < WINDOW_DIMS.x - BRICK_HALF_DIMS.x;
+         x += BRICK_DIMS.x + BRICK_MARGIN) {
+        for (float y = WINDOW_DIMS.y - BRICK_MARGIN - BRICK_HALF_DIMS.y; y > (WINDOW_DIMS.y / 2) - BRICK_HALF_DIMS.y;
+             y -= BRICK_DIMS.y + BRICK_MARGIN) {
             Brick brick;
             brick.isVisible = true;
             brick.isCollidable = true;
@@ -171,7 +175,7 @@ void BrickMap::onUpdate(const BZ::FrameTiming &frameTiming) {
         Brick &brick = bricks[i];
         if (brick.isVisible) {
             if (brick.secsToFade > 0.0f) {
-                //brick.sprite.tintAndAlpha = { 1.0f, 0.0f, 0.0f, brick.secsToFade / BRICK_FADE_SECONDS };
+                // brick.sprite.tintAndAlpha = { 1.0f, 0.0f, 0.0f, brick.secsToFade / BRICK_FADE_SECONDS };
                 brick.sprite.tintAndAlpha = BRICK_HIT_TINT;
                 brick.sprite.tintAndAlpha.a = brick.secsToFade / BRICK_FADE_SECONDS;
                 brick.secsToFade -= frameTiming.deltaTime.asSeconds();
@@ -192,7 +196,7 @@ void BrickMap::onUpdate(const BZ::FrameTiming &frameTiming) {
 
 void BrickMap::startParticleSystem(const Brick &brick) {
     BZ::ParticleSystem2D &ps = particleSystems[currentParticleSystem];
-    
+
     ps.setPosition(brick.sprite.position);
     ps.start();
 
@@ -200,8 +204,7 @@ void BrickMap::startParticleSystem(const Brick &brick) {
 }
 
 
-MainLayer::MainLayer() :
-    Layer("MainLayer") {
+MainLayer::MainLayer() : Layer("MainLayer") {
 }
 
 void MainLayer::onAttach() {
@@ -216,11 +219,16 @@ void MainLayer::onGraphicsContextCreated() {
     camera.getTransform().setTranslation(WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.y, 0.0f, BZ::Space::Parent);
     cameraController = BZ::CameraController2D(camera, 400.0f, true, 45.0f);
 
-    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
-    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", VK_FORMAT_R8G8B8A8_SRGB, BZ::MipmapData::Options::Generate);
+    brickTexture = BZ::Texture2D::create("BrickBreaker/textures/brick.png", VK_FORMAT_R8G8B8A8_SRGB,
+                                         BZ::MipmapData::Options::Generate);
+    paddleTexture = BZ::Texture2D::create("BrickBreaker/textures/paddle.png", VK_FORMAT_R8G8B8A8_SRGB,
+                                          BZ::MipmapData::Options::Generate);
+    ballTexture = BZ::Texture2D::create("BrickBreaker/textures/ball.png", VK_FORMAT_R8G8B8A8_SRGB,
+                                        BZ::MipmapData::Options::Generate);
+    ballParticleTexture = BZ::Texture2D::create("BrickBreaker/textures/particle2.png", VK_FORMAT_R8G8B8A8_SRGB,
+                                                BZ::MipmapData::Options::Generate);
+    brickExplosionTexture = BZ::Texture2D::create("BrickBreaker/textures/particle1.png", VK_FORMAT_R8G8B8A8_SRGB,
+                                                  BZ::MipmapData::Options::Generate);
 
     brickMap.init(brickTexture, brickExplosionTexture);
     paddle.init(paddleTexture);
@@ -233,7 +241,7 @@ void MainLayer::onUpdate(const BZ::FrameTiming &frameTiming) {
     cameraController.onUpdate(frameTiming);
 
     BZ::Renderer2D::begin(camera);
-    
+
     brickMap.onUpdate(frameTiming);
     paddle.onUpdate(frameTiming);
     ball.onUpdate(frameTiming, brickMap, paddle);
@@ -249,6 +257,6 @@ void MainLayer::onImGuiRender(const BZ::FrameTiming &frameTiming) {
     BZ_PROFILE_FUNCTION();
 }
 
-BZ::Application* createApplication() {
+BZ::Application *createApplication() {
     return new BrickBreakerApp();
 }

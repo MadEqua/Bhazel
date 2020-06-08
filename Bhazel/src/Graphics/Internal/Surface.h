@@ -7,21 +7,21 @@ struct GLFWwindow;
 
 namespace BZ {
 
-    class Instance;
+class Instance;
 
-    class Surface {
-    public:
-        Surface() = default;
+class Surface {
+  public:
+    Surface() = default;
 
-        BZ_NON_COPYABLE(Surface);
+    BZ_NON_COPYABLE(Surface);
 
-        void init(const Instance &instance, GLFWwindow &glfwWindow);
-        void destroy();
+    void init(const Instance &instance, GLFWwindow &glfwWindow);
+    void destroy();
 
-        VkSurfaceKHR getHandle() const { return handle; }
+    VkSurfaceKHR getHandle() const { return handle; }
 
-    private:
-        const Instance *instance;
-        VkSurfaceKHR handle;
-    };
+  private:
+    const Instance *instance;
+    VkSurfaceKHR handle;
+};
 }

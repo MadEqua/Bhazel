@@ -1,85 +1,85 @@
 #pragma once
 
-#include "Mesh.h"
 #include "Camera.h"
+#include "Mesh.h"
 #include "Transform.h"
 
 
 namespace BZ {
 
-    class DescriptorSet;
-    class Framebuffer;
+class DescriptorSet;
+class Framebuffer;
 
-    class DirectionalLight {
-    public:
-        DirectionalLight();
+class DirectionalLight {
+  public:
+    DirectionalLight();
 
-        glm::vec3 color;
-        float intensity;
+    glm::vec3 color;
+    float intensity;
 
-        const glm::vec3& getDirection() const { return direction; }
-        void setDirection(const glm::vec3 &direction);
+    const glm::vec3 &getDirection() const { return direction; }
+    void setDirection(const glm::vec3 &direction);
 
-        //TODO: does this belong here?
-        Ref<Framebuffer> shadowMapFramebuffer;
+    // TODO: does this belong here?
+    Ref<Framebuffer> shadowMapFramebuffer;
 
-    private:
-        glm::vec3 direction;
-    };
+  private:
+    glm::vec3 direction;
+};
 
-    class Entity {
-    public:
-        Entity(Mesh &mesh, Transform &transform, bool castShadow);
-        Entity(Mesh &mesh, Transform &transform, Material &overrideMaterial, bool castShadow);
+class Entity {
+  public:
+    Entity(Mesh &mesh, Transform &transform, bool castShadow);
+    Entity(Mesh &mesh, Transform &transform, Material &overrideMaterial, bool castShadow);
 
-        Mesh mesh;
-        Transform transform;
-        bool castShadow;
+    Mesh mesh;
+    Transform transform;
+    bool castShadow;
 
-        //If present, will override the Mesh Material
-        Material overrideMaterial;
-    };
+    // If present, will override the Mesh Material
+    Material overrideMaterial;
+};
 
-    struct SkyBox {
-        Mesh mesh;
-        Ref<TextureView> irradianceMapView;
-        Ref<TextureView> radianceMapView;
-    };
+struct SkyBox {
+    Mesh mesh;
+    Ref<TextureView> irradianceMapView;
+    Ref<TextureView> radianceMapView;
+};
 
-    class Scene {
-    public:
-        Scene();
-        Scene(Camera &camera);
+class Scene {
+  public:
+    Scene();
+    Scene(Camera &camera);
 
-        void addEntity(Mesh &mesh, Transform &transform, bool castShadow = true);
-        void addEntity(Mesh &mesh, Transform &transform, Material &overrideMaterial, bool castShadow = true);
-        void addDirectionalLight(DirectionalLight &light);
-        void enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6],
-                          const char *irradianceMapBasePath, const char *irradianceMapFileNames[6],
-                          const char *radianceMapBasePath, const char *radianceMapFileNames[6], uint32 radianceMipmapCount);
-        void setCamera(Camera &camera);
+    void addEntity(Mesh &mesh, Transform &transform, bool castShadow = true);
+    void addEntity(Mesh &mesh, Transform &transform, Material &overrideMaterial, bool castShadow = true);
+    void addDirectionalLight(DirectionalLight &light);
+    void enableSkyBox(const char *albedoBasePath, const char *albedoFileNames[6], const char *irradianceMapBasePath,
+                      const char *irradianceMapFileNames[6], const char *radianceMapBasePath,
+                      const char *radianceMapFileNames[6], uint32 radianceMipmapCount);
+    void setCamera(Camera &camera);
 
-        std::vector<Entity>& getEntities() { return entities; }
-        const std::vector<Entity>& getEntities() const { return entities; }
+    std::vector<Entity> &getEntities() { return entities; }
+    const std::vector<Entity> &getEntities() const { return entities; }
 
-        std::vector<DirectionalLight>& getDirectionalLights() { return lights; }
-        const std::vector<DirectionalLight>& getDirectionalLights() const { return lights; }
+    std::vector<DirectionalLight> &getDirectionalLights() { return lights; }
+    const std::vector<DirectionalLight> &getDirectionalLights() const { return lights; }
 
-        bool hasSkyBox() const { return skyBox.mesh.isValid(); }
-        const SkyBox& getSkyBox() const { return skyBox; }
+    bool hasSkyBox() const { return skyBox.mesh.isValid(); }
+    const SkyBox &getSkyBox() const { return skyBox; }
 
-        Camera& getCamera() { return *camera; }
-        const Camera& getCamera() const { return *camera; }
+    Camera &getCamera() { return *camera; }
+    const Camera &getCamera() const { return *camera; }
 
-        const DescriptorSet& getDescriptorSet() const { return *descriptorSet; }
+    const DescriptorSet &getDescriptorSet() const { return *descriptorSet; }
 
-    private:
-        std::vector<Entity> entities;
-        std::vector<DirectionalLight> lights;
+  private:
+    std::vector<Entity> entities;
+    std::vector<DirectionalLight> lights;
 
-        Camera *camera = nullptr;
-        SkyBox skyBox;
+    Camera *camera = nullptr;
+    SkyBox skyBox;
 
-        DescriptorSet *descriptorSet = nullptr;
-    };
+    DescriptorSet *descriptorSet = nullptr;
+};
 }

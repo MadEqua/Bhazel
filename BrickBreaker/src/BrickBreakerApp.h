@@ -31,7 +31,7 @@ struct Brick {
 };
 
 class BrickMap {
-public:
+  public:
     void init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ::Texture2D> &explosionTexture);
     void onUpdate(const BZ::FrameTiming &frameTiming);
 
@@ -39,7 +39,7 @@ public:
 
     void startParticleSystem(const Brick &brick);
 
-private:
+  private:
     const static uint32 PARTICLE_SYSTEMS_COUNT = 4;
     BZ::ParticleSystem2D particleSystems[PARTICLE_SYSTEMS_COUNT];
     uint32 currentParticleSystem;
@@ -54,7 +54,7 @@ struct Paddle {
 };
 
 class Ball {
-public:
+  public:
     BZ::Sprite sprite;
     BZ::BoundingSphere boundingSphere;
     glm::vec2 velocity;
@@ -71,7 +71,7 @@ public:
 
 
 class MainLayer : public BZ::Layer {
-public:
+  public:
     MainLayer();
 
     void onAttach() override;
@@ -81,7 +81,7 @@ public:
     void onEvent(BZ::Event &event) override;
     void onImGuiRender(const BZ::FrameTiming &frameTiming) override;
 
-private:
+  private:
     BZ::OrthographicCamera camera;
     BZ::CameraController2D cameraController;
 
@@ -98,8 +98,6 @@ private:
 
 
 class BrickBreakerApp : public BZ::Application {
-public:
-    BrickBreakerApp() {
-        pushLayer(new MainLayer());
-    }
+  public:
+    BrickBreakerApp() { pushLayer(new MainLayer()); }
 };

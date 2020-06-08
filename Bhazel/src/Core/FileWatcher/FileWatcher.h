@@ -2,35 +2,34 @@
 
 
 namespace filewatch {
-    template<class T>
-    class FileWatch;
+template <class T> class FileWatch;
 }
 
 namespace BZ {
 
-    class Shader;
-    class PipelineState;
+class Shader;
+class PipelineState;
 
-    class FileWatcher {
-    public:
-        FileWatcher() = default;
-        ~FileWatcher();
+class FileWatcher {
+  public:
+    FileWatcher() = default;
+    ~FileWatcher();
 
-        BZ_NON_COPYABLE(FileWatcher);
+    BZ_NON_COPYABLE(FileWatcher);
 
-        void startWatching();
+    void startWatching();
 
-        void registerPipelineState(PipelineState &pipelineState);
+    void registerPipelineState(PipelineState &pipelineState);
 
-        bool hasPipelineStatesToReload() const { return !pipelinesToReload.empty(); }
-        void performReloads();
+    bool hasPipelineStatesToReload() const { return !pipelinesToReload.empty(); }
+    void performReloads();
 
-    private:
-        filewatch::FileWatch<std::wstring> *fileWatcher;
+  private:
+    filewatch::FileWatch<std::wstring> *fileWatcher;
 
-        std::unordered_map<std::string, PipelineState*> pipelineStateRegistry;
-        Timer timer;
+    std::unordered_map<std::string, PipelineState *> pipelineStateRegistry;
+    Timer timer;
 
-        std::set<PipelineState*> pipelinesToReload;
-    };
+    std::set<PipelineState *> pipelinesToReload;
+};
 }

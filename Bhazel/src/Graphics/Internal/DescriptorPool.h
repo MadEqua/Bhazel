@@ -1,41 +1,41 @@
 #pragma once
 
-#include "Graphics/Internal/VulkanIncludes.h"
 #include "Graphics/DescriptorSet.h"
+#include "Graphics/Internal/VulkanIncludes.h"
 
 
 namespace BZ {
 
-    class Device;
-   
-    struct DescriptorPoolInitData {
-        VkDescriptorType type;
-        uint32 count;
-    };
+class Device;
 
-    //Internal only, not exposed to upper layers.
-    class DescriptorPool {
-    public:
-        DescriptorPool() = default;
+struct DescriptorPoolInitData {
+    VkDescriptorType type;
+    uint32 count;
+};
 
-        BZ_NON_COPYABLE(DescriptorPool);
+// Internal only, not exposed to upper layers.
+class DescriptorPool {
+  public:
+    DescriptorPool() = default;
 
-        void init(const Device &device, const std::initializer_list<DescriptorPoolInitData> &initDatas, uint32 maxSets);
-        void destroy();
+    BZ_NON_COPYABLE(DescriptorPool);
 
-        DescriptorSet& getDescriptorSet(const Ref<DescriptorSetLayout> &layout);
+    void init(const Device &device, const std::initializer_list<DescriptorPoolInitData> &initDatas, uint32 maxSets);
+    void destroy();
 
-        void reset();
+    DescriptorSet &getDescriptorSet(const Ref<DescriptorSetLayout> &layout);
 
-        VkDescriptorPool getHandle() const { return handle; }
+    void reset();
 
-    private:
-        const Device *device;
-        VkDescriptorPool handle;
+    VkDescriptorPool getHandle() const { return handle; }
 
-        uint32 maxSets;
+  private:
+    const Device *device;
+    VkDescriptorPool handle;
 
-        DescriptorSet *sets;
-        uint32 nextFreeIndex;
-    };
+    uint32 maxSets;
+
+    DescriptorSet *sets;
+    uint32 nextFreeIndex;
+};
 }

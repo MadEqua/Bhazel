@@ -3,10 +3,10 @@
 #include "Core/Application.h"
 
 
-//To be defined in Bhazel client applications. It should return an object inherited from Application.
-BZ::Application* createApplication();
+// To be defined in Bhazel client applications. It should return an object inherited from Application.
+BZ::Application *createApplication();
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 
     BZ_PROFILE_BEGIN_SESSION("Startup", "BhazelProfile-Startup.json");
     BZ::Log::get();

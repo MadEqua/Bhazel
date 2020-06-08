@@ -7,63 +7,68 @@
 
 
 namespace BZ {
-    
-    class Surface;
-    class Instance;
-    enum class MemoryType;
 
-    //Will pick and store an appropriate physical device to use, if available.
-    class PhysicalDevice {
-    public:
-        PhysicalDevice() = default;
+class Surface;
+class Instance;
+enum class MemoryType;
 
-        BZ_NON_COPYABLE(PhysicalDevice);
+// Will pick and store an appropriate physical device to use, if available.
+class PhysicalDevice {
+  public:
+    PhysicalDevice() = default;
 
-        void init(const Instance &instance, const Surface &surface, const std::vector<const char *> &requiredDeviceExtensions);
+    BZ_NON_COPYABLE(PhysicalDevice);
 
-        const VkPhysicalDeviceLimits& getLimits() const { return limits; }
+    void init(const Instance &instance, const Surface &surface,
+              const std::vector<const char *> &requiredDeviceExtensions);
 
-        const QueueFamilyContainer& getQueueFamilyContainer() const { return queueFamilyContainer; }
-        const SwapChainSupportDetails& getSwapChainSupportDetails() const { return swapChainSupportDetails; }
-        VkPhysicalDevice getHandle() const { return handle; }
+    const VkPhysicalDeviceLimits &getLimits() const { return limits; }
 
-    private:
-        VkPhysicalDevice handle = VK_NULL_HANDLE;
+    const QueueFamilyContainer &getQueueFamilyContainer() const { return queueFamilyContainer; }
+    const SwapChainSupportDetails &getSwapChainSupportDetails() const { return swapChainSupportDetails; }
+    VkPhysicalDevice getHandle() const { return handle; }
 
-        QueueFamilyContainer queueFamilyContainer;
-        SwapChainSupportDetails swapChainSupportDetails;
+  private:
+    VkPhysicalDevice handle = VK_NULL_HANDLE;
 
-        VkPhysicalDeviceLimits limits;
+    QueueFamilyContainer queueFamilyContainer;
+    SwapChainSupportDetails swapChainSupportDetails;
 
-        static QueueFamilyContainer getQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
-        static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
-        static bool isPhysicalDeviceSuitable(VkPhysicalDevice device, const SwapChainSupportDetails &swapChainSupportDetails, const QueueFamilyContainer &queueFamilyContainer, const std::vector<const char *> &requiredExtensions);
-        static bool checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char *> &requiredExtensions);
+    VkPhysicalDeviceLimits limits;
 
-        friend class Device;
-    };
+    static QueueFamilyContainer getQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
+    static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+    static bool isPhysicalDeviceSuitable(VkPhysicalDevice device,
+                                         const SwapChainSupportDetails &swapChainSupportDetails,
+                                         const QueueFamilyContainer &queueFamilyContainer,
+                                         const std::vector<const char *> &requiredExtensions);
+    static bool checkDeviceExtensionSupport(VkPhysicalDevice device,
+                                            const std::vector<const char *> &requiredExtensions);
+
+    friend class Device;
+};
 
 
-    /*-------------------------------------------------------------------------------------------*/
-    //Representing a logical device.
-    class Device {
-    public:
-        Device() = default;
+/*-------------------------------------------------------------------------------------------*/
+// Representing a logical device.
+class Device {
+  public:
+    Device() = default;
 
-        BZ_NON_COPYABLE(Device);
+    BZ_NON_COPYABLE(Device);
 
-        void init(const PhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions);
-        void destroy();
+    void init(const PhysicalDevice &physicalDevice, const std::vector<const char *> &requiredDeviceExtensions);
+    void destroy();
 
-        VkDevice getHandle() const { return handle; }
+    VkDevice getHandle() const { return handle; }
 
-        const QueueContainer& getQueueContainer() const { return queueContainer; }
-        const PhysicalDevice& getPhysicalDevice() const { return *physicalDevice; }
+    const QueueContainer &getQueueContainer() const { return queueContainer; }
+    const PhysicalDevice &getPhysicalDevice() const { return *physicalDevice; }
 
-    private:
-        VkDevice handle = VK_NULL_HANDLE;
-        const PhysicalDevice *physicalDevice;
+  private:
+    VkDevice handle = VK_NULL_HANDLE;
+    const PhysicalDevice *physicalDevice;
 
-        QueueContainer queueContainer;
-    };
+    QueueContainer queueContainer;
+};
 }
