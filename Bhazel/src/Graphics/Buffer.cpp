@@ -296,10 +296,9 @@ Buffer::Buffer(VkBufferUsageFlags usageFlags, uint32 size, MemoryType memoryType
     if (layout) {
         BZ_ASSERT_CORE(isVertex() || isIndex(), "Buffer with layout must be Vertex or Index!");
 
-        if (isIndex())
-            BZ_ASSERT_CORE(layout->begin()->getDataType() == DataType::Uint16 ||
-                               layout->begin()->getDataType() == DataType::Uint32,
-                           "Index Buffer Datatype must be Uint32 or Uint16!");
+        BZ_ASSERT_CORE(!isIndex() || layout->begin()->getDataType() == DataType::Uint16 ||
+                           layout->begin()->getDataType() == DataType::Uint32,
+                       "Index Buffer Datatype must be Uint32 or Uint16!");
 
         this->layout = *layout;
     }
@@ -386,9 +385,9 @@ VkMemoryPropertyFlags Buffer::toRequiredVkBufferUsageFlags() const {
         case MemoryType::GpuOnly:
             return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         case MemoryType::CpuToGpu:
-        case MemoryType::Staging:
-            return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
         case MemoryType::GpuToCpu:
+        case MemoryType::Staging:
+            // This memory type is guaranteed to exist.
             return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
         default:
             BZ_ASSERT_ALWAYS_CORE("Unknown MemoryType!");
