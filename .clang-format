@@ -5,7 +5,7 @@ AlignAfterOpenBracket: Align
 AlignConsecutiveMacros: false
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
-AlignEscapedNewlines: Right
+AlignEscapedNewlines: Left
 AlignOperands:   true
 AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: true
@@ -80,7 +80,7 @@ IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
 IndentCaseLabels: true
 IndentGotoLabels: true
-IndentPPDirectives: None
+IndentPPDirectives: BeforeHash
 IndentWidth:     4
 IndentWrappedFunctionNames: false
 JavaScriptQuotes: Leave

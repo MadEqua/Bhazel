@@ -22,9 +22,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "Core/AssertsAndErrors.h"
+// clang-format off
+#include "Core/Types.h"
 #include "Core/Core.h"
+#include "Core/AssertsAndErrors.h"
+// clang-format on
 #include "Core/Log.h"
 #include "Core/Profiler.h"
 #include "Core/Timer.h"
-#include "Core/Types.h"

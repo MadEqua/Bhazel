@@ -44,15 +44,15 @@ class ProfilerTimer {
 };
 }
 
-#define BZ_PROFILE_BEGIN_SESSION(name, filePath) BZ::Profiler::get().beginSession(name, filePath);
-#define BZ_PROFILE_END_SESSION() BZ::Profiler::get().endSession();
+    #define BZ_PROFILE_BEGIN_SESSION(name, filePath) BZ::Profiler::get().beginSession(name, filePath);
+    #define BZ_PROFILE_END_SESSION() BZ::Profiler::get().endSession();
 
-#define BZ_PROFILE_FUNCTION() BZ::ProfilerTimer timer(__FUNCSIG__);
-#define BZ_PROFILE_SCOPE(name) BZ::ProfilerTimer timer##__LINE__(name);
+    #define BZ_PROFILE_FUNCTION() BZ::ProfilerTimer timer(__FUNCSIG__);
+    #define BZ_PROFILE_SCOPE(name) BZ::ProfilerTimer timer##__LINE__(name);
 #else
-#define BZ_PROFILE_BEGIN_SESSION(name, filePath)
-#define BZ_PROFILE_END_SESSION()
+    #define BZ_PROFILE_BEGIN_SESSION(name, filePath)
+    #define BZ_PROFILE_END_SESSION()
 
-#define BZ_PROFILE_FUNCTION()
-#define BZ_PROFILE_SCOPE(name)
+    #define BZ_PROFILE_FUNCTION()
+    #define BZ_PROFILE_SCOPE(name)
 #endif

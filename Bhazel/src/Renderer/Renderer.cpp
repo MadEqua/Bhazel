@@ -243,16 +243,27 @@ void Renderer::initShadowPassData() {
 
     // TODO: this dependency is too strong. Will make it wait on the whole previous frame. Use an event to wait only on
     // color pass.
-    SubPassDependency dependency;
-    dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubPassIndex = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    dependency.dependencyFlags = 0;
+    SubPassDependency dependency1;
+    dependency1.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+    dependency1.dstSubPassIndex = 0;
+    dependency1.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency1.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    dependency1.srcAccessMask = 0;
+    dependency1.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependency1.dependencyFlags = 0;
 
-    rendererData.shadowRenderPass = RenderPass::create({ depthAttachmentDesc }, { subPassDesc }, { dependency });
+    // Wait for the memcpyied constant data to be available before doing actual rendering.
+    SubPassDependency dependency2;
+    dependency2.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+    dependency2.dstSubPassIndex = 0;
+    dependency2.srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    dependency2.dstStageMask = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    dependency2.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    dependency2.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    dependency2.dependencyFlags = 0;
+
+    rendererData.shadowRenderPass =
+        RenderPass::create({ depthAttachmentDesc }, { subPassDesc }, { dependency1, dependency2 });
 
     rendererData.passDescriptorSetLayoutForShadowPass = DescriptorSetLayout::create(
         { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT,
@@ -342,28 +353,28 @@ void Renderer::initColorPassData() {
     subPassDesc.depthStencilAttachmentsRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
     // Wait on ShadowPass.
-    SubPassDependency dependencyBefore;
-    dependencyBefore.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
-    dependencyBefore.dstSubPassIndex = 0;
-    dependencyBefore.srcStageMask =
-        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-    dependencyBefore.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    dependencyBefore.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    dependencyBefore.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    dependencyBefore.dependencyFlags = 0;
+    SubPassDependency dependency1;
+    dependency1.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+    dependency1.dstSubPassIndex = 0;
+    dependency1.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependency1.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    dependency1.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    dependency1.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    dependency1.dependencyFlags = 0;
 
-    // Make PostProcessor wait.
-    // SubPassDependency dependencyAfter;
-    // dependencyAfter.srcSubPassIndex = 0;
-    // dependencyAfter.dstSubPassIndex = VK_SUBPASS_EXTERNAL;
-    // dependencyAfter.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    // dependencyAfter.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    // dependencyAfter.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    // dependencyAfter.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    // dependencyAfter.dependencyFlags = 0;
+    // Wait for the memcpyied constant data to be available before doing actual rendering.
+    // No need as long as this pass waits on shadow pass which alaready does this wait.
+    // SubPassDependency dependency2;
+    // dependency2.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
+    // dependency2.dstSubPassIndex = 0;
+    // dependency2.srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    // dependency2.dstStageMask = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    // dependency2.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    // dependency2.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    // dependency2.dependencyFlags = 0;
 
     rendererData.colorRenderPass =
-        RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc }, { dependencyBefore });
+        RenderPass::create({ colorAttachmentDesc, depthStencilAttachmentDesc }, { subPassDesc }, { dependency1 });
 
     RasterizerState rasterizerState;
     rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;

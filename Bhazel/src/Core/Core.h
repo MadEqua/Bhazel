@@ -3,14 +3,14 @@
 #define ENABLE_PROFILER 0
 
 #ifndef BZ_DIST
-#define BZ_ASSERTS
-#define BZ_FULL_LOGGER
-#define BZ_HOT_RELOAD_SHADERS
-#define BZ_GRAPHICS_DEBUG
+    #define BZ_ASSERTS
+    #define BZ_FULL_LOGGER
+    #define BZ_HOT_RELOAD_SHADERS
+    #define BZ_GRAPHICS_DEBUG
 
-#if ENABLE_PROFILER
-#define BZ_PROFILER
-#endif
+    #if ENABLE_PROFILER
+        #define BZ_PROFILER
+    #endif
 #endif
 
 
@@ -19,10 +19,10 @@
 #define BZ_FLAG_CHECK(mask, flag) static_cast<bool>(mask & flag)
 #define BZ_BIT_MASK(type, oneCount) ((type)(-((oneCount) != 0))) & (((type)-1) >> ((sizeof(type) * 8) - (oneCount)))
 
-#define BZ_NON_COPYABLE(T)                                                                                             \
-    T(const T &) = delete;                                                                                             \
-    void operator=(const T &) = delete;                                                                                \
-    T(const T &&) = delete;                                                                                            \
+#define BZ_NON_COPYABLE(T)              \
+    T(const T &) = delete;              \
+    void operator=(const T &) = delete; \
+    T(const T &&) = delete;             \
     void operator=(const T &&) = delete;
 
 #define BZ_APP BZ::Application::get()

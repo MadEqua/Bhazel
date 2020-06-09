@@ -114,12 +114,12 @@ class CommandBuffer : public GpuObject<VkCommandBuffer> {
 };
 
 #ifdef BZ_GRAPHICS_DEBUG
-#define BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, ...) commandBuffer.beginDebugLabel(__VA_ARGS__)
-#define BZ_CB_END_DEBUG_LABEL(commandBuffer) commandBuffer.endDebugLabel()
-#define BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, ...) commandBuffer.insertDebugLabel(__VA_ARGS__)
+    #define BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, ...) commandBuffer.beginDebugLabel(__VA_ARGS__)
+    #define BZ_CB_END_DEBUG_LABEL(commandBuffer) commandBuffer.endDebugLabel()
+    #define BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, ...) commandBuffer.insertDebugLabel(__VA_ARGS__)
 #else
-#define BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, ...)
-#define BZ_CB_END_DEBUG_LABEL(commandBuffer)
-#define BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, ...)
+    #define BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, ...)
+    #define BZ_CB_END_DEBUG_LABEL(commandBuffer)
+    #define BZ_CB_INSERT_DEBUG_LABEL(commandBuffer, ...)
 #endif
 }

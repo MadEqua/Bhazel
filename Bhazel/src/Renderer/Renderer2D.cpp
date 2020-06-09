@@ -279,6 +279,10 @@ void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Fr
         CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
         BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "Renderer2D");
 
+        // Wait for the memcpyied index/vertex data to be available before doing actual rendering.
+        commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                            VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+
         commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
 
         glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
