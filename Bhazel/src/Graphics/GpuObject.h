@@ -1,7 +1,7 @@
 #pragma once
 
-#define BZ_GRAPHICS_DEVICE BZ::Application::get().getGraphicsContext().getDevice()
-#define BZ_MEM_ALLOCATOR BZ::Application::get().getGraphicsContext().getMemoryAllocator()
+#define BZ_GRAPHICS_DEVICE BZ::Engine::get().getGraphicsContext().getDevice()
+#define BZ_MEM_ALLOCATOR BZ::Engine::get().getGraphicsContext().getMemoryAllocator()
 
 
 namespace BZ {

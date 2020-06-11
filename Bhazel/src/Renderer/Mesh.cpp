@@ -1,6 +1,6 @@
 #include "bzpch.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/Utils.h"
 #include "Mesh.h"
 #include "Renderer.h"
@@ -209,7 +209,7 @@ Mesh::Mesh(const char *path, const Material &material) {
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    std::string fullPath = Application::get().getAssetsPath() + path;
+    std::string fullPath = Engine::get().getAssetsPath() + path;
     auto fullPathWithoutFileName = Utils::removeFileNameFromPath(fullPath);
 
     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, fullPath.c_str(),

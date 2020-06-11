@@ -1,6 +1,6 @@
 #include "bzpch.h"
 
-#include "Application.h"
+#include "Engine.h"
 
 #include "Events/WindowEvent.h"
 #include "Layers/Layer.h"
@@ -13,16 +13,17 @@
 
 namespace BZ {
 
-Application *Application::instance = nullptr;
-
 static void GLFWErrorCallback(int error, const char *description) {
     BZ_LOG_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 }
 
-Application::Application() {
+Engine* Engine::instance = nullptr;
+
+Engine::Engine() {
     BZ_PROFILE_FUNCTION();
 
-    BZ_ASSERT_CORE(!instance, "Application already exists");
+    BZ::Log::get(); // Init Logger.
+
     instance = this;
 
     glfwSetErrorCallback(GLFWErrorCallback);
@@ -36,10 +37,10 @@ Application::Application() {
     WindowData windowData;
     windowData.dimensions.x = settings.getFieldAsBasicType<uint32>("width", 1280);
     windowData.dimensions.y = settings.getFieldAsBasicType<uint32>("height", 800);
-    windowData.title = settings.getFieldAsString("title", "Bhazel Engine Untitled Application");
+    windowData.title = settings.getFieldAsString("title", "Bhazel Engine Untitled Engine");
     // windowData.fullScreen = settings.getFieldAsBasicType<bool>("fullScreen", false);
 
-    window.init(windowData, BZ_BIND_EVENT_FN(Application::onEvent));
+    window.init(windowData, BZ_BIND_EVENT_FN(Engine::onEvent));
     graphicsContext.init();
 
     RendererImGui::init();
@@ -54,17 +55,19 @@ Application::Application() {
 #endif
 }
 
-Application::~Application() {
+Engine::~Engine() {
     BZ_PROFILE_FUNCTION();
 
+    BZ_LOG_CORE_INFO("Shutting down Engine.");
     graphicsContext.waitForDevice();
+
+    delete application;
+
     RendererImGui::destroy();
     Renderer2D::destroy();
     Renderer::destroy();
 
     rendererCoordinator.destroy();
-
-    layerStack.clear();
 
     graphicsContext.destroy();
     window.destroy();
@@ -72,18 +75,23 @@ Application::~Application() {
     glfwTerminate();
 }
 
-void Application::run() {
+void Engine::attachApplication(Application *application) {
+    BZ_ASSERT_CORE(application, "Invalid Application!");
+    this->application = application;
+
+    application->onAttachToEngine();
+}
+
+void Engine::mainLoop() {
     BZ_PROFILE_FUNCTION();
 
-    BZ_ASSERT_CORE(!running, "Application is already running!");
-    running = true;
-
-    layerStack.onGraphicsContextCreated();
+    BZ_ASSERT_CORE(!onMainLoop, "Engine is already on main loop!");
+    onMainLoop = true;
 
     Timer frameTimer;
     frameTiming = {};
 
-    while (!window.isClosed()) {
+    while (!window.isClosed() || forceStopLoop) {
 
         window.pollEvents();
 
@@ -95,13 +103,13 @@ void Application::run() {
             frameTimer.restart();
             frameTiming.deltaTime = frameDuration;
             frameTiming.runningTime += frameDuration;
-            layerStack.onUpdate(frameTiming);
+            application->onUpdate(frameTiming);
 
             RendererImGui::begin();
             graphicsContext.onImGuiRender(frameTiming);
             Renderer::onImGuiRender(frameTiming);
             Renderer2D::onImGuiRender(frameTiming);
-            layerStack.onImGuiRender(frameTiming);
+            application->onImGuiRender(frameTiming);
             RendererImGui::end();
 
             rendererCoordinator.render();
@@ -118,7 +126,11 @@ void Application::run() {
     }
 }
 
-void Application::onEvent(Event &e) {
+void Engine::stopMainLoop() {
+    forceStopLoop = true;
+}
+
+void Engine::onEvent(Event &e) {
     // BZ_LOG_CORE_TRACE(e);
 
     rendererCoordinator.onEvent(e);
@@ -126,8 +138,33 @@ void Application::onEvent(Event &e) {
     RendererImGui::onEvent(e);
 
     EventDispatcher dispatcher(e);
-    dispatcher.dispatch<WindowResizedEvent>(BZ_BIND_EVENT_FN(Application::onWindowResized));
+    dispatcher.dispatch<WindowResizedEvent>([this](const WindowResizedEvent &e) -> bool {
+        graphicsContext.onWindowResize(e);
+        return false;
+    });
 
+    application->onEvent(e);
+}
+
+
+/*-------------------------------------------------------------------------------------------*/
+Application::~Application() {
+    layerStack.clear();
+}
+
+void Application::onAttachToEngine() {
+    layerStack.onAttachToEngine();
+}
+
+void Application::onUpdate(const FrameTiming &frameTiming) {
+    layerStack.onUpdate(frameTiming);
+}
+
+void Application::onImGuiRender(const FrameTiming &frameTiming) {
+    layerStack.onImGuiRender(frameTiming);
+}
+
+void Application::onEvent(Event &e) {
     layerStack.onEvent(e);
 }
 
@@ -137,10 +174,5 @@ void Application::pushLayer(Layer *layer) {
 
 void Application::pushOverlay(Layer *overlay) {
     layerStack.pushOverlay(overlay);
-}
-
-bool Application::onWindowResized(const WindowResizedEvent &e) {
-    graphicsContext.onWindowResize(e);
-    return false;
 }
 }

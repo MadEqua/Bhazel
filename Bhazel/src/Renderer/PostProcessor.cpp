@@ -2,7 +2,7 @@
 
 #include "PostProcessor.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 
 #include "Graphics/Buffer.h"
 #include "Graphics/CommandBuffer.h"
@@ -372,7 +372,7 @@ void ToneMap::init() {
     pipelineStateData.viewports = { { 0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y, 0.0f, 1.0f } };
     pipelineStateData.scissorRects = { { 0u, 0u, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y } };
     pipelineStateData.blendingState = blendingState;
-    pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+    pipelineStateData.renderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
     pipelineStateData.subPassIndex = 0;
     pipelineState = PipelineState::create(pipelineStateData);
     BZ_SET_PIPELINE_DEBUG_NAME(pipelineState, "ToneMap Pipeline");
@@ -420,7 +420,7 @@ void FXAA::init(const Ref<TextureView> &inTexture) {
     pipelineStateData.viewports = { { 0.0f, 0.0f, INPUT_DIMENSIONS_F.x, INPUT_DIMENSIONS_F.y, 0.0f, 1.0f } };
     pipelineStateData.scissorRects = { { 0u, 0u, INPUT_DIMENSIONS.x, INPUT_DIMENSIONS.y } };
     pipelineStateData.blendingState = blendingState;
-    pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+    pipelineStateData.renderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
     pipelineStateData.subPassIndex = 0;
     pipelineState = PipelineState::create(pipelineStateData);
     BZ_SET_PIPELINE_DEBUG_NAME(pipelineState, "FXAA Pipeline");
@@ -454,9 +454,9 @@ PostProcessor::PostProcessor() : bloom(*this), toneMap(*this), fxaa(*this) {
 void PostProcessor::init(const Ref<TextureView> &colorTexView, const Ref<Buffer> &constantBuffer, uint32 bufferOffset) {
     inputTexView = colorTexView;
 
-    const Ref<RenderPass> &swapchainRenderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+    const Ref<RenderPass> &swapchainRenderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
     const Ref<Framebuffer> &swapchainFramebuffer =
-        Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
+        Engine::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
     const glm::uvec3 SWAPCHAIN_DIMS = swapchainFramebuffer->getDimensionsAndLayers();
     auto swapchainReplicaTex =
         Texture2D::createRenderTarget(SWAPCHAIN_DIMS.x, SWAPCHAIN_DIMS.y, 1, 1,

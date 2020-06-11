@@ -16,6 +16,6 @@ class Input {
   private:
     static void init();
 
-    friend class Application;
+    friend class Engine;
 };
 }

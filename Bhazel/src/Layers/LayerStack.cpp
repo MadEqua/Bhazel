@@ -15,12 +15,10 @@ LayerStack::~LayerStack() {
 void LayerStack::pushLayer(Layer *layer) {
     layers.emplace(layers.begin() + layerInsertIndex, layer);
     layerInsertIndex++;
-    layer->onAttach();
 }
 
 void LayerStack::pushOverlay(Layer *overlay) {
     layers.emplace_back(overlay);
-    overlay->onAttach();
 }
 
 void LayerStack::popLayer(Layer *layer) {
@@ -48,9 +46,9 @@ void LayerStack::clear() {
     layers.clear();
 }
 
-void LayerStack::onGraphicsContextCreated() {
+void LayerStack::onAttachToEngine() {
     for (Layer *layer : layers) {
-        layer->onGraphicsContextCreated();
+        layer->onAttachToEngine();
     }
 }
 

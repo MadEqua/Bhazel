@@ -2,7 +2,7 @@
 
 #include "Shader.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Graphics/GraphicsContext.h"
 #include <fstream>
 
@@ -34,7 +34,7 @@ void Shader::reload() {
 }
 
 void Shader::init() {
-    auto &assetsPath = Application::get().getAssetsPath();
+    auto &assetsPath = Engine::get().getAssetsPath();
     for (uint32 i = 0; i < stageCount; ++i) {
         handle.modules[i] = createShaderModuleFromBinaryBlob(readBinaryFile((assetsPath + stages[i].path).c_str()));
     }

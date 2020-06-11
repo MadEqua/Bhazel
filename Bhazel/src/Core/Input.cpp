@@ -1,6 +1,6 @@
 #include "bzpch.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/Window.h"
 #include "Input.h"
 
@@ -13,7 +13,7 @@ static const Window *window = nullptr;
 static GLFWwindow *glfwWindow = nullptr;
 
 void Input::init() {
-    BZ::window = &Application::get().getWindow();
+    BZ::window = &Engine::get().getWindow();
     glfwWindow = BZ::window->getNativeHandle();
 }
 

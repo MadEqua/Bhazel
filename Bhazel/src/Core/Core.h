@@ -25,8 +25,8 @@
     T(const T &&) = delete;             \
     void operator=(const T &&) = delete;
 
-#define BZ_APP BZ::Application::get()
-#define BZ_GRAPHICS_CTX BZ::Application::get().getGraphicsContext()
+#define BZ_ENGINE BZ::Engine::get()
+#define BZ_GRAPHICS_CTX BZ::Engine::get().getGraphicsContext()
 
 namespace BZ {
 

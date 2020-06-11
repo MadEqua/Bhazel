@@ -11,7 +11,7 @@
 #include "Graphics/Shader.h"
 #include "Graphics/Texture.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/Input.h"
 #include "Core/KeyCodes.h"
 
@@ -192,7 +192,7 @@ void RendererImGui::initGraphics() {
     pipelineStateData.layout = rendererData.pipelineLayout;
     pipelineStateData.blendingState = blendingState;
     pipelineStateData.dynamicStates = { VK_DYNAMIC_STATE_SCISSOR };
-    pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+    pipelineStateData.renderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
     pipelineStateData.subPassIndex = 0;
 
     rendererData.pipelineState = PipelineState::create(pipelineStateData);
@@ -325,7 +325,7 @@ void RendererImGui::onEvent(Event &event) {
         return false;
     });
 
-    Window &window = Application::get().getWindow();
+    Window &window = Engine::get().getWindow();
     dispatcher.dispatch<MouseMovedEvent>([&window](const MouseMovedEvent &event) -> bool {
         ImGuiIO &io = ImGui::GetIO();
         io.MouseHoveredViewport = 0;
@@ -355,7 +355,7 @@ void RendererImGui::onEvent(Event &event) {
 
 void RendererImGui::begin() {
     ImGuiIO &io = ImGui::GetIO();
-    const auto &windowDims = Application::get().getWindow().getDimensionsFloat();
+    const auto &windowDims = Engine::get().getWindow().getDimensionsFloat();
     io.DisplaySize = ImVec2(windowDims.x, windowDims.y);
 
     ImGui::NewFrame();

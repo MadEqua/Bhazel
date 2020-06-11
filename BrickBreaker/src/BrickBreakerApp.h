@@ -74,8 +74,7 @@ class MainLayer : public BZ::Layer {
   public:
     MainLayer();
 
-    void onAttach() override;
-    void onGraphicsContextCreated() override;
+    void onAttachToEngine() override;
 
     void onUpdate(const BZ::FrameTiming &frameTiming) override;
     void onEvent(BZ::Event &event) override;

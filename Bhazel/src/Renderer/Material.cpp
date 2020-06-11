@@ -3,7 +3,7 @@
 #include "Material.h"
 #include "Renderer.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Graphics/DescriptorSet.h"
 #include "Graphics/GraphicsContext.h"
 #include "Graphics/Texture.h"

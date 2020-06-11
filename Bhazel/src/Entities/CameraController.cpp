@@ -2,7 +2,7 @@
 
 #include "CameraController.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 
 #include "Events/MouseEvent.h"
 #include "Events/WindowEvent.h"
@@ -109,7 +109,7 @@ FreeCameraController::FreeCameraController(PerspectiveCamera &camera, float came
 
 void FreeCameraController::onUpdate(const FrameTiming &frameTiming) {
     auto mousePosition = Input::getMousePosition();
-    const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensionsInt();
+    const auto WINDOW_DIMS_INT = Engine::get().getWindow().getDimensionsInt();
 
     if (mousePosition.x >= 0 && mousePosition.x < WINDOW_DIMS_INT.x && mousePosition.y >= 0 &&
         mousePosition.y < WINDOW_DIMS_INT.y) {
@@ -201,7 +201,7 @@ RotateCameraController::RotateCameraController(PerspectiveCamera &camera, float 
 
 void RotateCameraController::onUpdate(const FrameTiming &frameTiming) {
     auto mousePosition = Input::getMousePosition();
-    const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensionsInt();
+    const auto WINDOW_DIMS_INT = Engine::get().getWindow().getDimensionsInt();
 
     thetaAccel = 0.0f;
     zAccel = 0.0f;

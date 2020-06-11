@@ -19,6 +19,7 @@ class RenderPass;
 class CommandBuffer;
 class TextureView;
 struct FrameTiming;
+class Window;
 
 
 class GraphicsContext {

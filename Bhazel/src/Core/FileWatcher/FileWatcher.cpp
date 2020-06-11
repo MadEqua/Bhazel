@@ -2,7 +2,7 @@
 
 #include <FileWatch.hpp>
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "FileWatcher.h"
 #include "Graphics/PipelineState.h"
 #include "Graphics/Shader.h"
@@ -20,7 +20,7 @@ FileWatcher::~FileWatcher() {
 
 void FileWatcher::startWatching() {
 
-    const auto &watchFolder = Application::get().getAssetsPath();
+    const auto &watchFolder = Engine::get().getAssetsPath();
 
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     std::wstring wideWatchFolder = converter.from_bytes(watchFolder);

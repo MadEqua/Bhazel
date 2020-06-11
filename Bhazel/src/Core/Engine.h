@@ -17,6 +17,8 @@ namespace BZ {
 class Event;
 class WindowResizedEvent;
 class Layer;
+class Application;
+
 
 struct FrameTiming {
     // Time since the last update.
@@ -26,18 +28,20 @@ struct FrameTiming {
     TimeDuration runningTime;
 };
 
-class Application {
+
+class Engine {
   public:
-    Application();
-    virtual ~Application();
+    BZ_NON_COPYABLE(Engine);
 
-    BZ_NON_COPYABLE(Application);
+    Engine();
+    ~Engine();
 
-    void run();
+    void mainLoop();
+    void stopMainLoop();
+
     void onEvent(Event &ev);
 
-    void pushLayer(Layer *layer);
-    void pushOverlay(Layer *overlay);
+    void attachApplication(Application *application);
 
     Window &getWindow() { return window; }
     GraphicsContext &getGraphicsContext() { return graphicsContext; }
@@ -51,16 +55,19 @@ class Application {
 #ifdef BZ_HOT_RELOAD_SHADERS
     FileWatcher &getFileWatcher() { return fileWatcher; }
 #endif
-    static Application &get() { return *instance; }
+
+    static Engine &get() { return *instance; }
 
   private:
     bool onWindowResized(const WindowResizedEvent &e);
+
+    static Engine *instance;
+    Application *application;
 
     Window window;
     GraphicsContext graphicsContext;
     RendererCoordinator rendererCoordinator;
 
-    LayerStack layerStack;
     IniParser iniParser;
     FrameTiming frameTiming;
 
@@ -70,7 +77,29 @@ class Application {
     FileWatcher fileWatcher;
 #endif
 
-    bool running = false;
-    static Application *instance;
+    bool onMainLoop = false;
+    bool forceStopLoop = false;
+};
+
+
+/*-------------------------------------------------------------------------------------------*/
+class Application {
+  public:
+    Application() = default;
+    virtual ~Application();
+
+    BZ_NON_COPYABLE(Application);
+
+    void onEvent(Event &ev);
+
+    void onAttachToEngine();
+    void onUpdate(const FrameTiming &frameTiming);
+    void onImGuiRender(const FrameTiming &frameTiming);
+
+    void pushLayer(Layer *layer);
+    void pushOverlay(Layer *overlay);
+
+  private:
+    LayerStack layerStack;
 };
 }

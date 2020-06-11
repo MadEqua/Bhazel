@@ -9,7 +9,7 @@
 #include "Renderer/Renderer2D.h"
 #include "Renderer/RendererImGui.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/KeyCodes.h"
 #include "Events/KeyEvent.h"
 
@@ -23,7 +23,7 @@ void RendererCoordinator::init() {
 
     // Create the possible combinations of RenderPasses. All compatible with the default Swapchain
     // Renderpass, which is used on the Pipelines and to create the Framebuffers.
-    const Ref<RenderPass> &renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+    const Ref<RenderPass> &renderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
     const SubPassDescription &subPassDesc = renderPass->getSubPassDescription(0);
 
     AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
@@ -124,7 +124,7 @@ void RendererCoordinator::onEvent(Event &ev) {
 
 void RendererCoordinator::render() {
     Ref<Framebuffer> currentSwapchainFramebuffer =
-        Application::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
+        Engine::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
 
     uint32 activeRendererCount = getActiveRendererCount();
     if (activeRendererCount == 1) {

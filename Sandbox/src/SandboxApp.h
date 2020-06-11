@@ -7,8 +7,7 @@ class ParticleLayer : public BZ::Layer {
   public:
     ParticleLayer();
 
-    void onAttach() override;
-    void onGraphicsContextCreated() override;
+    void onAttachToEngine() override;
 
     void onUpdate(const BZ::FrameTiming &frameTiming) override;
     void onEvent(BZ::Event &event) override;
@@ -29,8 +28,7 @@ class Layer3D : public BZ::Layer {
   public:
     Layer3D();
 
-    void onAttach() override;
-    void onGraphicsContextCreated() override;
+    void onAttachToEngine() override;
 
     void onUpdate(const BZ::FrameTiming &frameTiming) override;
     void onEvent(BZ::Event &event) override;

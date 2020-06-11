@@ -21,7 +21,7 @@ void Ball::init(const BZ::Ref<BZ::Texture2D> &ballTexture, const BZ::Ref<BZ::Tex
 }
 
 void Ball::onUpdate(const BZ::FrameTiming &frameTiming, BrickMap &brickMap, Paddle &paddle) {
-    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
 
     sprite.position += velocity * frameTiming.deltaTime.asSeconds();
 
@@ -92,7 +92,7 @@ void Ball::onUpdate(const BZ::FrameTiming &frameTiming, BrickMap &brickMap, Padd
 }
 
 void Ball::setToInitialPosition() {
-    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
     const auto WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
 
     sprite.position = { WINDOW_HALF_DIMS.x, PADDLE_Y + BRICK_MARGIN };
@@ -100,7 +100,7 @@ void Ball::setToInitialPosition() {
 }
 
 void Paddle::init(const BZ::Ref<BZ::Texture2D> &texture) {
-    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
     const auto WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
 
     sprite.position = { WINDOW_HALF_DIMS.x, PADDLE_Y };
@@ -111,7 +111,7 @@ void Paddle::init(const BZ::Ref<BZ::Texture2D> &texture) {
 }
 
 void Paddle::onUpdate(const BZ::FrameTiming &frameTiming) {
-    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
 
     if (BZ::Input::isKeyPressed(BZ_KEY_LEFT)) {
         sprite.position.x -= PADDLE_VELOCITY * frameTiming.deltaTime.asSeconds();
@@ -134,7 +134,7 @@ void Paddle::onUpdate(const BZ::FrameTiming &frameTiming) {
 }
 
 void BrickMap::init(const BZ::Ref<BZ::Texture2D> &brickTexture, const BZ::Ref<BZ::Texture2D> &explosionTexture) {
-    const auto &WINDOW_DIMS = BZ::Application::get().getWindow().getDimensions();
+    const auto &WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensions();
 
     bool flip = true;
     for (float x = BRICK_MARGIN + BRICK_HALF_DIMS.x; x < WINDOW_DIMS.x - BRICK_HALF_DIMS.x;
@@ -207,12 +207,10 @@ void BrickMap::startParticleSystem(const Brick &brick) {
 MainLayer::MainLayer() : Layer("MainLayer") {
 }
 
-void MainLayer::onAttach() {
-    BZ::Application::get().enable3dRenderer(false);
-}
+void MainLayer::onAttachToEngine() {
+    BZ::Engine::get().enable3dRenderer(false);
 
-void MainLayer::onGraphicsContextCreated() {
-    const auto WINDOW_DIMS = BZ::Application::get().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
 
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);

@@ -8,16 +8,12 @@ struct FrameTiming;
 
 class Layer {
   public:
-    Layer(const char *name = "Layer");
+    Layer(const char *name = "Layer") : debugName(name) {}
     virtual ~Layer() = default;
 
-    // On attach to the LayerStack
-    virtual void onAttach() {}
-
-    // After creation of the GraphicsContext and the Window.
+    // On Application attach to the Engine.
     // It's safe to create graphics objects.
-    virtual void onGraphicsContextCreated() {}
-
+    virtual void onAttachToEngine() {}
     virtual void onDetach() {}
 
     virtual void onUpdate(const FrameTiming &frameTiming) {}

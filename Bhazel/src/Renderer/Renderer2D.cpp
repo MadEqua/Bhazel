@@ -11,7 +11,7 @@
 #include "Graphics/Shader.h"
 #include "Graphics/Texture.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/Utils.h"
 
 #include "Renderer/ParticleSystem2D.h"
@@ -172,7 +172,7 @@ void Renderer2D::init() {
                          { "Bhazel/shaders/bin/Renderer2DFrag.spv", VK_SHADER_STAGE_FRAGMENT_BIT } });
     pipelineStateData.layout = rendererData.pipelineLayout;
     pipelineStateData.blendingState = blendingState;
-    pipelineStateData.renderPass = Application::get().getGraphicsContext().getSwapchainRenderPass();
+    pipelineStateData.renderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
     pipelineStateData.subPassIndex = 0;
     rendererData.pipelineState = PipelineState::create(pipelineStateData);
     BZ_SET_PIPELINE_DEBUG_NAME(rendererData.pipelineState, "Renderer2D Pipeline");

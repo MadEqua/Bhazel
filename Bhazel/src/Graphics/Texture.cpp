@@ -2,7 +2,7 @@
 
 #include "Texture.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/Utils.h"
 
 #include "Graphics/CommandBuffer.h"
@@ -418,7 +418,7 @@ void Texture::freeData(const FileData &fileData) {
 /*-------------------------------------------------------------------------------------------*/
 Ref<Texture2D> Texture2D::create(const char *path, TextureFormat format, MipmapData mipmapData,
                                  VkImageUsageFlags additionalUsageFlags) {
-    auto &assetsPath = Application::get().getAssetsPath();
+    auto &assetsPath = Engine::get().getAssetsPath();
     return MakeRef<Texture2D>((assetsPath + path).c_str(), format, mipmapData, additionalUsageFlags);
 }
 
@@ -678,7 +678,7 @@ void Texture2D::createImage(bool hasData, MipmapData mipmapData, VkImageUsageFla
 /*-------------------------------------------------------------------------------------------*/
 Ref<TextureCube> TextureCube::create(const char *basePath, const char *fileNames[6], TextureFormat format,
                                      MipmapData mipmapData, VkImageUsageFlags additionalUsageFlags) {
-    auto &assetsPath = Application::get().getAssetsPath();
+    auto &assetsPath = Engine::get().getAssetsPath();
     return MakeRef<TextureCube>((assetsPath + basePath).c_str(), fileNames, format, mipmapData, additionalUsageFlags);
 }
 

@@ -2,7 +2,8 @@
 
 #include "GraphicsContext.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
+#include "Core/Window.h"
 
 #include "Graphics/CommandBuffer.h"
 #include "Graphics/DescriptorSet.h"
@@ -17,7 +18,7 @@
 namespace BZ {
 
 void GraphicsContext::init() {
-    GLFWwindow *windowHandle = Application::get().getWindow().getNativeHandle();
+    GLFWwindow *windowHandle = Engine::get().getWindow().getNativeHandle();
 
     instance.init();
     surface.init(instance, *static_cast<GLFWwindow *>(windowHandle));

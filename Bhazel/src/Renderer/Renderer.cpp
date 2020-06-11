@@ -13,7 +13,7 @@
 #include "Graphics/Shader.h"
 #include "Graphics/Texture.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/Utils.h"
 #include "Core/Window.h"
 
@@ -403,7 +403,7 @@ void Renderer::initColorPassData() {
     rendererData.colorPassPipelineState = PipelineState::create(pipelineStateData);
     BZ_SET_PIPELINE_DEBUG_NAME(rendererData.colorPassPipelineState, "Renderer Color Pass Pipeline");
 
-    const auto WINDOW_DIMS_INT = Application::get().getWindow().getDimensions();
+    const auto WINDOW_DIMS_INT = Engine::get().getWindow().getDimensions();
 
     auto colorTexture = Texture2D::createRenderTarget(WINDOW_DIMS_INT.x, WINDOW_DIMS_INT.y, 1, 1,
                                                       colorAttachmentDesc.format, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);

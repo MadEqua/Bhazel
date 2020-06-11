@@ -18,7 +18,7 @@ class LayerStack {
 
     void clear();
 
-    void onGraphicsContextCreated();
+    void onAttachToEngine();
     void onUpdate(const FrameTiming &frameTiming);
     void onImGuiRender(const FrameTiming &frameTiming);
     void onEvent(Event &event);

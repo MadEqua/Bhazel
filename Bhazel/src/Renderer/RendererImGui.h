@@ -16,7 +16,7 @@ class RendererImGui {
 
   private:
     friend class RendererCoordinator;
-    friend class Application;
+    friend class Engine;
 
     static void init();
     static void destroy();

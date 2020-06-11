@@ -2,7 +2,7 @@
 
 #include "PipelineState.h"
 
-#include "Core/Application.h"
+#include "Core/Engine.h"
 #include "Core/Window.h"
 
 #include "Graphics/DescriptorSet.h"
@@ -50,8 +50,8 @@ PipelineLayout::~PipelineLayout() {
 
 /*-------------------------------------------------------------------------------------------*/
 PipelineStateData::PipelineStateData() {
-    const auto WINDOW_DIMS_UINT = Application::get().getWindow().getDimensions();
-    const auto WINDOW_DIMS_FLOAT = Application::get().getWindow().getDimensionsFloat();
+    const auto WINDOW_DIMS_UINT = Engine::get().getWindow().getDimensions();
+    const auto WINDOW_DIMS_FLOAT = Engine::get().getWindow().getDimensionsFloat();
 
     viewports = { { 0.0f, 0.0f, WINDOW_DIMS_FLOAT.x, WINDOW_DIMS_FLOAT.y, 0.0f, 1.0f } };
     scissorRects = { { 0u, 0u, WINDOW_DIMS_UINT.x, WINDOW_DIMS_UINT.y } };
@@ -83,7 +83,7 @@ PipelineState::PipelineState(PipelineStateData &inData) : data(inData) {
                    "on PipelineState!");
 
 #ifdef BZ_HOT_RELOAD_SHADERS
-    Application::get().getFileWatcher().registerPipelineState(*this);
+    Engine::get().getFileWatcher().registerPipelineState(*this);
 #endif
 
     init();
