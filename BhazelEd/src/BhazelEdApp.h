@@ -9,7 +9,7 @@ namespace BZ {
 
 class BhazelEdApp : public Application {
   public:
-    BhazelEdApp() { pushLayer(new MainLayer()); }
+    BhazelEdApp();
 };
 
 }

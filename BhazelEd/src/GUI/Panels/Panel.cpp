@@ -5,11 +5,10 @@
 
 namespace BZ {
 
-Panel::Panel() {
-}
-
 void Panel::render() {
-
+    if (open) {
+        internalRender();
+    }
 }
 
 }

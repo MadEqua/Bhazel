@@ -7,7 +7,7 @@ ParticleLayer::ParticleLayer() : Layer("Particle") {
 }
 
 void ParticleLayer::onAttachToEngine() {
-    BZ::Engine::get().enable3dRenderer(false);
+    BZ::Engine::get().getRendererCoordinator().enable3dRenderer(false);
 
     const auto &WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;

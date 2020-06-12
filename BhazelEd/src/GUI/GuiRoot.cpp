@@ -1,12 +1,14 @@
 #include "GuiRoot.h"
 
+#include "Panels/ViewportPanel.h"
+
 #include <imgui.h>
 
 
 namespace BZ {
 
 GuiRoot::GuiRoot() {
-    panels.emplace_back(Panel());
+    panels.emplace_back(std::make_unique<ViewportPanel>());
 }
 
 void GuiRoot::render() {
@@ -34,7 +36,7 @@ void GuiRoot::render() {
     renderMenuBar();
 
     for (auto &panel : panels) {
-        panel.render();
+        panel->render();
     }
 
     ImGui::End();

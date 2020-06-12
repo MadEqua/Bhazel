@@ -17,6 +17,8 @@ class MainLayer : public Layer {
     void onImGuiRender(const FrameTiming &frameTiming) override;
 
   private:
+    OrthographicCamera camera;
+
     GuiRoot guiRoot;
 };
 

@@ -48,9 +48,7 @@ class Engine {
 
     const std::string &getAssetsPath() const { return assetsPath; }
 
-    void enable3dRenderer(bool enable) { rendererCoordinator.enable3dRenderer(enable); }
-    void enable2dRenderer(bool enable) { rendererCoordinator.enable2dRenderer(enable); }
-    void enableImGuiRenderer(bool enable) { rendererCoordinator.enableImGuiRenderer(enable); }
+    RendererCoordinator& getRendererCoordinator() { return rendererCoordinator; }
 
 #ifdef BZ_HOT_RELOAD_SHADERS
     FileWatcher &getFileWatcher() { return fileWatcher; }

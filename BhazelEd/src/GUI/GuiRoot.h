@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Panels/Panel.h"
+
+#include <memory>
 #include <vector>
 
 
@@ -15,7 +17,7 @@ class GuiRoot {
   private:
     void renderMenuBar();
 
-    std::vector<Panel> panels; // Pointer?
+    std::vector<std::unique_ptr<Panel>> panels;
 };
 
 }

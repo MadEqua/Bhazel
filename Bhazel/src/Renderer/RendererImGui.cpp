@@ -35,7 +35,7 @@ static struct ImGuiRendererData {
 
     Ref<PipelineLayout> pipelineLayout;
     Ref<PipelineState> pipelineState;
-    DescriptorSet *descriptorSet;
+    DescriptorSet *fontDescriptorSet;
 } rendererData;
 
 
@@ -199,9 +199,9 @@ void RendererImGui::initGraphics() {
     BZ_SET_PIPELINE_DEBUG_NAME(rendererData.pipelineState, "RendererImGui Pipeline");
 
     // DescriptorSet
-    rendererData.descriptorSet = &DescriptorSet::get(descriptorSetLayout);
-    rendererData.descriptorSet->setCombinedTextureSampler(rendererData.fontTextureView, rendererData.fontTextureSampler,
-                                                          0);
+    rendererData.fontDescriptorSet = &DescriptorSet::get(descriptorSetLayout);
+    rendererData.fontDescriptorSet->setCombinedTextureSampler(rendererData.fontTextureView,
+                                                              rendererData.fontTextureSampler, 0);
 }
 
 void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
@@ -240,7 +240,6 @@ void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref
     commandBuffer.bindBuffer(rendererData.vertexBuffer, 0);
     commandBuffer.bindBuffer(rendererData.indexBuffer, 0);
     commandBuffer.bindPipelineState(rendererData.pipelineState);
-    commandBuffer.bindDescriptorSet(*rendererData.descriptorSet, rendererData.pipelineLayout, 0, nullptr, 0);
     commandBuffer.setPushConstants(rendererData.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, &io.DisplaySize, 0,
                                    sizeof(ImVec2));
 
@@ -267,6 +266,16 @@ void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref
                 scissorRect.offset.y = std::max(static_cast<uint32>(pcmd->ClipRect.y), 0u);
                 scissorRect.extent.width = static_cast<uint32>(pcmd->ClipRect.z - pcmd->ClipRect.x);
                 scissorRect.extent.height = static_cast<uint32>(pcmd->ClipRect.w - pcmd->ClipRect.y);
+
+                const DescriptorSet *texDescSet = reinterpret_cast<const DescriptorSet *>(pcmd->TextureId);
+                if (texDescSet) {
+                    commandBuffer.bindDescriptorSet(*texDescSet, rendererData.pipelineLayout, 0, nullptr, 0);
+                }
+                else {
+                    commandBuffer.bindDescriptorSet(*rendererData.fontDescriptorSet, rendererData.pipelineLayout, 0,
+                                                    nullptr, 0);
+                }
+
                 commandBuffer.setScissorRects(0, &scissorRect, 1);
                 commandBuffer.drawIndexed(pcmd->ElemCount, 1, pcmd->IdxOffset + globalIndexOffset,
                                           pcmd->VtxOffset + globalVertexOffset, 0);
