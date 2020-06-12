@@ -22,6 +22,8 @@ Engine* Engine::instance = nullptr;
 Engine::Engine() {
     BZ_PROFILE_FUNCTION();
 
+    BZ_LOG_CORE_INFO("Initializing Engine.");
+
     BZ::Log::get(); // Init Logger.
 
     instance = this;
