@@ -204,7 +204,7 @@ void RendererImGui::initGraphics() {
                                                               rendererData.fontTextureSampler, 0);
 }
 
-void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+void RendererImGui::render(const Ref<RenderPass>& finalRenderPass, const Ref<Framebuffer>& finalFramebuffer,
                            bool waitForImageAvailable, bool signalFrameEnd) {
     ImDrawData *imDrawData = ImGui::GetDrawData();
 
@@ -218,7 +218,7 @@ void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref
 
         // Still need to submit a command buffer to respect the frame sync and layout transitions
         // coming from the RendererCoordinator.
-        commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
+        commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
         commandBuffer.endRenderPass();
         commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
         return;
@@ -247,7 +247,7 @@ void RendererImGui::render(const Ref<RenderPass> &swapchainRenderPass, const Ref
     commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                                         VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 
-    commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
+    commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
 
     int globalIndexOffset = 0;
     int globalVertexOffset = 0;

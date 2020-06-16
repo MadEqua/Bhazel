@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Graphics/GraphicsContext.h"
+
 
 namespace BZ {
 
@@ -8,6 +10,7 @@ class Framebuffer;
 class Event;
 class DescriptorSet;
 
+
 /*
  * Coordinates Renderers accessing the final destination Framebuffer (either Swapchain or an offscreen Framebuffer).
  * Controls the layout transitions, clears/loads and frame Semaphore/Fence signaling.
@@ -15,44 +18,32 @@ class DescriptorSet;
 class RendererCoordinator {
   public:
     BZ_NON_COPYABLE(RendererCoordinator);
-    
+
+    // TODO: make this private and Engine friend.
     RendererCoordinator() = default;
 
-    void init();
+    void init(bool enable2dRenderer, bool enable3dRenderer, bool enableImGuiRenderer);
+    void initEditorMode();
     void destroy();
-
-    void enable3dRenderer(bool enable);
-    void enable2dRenderer(bool enable);
-    void enableImGuiRenderer(bool enable);
-
-    // Force offscreen rendering for 3D and 2D renderers. Useful for tools like the editor.
-    void forceOffscreenRendering(bool force);
 
     void onEvent(Event &ev);
     void render();
 
-    DescriptorSet *getOffscreenTextureDescriptorSet() { return offscreenTextureDescriptorSet; }
+    DescriptorSet *getOffscreenTextureDescriptorSet();
 
   private:
-    bool is3dActive;
-    bool is2dActive;
-    bool isImGuiActive;
-    bool isForceOffscreenRendering;
+    Ref<Framebuffer> offscreenFramebuffers[GraphicsContext::MAX_FRAMES_IN_FLIGHT];
+    DescriptorSet *offscreenTextureDescriptorSets[GraphicsContext::MAX_FRAMES_IN_FLIGHT];
 
     Ref<RenderPass> firstPass;
     Ref<RenderPass> secondPass;
     Ref<RenderPass> lastPass;
     Ref<RenderPass> firstAndLastPass;
 
-    // Swapchain replica used when isForceOffscreenRendering is true. Lazy initialized.
-    Ref<Framebuffer> offscreenFramebuffer;
-    Ref<RenderPass> firstPassOffscreen;
-    Ref<RenderPass> secondPassOffscreen;
-    Ref<RenderPass> lastPassOffscreen;
-    Ref<RenderPass> firstAndLastPassOffscreen;
+    Ref<RenderPass> lastPassEditorMode;
 
-    DescriptorSet *offscreenTextureDescriptorSet;
+    std::function<void()> renderFunction;
 
-    uint32 getActiveRendererCount() const;
+    void internalInit();
 };
 }

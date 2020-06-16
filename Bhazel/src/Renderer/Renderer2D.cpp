@@ -269,7 +269,7 @@ void Renderer2D::renderParticleSystem2D(const ParticleSystem2D &particleSystem) 
     }
 }
 
-void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+void Renderer2D::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer,
                         bool waitForImageAvailable, bool signalFrameEnd) {
     BZ_PROFILE_FUNCTION();
 
@@ -283,7 +283,7 @@ void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Fr
         commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                                             VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 
-        commandBuffer.beginRenderPass(swapchainRenderPass, swapchainFramebuffer);
+        commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
 
         glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
         memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
@@ -371,6 +371,14 @@ void Renderer2D::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Fr
 
         commandBuffer.endRenderPass();
         BZ_CB_END_DEBUG_LABEL(commandBuffer);
+        commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
+    }
+    else {
+        // Dummy well behaved pass if this renderer is active but without stuff to render. Should not happen
+        // frequently.
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
+        commandBuffer.endRenderPass();
         commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 }

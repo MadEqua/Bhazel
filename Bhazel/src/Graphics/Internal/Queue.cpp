@@ -39,7 +39,7 @@ const Queue *QueueContainer::getQueueByFamilyIndex(uint32 familyIndex) const {
         if (queues[i].getFamily().getIndex() == familyIndex)
             return &queues[i];
     }
-    BZ_ASSERT_ALWAYS_CORE("Queue family index {} is not being used by any Queue!");
+    BZ_ASSERT_ALWAYS_CORE("Queue family index {} is not being used by any Queue!", familyIndex);
     return nullptr;
 }
 

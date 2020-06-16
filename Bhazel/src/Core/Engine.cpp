@@ -45,11 +45,6 @@ Engine::Engine() {
     window.init(windowData, BZ_BIND_EVENT_FN(Engine::onEvent));
     graphicsContext.init();
 
-    RendererImGui::init();
-    Renderer2D::init();
-    Renderer::init();
-    rendererCoordinator.init();
-
     Input::init();
 
 #ifdef BZ_HOT_RELOAD_SHADERS
@@ -65,10 +60,6 @@ Engine::~Engine() {
 
     delete application;
 
-    RendererImGui::destroy();
-    Renderer2D::destroy();
-    Renderer::destroy();
-
     rendererCoordinator.destroy();
 
     graphicsContext.destroy();
@@ -80,6 +71,15 @@ Engine::~Engine() {
 void Engine::attachApplication(Application *application) {
     BZ_ASSERT_CORE(application, "Invalid Application!");
     this->application = application;
+
+    const Application::Settings &appSettings = application->getSettings();
+    if (appSettings.editorMode) {
+        rendererCoordinator.initEditorMode();
+    }
+    else {
+        rendererCoordinator.init(appSettings.enable2dRenderer, appSettings.enable3dRenderer, appSettings.enableImGuiRenderer);
+    }
+    
 
     application->onAttachToEngine();
 }
@@ -136,8 +136,6 @@ void Engine::onEvent(Event &e) {
     // BZ_LOG_CORE_TRACE(e);
 
     rendererCoordinator.onEvent(e);
-
-    RendererImGui::onEvent(e);
 
     EventDispatcher dispatcher(e);
     dispatcher.dispatch<WindowResizedEvent>([this](const WindowResizedEvent &e) -> bool {

@@ -26,12 +26,15 @@ class CommandPool {
 
     VkCommandPool getHandle() const { return handle; }
 
+    constexpr static uint32 MAX_COMMAND_BUFFERS_PER_FRAME = 64;
+
   private:
     VkCommandPool handle;
     const Device *device;
     uint32 familyIndex;
 
-    std::vector<CommandBuffer> buffers;
+    CommandBuffer buffers[MAX_COMMAND_BUFFERS_PER_FRAME];
     uint32 nextFreeIndex;
+    uint32 nextToAllocateIndex;
 };
 }

@@ -17,15 +17,122 @@
 
 namespace BZ {
 
-void RendererCoordinator::init() {
-    is3dActive = true;
-    is2dActive = true;
-    isImGuiActive = true;
-    isForceOffscreenRendering = false;
+void RendererCoordinator::init(bool enable2dRenderer, bool enable3dRenderer, bool enableImGuiRenderer) {
+    if (enable2dRenderer)
+        Renderer2D::init();
+    if (enable3dRenderer)
+        Renderer::init();
+    if (enableImGuiRenderer)
+        RendererImGui::init();
 
+    internalInit();
+
+    if (enable2dRenderer) {
+        if (enable3dRenderer) {
+            if (enableImGuiRenderer) {
+                renderFunction = [this]() {
+                    const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+                    Renderer::render(firstPass, swapchainFramebuffer, true, false);
+                    Renderer2D::render(secondPass, swapchainFramebuffer, false, false);
+                    RendererImGui::render(lastPass, swapchainFramebuffer, false, true);
+                };
+            }
+            else {
+                renderFunction = [this]() {
+                    const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+                    Renderer::render(firstPass, swapchainFramebuffer, true, false);
+                    Renderer2D::render(lastPass, swapchainFramebuffer, false, true);
+                };
+            }
+        }
+        else {
+            if (enableImGuiRenderer) {
+                renderFunction = [this]() {
+                    const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+                    Renderer2D::render(firstPass, swapchainFramebuffer, true, false);
+                    RendererImGui::render(lastPass, swapchainFramebuffer, false, true);
+                };
+            }
+            else {
+                renderFunction = [this]() {
+                    const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+                    Renderer2D::render(firstAndLastPass, swapchainFramebuffer, true, true);
+                };
+            }
+        }
+    }
+    else {
+        if (enable3dRenderer) {
+            if (enableImGuiRenderer) {
+                renderFunction = [this]() {
+                    const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+                    Renderer::render(firstPass, swapchainFramebuffer, true, false);
+                    RendererImGui::render(lastPass, swapchainFramebuffer, false, true);
+                };
+            }
+            else {
+                renderFunction = [this]() {
+                    const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+                    Renderer::render(firstAndLastPass, swapchainFramebuffer, true, true);
+                };
+            }
+        }
+        else {
+            if (enableImGuiRenderer) {
+                renderFunction = [this]() {
+                    const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+                    RendererImGui::render(firstAndLastPass, swapchainFramebuffer, true, true);
+                };
+            }
+            else {
+                BZ_ASSERT_ALWAYS_CORE("At least one Renderer must be active!");
+            }
+        }
+    }
+}
+
+void RendererCoordinator::initEditorMode() {
+    Renderer2D::init();
+    Renderer::init();
+    RendererImGui::init();
+
+    internalInit();
+
+    const Ref<RenderPass> &swapchainRenderPass = BZ_GRAPHICS_CTX.getSwapchainRenderPass();
+    const Ref<Framebuffer> &swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+    const glm::uvec3 SWAPCHAIN_DIMS = swapchainFramebuffer->getDimensionsAndLayers();
+
+    for (uint32 i = 0; i < GraphicsContext::MAX_FRAMES_IN_FLIGHT; ++i) {
+        auto swapchainReplicaTex =
+            Texture2D::createRenderTarget(SWAPCHAIN_DIMS.x, SWAPCHAIN_DIMS.y, 1, 1,
+                                          swapchainFramebuffer->getColorAttachmentTextureView(0)->getTextureFormat());
+        BZ_SET_TEXTURE_DEBUG_NAME(swapchainReplicaTex, "RendererCoordinator SwapchainReplica Texture");
+        auto swapchainReplicaTexView = TextureView::create(swapchainReplicaTex);
+
+        offscreenFramebuffers[i] =
+            Framebuffer::create(swapchainRenderPass, { swapchainReplicaTexView }, SWAPCHAIN_DIMS);
+
+        Ref<DescriptorSetLayout> descriptorSetLayout = DescriptorSetLayout::create(
+            { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
+        offscreenTextureDescriptorSets[i] = &BZ_GRAPHICS_CTX.getDescriptorPool().getDescriptorSet(descriptorSetLayout);
+        offscreenTextureDescriptorSets[i]->setCombinedTextureSampler(swapchainReplicaTexView,
+                                                                     Renderer::getDefaultSampler(), 0);
+    }
+
+    renderFunction = [this]() {
+        const Ref<Framebuffer> offscreenFramebuffer = offscreenFramebuffers[BZ_GRAPHICS_CTX.getCurrentFrameIndex()];
+        const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
+        Renderer::render(firstPass, offscreenFramebuffer, true, false);
+        Renderer2D::render(lastPassEditorMode, offscreenFramebuffer, false, false);
+        RendererImGui::render(firstAndLastPass, swapchainFramebuffer, false, true);
+    };
+}
+
+// TODO: only create the necessary RenderPasses.
+void RendererCoordinator::internalInit() {
     // Create the possible combinations of RenderPasses. All compatible with the default Swapchain
     // Renderpass, which is used on the Pipelines and to create the Framebuffers.
-    const Ref<RenderPass> &renderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
+    const Ref<RenderPass> &renderPass = BZ_GRAPHICS_CTX.getSwapchainRenderPass();
     const SubPassDescription &subPassDesc = renderPass->getSubPassDescription(0);
 
     AttachmentDescription colorAttachmentDesc = renderPass->getColorAttachmentDescription(0);
@@ -34,7 +141,7 @@ void RendererCoordinator::init() {
     colorAttachmentDesc.loadOperatorStencil = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachmentDesc.storeOperatorStencil = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-    // Wait for previous Renderer. //TODO: confirm if correct.
+    // Wait for previous Renderer.
     SubPassDependency dependency;
     dependency.srcSubPassIndex = VK_SUBPASS_EXTERNAL;
     dependency.dstSubPassIndex = 0;
@@ -49,14 +156,12 @@ void RendererCoordinator::init() {
     colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     firstPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
-    firstPassOffscreen = firstPass;
 
     // secondPass
     colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
     colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     secondPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
-    secondPassOffscreen = secondPass;
 
     // lastPass
     colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -65,159 +170,43 @@ void RendererCoordinator::init() {
     lastPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
 
     colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    lastPassOffscreen = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
+    lastPassEditorMode = RenderPass::create({ colorAttachmentDesc }, { subPassDesc }, { dependency });
 
     // firstAndLastPass
     colorAttachmentDesc.loadOperatorColorAndDepth = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     firstAndLastPass = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
-
-    colorAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    firstAndLastPassOffscreen = RenderPass::create({ colorAttachmentDesc }, { subPassDesc });
 }
 
 void RendererCoordinator::destroy() {
+    Renderer2D::destroy();
+    Renderer::destroy();
+    RendererImGui::destroy();
+
     firstPass.reset();
     secondPass.reset();
     lastPass.reset();
     firstAndLastPass.reset();
 
-    offscreenFramebuffer.reset();
-    firstPassOffscreen.reset();
-    secondPassOffscreen.reset();
-    lastPassOffscreen.reset();
-    firstAndLastPassOffscreen.reset();
-}
+    lastPassEditorMode.reset();
 
-void RendererCoordinator::enable3dRenderer(bool enable) {
-    is3dActive = enable;
-}
-
-void RendererCoordinator::enable2dRenderer(bool enable) {
-    is2dActive = enable;
-}
-
-void RendererCoordinator::enableImGuiRenderer(bool enable) {
-    isImGuiActive = enable;
-}
-
-void RendererCoordinator::forceOffscreenRendering(bool force) {
-    isForceOffscreenRendering = force;
-
-    if (!offscreenFramebuffer) {
-        const Ref<RenderPass> &swapchainRenderPass = Engine::get().getGraphicsContext().getSwapchainRenderPass();
-        const Ref<Framebuffer> &swapchainFramebuffer =
-            Engine::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
-        const glm::uvec3 SWAPCHAIN_DIMS = swapchainFramebuffer->getDimensionsAndLayers();
-        auto swapchainReplicaTex =
-            Texture2D::createRenderTarget(SWAPCHAIN_DIMS.x, SWAPCHAIN_DIMS.y, 1, 1,
-                                          swapchainFramebuffer->getColorAttachmentTextureView(0)->getTextureFormat());
-        BZ_SET_TEXTURE_DEBUG_NAME(swapchainReplicaTex, "RendererCoordinator SwapchainReplica Texture");
-        auto swapchainReplicaTexView = TextureView::create(swapchainReplicaTex);
-
-        offscreenFramebuffer = Framebuffer::create(swapchainRenderPass, { swapchainReplicaTexView }, SWAPCHAIN_DIMS);
-
-        Ref<DescriptorSetLayout> descriptorSetLayout = DescriptorSetLayout::create(
-            { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } });
-        offscreenTextureDescriptorSet = &BZ_GRAPHICS_CTX.getDescriptorPool().getDescriptorSet(descriptorSetLayout);
-        offscreenTextureDescriptorSet->setCombinedTextureSampler(swapchainReplicaTexView, Renderer::getDefaultSampler(),
-                                                                 0);
+    for (uint32 i = 0; i < GraphicsContext::MAX_FRAMES_IN_FLIGHT; ++i) {
+        this->offscreenFramebuffers[i].reset();
     }
 }
 
-void RendererCoordinator::onEvent(Event &ev) {
-    EventDispatcher dispatcher(ev);
-    dispatcher.dispatch<KeyPressedEvent>([this](const KeyPressedEvent &ev) -> bool {
-        uint32 activeRendererCount = getActiveRendererCount();
-
-        if (ev.getKeyCode() == BZ_KEY_F1) {
-            if (is3dActive) {
-                if (activeRendererCount > 1) {
-                    is3dActive = false;
-                }
-            }
-            else
-                is3dActive = true;
-        }
-        if (ev.getKeyCode() == BZ_KEY_F2) {
-            if (is2dActive) {
-                if (activeRendererCount > 1) {
-                    is2dActive = false;
-                }
-            }
-            else
-                is2dActive = true;
-        }
-        if (ev.getKeyCode() == BZ_KEY_F3) {
-            if (isImGuiActive) {
-                if (activeRendererCount > 1) {
-                    isImGuiActive = false;
-                }
-            }
-            else
-                isImGuiActive = true;
-        }
-        return false;
-    });
+void RendererCoordinator::onEvent(Event &e) {
+    RendererImGui::onEvent(e);
 }
 
 void RendererCoordinator::render() {
-    Ref<Framebuffer> swapchainFramebuffer = Engine::get().getGraphicsContext().getSwapchainAquiredImageFramebuffer();
-    Ref<Framebuffer> framebuffer = isForceOffscreenRendering ? offscreenFramebuffer : swapchainFramebuffer;
-
-    uint32 activeRendererCount = getActiveRendererCount();
-    if (activeRendererCount == 1) {
-        Ref<RenderPass> renderPass = isForceOffscreenRendering ? firstAndLastPassOffscreen : firstAndLastPass;
-
-        if (is3dActive) {
-            Renderer::render(renderPass, framebuffer, true, true);
-        }
-        else if (is2dActive) {
-            Renderer2D::render(renderPass, framebuffer, true, true);
-        }
-        else {
-            RendererImGui::render(firstAndLastPass, swapchainFramebuffer, true, true);
-        }
-    }
-    else if (activeRendererCount == 2) {
-        Ref<RenderPass> firstRenderPass = isForceOffscreenRendering ? firstAndLastPassOffscreen : firstPass;
-        Ref<RenderPass> lastRenderPass = isForceOffscreenRendering ? lastPassOffscreen : lastPass;
-        Ref<RenderPass> finalRenderPass = isForceOffscreenRendering ? firstAndLastPass : lastPass;
-
-        if (is3dActive) {
-            Renderer::render(firstRenderPass, framebuffer, true, false);
-            if (is2dActive) {
-                Renderer2D::render(lastRenderPass, framebuffer, false, true);
-            }
-            else if (isImGuiActive) {
-                RendererImGui::render(finalRenderPass, swapchainFramebuffer, false, true);
-            }
-        }
-        else {
-            Renderer2D::render(firstRenderPass, framebuffer, true, false);
-            RendererImGui::render(finalRenderPass, swapchainFramebuffer, false, true);
-        }
-    }
-    else if (activeRendererCount == 3) {
-        Ref<RenderPass> firstRenderPass = isForceOffscreenRendering ? firstPassOffscreen : firstPass;
-        Ref<RenderPass> secondRenderPass = isForceOffscreenRendering ? secondPassOffscreen : secondPass;
-        Ref<RenderPass> finalRenderPass = isForceOffscreenRendering ? firstAndLastPass : lastPass;
-
-        Renderer::render(firstRenderPass, framebuffer, true, false);
-        Renderer2D::render(secondRenderPass, framebuffer, false, false);
-        RendererImGui::render(firstAndLastPass, swapchainFramebuffer, false, true);
-    }
+    renderFunction();
 }
 
-uint32 RendererCoordinator::getActiveRendererCount() const {
-    uint32 activeRendererCount = 0;
-    if (is3dActive)
-        activeRendererCount++;
-    if (is2dActive)
-        activeRendererCount++;
-    if (isImGuiActive)
-        activeRendererCount++;
-    return activeRendererCount;
+DescriptorSet *RendererCoordinator::getOffscreenTextureDescriptorSet() {
+    uint32 currentFrame = BZ_GRAPHICS_CTX.getCurrentFrameIndex();
+    return offscreenTextureDescriptorSets[currentFrame];
 }
+
 }

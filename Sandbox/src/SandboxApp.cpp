@@ -7,8 +7,6 @@ ParticleLayer::ParticleLayer() : Layer("Particle") {
 }
 
 void ParticleLayer::onAttachToEngine() {
-    BZ::Engine::get().getRendererCoordinator().enable3dRenderer(false);
-
     const auto &WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = WINDOW_DIMS * 0.5f;
     camera = BZ::OrthographicCamera(-WINDOW_HALF_DIMS.x, WINDOW_HALF_DIMS.x, -WINDOW_HALF_DIMS.y, WINDOW_HALF_DIMS.y);

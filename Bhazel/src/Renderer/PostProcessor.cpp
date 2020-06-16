@@ -538,7 +538,7 @@ void PostProcessor::fillData(const BufferPtr &ptr, const Scene &scene) {
     memcpy(ptr, &data, sizeof(PostProcessConstantBufferData));
 }
 
-void PostProcessor::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+void PostProcessor::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer,
                            bool waitForImageAvailable, bool signalFrameEnd) {
     CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
 
@@ -554,14 +554,14 @@ void PostProcessor::render(const Ref<RenderPass> &swapchainRenderPass, const Ref
 
     BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "ToneMapping");
     addBarrier(commandBuffer);
-    toneMap.render(commandBuffer, fxaa.isEnabled() ? swapchainReplicaRenderPass : swapchainRenderPass,
-                   fxaa.isEnabled() ? swapchainReplicaFramebuffer : swapchainFramebuffer);
+    toneMap.render(commandBuffer, fxaa.isEnabled() ? swapchainReplicaRenderPass : finalRenderPass,
+                   fxaa.isEnabled() ? swapchainReplicaFramebuffer : finalFramebuffer);
     BZ_CB_END_DEBUG_LABEL(commandBuffer);
 
     if (fxaa.isEnabled()) {
         BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "FXAA");
         addBarrier(commandBuffer);
-        fxaa.render(commandBuffer, swapchainRenderPass, swapchainFramebuffer);
+        fxaa.render(commandBuffer, finalRenderPass, finalFramebuffer);
         BZ_CB_END_DEBUG_LABEL(commandBuffer);
     }
 

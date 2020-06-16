@@ -588,8 +588,8 @@ void Renderer::drawEntities(CommandBuffer &commandBuffer, const Scene &scene, bo
         if (!shadowPass || entity.castShadow) {
             uint32 entityOffset = entityIndex * sizeof(EntityConstantBufferData);
             commandBuffer.bindDescriptorSet(*rendererData.entityDescriptorSet,
-                                            shadowPass ? rendererData.shadowPassPipelineLayout
-                                                       : rendererData.pipelineLayout,
+                                            shadowPass ? rendererData.shadowPassPipelineLayout :
+                                                         rendererData.pipelineLayout,
                                             RENDERER_ENTITY_DESCRIPTOR_SET_IDX, &entityOffset, 1);
 
             drawMesh(commandBuffer, entity.mesh, entity.overrideMaterial, shadowPass);
@@ -613,8 +613,8 @@ void Renderer::drawMesh(CommandBuffer &commandBuffer, const Mesh &mesh, const Ma
 
             uint32 materialOffset = rendererData.materialOffsetMap[materialToUse];
             commandBuffer.bindDescriptorSet(materialToUse.getDescriptorSet(),
-                                            shadowPass ? rendererData.shadowPassPipelineLayout
-                                                       : rendererData.pipelineLayout,
+                                            shadowPass ? rendererData.shadowPassPipelineLayout :
+                                                         rendererData.pipelineLayout,
                                             RENDERER_MATERIAL_DESCRIPTOR_SET_IDX, &materialOffset, 1);
         }
 
@@ -830,7 +830,7 @@ void Renderer::fillEntities(const Scene &scene) {
     BZ_ASSERT_CORE(entityIndex <= MAX_ENTITIES_PER_SCENE, "Reached the max number of Entities!");
 }
 
-void Renderer::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+void Renderer::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer,
                       bool waitForImageAvailable, bool signalFrameEnd) {
     BZ_PROFILE_FUNCTION();
 
@@ -839,10 +839,17 @@ void Renderer::render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Fram
 
         shadowPass(*rendererData.sceneToRender);
         colorPass(*rendererData.sceneToRender);
-        rendererData.postProcessor.render(swapchainRenderPass, swapchainFramebuffer, waitForImageAvailable,
-                                          signalFrameEnd);
+        rendererData.postProcessor.render(finalRenderPass, finalFramebuffer, waitForImageAvailable, signalFrameEnd);
 
         rendererData.sceneToRender = nullptr;
+    }
+    else {
+        // Dummy well behaved pass if this renderer is active but without stuff to render. Should not happen
+        // frequently.
+        CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
+        commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
+        commandBuffer.endRenderPass();
+        commandBuffer.endAndSubmit(waitForImageAvailable, signalFrameEnd);
     }
 }
 

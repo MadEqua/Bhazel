@@ -98,5 +98,8 @@ class MainLayer : public BZ::Layer {
 
 class BrickBreakerApp : public BZ::Application {
   public:
-    BrickBreakerApp() { pushLayer(new MainLayer()); }
+    BrickBreakerApp() {
+        settings.enable3dRenderer = false;
+        pushLayer(new MainLayer());
+    }
 };

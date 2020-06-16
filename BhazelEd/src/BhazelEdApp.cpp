@@ -8,8 +8,8 @@ BZ::Application *createApplication() {
 namespace BZ {
 
 BhazelEdApp::BhazelEdApp() {
-    Engine::get().getRendererCoordinator().enable3dRenderer(false);
-    Engine::get().getRendererCoordinator().forceOffscreenRendering(true);
+    settings.editorMode = true;
+
     pushLayer(new MainLayer());
 }
 

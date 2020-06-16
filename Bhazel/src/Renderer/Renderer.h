@@ -68,7 +68,7 @@ class Renderer {
     static void fillMaterial(const Material &material);
     static void fillEntities(const Scene &scene);
 
-    static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+    static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer,
                        bool waitForImageAvailable, bool signalFrameEnd);
     static void onImGuiRender(const FrameTiming &frameTiming);
 

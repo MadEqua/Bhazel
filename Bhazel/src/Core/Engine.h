@@ -45,10 +45,9 @@ class Engine {
 
     Window &getWindow() { return window; }
     GraphicsContext &getGraphicsContext() { return graphicsContext; }
+    RendererCoordinator &getRendererCoordinator() { return rendererCoordinator; }
 
     const std::string &getAssetsPath() const { return assetsPath; }
-
-    RendererCoordinator& getRendererCoordinator() { return rendererCoordinator; }
 
 #ifdef BZ_HOT_RELOAD_SHADERS
     FileWatcher &getFileWatcher() { return fileWatcher; }
@@ -83,6 +82,16 @@ class Engine {
 /*-------------------------------------------------------------------------------------------*/
 class Application {
   public:
+    struct Settings {
+        // If true, all renderers are enabled and the 2D and 3D renderers will use default Swapchain while ImGui renderer
+        // will use an offscreen Framebuffer.
+        bool editorMode = false;
+
+        bool enable2dRenderer = true;
+        bool enable3dRenderer = true;
+        bool enableImGuiRenderer = true;
+    };
+
     Application() = default;
     virtual ~Application();
 
@@ -97,7 +106,11 @@ class Application {
     void pushLayer(Layer *layer);
     void pushOverlay(Layer *overlay);
 
-  private:
+    const Settings &getSettings() const { return settings; }
+
+  protected:
     LayerStack layerStack;
+
+    Settings settings;
 };
 }

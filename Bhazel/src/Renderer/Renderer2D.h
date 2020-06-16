@@ -43,7 +43,7 @@ class Renderer2D {
     static void init();
     static void destroy();
 
-    static void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+    static void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer,
                        bool waitForImageAvailable, bool signalFrameEnd);
     static void onImGuiRender(const FrameTiming &frameTiming);
 };

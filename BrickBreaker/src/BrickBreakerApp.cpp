@@ -208,8 +208,6 @@ MainLayer::MainLayer() : Layer("MainLayer") {
 }
 
 void MainLayer::onAttachToEngine() {
-    BZ::Engine::get().getRendererCoordinator().enable3dRenderer(false);
-
     const auto WINDOW_DIMS = BZ::Engine::get().getWindow().getDimensionsFloat();
     const glm::vec2 WINDOW_HALF_DIMS = { WINDOW_DIMS.x * 0.5f, WINDOW_DIMS.t * 0.5f };
 

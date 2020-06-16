@@ -151,7 +151,7 @@ class PostProcessor {
     void destroy();
 
     void fillData(const BufferPtr &ptr, const Scene &scene);
-    void render(const Ref<RenderPass> &swapchainRenderPass, const Ref<Framebuffer> &swapchainFramebuffer,
+    void render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer,
                 bool waitForImageAvailable, bool signalFrameEnd);
     void onImGuiRender(const FrameTiming &frameTiming);
 
