@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Camera.h"
-#include "Mesh.h"
-#include "Transform.h"
+#include "Renderer/Components/Camera.h"
+#include "Renderer/Components/Mesh.h"
+#include "Renderer/Components/Transform.h"
 
 
 namespace BZ {

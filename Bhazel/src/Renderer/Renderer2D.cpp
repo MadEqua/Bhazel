@@ -14,9 +14,8 @@
 #include "Core/Engine.h"
 #include "Core/Utils.h"
 
-#include "Renderer/ParticleSystem2D.h"
-
-#include "Camera.h"
+#include "Renderer/Components/ParticleSystem2D.h"
+#include "Renderer/Components/Camera.h"
 
 #include <imgui.h>
 
