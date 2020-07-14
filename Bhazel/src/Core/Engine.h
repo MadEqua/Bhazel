@@ -5,11 +5,10 @@
 #include "Core/Ini/IniParser.h"
 #include "Core/Input.h"
 #include "Core/Timer.h"
-
 #include "FileWatcher/FileWatcher.h"
 #include "Graphics/GraphicsContext.h"
-#include "Layers/LayerStack.h"
 #include "Renderer/RendererCoordinator.h"
+#include "Scene/SceneManager.h"
 
 
 namespace BZ {
@@ -18,6 +17,8 @@ class Event;
 class WindowResizedEvent;
 class Layer;
 class Application;
+class EcsInstance;
+class Scene;
 
 
 struct FrameTiming {
@@ -56,8 +57,6 @@ class Engine {
     static Engine &get() { return *instance; }
 
   private:
-    bool onWindowResized(const WindowResizedEvent &e);
-
     static Engine *instance;
     Application *application;
 
@@ -76,6 +75,8 @@ class Engine {
 
     bool onMainLoop = false;
     bool forceStopLoop = false;
+
+    void updateSystems(const FrameTiming &frameTiming, Scene &scene);
 };
 
 
@@ -83,8 +84,8 @@ class Engine {
 class Application {
   public:
     struct Settings {
-        // If true, all renderers are enabled and the 2D and 3D renderers will use default Swapchain while ImGui renderer
-        // will use an offscreen Framebuffer.
+        // If true, all renderers are enabled and the 2D and 3D renderers will use default Swapchain while ImGui
+        // renderer will use an offscreen Framebuffer.
         bool editorMode = false;
 
         bool enable2dRenderer = true;
@@ -93,23 +94,20 @@ class Application {
     };
 
     Application() = default;
-    virtual ~Application();
+    virtual ~Application() = default;
 
     BZ_NON_COPYABLE(Application);
-
-    void onEvent(Event &ev);
 
     void onAttachToEngine();
     void onUpdate(const FrameTiming &frameTiming);
     void onImGuiRender(const FrameTiming &frameTiming);
-
-    void pushLayer(Layer *layer);
-    void pushOverlay(Layer *overlay);
+    void onEvent(Event &ev);
 
     const Settings &getSettings() const { return settings; }
+    SceneManager &getSceneManager() { return sceneManager; }
 
   protected:
-    LayerStack layerStack;
+    SceneManager sceneManager;
 
     Settings settings;
 };

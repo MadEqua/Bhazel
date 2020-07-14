@@ -13,8 +13,8 @@
 #include "Graphics/Shader.h"
 #include "Graphics/Texture.h"
 
-#include "Renderer/Camera.h"
-#include "Renderer/Scene.h"
+#include "Renderer/Components/Camera.h"
+#include "Scene/Scene.h"
 
 #include <imgui.h>
 
@@ -528,7 +528,7 @@ void PostProcessor::destroy() {
 
 void PostProcessor::fillData(const BufferPtr &ptr, const Scene &scene) {
     PostProcessConstantBufferData data;
-    data.cameraExposureAndBloomIntensity.x = scene.getCamera().getExposure();
+    //data.cameraExposureAndBloomIntensity.x = scene.getCamera().getExposure();
     data.cameraExposureAndBloomIntensity.y = bloom.getIntensity();
 
     for (uint32 i = 0; i < Bloom::BLOOM_TEXTURE_MIPS; ++i) {

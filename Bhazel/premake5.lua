@@ -24,6 +24,7 @@ project "Bhazel"
         "vendor/VulkanMemoryAllocator",
         "vendor/tinyobjloader",
         "vendor/filewatch",
+        "vendor/entt/src",
         "%{VULKAN_SDK_DIR}/Include"
     }
 

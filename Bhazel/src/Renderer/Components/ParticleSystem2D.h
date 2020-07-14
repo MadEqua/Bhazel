@@ -5,7 +5,14 @@
 
 namespace BZ {
 
-template <typename T> struct Range {
+class ParticleSystem2D;
+struct FrameTiming;
+class Scene;
+class Texture2D;
+
+
+template<typename T>
+struct Range {
     T min;
     T max;
 
@@ -21,20 +28,17 @@ template <typename T> struct Range {
 };
 
 struct Particle2DRanges {
-    Range<glm::vec2> positionRange;
-    Range<glm::vec2> dimensionRange;
-    Range<float> rotationRange;
-    Range<float> lifeSecsRange;
-    Range<glm::vec2> velocityRange;
-    Range<float> angularVelocityRange;
-    Range<glm::vec2> accelerationRange;
-    Range<glm::vec4> tintAndAlphaRange;
-
-    Particle2DRanges();
+    Range<glm::vec2> positionRange = { {} };
+    Range<glm::vec2> dimensionRange = { { 10.0f, 10.0f }, { 15.0f, 15.0f } };
+    Range<float> rotationRange = { 0.0f, 359.0f };
+    Range<float> lifeSecsRange = { 1.0f, 5.0f };
+    Range<glm::vec2> velocityRange = { { -50.0f, -50.0f }, { 50.0f, 50.0f } };
+    Range<float> angularVelocityRange = { 0.0f, 0.0f };
+    Range<glm::vec2> accelerationRange = { {} };
+    Range<glm::vec4> tintAndAlphaRange = { { 0.2f, 0.2f, 0.2f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } };
 };
 
 struct Particle2D {
-    // Don't use Sprite. We don't need a Texture for all Particlesm they share the Emitter texture.
     glm::vec2 position;
     glm::vec2 dimensions;
     float rotationDeg;
@@ -50,20 +54,12 @@ struct Particle2D {
 
 
 /*-------------------------------------------------------------------------------------------*/
-class ParticleSystem2D;
-struct FrameTiming;
-class Texture2D;
-
-
 class Emitter2D {
   public:
-    Emitter2D(ParticleSystem2D &parent, const glm::vec2 &positionOffset, uint32 particlesPerSec, float totalLifeSecs,
-              Particle2DRanges &ranges, const Ref<Texture2D> &texture);
+    Emitter2D(const glm::vec2 &positionOffset, uint32 particlesPerSec, float totalLifeSecs, Particle2DRanges &ranges,
+              const Ref<Texture2D> &texture);
 
     void start();
-    void onUpdate(const FrameTiming &frameTiming);
-
-    const std::vector<Particle2D> &getActiveParticles() const { return activeParticles; }
 
     uint32 particlesPerSec;
     float totalLifeSecs;
@@ -71,46 +67,43 @@ class Emitter2D {
     Particle2DRanges ranges;
     Ref<Texture2D> texture;
 
-  private:
-    ParticleSystem2D &parent;
-
-    glm::vec2 positionOffset; // Relative to parent ParticleSystem
+    // Relative to parent ParticleSystem.
+    glm::vec2 positionOffset;
     float secsToLive;
     float secsPerParticle;
     float secsUntilNextEmission;
 
     std::vector<Particle2D> activeParticles;
     // std::vector<Particle2D> inactiveParticles;
-
-    void emitParticle();
 };
 
 
 /*-------------------------------------------------------------------------------------------*/
 /*
- * Works on World coordinates. Meant to be rendered through a Renderer2D which can take a ParticleSystem2D and perform
- * batching.
+ * Works on World coordinates.
  */
 class ParticleSystem2D {
   public:
     ParticleSystem2D();
     explicit ParticleSystem2D(const glm::vec2 &position);
 
-    void addEmitter(const glm::vec2 &positionOffset, uint32 particlesPerSec, float totalLifeSecs,
-                    Particle2DRanges &ranges, const Ref<Texture2D> &texture);
     void start();
 
     void setPosition(const glm::vec2 &position) { this->position = position; }
     const glm::vec2 &getPosition() const { return position; }
 
-    std::vector<Emitter2D> &getEmitters() { return emitters; }
-    const std::vector<Emitter2D> &getEmitters() const { return emitters; }
-
-    void onUpdate(const FrameTiming &frameTiming);
-
-  private:
     std::vector<Emitter2D> emitters;
     glm::vec2 position;
     bool isStarted = false;
+};
+
+
+/*-------------------------------------------------------------------------------------------*/
+class ParticleSystem2DSystem {
+  public:
+    static void update(const FrameTiming &frameTiming, Scene &scene);
+
+  private:
+    static void emitParticle(const ParticleSystem2D &system, Emitter2D &emitter);
 };
 }

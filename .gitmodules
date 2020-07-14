@@ -10,3 +10,6 @@
 [submodule "Bhazel/vendor/glfw"]
 	path = Bhazel/vendor/glfw
 	url = https://github.com/glfw/glfw
+[submodule "Bhazel/vendor/entt"]
+	path = Bhazel/vendor/entt
+	url = https://github.com/skypjack/entt.git

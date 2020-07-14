@@ -15,11 +15,11 @@ class Material {
   public:
     Material() = default;
 
-    Material(Ref<Texture2D> &albedoTexture, Ref<Texture2D> &normalTexture = MakeRefNull<Texture2D>(),
-             Ref<Texture2D> &metallicTexture = MakeRefNull<Texture2D>(),
-             Ref<Texture2D> &roughnessTexture = MakeRefNull<Texture2D>(),
-             Ref<Texture2D> &heightTexture = MakeRefNull<Texture2D>(),
-             Ref<Texture2D> &aoTexture = MakeRefNull<Texture2D>(), bool useAnisotropicSampler = false);
+    Material(const Ref<Texture2D> &albedoTexture, const Ref<Texture2D> &normalTexture = MakeRefNull<Texture2D>(),
+             const Ref<Texture2D> &metallicTexture = MakeRefNull<Texture2D>(),
+             const Ref<Texture2D> &roughnessTexture = MakeRefNull<Texture2D>(),
+             const Ref<Texture2D> &heightTexture = MakeRefNull<Texture2D>(),
+             const Ref<Texture2D> &aoTexture = MakeRefNull<Texture2D>(), bool useAnisotropicSampler = false);
 
     explicit Material(Ref<TextureCube> &albedoTexture);
 
@@ -87,7 +87,8 @@ class Material {
 };
 }
 
-template <> struct std::hash<BZ::Material> {
+template<>
+struct std::hash<BZ::Material> {
     size_t operator()(const BZ::Material &mat) const {
         return (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getAlbedoTextureView())) ^
                (std::hash<BZ::Ref<BZ::TextureView>>()(mat.getNormalTextureView())) ^

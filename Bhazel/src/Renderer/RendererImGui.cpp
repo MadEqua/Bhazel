@@ -243,7 +243,7 @@ void RendererImGui::render(const Ref<RenderPass>& finalRenderPass, const Ref<Fra
     commandBuffer.setPushConstants(rendererData.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, &io.DisplaySize, 0,
                                    sizeof(ImVec2));
 
-    // Wait for the memcpyied index/vertex data to be available before doing actual rendering.
+    // Wait for the memcpyed index/vertex data to be available before doing actual rendering.
     commandBuffer.pipelineBarrierMemory(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                                         VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 

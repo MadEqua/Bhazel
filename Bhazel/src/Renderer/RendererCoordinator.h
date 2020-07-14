@@ -9,7 +9,7 @@ class RenderPass;
 class Framebuffer;
 class Event;
 class DescriptorSet;
-
+class Scene;
 
 /*
  * Coordinates Renderers accessing the final destination Framebuffer (either Swapchain or an offscreen Framebuffer).
@@ -27,7 +27,7 @@ class RendererCoordinator {
     void destroy();
 
     void onEvent(Event &ev);
-    void render();
+    void render(const Scene &scene);
 
     DescriptorSet *getOffscreenTextureDescriptorSet();
 
@@ -42,7 +42,7 @@ class RendererCoordinator {
 
     Ref<RenderPass> lastPassEditorMode;
 
-    std::function<void()> renderFunction;
+    std::function<void(const Scene &)> renderFunction;
 
     void internalInit();
 };

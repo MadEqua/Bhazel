@@ -14,9 +14,13 @@
 #include "Core/Engine.h"
 #include "Core/Utils.h"
 
-#include "Renderer/Components/ParticleSystem2D.h"
 #include "Renderer/Components/Camera.h"
+#include "Renderer/Components/ParticleSystem2D.h"
+#include "Renderer/Components/Transform.h"
 
+#include "Scene/Scene.h"
+
+#include <entt/entity/registry.hpp>
 #include <imgui.h>
 
 
@@ -70,8 +74,6 @@ struct TexData {
 };
 
 static struct Renderer2DData {
-    const OrthographicCamera *camera;
-
     Ref<Buffer> vertexBuffer;
     Ref<Buffer> indexBuffer;
     Ref<Buffer> constantBuffer;
@@ -204,42 +206,28 @@ void Renderer2D::destroy() {
     rendererData.textureDescriptorSetLayout.reset();
 }
 
-void Renderer2D::begin(const OrthographicCamera &camera) {
+void Renderer2D::addSprite(const Sprite &sprite) {
     BZ_PROFILE_FUNCTION();
 
-    rendererData.nextSprite = 0;
-    rendererData.camera = &camera;
+    if (sprite.texture)
+        addQuad(sprite.position, sprite.dimensions, sprite.rotationDeg, sprite.texture, sprite.tintAndAlpha);
+    else
+        addQuad(sprite.position, sprite.dimensions, sprite.rotationDeg, rendererData.whiteTexture, sprite.tintAndAlpha);
 }
 
-void Renderer2D::end() {
+void Renderer2D::addQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg,
+                         const glm::vec4 &colorAndAlpha) {
     BZ_PROFILE_FUNCTION();
 
-    if (rendererData.nextSprite > 0) {
-        // Sort objects to minimize state changes when rendering. Sorted by Texture and then by
-        // tint.
-        std::sort(rendererData.sprites, rendererData.sprites + rendererData.nextSprite,
-                  [](const InternalSprite &a, const InternalSprite &b) { return a.sortKey < b.sortKey; });
-    }
+    addQuad(position, dimensions, rotationDeg, rendererData.whiteTexture, colorAndAlpha);
 }
 
-void Renderer2D::renderSprite(const Sprite &sprite) {
-    BZ_PROFILE_FUNCTION();
-
-    renderQuad(sprite.position, sprite.dimensions, sprite.rotationDeg, sprite.texture, sprite.tintAndAlpha);
-}
-
-void Renderer2D::renderQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg,
-                            const glm::vec4 &colorAndAlpha) {
-    BZ_PROFILE_FUNCTION();
-
-    renderQuad(position, dimensions, rotationDeg, rendererData.whiteTexture, colorAndAlpha);
-}
-
-void Renderer2D::renderQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg,
-                            const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha) {
+void Renderer2D::addQuad(const glm::vec2 &position, const glm::vec2 &dimensions, float rotationDeg,
+                         const Ref<Texture2D> &texture, const glm::vec4 &tintAndAlpha) {
     BZ_PROFILE_FUNCTION();
 
     BZ_ASSERT_CORE(rendererData.nextSprite < MAX_RENDERER2D_SPRITES, "nextSprite exceeded MAX_RENDERER2D_SPRITES!");
+    BZ_ASSERT_CORE(texture, "A texture is required!");
 
     InternalSprite &spr = rendererData.sprites[rendererData.nextSprite++];
     spr.position = position;
@@ -257,24 +245,41 @@ void Renderer2D::renderQuad(const glm::vec2 &position, const glm::vec2 &dimensio
     spr.sortKey = spr.textureHash;
 }
 
-void Renderer2D::renderParticleSystem2D(const ParticleSystem2D &particleSystem) {
+void Renderer2D::addParticleSystem2D(const ParticleSystem2D &particleSystem) {
     BZ_PROFILE_FUNCTION();
 
-    for (const auto &emitter : particleSystem.getEmitters()) {
-        for (const auto &particle : emitter.getActiveParticles()) {
-            renderQuad(particle.position, particle.dimensions, particle.rotationDeg, emitter.texture,
-                       particle.tintAndAlpha);
+    for (const auto &emitter : particleSystem.emitters) {
+        for (const auto &particle : emitter.activeParticles) {
+            addQuad(particle.position, particle.dimensions, particle.rotationDeg, emitter.texture,
+                    particle.tintAndAlpha);
         }
     }
 }
 
-void Renderer2D::render(const Ref<RenderPass> &finalRenderPass, const Ref<Framebuffer> &finalFramebuffer,
-                        bool waitForImageAvailable, bool signalFrameEnd) {
+void Renderer2D::render(const Scene &scene, const Ref<RenderPass> &finalRenderPass,
+                        const Ref<Framebuffer> &finalFramebuffer, bool waitForImageAvailable, bool signalFrameEnd) {
     BZ_PROFILE_FUNCTION();
+
+    // TODO: why is this const needed?
+    const auto spriteView = scene.getEcsInstance().view<const Sprite>();
+    const auto particleSystemView = scene.getEcsInstance().view<const ParticleSystem2D>();
+
+    rendererData.nextSprite = 0;
+
+    auto cameraView = scene.getEcsInstance().view<const Transform, const OrthographicCamera>();
+    BZ_ASSERT_CORE(!cameraView.empty(), "Renderer2D needs an OrthographicCamera with a Transform!");
+
+    spriteView.each([](auto &sprite) { addSprite(sprite); });
+    particleSystemView.each([](auto &particleSystem) { addParticleSystem2D(particleSystem); });
 
     rendererData.stats.spriteCount = rendererData.nextSprite;
 
     if (rendererData.nextSprite > 0) {
+        // Sort objects to minimize state changes when rendering.Sorted by Texture and then by
+        // tint.
+        std::sort(rendererData.sprites, rendererData.sprites + rendererData.nextSprite,
+                  [](const InternalSprite &a, const InternalSprite &b) { return a.sortKey < b.sortKey; });
+
         CommandBuffer &commandBuffer = CommandBuffer::getAndBegin(QueueProperty::Graphics);
         BZ_CB_BEGIN_DEBUG_LABEL(commandBuffer, "Renderer2D");
 
@@ -284,7 +289,9 @@ void Renderer2D::render(const Ref<RenderPass> &finalRenderPass, const Ref<Frameb
 
         commandBuffer.beginRenderPass(finalRenderPass, finalFramebuffer);
 
-        glm::mat4 viewProjMatrix = rendererData.camera->getProjectionMatrix() * rendererData.camera->getViewMatrix();
+        entt::entity cameraEnt = cameraView.front();
+        glm::mat4 viewProjMatrix = scene.getEcsInstance().get<OrthographicCamera>(cameraEnt).projectionMatrix *
+                                   scene.getEcsInstance().get<Transform>(cameraEnt).getParentToLocalMatrix();
         memcpy(rendererData.constantBufferPtr, &viewProjMatrix[0][0], sizeof(glm::mat4));
         commandBuffer.bindDescriptorSet(*rendererData.constantsDescriptorSet, rendererData.pipelineLayout, 0, nullptr,
                                         0);
@@ -336,7 +343,7 @@ void Renderer2D::render(const Ref<RenderPass> &finalRenderPass, const Ref<Frameb
                 memcpy(rendererData.indexBufferPtr + offset, &indices, sizeof(indices));
             }
 
-            // Command recording
+            // Command recording.
             bool texChanged = currentBatchTexHash != spr.textureHash;
             // bool tintChanged = currentBatchTint != spr.tintAndAlpha;
 

@@ -11,9 +11,9 @@
 
 namespace BZ {
 
-Material::Material(Ref<Texture2D> &albedoTexture, Ref<Texture2D> &normalTexture, Ref<Texture2D> &metallicTexture,
-                   Ref<Texture2D> &roughnessTexture, Ref<Texture2D> &heightTexture, Ref<Texture2D> &aoTexture,
-                   bool useAnisotropicSampler) :
+Material::Material(const Ref<Texture2D> &albedoTexture, const Ref<Texture2D> &normalTexture,
+                   const Ref<Texture2D> &metallicTexture, const Ref<Texture2D> &roughnessTexture,
+                   const Ref<Texture2D> &heightTexture, const Ref<Texture2D> &aoTexture, bool useAnisotropicSampler) :
     albedoTextureView(TextureView::create(albedoTexture)),
     anisotropicSampler(useAnisotropicSampler) {
 

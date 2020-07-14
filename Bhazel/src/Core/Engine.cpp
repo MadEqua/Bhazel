@@ -4,9 +4,15 @@
 
 #include "Events/WindowEvent.h"
 #include "Layers/Layer.h"
+
 #include "Renderer/Renderer.h"
 #include "Renderer/Renderer2D.h"
 #include "Renderer/RendererImGui.h"
+
+#include "Renderer/Components/CameraController.h"
+#include "Renderer/Components/ParticleSystem2D.h"
+
+#include "Scene/Scene.h"
 
 #include <GLFW/glfw3.h>
 
@@ -17,14 +23,15 @@ static void GLFWErrorCallback(int error, const char *description) {
     BZ_LOG_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 }
 
-Engine* Engine::instance = nullptr;
+Engine *Engine::instance = nullptr;
 
 Engine::Engine() {
     BZ_PROFILE_FUNCTION();
 
     BZ_LOG_CORE_INFO("Initializing Engine.");
 
-    BZ::Log::get(); // Init Logger.
+    // Init Logger.
+    BZ::Log::get();
 
     instance = this;
 
@@ -77,9 +84,9 @@ void Engine::attachApplication(Application *application) {
         rendererCoordinator.initEditorMode();
     }
     else {
-        rendererCoordinator.init(appSettings.enable2dRenderer, appSettings.enable3dRenderer, appSettings.enableImGuiRenderer);
+        rendererCoordinator.init(appSettings.enable2dRenderer, appSettings.enable3dRenderer,
+                                 appSettings.enableImGuiRenderer);
     }
-    
 
     application->onAttachToEngine();
 }
@@ -107,6 +114,10 @@ void Engine::mainLoop() {
             frameTiming.runningTime += frameDuration;
             application->onUpdate(frameTiming);
 
+            Scene &currentScene = application->getSceneManager().getCurrentScene();
+            updateSystems(frameTiming, currentScene);
+
+            // TODO: this is useless if ImGuiRenderer is not active.
             RendererImGui::begin();
             graphicsContext.onImGuiRender(frameTiming);
             Renderer::onImGuiRender(frameTiming);
@@ -114,7 +125,7 @@ void Engine::mainLoop() {
             application->onImGuiRender(frameTiming);
             RendererImGui::end();
 
-            rendererCoordinator.render();
+            rendererCoordinator.render(currentScene);
 
             graphicsContext.endFrame();
 
@@ -146,33 +157,26 @@ void Engine::onEvent(Event &e) {
     application->onEvent(e);
 }
 
-
-/*-------------------------------------------------------------------------------------------*/
-Application::~Application() {
-    layerStack.clear();
+void Engine::updateSystems(const FrameTiming &frameTiming, Scene &scene) {
+    CameraControllerSystem::update(frameTiming, scene);
+    ParticleSystem2DSystem::update(frameTiming, scene);
 }
 
+
+/*-------------------------------------------------------------------------------------------*/
 void Application::onAttachToEngine() {
-    layerStack.onAttachToEngine();
+    sceneManager.onAttachToEngine();
 }
 
 void Application::onUpdate(const FrameTiming &frameTiming) {
-    layerStack.onUpdate(frameTiming);
+    sceneManager.onUpdate(frameTiming);
 }
 
 void Application::onImGuiRender(const FrameTiming &frameTiming) {
-    layerStack.onImGuiRender(frameTiming);
+    sceneManager.onImGuiRender(frameTiming);
 }
 
 void Application::onEvent(Event &e) {
-    layerStack.onEvent(e);
-}
-
-void Application::pushLayer(Layer *layer) {
-    layerStack.pushLayer(layer);
-}
-
-void Application::pushOverlay(Layer *overlay) {
-    layerStack.pushOverlay(overlay);
+    sceneManager.onEvent(e);
 }
 }

@@ -30,33 +30,33 @@ void RendererCoordinator::init(bool enable2dRenderer, bool enable3dRenderer, boo
     if (enable2dRenderer) {
         if (enable3dRenderer) {
             if (enableImGuiRenderer) {
-                renderFunction = [this]() {
+                renderFunction = [this](const Scene &scene) {
                     const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
                     Renderer::render(firstPass, swapchainFramebuffer, true, false);
-                    Renderer2D::render(secondPass, swapchainFramebuffer, false, false);
+                    Renderer2D::render(scene, secondPass, swapchainFramebuffer, false, false);
                     RendererImGui::render(lastPass, swapchainFramebuffer, false, true);
                 };
             }
             else {
-                renderFunction = [this]() {
+                renderFunction = [this](const Scene &scene) {
                     const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
                     Renderer::render(firstPass, swapchainFramebuffer, true, false);
-                    Renderer2D::render(lastPass, swapchainFramebuffer, false, true);
+                    Renderer2D::render(scene, lastPass, swapchainFramebuffer, false, true);
                 };
             }
         }
         else {
             if (enableImGuiRenderer) {
-                renderFunction = [this]() {
+                renderFunction = [this](const Scene &scene) {
                     const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
-                    Renderer2D::render(firstPass, swapchainFramebuffer, true, false);
+                    Renderer2D::render(scene, firstPass, swapchainFramebuffer, true, false);
                     RendererImGui::render(lastPass, swapchainFramebuffer, false, true);
                 };
             }
             else {
-                renderFunction = [this]() {
+                renderFunction = [this](const Scene &scene) {
                     const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
-                    Renderer2D::render(firstAndLastPass, swapchainFramebuffer, true, true);
+                    Renderer2D::render(scene, firstAndLastPass, swapchainFramebuffer, true, true);
                 };
             }
         }
@@ -64,14 +64,14 @@ void RendererCoordinator::init(bool enable2dRenderer, bool enable3dRenderer, boo
     else {
         if (enable3dRenderer) {
             if (enableImGuiRenderer) {
-                renderFunction = [this]() {
+                renderFunction = [this](const Scene &scene) {
                     const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
                     Renderer::render(firstPass, swapchainFramebuffer, true, false);
                     RendererImGui::render(lastPass, swapchainFramebuffer, false, true);
                 };
             }
             else {
-                renderFunction = [this]() {
+                renderFunction = [this](const Scene &scene) {
                     const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
                     Renderer::render(firstAndLastPass, swapchainFramebuffer, true, true);
                 };
@@ -79,7 +79,7 @@ void RendererCoordinator::init(bool enable2dRenderer, bool enable3dRenderer, boo
         }
         else {
             if (enableImGuiRenderer) {
-                renderFunction = [this]() {
+                renderFunction = [this](const Scene &scene) {
                     const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
                     RendererImGui::render(firstAndLastPass, swapchainFramebuffer, true, true);
                 };
@@ -119,11 +119,11 @@ void RendererCoordinator::initEditorMode() {
                                                                      Renderer::getDefaultSampler(), 0);
     }
 
-    renderFunction = [this]() {
+    renderFunction = [this](const Scene &scene) {
         const Ref<Framebuffer> offscreenFramebuffer = offscreenFramebuffers[BZ_GRAPHICS_CTX.getCurrentFrameIndex()];
         const Ref<Framebuffer> swapchainFramebuffer = BZ_GRAPHICS_CTX.getSwapchainAquiredImageFramebuffer();
         Renderer::render(firstPass, offscreenFramebuffer, true, false);
-        Renderer2D::render(lastPassEditorMode, offscreenFramebuffer, false, false);
+        Renderer2D::render(scene, lastPassEditorMode, offscreenFramebuffer, false, false);
         RendererImGui::render(firstAndLastPass, swapchainFramebuffer, false, true);
     };
 }
@@ -200,8 +200,8 @@ void RendererCoordinator::onEvent(Event &e) {
     RendererImGui::onEvent(e);
 }
 
-void RendererCoordinator::render() {
-    renderFunction();
+void RendererCoordinator::render(const Scene &scene) {
+    renderFunction(scene);
 }
 
 DescriptorSet *RendererCoordinator::getOffscreenTextureDescriptorSet() {

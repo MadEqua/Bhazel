@@ -19,6 +19,7 @@ project "Sandbox"
         "../Bhazel/vendor/glm",
         "../Bhazel/vendor/ImGui",
         "../Bhazel/vendor/VulkanMemoryAllocator",
+        "../Bhazel/vendor/entt/src",
         "%{VULKAN_SDK_DIR}/Include",
     }
 
