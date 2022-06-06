@@ -17,12 +17,12 @@
 #include "Core/Utils.h"
 #include "Core/Window.h"
 
-#include "Renderer/Components/Camera.h"
-#include "Renderer/Components/Material.h"
-#include "Renderer/Components/Mesh.h"
-#include "Renderer/Components/Transform.h"
+#include "Renderer/Camera.h"
+#include "Renderer/Material.h"
+#include "Renderer/Mesh.h"
 #include "Renderer/PostProcessor.h"
 #include "Renderer/Scene.h"
+#include "Renderer/Transform.h"
 
 #include <imgui.h>
 

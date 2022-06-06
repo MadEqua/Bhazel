@@ -1,11 +1,11 @@
 #include "bzpch.h"
 
-#include "Mesh.h"
-
 #include "Core/Engine.h"
 #include "Core/Utils.h"
+#include "Mesh.h"
+#include "Renderer.h"
+
 #include "Graphics/Buffer.h"
-#include "Renderer/Renderer.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -285,10 +285,10 @@ Mesh::Mesh(const char *path, const Material &material) {
             submesh.material = Material(
                 (pathWithoutFileName + material.diffuse_texname).c_str(),
                 !material.normal_texname.empty() ? (pathWithoutFileName + material.normal_texname).c_str() : nullptr,
-                !material.metallic_texname.empty() ? (pathWithoutFileName + material.metallic_texname).c_str() :
-                                                     nullptr,
-                !material.roughness_texname.empty() ? (pathWithoutFileName + material.roughness_texname).c_str() :
-                                                      nullptr,
+                !material.metallic_texname.empty() ? (pathWithoutFileName + material.metallic_texname).c_str()
+                                                   : nullptr,
+                !material.roughness_texname.empty() ? (pathWithoutFileName + material.roughness_texname).c_str()
+                                                    : nullptr,
                 !material.bump_texname.empty() ? (pathWithoutFileName + material.bump_texname).c_str() : nullptr,
                 !material.ambient_texname.empty() ? (pathWithoutFileName + material.ambient_texname).c_str() : nullptr);
         }

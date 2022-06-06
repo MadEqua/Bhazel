@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/Components/Camera.h"
+#include "Renderer/Camera.h"
 
 
 namespace BZ {
