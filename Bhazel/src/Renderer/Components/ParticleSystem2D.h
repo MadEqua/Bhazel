@@ -89,9 +89,6 @@ class ParticleSystem2D {
 
     void start();
 
-    void setPosition(const glm::vec2 &position) { this->position = position; }
-    const glm::vec2 &getPosition() const { return position; }
-
     std::vector<Emitter2D> emitters;
     glm::vec2 position;
     bool isStarted = false;

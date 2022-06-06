@@ -73,7 +73,7 @@ void TestScene::onUpdate(const BZ::FrameTiming &frameTiming) {
     pos.x += 100.0f * frameTiming.deltaTime.asSeconds() * mult;
     pos.y = (sin(pos.x * 0.02f) * 0.5f + 0.5f) * (WINDOW_DIMS.y * 0.75f) + (WINDOW_DIMS.y * 0.125f);
 
-    ecsInstance.get<BZ::ParticleSystem2D>(emitterEnt).setPosition(pos);
+    ecsInstance.get<BZ::ParticleSystem2D>(emitterEnt).position = pos;
 }
 
 

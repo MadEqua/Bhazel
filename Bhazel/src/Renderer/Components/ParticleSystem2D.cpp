@@ -95,7 +95,7 @@ void ParticleSystem2DSystem::update(const FrameTiming &frameTiming, Scene &scene
 
 void ParticleSystem2DSystem::emitParticle(const ParticleSystem2D &system, Emitter2D &emitter) {
     Particle2D particle;
-    particle.position = system.getPosition() + emitter.positionOffset + emitter.ranges.positionRange.getValue();
+    particle.position = system.position + emitter.positionOffset + emitter.ranges.positionRange.getValue();
     particle.dimensions = emitter.ranges.dimensionRange.getValue();
     particle.rotationDeg = emitter.ranges.rotationRange.getValue();
     particle.tintAndAlpha = emitter.ranges.tintAndAlphaRange.getValue();

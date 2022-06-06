@@ -47,8 +47,8 @@ class ParticleLayer : public BZ::Layer {
 class TestScene : public BZ::Scene {
   public:
     TestScene() {
-        pushLayer(new ParticleLayer());
-        // pushLayer(new Layer3D());
+        //pushLayer(new ParticleLayer());
+        pushLayer(new Layer3D());
     }
 
     virtual ~TestScene() = default;
