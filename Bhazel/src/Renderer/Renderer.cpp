@@ -87,7 +87,7 @@ static DataLayout vertexDataLayout = {
     { DataType::Uint16, DataElements::Vec2, true },
 };
 
-static DataLayout indexDataLayout = { { DataType::Uint32, DataElements::Scalar, "" } };
+static DataLayout indexDataLayout = { { DataType::Uint32, DataElements::Scalar } };
 
 struct RendererStats {
     uint32 vertexCount;

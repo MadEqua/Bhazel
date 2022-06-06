@@ -89,10 +89,9 @@ void Layer3D::onAttachToEngine() {
     camera = BZ::PerspectiveCamera(50.0f, BZ::Engine::get().getWindow().getAspectRatio(), 0.1f, 600.0f);
     camera.getTransform().setTranslation(0.0f, 100.0f, 100.0f, BZ::Space::Parent);
     camera.setExposure(0.5f);
-    scenes[0].setCamera(camera);
-    scenes[1].setCamera(camera);
-    scenes[2].setCamera(camera);
-
+    scenes[0] = new BZ::Scene(camera);
+    scenes[1] = new BZ::Scene(camera);
+    scenes[2] = new BZ::Scene(camera);
     rotateCameraController = BZ::RotateCameraController(camera, 11.0f, 0.07f);
     freeCameraController = BZ::FreeCameraController(camera, 50.0f);
 
@@ -106,9 +105,9 @@ void Layer3D::onAttachToEngine() {
     BZ::Transform hydrantTransform;
     hydrantTransform.setScale(0.5f, 0.5f, 0.5f);
     hydrantTransform.setTranslation(0.0f, -26.0f, 0.0f, BZ::Space::Parent);
-    scenes[0].addEntity(hydrantMesh, hydrantTransform);
-    scenes[1].addEntity(hydrantMesh, hydrantTransform);
-    scenes[2].addEntity(hydrantMesh, hydrantTransform);
+    scenes[0]->addEntity(hydrantMesh, hydrantTransform);
+    scenes[1]->addEntity(hydrantMesh, hydrantTransform);
+    scenes[2]->addEntity(hydrantMesh, hydrantTransform);
 
     BZ::Material wrenchMaterial("Sandbox/meshes/wrench/albedo.jpg", "Sandbox/meshes/wrench/normal.png",
                                 "Sandbox/meshes/wrench/metallic.jpg", "Sandbox/meshes/wrench/roughness.jpg",
@@ -118,9 +117,9 @@ void Layer3D::onAttachToEngine() {
     BZ::Transform wrenchTransform;
     wrenchTransform.setTranslation(20.0f, 0.0f, 0.0f, BZ::Space::Parent);
     wrenchTransform.setRotationEuler(0.0f, 90.0f, 30.0f, BZ::Space::Parent);
-    scenes[0].addEntity(wrenchMesh, wrenchTransform);
-    scenes[1].addEntity(wrenchMesh, wrenchTransform);
-    scenes[2].addEntity(wrenchMesh, wrenchTransform);
+    scenes[0]->addEntity(wrenchMesh, wrenchTransform);
+    scenes[1]->addEntity(wrenchMesh, wrenchTransform);
+    scenes[2]->addEntity(wrenchMesh, wrenchTransform);
 
     BZ::Material gunMaterial("Sandbox/meshes/cerberus/albedo.png", "Sandbox/meshes/cerberus/normal.png",
                              "Sandbox/meshes/cerberus/metallic.png", "Sandbox/meshes/cerberus/roughness.png",
@@ -131,9 +130,9 @@ void Layer3D::onAttachToEngine() {
     gunTransform.setScale(9.0f, 9.0f, 9.0f);
     gunTransform.setTranslation(-25.0f, 0.0f, 0.0f, BZ::Space::Parent);
     // gunTransform.setRotationEuler(0.0f, 90.0f, -45.0f, BZ::Space::Parent);
-    scenes[0].addEntity(gunMesh, gunTransform);
-    scenes[1].addEntity(gunMesh, gunTransform);
-    scenes[2].addEntity(gunMesh, gunTransform);
+    scenes[0]->addEntity(gunMesh, gunTransform);
+    scenes[1]->addEntity(gunMesh, gunTransform);
+    scenes[2]->addEntity(gunMesh, gunTransform);
 #endif
 
     // Ground
@@ -161,9 +160,9 @@ void Layer3D::onAttachToEngine() {
     BZ::Transform groundTransform;
     groundTransform.setTranslation(0.0f, -25.0f, 0.0f, BZ::Space::Parent);
     groundTransform.setScale(300.0f, 300.0f, 300.0f);
-    scenes[0].addEntity(groundMesh, groundTransform, false);
-    scenes[1].addEntity(groundMesh, groundTransform, false);
-    scenes[2].addEntity(groundMesh, groundTransform, false);
+    scenes[0]->addEntity(groundMesh, groundTransform, false);
+    scenes[1]->addEntity(groundMesh, groundTransform, false);
+    scenes[2]->addEntity(groundMesh, groundTransform, false);
 #endif
 
     // Houses and barrel
@@ -173,34 +172,34 @@ void Layer3D::onAttachToEngine() {
     barrelTransform.setScale(2.5f, 2.5f, 2.5f);
     barrelTransform.setTranslation(40.0f, -23.0f, 0.0f, BZ::Space::Parent);
     barrelTransform.setRotationEuler(29.0f, 4.0f, 90.0f, BZ::Space::Parent);
-    scenes[0].addEntity(barrelMesh, barrelTransform);
-    scenes[1].addEntity(barrelMesh, barrelTransform);
-    scenes[2].addEntity(barrelMesh, barrelTransform);
+    scenes[0]->addEntity(barrelMesh, barrelTransform);
+    scenes[1]->addEntity(barrelMesh, barrelTransform);
+    scenes[2]->addEntity(barrelMesh, barrelTransform);
 
     BZ::Mesh houseMesh("Sandbox/meshes/house/house.obj");
     BZ::Transform houseTransform;
     houseTransform.setScale(10.0f, 10.0f, 10.0f);
     houseTransform.setTranslation(0.4f, -29.0f, 0.0f, BZ::Space::Parent);
     houseTransform.setRotationEuler(0.0f, 295.0f, 0.0f, BZ::Space::Parent);
-    scenes[0].addEntity(houseMesh, houseTransform);
-    scenes[1].addEntity(houseMesh, houseTransform);
-    scenes[2].addEntity(houseMesh, houseTransform);
+    scenes[0]->addEntity(houseMesh, houseTransform);
+    scenes[1]->addEntity(houseMesh, houseTransform);
+    scenes[2]->addEntity(houseMesh, houseTransform);
     
     BZ::Transform houseTransform2;
     houseTransform2.setScale(10.0f, 10.0f, 10.0f);
     houseTransform2.setTranslation(-83.0f, -29.0f, -27.4f, BZ::Space::Parent);
     houseTransform2.setRotationEuler(0.0f, -218.0f, 0.0f, BZ::Space::Parent);
-    scenes[0].addEntity(houseMesh, houseTransform2);
-    scenes[1].addEntity(houseMesh, houseTransform2);
-    scenes[2].addEntity(houseMesh, houseTransform2);
+    scenes[0]->addEntity(houseMesh, houseTransform2);
+    scenes[1]->addEntity(houseMesh, houseTransform2);
+    scenes[2]->addEntity(houseMesh, houseTransform2);
     
     BZ::Transform houseTransform3;
     houseTransform3.setScale(10.0f, 10.0f, 10.0f);
     houseTransform3.setTranslation(-20.0f, -29.0f, -100.0f, BZ::Space::Parent);
     houseTransform3.setRotationEuler(0.0f, 151.0f, 0.0f, BZ::Space::Parent);
-    scenes[0].addEntity(houseMesh, houseTransform3);
-    scenes[1].addEntity(houseMesh, houseTransform3);
-    scenes[2].addEntity(houseMesh, houseTransform3);
+    scenes[0]->addEntity(houseMesh, houseTransform3);
+    scenes[1]->addEntity(houseMesh, houseTransform3);
+    scenes[2]->addEntity(houseMesh, houseTransform3);
 #endif
 
     // Sphere Wall
@@ -223,9 +222,9 @@ void Layer3D::onAttachToEngine() {
             mat.setMetallic(static_cast<float>(x + 3) / 6.0f);
             mat.setRoughness(static_cast<float>(y + 3) / 6.0f);
     
-            scenes[0].addEntity(sphereMesh, sphereTransform, mat, false);
-            scenes[1].addEntity(sphereMesh, sphereTransform, mat, false);
-            scenes[2].addEntity(sphereMesh, sphereTransform, mat, false);
+            scenes[0]->addEntity(sphereMesh, sphereTransform, mat, false);
+            scenes[1]->addEntity(sphereMesh, sphereTransform, mat, false);
+            scenes[2]->addEntity(sphereMesh, sphereTransform, mat, false);
         }
     }
 #endif
@@ -234,22 +233,22 @@ void Layer3D::onAttachToEngine() {
     dirLight.setDirection({ 0.3f, -1.0f, -1.0f });
     dirLight.color = { 1.0f, 1.0f, 1.0f };
     dirLight.intensity = 1.0f;
-    scenes[0].addDirectionalLight(dirLight);
-    scenes[1].addDirectionalLight(dirLight);
-    scenes[2].addDirectionalLight(dirLight);
+    scenes[0]->addDirectionalLight(dirLight);
+    scenes[1]->addDirectionalLight(dirLight);
+    scenes[2]->addDirectionalLight(dirLight);
 
     // BZ::DirectionalLight dirLight2;
     // dirLight2.setDirection({ 0.0f, -1.0f, -0.5f });
     // dirLight2.color = { 1.0f, 1.0f, 1.0f };
     // dirLight2.intensity = 1.0f;
-    // scenes[0].addDirectionalLight(dirLight2);
-    // scenes[1].addDirectionalLight(dirLight2);
-    // scenes[2].addDirectionalLight(dirLight2);
+    // scenes[0]->addDirectionalLight(dirLight2);
+    // scenes[1]->addDirectionalLight(dirLight2);
+    // scenes[2]->addDirectionalLight(dirLight2);
 
     const char *cubeFileNames[6] = { "skybox_posx.hdr", "skybox_negx.hdr", "skybox_posy.hdr",
                                      "skybox_negy.hdr", "skybox_posz.hdr", "skybox_negz.hdr" };
 
-    scenes[0].enableSkyBox("Sandbox/textures/umbrellas/", cubeFileNames, "Sandbox/textures/umbrellasIrradiance/",
+    scenes[0]->enableSkyBox("Sandbox/textures/umbrellas/", cubeFileNames, "Sandbox/textures/umbrellasIrradiance/",
                            cubeFileNames, "Sandbox/textures/umbrellasRadiance/", cubeFileNames, 5);
 }
 
@@ -263,7 +262,7 @@ void Layer3D::onUpdate(const BZ::FrameTiming &frameTiming) {
 
     // scenes[activeScene].getEntities()[2].transform.yaw(frameTiming.deltaTime.asSeconds() * 10.0f, BZ::Space::Local);
 
-    BZ::Renderer::renderScene(scenes[activeScene]);
+    BZ::Renderer::renderScene(*scenes[activeScene]);
 
     BZ::Renderer2D::begin(orthoCamera);
     // BZ::Renderer2D::renderQuad(glm::vec2(100.0f, 0.0f), glm::vec2(200.0f, 200.0f), 0.0f, glm::vec4(1, 1, 1, 1));
@@ -276,7 +275,7 @@ void Layer3D::onUpdate(const BZ::FrameTiming &frameTiming) {
     BZ::Renderer2D::renderQuad(
         pos, SIZE, 0.0f,
         std::static_pointer_cast<BZ::Texture2D>(scenes[activeScene]
-                                                    .getDirectionalLights()[0]
+                                                    ->getDirectionalLights()[0]
                                                     .shadowMapFramebuffer->getDepthStencilTextureView()
                                                     ->getTexture()),
         glm::vec4(1, 1, 1, 1));
@@ -301,7 +300,7 @@ void Layer3D::onImGuiRender(const BZ::FrameTiming &frameTiming) {
     }
     ImGui::End();
 
-    BZ::Scene &scene = scenes[activeScene];
+    BZ::Scene &scene = *scenes[activeScene];
 
     int i = 0;
     if (ImGui::Begin("Transforms")) {

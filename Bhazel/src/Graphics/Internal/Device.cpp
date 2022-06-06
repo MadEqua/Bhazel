@@ -160,57 +160,74 @@ void Device::init(const PhysicalDevice &physicalDevice, const std::vector<const 
     const QueueFamily *selectedFamilies[QUEUE_PROPS_COUNT];
 
     for (const QueueFamily &fam : physicalDevice.getQueueFamilyContainer()) {
-        int scores[QUEUE_PROPS_COUNT] = {};
+        int score = 0;
 
         constexpr int GRAPHICS = static_cast<int>(QueueProperty::Graphics);
-        if (fam.hasProperty(QueueProperty::Present))
-            scores[GRAPHICS] += 5;
-        if (fam.hasProperty(QueueProperty::Compute))
-            scores[GRAPHICS] += 1;
-        if (fam.hasProperty(QueueProperty::Transfer))
-            scores[GRAPHICS] += 1;
-
-        if (scores[GRAPHICS] >= maxScores[GRAPHICS]) {
-            maxScores[GRAPHICS] = scores[GRAPHICS];
+        if (fam.hasProperty(QueueProperty::Graphics)) {
+            score = 1;
+            if (fam.hasProperty(QueueProperty::Present))
+                score += 5;
+            if (fam.hasProperty(QueueProperty::Compute))
+                score += 1;
+            if (fam.hasProperty(QueueProperty::Transfer))
+                score += 1;
+        }
+        if (score > maxScores[GRAPHICS]) {
+            maxScores[GRAPHICS] = score;
             selectedFamilies[GRAPHICS] = &fam;
         }
 
+        score = 0;
         constexpr int COMPUTE = static_cast<int>(QueueProperty::Compute);
-        if (fam.hasProperty(QueueProperty::Present))
-            scores[COMPUTE] += 5;
-        if (fam.hasProperty(QueueProperty::Graphics))
-            scores[COMPUTE] += 1;
-        if (fam.hasProperty(QueueProperty::Transfer))
-            scores[COMPUTE] += 1;
+        if (fam.hasProperty(QueueProperty::Compute)) {
+            score = 1;
+            if (fam.hasProperty(QueueProperty::Present))
+                score += 5;
+            if (fam.hasProperty(QueueProperty::Graphics))
+                score += 1;
+            if (fam.hasProperty(QueueProperty::Transfer))
+                score += 1;
+        }
 
-        if (scores[COMPUTE] >= maxScores[COMPUTE]) {
-            maxScores[COMPUTE] = scores[COMPUTE];
+        if (score > maxScores[COMPUTE]) {
+            maxScores[COMPUTE] = score;
             selectedFamilies[COMPUTE] = &fam;
         }
 
+        score = 0;
         constexpr int TRANSFER = static_cast<int>(QueueProperty::Transfer);
-        if (!fam.hasProperty(QueueProperty::Present))
-            scores[TRANSFER] += 1;
-        if (!fam.hasProperty(QueueProperty::Graphics))
-            scores[TRANSFER] += 1;
-        if (!fam.hasProperty(QueueProperty::Compute))
-            scores[TRANSFER] += 1;
+        if (fam.hasProperty(QueueProperty::Transfer)) {
+            score = 1;
 
-        if (scores[TRANSFER] >= maxScores[TRANSFER]) {
-            maxScores[TRANSFER] = scores[TRANSFER];
+            // Try to find a exclusively transfer queue.
+            if (!fam.hasProperty(QueueProperty::Present))
+                score += 1;
+            if (!fam.hasProperty(QueueProperty::Graphics))
+                score += 1;
+            if (!fam.hasProperty(QueueProperty::Compute))
+                score += 1;
+        }
+
+        if (score > maxScores[TRANSFER]) {
+            maxScores[TRANSFER] = score;
             selectedFamilies[TRANSFER] = &fam;
         }
 
+        score = 0;
         constexpr int PRESENT = static_cast<int>(QueueProperty::Present);
-        if (fam.hasProperty(QueueProperty::Graphics))
-            scores[PRESENT] += 5;
-        if (fam.hasProperty(QueueProperty::Compute))
-            scores[PRESENT] += 4;
-        if (fam.hasProperty(QueueProperty::Transfer))
-            scores[PRESENT] += 1;
+        if (fam.hasProperty(QueueProperty::Present)) {
+            score = 1;
 
-        if (scores[PRESENT] >= maxScores[PRESENT]) {
-            maxScores[PRESENT] = scores[PRESENT];
+            if (fam.hasProperty(QueueProperty::Graphics))
+                score += 5;
+            if (fam.hasProperty(QueueProperty::Compute))
+                score += 4;
+            if (fam.hasProperty(QueueProperty::Transfer))
+                score += 1;
+        }
+
+        if (score > maxScores[PRESENT]) {
+            maxScores[PRESENT] = score;
             selectedFamilies[PRESENT] = &fam;
         }
     }

@@ -80,7 +80,6 @@ void Engine::attachApplication(Application *application) {
         rendererCoordinator.init(appSettings.enable2dRenderer, appSettings.enable3dRenderer, appSettings.enableImGuiRenderer);
     }
     
-
     application->onAttachToEngine();
 }
 

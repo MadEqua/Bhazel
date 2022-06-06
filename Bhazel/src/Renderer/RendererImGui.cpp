@@ -157,7 +157,7 @@ void RendererImGui::initGraphics() {
     rendererData.vertexBuffer = Buffer::create(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawVert),
                                                MemoryType::CpuToGpu, vertexLayout);
     rendererData.indexBuffer = Buffer::create(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, MAX_INDICES * sizeof(ImDrawIdx),
-                                              MemoryType::CpuToGpu, { { DataType::Uint16, DataElements::Scalar, "" } });
+                                              MemoryType::CpuToGpu, { { DataType::Uint16, DataElements::Scalar } });
     BZ_SET_BUFFER_DEBUG_NAME(rendererData.vertexBuffer, "RendererImGui Vertex Buffer");
     BZ_SET_BUFFER_DEBUG_NAME(rendererData.indexBuffer, "RendererImGui Index Buffer");
 

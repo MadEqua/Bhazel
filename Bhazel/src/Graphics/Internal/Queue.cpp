@@ -34,6 +34,8 @@ void Queue::init(const Device &device, const QueueFamily &family) {
     vkGetDeviceQueue(device.getHandle(), family.getIndex(), 0, &handle);
 }
 
+
+/*-------------------------------------------------------------------------------------------*/
 const Queue *QueueContainer::getQueueByFamilyIndex(uint32 familyIndex) const {
     for (uint32 i = 0; i < static_cast<uint32>(QueueProperty::Count); ++i) {
         if (queues[i].getFamily().getIndex() == familyIndex)
@@ -43,7 +45,6 @@ const Queue *QueueContainer::getQueueByFamilyIndex(uint32 familyIndex) const {
     return nullptr;
 }
 
-/*-------------------------------------------------------------------------------------------*/
 std::set<uint32> QueueContainer::getFamilyIndexesInUse() const {
     std::set<uint32> ret;
     for (uint32 i = 0; i < static_cast<uint32>(QueueProperty::Count); ++i) {

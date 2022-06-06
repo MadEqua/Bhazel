@@ -35,7 +35,7 @@ class Layer3D : public BZ::Layer {
     void onImGuiRender(const BZ::FrameTiming &frameTiming) override;
 
   private:
-    BZ::Scene scenes[3];
+    BZ::Scene* scenes[3]; //TODO: it's not very nice to have a bunch of Scene pointers here
     int activeScene = 0;
 
     BZ::PerspectiveCamera camera;

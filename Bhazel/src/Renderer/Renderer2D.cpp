@@ -39,7 +39,7 @@ static DataLayout vertexLayout = {
 };
 
 static DataLayout indexLayout = {
-    { DataType::Uint32, DataElements::Scalar, "" },
+    { DataType::Uint32, DataElements::Scalar },
 };
 
 struct VertexData {

@@ -82,7 +82,7 @@ void Scene::enableSkyBox(const char *albedoBasePath, const char *albedoFileNames
 
     auto irradianceMapTexRef = TextureCube::create(irradianceMapBasePath, irradianceMapFileNames,
                                                    VK_FORMAT_R32G32B32A32_SFLOAT, MipmapData::Options::Generate);
-    BZ_SET_TEXTURE_DEBUG_NAME(irradianceMapTexRef, "Scene SkyBox  Irradiance Texture");
+    BZ_SET_TEXTURE_DEBUG_NAME(irradianceMapTexRef, "Scene SkyBox Irradiance Texture");
     skyBox.irradianceMapView = TextureView::create(irradianceMapTexRef);
 
     auto radianceMapTexRef =

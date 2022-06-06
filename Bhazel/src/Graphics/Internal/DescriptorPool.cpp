@@ -45,6 +45,9 @@ void DescriptorPool::destroy() {
 }
 
 DescriptorSet &DescriptorPool::getDescriptorSet(const Ref<DescriptorSetLayout> &layout) {
+
+    BZ_ASSERT_CORE(layout, "DescriptorSetLayout is invalid!")
+
     // TODO: Do better than this. It's OK for now.
     BZ_ASSERT_CORE(nextFreeIndex < maxSets, "DescriptorPool has reached maximum capacity!");
 
