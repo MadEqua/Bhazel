@@ -70,5 +70,7 @@ void main() {
         outData.LTan[i] = -normalize(uSceneConstants.dirLightDirectionsAndIntensities[i].xyz * outData.TBN);
     }
 
-    outData.VTan = normalize((uPassConstants.cameraPosition.xyz - positionWorld.xyz) * outData.TBN);
+    //Don't normalize. Doing that would yield an incorrect interpolation of the vector.
+    outData.VTan = (uPassConstants.cameraPosition.xyz - positionWorld.xyz) * outData.TBN;
+
 }

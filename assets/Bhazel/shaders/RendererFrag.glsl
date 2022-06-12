@@ -137,7 +137,9 @@ vec3 directLight(vec3 N, vec3 V, vec3 L, vec3 albedo, vec3 F0, float roughness, 
     vec3 specular = (NDF * G * F) / max((4.0 * NdotV * NdotL), 0.001);
 
     vec3 kDiffuse = 1.0 - F;
-    return (kDiffuse * albedo / PI + specular) * lightRadiance * NdotL;
+
+    //return (kDiffuse * albedo / PI + specular) * PI * lightRadiance * NdotL; Simplify to:
+    return (kDiffuse * albedo + specular * PI) * lightRadiance * NdotL;
 }
 
 vec3 indirectLight(vec3 N, vec3 V, vec3 F0, vec3 albedo, float roughness, vec2 texCoord) {
@@ -216,7 +218,8 @@ vec3 lighting(vec3 N, vec3 V, vec2 texCoord) {
     int cascadeIdx = findShadowMapCascade();
 
     for(int lightIdx = 0; lightIdx < int(uSceneConstants.dirLightCount); ++lightIdx) {
-        vec3 L = normalize(inData.LTan[lightIdx]);
+        //No need to normalize, it was done on VS and the direction is constant.
+        vec3 L = inData.LTan[lightIdx];
 
         float shadow = shadowMapping(lightIdx, cascadeIdx);
         col += shadow * directLight(N, V, L, albedo, F0, roughness, uSceneConstants.dirLightColors[lightIdx].xyz * uSceneConstants.dirLightDirectionsAndIntensities[lightIdx].w, texCoord);
